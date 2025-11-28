@@ -1,0 +1,22 @@
+<mat-sidenav-container class="admin-sidenav-container">
+  <mat-sidenav #s mode="side" opened class="admin-sidenav">
+    <div class="logo">FXN - Admin</div>
+    <mat-nav-list>
+      <a mat-list-item [routerLink]="['/admin/users']"><mat-icon>people</mat-icon> Utilisateurs</a>
+      <a mat-list-item [routerLink]="['/admin/depots']"><mat-icon>inventory_2</mat-icon> Dépôts</a>
+      <a mat-list-item [routerLink]="['/admin/tools']"><mat-icon>build</mat-icon> Outils</a>
+      <a mat-list-item [routerLink]="['/admin/vehicles']"><mat-icon>directions_car</mat-icon> Véhicules</a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary">
+      <button mat-icon-button (click)="s.toggle()"><mat-icon>menu</mat-icon></button>
+      <span class="toolbar-title">Administration</span>
+    </mat-toolbar>
+
+    <div class="admin-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

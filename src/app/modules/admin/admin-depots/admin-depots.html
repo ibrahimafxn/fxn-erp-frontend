@@ -1,0 +1,5 @@
+<h2>Dépôts</h2>
+
+@for (d of depots; track d.idDep) {
+  <mat-card>{{ d.name }} — {{ d.address }}</mat-card>
+}

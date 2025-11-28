@@ -1,0 +1,31 @@
+<!-- admin-dashboard.html (corrigé pour @if) -->
+
+@if (loading()) {
+  <div class="loading">
+    <p>Chargement des statistiques...</p>
+  </div>
+}
+@else {
+  @if (error()) {
+    <div class="error">
+      <p>Erreur lors du chargement : {{ error() }}</p>
+      <button (click)="refresh()">Réessayer</button>
+    </div>
+  }
+  @else {
+    @if (stats()) {
+      <div class="dashboard">
+        <h2>Dashboard Admin</h2>
+        <ul>
+          <li>Utilisateurs : {{ stats()?.totalUsers }}</li>
+          <li>Dépôts : {{ stats()?.totalDepots }}</li>
+          <li>Matériels : {{ stats()?.totalMaterials }}</li>
+          <li>Véhicules : {{ stats()?.totalVehicles }}</li>
+          <li>Consommables : {{ stats()?.totalConsumables }}</li>
+        </ul>
+
+        <button (click)="refresh()">Rafraîchir</button>
+      </div>
+    }
+  }
+}
