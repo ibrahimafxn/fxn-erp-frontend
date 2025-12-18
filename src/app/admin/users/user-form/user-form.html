@@ -1,1 +1,93 @@
-<p>user-form works!</p>
+<section class="user-form-page">
+
+  <header class="page-header">
+    <div>
+      <h1>
+        @if (isEdit()) { Modifier un utilisateur } @else { Créer un utilisateur }
+      </h1>
+      <p class="subtitle">
+        Renseigne les informations principales. Tu pourras lier dépôt / véhicule plus tard.
+      </p>
+    </div>
+
+    <button type="button" class="btn-outline" (click)="cancel()">Retour</button>
+  </header>
+
+  <!-- Statuts -->
+  @if (loading()) {
+    <div class="status">Chargement…</div>
+  }
+
+  @if (!loading() && error()) {
+    @let err = error();
+    <div class="status error">
+      <span>Erreur :</span>
+      <code>{{ err }}</code>
+    </div>
+  }
+
+  @if (!loading() && success()) {
+    <div class="status success">{{ success() }}</div>
+  }
+
+  <!-- Formulaire -->
+  @if (!loading()) {
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+
+      <div class="grid">
+        <div class="field">
+          <label>Prénom *</label>
+          <input type="text" formControlName="firstName" placeholder="Ex: Ibrahima" />
+          @if (fieldError('firstName')) {
+            <div class="hint error">{{ fieldError('firstName') }}</div>
+          }
+        </div>
+
+        <div class="field">
+          <label>Nom</label>
+          <input type="text" formControlName="lastName" placeholder="Ex: Coulibaly" />
+        </div>
+
+        <div class="field">
+          <label>Email *</label>
+          <input type="email" formControlName="email" placeholder="ex: admin@fxn.local" />
+          @if (fieldError('email')) {
+            <div class="hint error">{{ fieldError('email') }}</div>
+          }
+        </div>
+
+        <div class="field">
+          <label>Téléphone</label>
+          <input type="text" formControlName="phone" placeholder="06..." />
+        </div>
+
+        <div class="field">
+          <label>Rôle *</label>
+          <select formControlName="role">
+            @for (r of roles; track r.value) {
+              <option [value]="r.value">{{ r.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label>ID Dépôt (optionnel)</label>
+          <input type="text" formControlName="idDepot" placeholder="ObjectId Mongo" />
+        </div>
+
+        <div class="field">
+          <label>Véhicule attribué (optionnel)</label>
+          <input type="text" formControlName="assignedVehicle" placeholder="ObjectId Mongo" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-outline" (click)="cancel()">Annuler</button>
+
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          @if (saving()) { Enregistrement… } @else { Enregistrer }
+        </button>
+      </div>
+    </form>
+  }
+</section>

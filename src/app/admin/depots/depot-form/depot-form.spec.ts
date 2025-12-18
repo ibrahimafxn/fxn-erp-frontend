@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { DepotForm } from './depot-form';
+import {DepotForm} from './depot-form';
 
 describe('DepotForm', () => {
   let component: DepotForm;

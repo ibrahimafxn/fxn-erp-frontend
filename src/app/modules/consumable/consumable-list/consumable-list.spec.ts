@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { ConsumableList } from './consumable-list';
+import {ConsumableList} from './consumable-list';
 
 describe('ConsumableList', () => {
   let component: ConsumableList;

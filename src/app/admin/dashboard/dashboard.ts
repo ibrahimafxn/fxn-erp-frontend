@@ -1,47 +1,68 @@
-import { Component, signal, inject } from '@angular/core';
-import {DepotService} from '../../core/services/depot.service';
+// dashboard.ts
 
-interface DepotDashboardStats {
-  totalAssigned: number;
-  totalAvailable: number;
-  totalVehicles: number;
-}
+import {Component, computed, inject, OnInit} from '@angular/core';
+import {CommonModule, DatePipe} from '@angular/common';
+import {Router, RouterModule} from '@angular/router';
+import {AdminService} from '../../core/services/admin.service';
+import {HistoryItem} from '../../core/models/historyItem.model';
 
 @Component({
-  selector: 'app-dashboard',
+  standalone: true,
+  selector: 'app-admin-dashboard',
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss']
+  styleUrls: ['./dashboard.scss'],
+  imports: [CommonModule, RouterModule, DatePipe]
 })
-export class DashboardComponent {
+export class Dashboard implements OnInit {
+  readonly adminService = inject(AdminService);
+  private router = inject(Router);
 
-  private depotService = inject(DepotService);
+  // On réexpose les signals du service pour les templates
+  readonly stats = this.adminService.stats;       // Signal<DashboardStats | null>
+  readonly loading = this.adminService.loading;   // Signal<boolean>
+  readonly error = this.adminService.error;       // Signal<any | null>
+  readonly historySignal = this.adminService.history; // Signal<HistoryItem[]>
 
-  stats = signal<DepotDashboardStats | null>(null);
-  loading = signal(true);
-  error = signal<string | null>(null);
+  // Derniers mouvements (ex : 10 derniers)
+  readonly recentHistory = computed(() => {
+    const list = this.historySignal() || [];
+    return list.slice(0, 10);
+  });
 
-  constructor() {
-    this.loadStats();
-  }
+  ngOnInit(): void {
+    // Charge les stats du dashboard au chargement de la page
+    this.adminService.loadDashboardStats();
 
-  loadStats() {
-    this.loading.set(true);
-    this.error.set(null);
-
-    // ici getDepotStats retourne Observable<DepotDashboardStats>
-    this.depotService.getDepotStats('someDepotId').subscribe({
-      next: (data: DepotDashboardStats) => {
-        this.stats.set(data);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err?.message || 'Erreur inconnue');
-        this.loading.set(false);
+    // Charge l'historique global (tu peux rajouter des filtres plus tard)
+    this.adminService.refreshHistory({}, true).subscribe({
+      error: () => {
+        // l'erreur est déjà stockée dans le signal error(), rien à faire ici
       }
     });
   }
 
-  refresh() {
-    this.loadStats();
+  // Navigation rapide depuis les cartes du dashboard
+  goToUsers(): void {
+    this.router.navigate(['/admin/users']);
+  }
+
+  goToDepots(): void {
+    this.router.navigate(['/admin/depots']);
+  }
+
+  goToResources(type?: 'materials' | 'consumables' | 'vehicles'): void {
+    if (type) {
+      this.router.navigate(['/admin/resources', type]);
+    } else {
+      this.router.navigate(['/admin/resources']);
+    }
+  }
+
+  goToHistory(): void {
+    this.router.navigate(['/admin/history']);
+  }
+
+  trackHistory(index: number, item: HistoryItem): string {
+    return (item as any).id || `${index}`;
   }
 }

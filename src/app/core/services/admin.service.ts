@@ -1,14 +1,14 @@
-import { Injectable, signal, Signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { tap, catchError, shareReplay, switchMap } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
+import {Injectable, signal, Signal} from '@angular/core';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {Observable, throwError} from 'rxjs';
+import {catchError, shareReplay, switchMap, tap} from 'rxjs/operators';
+import {environment} from '../../environments/environment';
 import {User} from '../models';
+import {HistoryItem} from '../models/historyItem.model';
 
 // Typages minimaux — à étendre selon ton backend
 export interface Depot { idDepot?: string; name?: string; location?: string; }
 export interface Resource { id?: string; name?: string; type?: string; depotId?: string; }
-export interface HistoryItem { id?: string; resourceType?: string; resourceId?: string; action?: string; timestamp?: string; }
 export interface DashboardStats {
   totalUsers: number;
   totalDepots: number;

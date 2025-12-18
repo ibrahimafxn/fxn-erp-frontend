@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { ToolForm } from './tool-form';
+import {ToolForm} from './tool-form';
 
 describe('ToolForm', () => {
   let component: ToolForm;

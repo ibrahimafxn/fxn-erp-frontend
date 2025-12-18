@@ -1,0 +1,27 @@
+.unauthorized-page {
+  min-height: calc(100vh - 2rem);
+  padding: 2rem;
+  display: grid;
+  place-items: center;
+}
+
+.card {
+  width: min(560px, 100%);
+  padding: 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.hint {
+  opacity: 0.8;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}

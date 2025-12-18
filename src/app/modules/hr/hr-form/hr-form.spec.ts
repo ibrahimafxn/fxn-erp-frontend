@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { HrForm } from './hr-form';
+import {HrForm} from './hr-form';
 
 describe('HrForm', () => {
   let component: HrForm;

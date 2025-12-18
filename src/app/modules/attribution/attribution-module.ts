@@ -1,7 +1,7 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
 
-import { AttributionRoutingModule } from './attribution-routing-module';
+import {AttributionRoutingModule} from './attribution-routing-module';
 
 
 @NgModule({

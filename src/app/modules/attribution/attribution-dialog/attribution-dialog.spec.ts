@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { AttributionDialog } from './attribution-dialog';
+import {AttributionDialog} from './attribution-dialog';
 
 describe('AttributionDialog', () => {
   let component: AttributionDialog;

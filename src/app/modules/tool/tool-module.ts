@@ -1,7 +1,7 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {NgModule} from '@angular/core';
+import {CommonModule} from '@angular/common';
 
-import { ToolRoutingModule } from './tool-routing-module';
+import {ToolRoutingModule} from './tool-routing-module';
 
 
 @NgModule({

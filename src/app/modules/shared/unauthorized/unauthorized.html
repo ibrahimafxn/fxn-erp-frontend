@@ -1,0 +1,28 @@
+<section class="unauthorized-page">
+  <div class="card">
+    <h1>Accès refusé</h1>
+    <p>
+      Tu n’as pas les droits nécessaires pour accéder à cette page.
+    </p>
+
+    @if (role()) {
+      <p class="hint">
+        Rôle courant : <strong>{{ role() }}</strong>
+      </p>
+    } @else {
+      <p class="hint">
+        Tu n’es pas connecté.
+      </p>
+    }
+
+    <div class="actions">
+      <button type="button" class="btn-primary" (click)="goHome()">
+        Revenir à l’accueil
+      </button>
+
+      <button type="button" class="btn-outline" (click)="logout()">
+        Se déconnecter
+      </button>
+    </div>
+  </div>
+</section>

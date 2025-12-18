@@ -1,1 +1,97 @@
-<p>user-list works!</p>
+<section class="admin-users">
+
+  <!-- Header -->
+  <header class="page-header">
+    <div>
+      <h1>Utilisateurs</h1>
+      <p class="subtitle">Gestion des comptes et des rôles</p>
+    </div>
+
+    <button type="button" class="btn-primary" (click)="goCreate()">
+      + Nouvel utilisateur
+    </button>
+  </header>
+
+  <!-- Status bar -->
+  <section class="status-bar">
+    @if (loading()) {
+      <div class="status loading">
+        Chargement des utilisateurs…
+      </div>
+    }
+
+    @if (!loading() && error()) {
+      @let err = error();
+      <div class="status error">
+        <span>Erreur :</span>
+        <code>{{ err?.error?.message || err?.message || err }}</code>
+      </div>
+    }
+  </section>
+
+  <!-- Table -->
+  @if (!loading() && users().length) {
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Téléphone</th>
+          <th>Rôle</th>
+          <th>Créé le</th>
+          <th class="actions">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (u of users(); track userId(u)) {
+            <tr>
+              <td>{{ u.firstName }} {{ u.lastName }}</td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.phone || '—' }}</td>
+              <td>
+        <span class="role-badge role-{{ u.role | lowercase }}">
+          {{ u.role }}
+        </span>
+              </td>
+              <td>
+                @if (userCreatedAt(u)) {
+                  {{ userCreatedAt(u) | date:'short' }}
+                } @else {
+                  —
+                }
+              </td>
+              <td class="row-actions">
+                <button type="button" class="btn-link" (click)="edit(u)">
+                  Modifier
+                </button>
+
+                <button
+                  type="button"
+                  class="btn-danger"
+                  [disabled]="deletingId() === userId(u)"
+                  (click)="delete(u)"
+                >
+                  @if (deletingId() === userId(u)) {
+                    Suppression…
+                  } @else {
+                    Supprimer
+                  }
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Empty state -->
+  @if (!loading() && !users().length && !error()) {
+    <div class="empty-state">
+      <p>Aucun utilisateur enregistré.</p>
+    </div>
+  }
+
+</section>

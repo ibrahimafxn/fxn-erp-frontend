@@ -1,30 +1,23 @@
 // src/app/core/guards/role.guard.ts
-import { inject } from '@angular/core';
-import { Router, CanActivateFn } from '@angular/router';
-import { from, map } from 'rxjs';
-import { AuthService } from '../services/auth.service';
+import {inject} from '@angular/core';
+import {ActivatedRouteSnapshot, CanActivateFn, Router, RouterStateSnapshot, UrlTree} from '@angular/router';
+import {AuthService} from '../services/auth.service';
+import {Role} from '../models/roles.model';
 
-export function RoleGuard(requiredRoles: string[] = []): CanActivateFn {
-  return () => {
+export function RoleGuard(allowedRoles: Role[]): CanActivateFn {
+  return (route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree => {
     const auth = inject(AuthService);
     const router = inject(Router);
 
-    const normalize = (r?: string) => (r || '').toString().toUpperCase();
-    const unauthorized = () => router.parseUrl('/forbidden');
+    // Pas connecté -> login + returnUrl
+    if (!auth.isAuthenticated()) {
+      return router.parseUrl(`/login?returnUrl=${encodeURIComponent(state.url)}`);
+    }
 
-    const checkRole = (isLogged: boolean) => {
-      if (!isLogged) return router.parseUrl(`/login?returnUrl=${encodeURIComponent(router.url || '/')}`);
+    // Connecté mais rôle non autorisé
+    const role = auth.getUserRole();
+    const ok = !!role && allowedRoles.includes(role);
 
-      const userRole = auth.getUserRole();
-      if (!userRole) return unauthorized();
-
-      const allowed = requiredRoles.map(normalize);
-      if (allowed.includes(normalize(userRole))) return true;
-      return unauthorized();
-    };
-
-    const res = auth.isLoggedIn();
-    if (typeof res === 'boolean') return checkRole(res);
-    return from(res as Promise<boolean>).pipe(map(checkRole));
+    return ok ? true : router.parseUrl('/unauthorized');
   };
 }

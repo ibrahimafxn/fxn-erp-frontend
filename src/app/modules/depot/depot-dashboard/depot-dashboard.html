@@ -1,0 +1,48 @@
+<div class="dashboard-container">
+
+  <!-- Loader -->
+  @if (loading()){
+    <div class="loader">
+      <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+      <p>Chargement des statistiques du dépôt...</p>
+    </div>
+  }
+
+
+  <!-- Erreur -->
+  @if (error()){
+    <div class="error">
+      <mat-card>
+        <mat-card-title>Erreur</mat-card-title>
+        <mat-card-content>{{ error() }}</mat-card-content>
+      </mat-card>
+    </div>
+
+  }
+
+  <!-- Stats -->
+  @if (stats()){
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-title>Total assignés</mat-card-title>
+        <mat-card-content>{{ stats()?.totalAssigned }}</mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-title>Total disponibles</mat-card-title>
+        <mat-card-content>{{ stats()?.totalAvailable }}</mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-title>Total véhicules</mat-card-title>
+        <mat-card-content>{{ stats()?.totalVehicles }}</mat-card-content>
+      </mat-card>
+    </div>
+
+    <div class="refresh-button">
+      <button mat-raised-button color="primary" (click)="refresh()">Rafraîchir</button>
+    </div>
+
+  }
+
+</div>

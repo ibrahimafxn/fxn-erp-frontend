@@ -1,1 +1,151 @@
-<p>user-detail works!</p>
+<section class="user-detail">
+  <header class="topbar">
+    <button type="button" class="btn-ghost" (click)="backToList()">← Utilisateurs</button>
+
+    <div class="top-actions">
+      <button type="button" class="btn-outline" (click)="load()">Recharger</button>
+      <button type="button" class="btn-primary" (click)="edit()">Modifier</button>
+      <button type="button" class="btn-danger" (click)="delete()">Supprimer</button>
+    </div>
+  </header>
+
+  @if (state() === 'loading') {
+    <div class="state">Chargement…</div>
+  } @else if (state() === 'error') {
+    <div class="state error">
+      <strong>Erreur</strong> — {{ error() }}
+    </div>
+  } @else if (user() as u) {
+    <!-- HERO -->
+    <section class="hero">
+      <div class="avatar">{{ initials() }}</div>
+
+      <div class="hero-main">
+        <div class="title-row">
+          <h1 class="name">{{ displayName() }}</h1>
+
+          <span class="badge role role-{{ (u.role || '').toLowerCase() }}">
+            {{ u.role || '—' }}
+          </span>
+
+          @if (hasAccess()) {
+            <span class="badge success">Accès activé</span>
+          } @else {
+            <span class="badge warn">Accès non activé</span>
+          }
+        </div>
+
+        <div class="meta">
+          <div class="meta-item">
+            <span class="k">Email</span>
+            <span class="v">{{ u.email || '—' }}</span>
+          </div>
+
+          <div class="meta-item">
+            <span class="k">Téléphone</span>
+            <span class="v">{{ u.phone || '—' }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRID -->
+    <section class="grid">
+      <!-- Identité -->
+      <article class="card">
+        <h2>Identité</h2>
+
+        <div class="row">
+          <span class="k">Prénom</span><span class="v">{{ u.firstName || '—' }}</span>
+        </div>
+        <div class="row">
+          <span class="k">Nom</span><span class="v">{{ u.lastName || '—' }}</span>
+        </div>
+        <div class="row">
+          <span class="k">Email</span><span class="v">{{ u.email || '—' }}</span>
+        </div>
+        <div class="row">
+          <span class="k">Téléphone</span><span class="v">{{ u.phone || '—' }}</span>
+        </div>
+
+        @if ((u as any).numSec) {
+          <div class="row">
+            <span class="k">N° sécu</span><span class="v mono">{{ (u as any).numSec }}</span>
+          </div>
+        }
+        @if ((u as any).numSiret) {
+          <div class="row">
+            <span class="k">SIRET</span><span class="v mono">{{ (u as any).numSiret }}</span>
+          </div>
+        }
+      </article>
+
+      <!-- Affectations -->
+      <article class="card">
+        <h2>Affectations</h2>
+
+        <div class="row">
+          <span class="k">Dépôt</span>
+          <span class="v mono">{{ (u as any).idDepot || '—' }}</span>
+        </div>
+
+        <div class="row">
+          <span class="k">Véhicule</span>
+          <span class="v mono">{{ (u as any).assignedVehicle || '—' }}</span>
+        </div>
+
+        <div class="hint">
+          (On affichera le nom du dépôt / véhicule quand on fera des endpoints “populate” ou des requêtes dédiées.)
+        </div>
+      </article>
+
+      <!-- Accès / Sécurité -->
+      <article class="card">
+        <h2>Accès & Sécurité</h2>
+
+        <div class="row">
+          <span class="k">Username</span>
+          <span class="v">{{ u.username || '—' }}</span>
+        </div>
+
+        <div class="actions">
+          @if (hasAccess()) {
+            <button type="button" class="btn-outline" (click)="goChangePassword()">
+              Changer le mot de passe
+            </button>
+          } @else {
+            <button type="button" class="btn-primary" (click)="goGiveAccess()">
+              Donner accès (username + mot de passe)
+            </button>
+          }
+        </div>
+
+        <div class="hint">
+          Le mot de passe n’est jamais affiché. On passe par “donner accès” / “changer mot de passe”.
+        </div>
+      </article>
+
+      <!-- Audit -->
+      <article class="card">
+        <h2>Audit</h2>
+
+        <div class="row">
+          <span class="k">ID</span>
+          <span class="v mono">{{ (u as any)._id || '—' }}</span>
+        </div>
+
+        <div class="row">
+          <span class="k">Créé le</span>
+          <span class="v">{{ (u as any).createdAt ? ((u as any).createdAt | date:'medium') : '—' }}</span>
+        </div>
+
+        <div class="row">
+          <span class="k">Mis à jour</span>
+          <span class="v">{{ (u as any).updatedAt ? ((u as any).updatedAt | date:'medium') : '—' }}</span>
+        </div>
+      </article>
+    </section>
+  } @else {
+    <div class="state">Utilisateur introuvable.</div>
+  }
+</section>

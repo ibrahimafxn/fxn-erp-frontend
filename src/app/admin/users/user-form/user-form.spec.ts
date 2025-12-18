@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { UserForm } from './user-form';
+import {UserForm} from './user-form';
 
 describe('UserForm', () => {
   let component: UserForm;

@@ -1,1 +1,103 @@
-<p>dashboard works!</p>
+<section class="admin-dashboard">
+  <header class="dashboard-header">
+    <div>
+      <h1>Dashboard administration</h1>
+      <p class="subtitle">
+        Vue d'ensemble de l'activité stock, dépôts, utilisateurs et véhicules.
+      </p>
+    </div>
+
+    <button class="btn-outline" type="button" (click)="adminService.loadDashboardStats()">
+      Recharger les données
+    </button>
+  </header>
+
+  <!-- Messages de statut global -->
+  <div class="status-bar">
+    <div class="status loading" *ngIf="loading()">
+      Chargement des données...
+    </div>
+
+    <div class="status error" *ngIf="!loading() && error() as err">
+      <span>Une erreur est survenue :</span>
+      <code>{{ err.message || err }}</code>
+    </div>
+  </div>
+
+  <!-- KPIs principaux -->
+  <section class="kpi-grid" *ngIf="stats() as s">
+    <article class="kpi-card clickable" (click)="goToUsers()">
+      <div class="kpi-label">Utilisateurs</div>
+      <div class="kpi-value">{{ s.totalUsers }}</div>
+      <div class="kpi-footer">Tous rôles confondus</div>
+    </article>
+
+    <article class="kpi-card clickable" (click)="goToDepots()">
+      <div class="kpi-label">Dépôts</div>
+      <div class="kpi-value">{{ s.totalDepots }}</div>
+      <div class="kpi-footer">Dépôts enregistrés</div>
+    </article>
+
+    <article class="kpi-card clickable" (click)="goToResources('materials')">
+      <div class="kpi-label">Matériels</div>
+      <div class="kpi-value">{{ s.totalMaterials }}</div>
+      <div class="kpi-footer">Références en stock</div>
+    </article>
+
+    <article class="kpi-card clickable" (click)="goToResources('consumables')">
+      <div class="kpi-label">Consommables</div>
+      <div class="kpi-value">{{ s.totalConsumables }}</div>
+      <div class="kpi-footer">Articles suivis</div>
+    </article>
+
+    <article class="kpi-card clickable" (click)="goToResources('vehicles')">
+      <div class="kpi-label">Véhicules</div>
+      <div class="kpi-value">{{ s.totalVehicles }}</div>
+      <div class="kpi-footer">Flotte opérationnelle</div>
+    </article>
+  </section>
+
+  <section class="empty-state" *ngIf="!stats() && !loading() && !error()">
+    <p>Aucune donnée de dashboard pour le moment.</p>
+  </section>
+
+  <!-- Derniers mouvements -->
+  <section class="history-section" *ngIf="recentHistory().length">
+    <div class="history-header">
+      <h2>Derniers mouvements de stock</h2>
+      <button class="btn-link" type="button" (click)="goToHistory()">
+        Voir tout l'historique
+      </button>
+    </div>
+
+    <div class="history-table-wrapper">
+      <table class="history-table">
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Action</th>
+          <th>Ressource</th>
+          <th>Dépot / Utilisateur</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let h of recentHistory(); trackBy: trackHistory">
+          <td>{{ h.timestamp | date: 'short' }}</td>
+          <td>{{ h.resourceType || '—' }}</td>
+          <td>{{ h.action || '—' }}</td>
+          <td>
+            <!-- À adapter selon ce que renvoie ton API (libellé, ref...) -->
+            {{ h.resourceName || h.resourceId || '—' }}
+          </td>
+          <td>
+            <!-- Champs à adapter (fromDepotName, toDepotName, userName...) -->
+            <span *ngIf="h.depotName">{{ h.depotName }}</span>
+            <span *ngIf="h.userName"> · {{ h.userName }}</span>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>

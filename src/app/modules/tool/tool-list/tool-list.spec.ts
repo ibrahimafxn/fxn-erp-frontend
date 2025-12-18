@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {ComponentFixture, TestBed} from '@angular/core/testing';
 
-import { ToolList } from './tool-list';
+import {ToolList} from './tool-list';
 
 describe('ToolList', () => {
   let component: ToolList;

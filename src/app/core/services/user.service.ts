@@ -1,10 +1,15 @@
-import { Injectable, signal, Signal } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { tap, catchError, shareReplay, switchMap } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
-import {User} from '../models';
+// src/app/core/services/user.service.ts
+import {Injectable, signal, Signal} from '@angular/core';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {Observable, throwError} from 'rxjs';
+import {catchError, finalize, map, shareReplay, tap} from 'rxjs/operators';
+import {environment} from '../../environments/environment';
 import {toObservable} from '@angular/core/rxjs-interop';
+
+import {User} from '../models';
+import {UserListResult} from '../models/user-list-result.model';
+
+type ApiResponse<T> = { success: boolean; data: T; message?: string; errors?: any };
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -16,6 +21,10 @@ export class UserService {
   private _users = signal<User[]>([]);
   readonly users: Signal<User[]> = this._users.asReadonly();
 
+  // meta pagination (optionnel mais très utile pour /admin/users)
+  private _meta = signal<{ total: number; page: number; limit: number } | null>(null);
+  readonly meta = this._meta.asReadonly();
+
   private _loading = signal(false);
   readonly loading: Signal<boolean> = this._loading.asReadonly();
 
@@ -25,7 +34,7 @@ export class UserService {
   // -----------------------------
   // Cache RxJS
   // -----------------------------
-  private _usersRequest$?: Observable<User[]>;
+  private _usersRequest$?: Observable<UserListResult>;
 
   constructor(private http: HttpClient) {}
 
@@ -35,30 +44,46 @@ export class UserService {
   private handleError(err: any) {
     console.error(err);
     this._error.set(err);
-    this._loading.set(false);
     return throwError(() => err);
   }
 
   // -----------------------------
   // Chargement / refresh
   // -----------------------------
-  refreshUsers(force = false, filter?: { search?: string; role?: string; depot?: string }): Observable<User[]> {
+  refreshUsers(
+    force = false,
+    filter?: { q?: string; role?: string; depot?: string; page?: number; limit?: number }
+  ): Observable<UserListResult> {
     if (!force && this._usersRequest$) return this._usersRequest$;
 
     this._loading.set(true);
     this._error.set(null);
 
     let params = new HttpParams();
-    if (filter?.search) params = params.set('search', filter.search);
+    if (filter?.q) params = params.set('q', filter.q);
     if (filter?.role) params = params.set('role', filter.role);
     if (filter?.depot) params = params.set('depot', filter.depot);
+    if (filter?.page) params = params.set('page', String(filter.page));
+    if (filter?.limit) params = params.set('limit', String(filter.limit));
 
-    const req$ = this.http.get<User[]>(this.baseUrl, { params }).pipe(
-      tap(list => this._users.set(list || [])),
-      catchError(err => this.handleError(err)),
-      tap(() => this._loading.set(false)),
-      shareReplay({ bufferSize: 1, refCount: true })
-    );
+    const req$ = this.http
+      .get<ApiResponse<UserListResult>>(this.baseUrl, { params })
+      .pipe(
+        map(resp => {
+          if (!resp?.success) {
+            throw resp;
+          }
+          return resp.data;
+        }),
+        tap(result => {
+          const items = result?.items ?? [];
+          this._users.set(items);
+          this._meta.set({ total: result.total, page: result.page, limit: result.limit });
+        }),
+        shareReplay({ bufferSize: 1, refCount: true }),
+        catchError(err => this.handleError(err)),
+        finalize(() => this._loading.set(false))
+      );
 
     this._usersRequest$ = req$;
     return req$;
@@ -67,41 +92,77 @@ export class UserService {
   // -----------------------------
   // Exposition
   // -----------------------------
-  getUsersSignal(): Signal<User[]> { return this.users; }
+  getUsersSignal(): Signal<User[]> {
+    return this.users;
+  }
 
   // Observable basé sur le signal
-  getUsers$(): Observable<User[]> { return toObservable(this._users); }
+  getUsers$(): Observable<User[]> {
+    return toObservable(this._users);
+  }
 
   // -----------------------------
-  // CRUD Utilisateur
+  // CRUD Utilisateur (API renvoie {success, data})
   // -----------------------------
   getUser(id: string): Observable<User> {
-    return this.http.get<User>(`${this.baseUrl}/${id}`).pipe(catchError(err => this.handleError(err)));
-  }
-
-  createUser(payload: Partial<User>): Observable<User[]> {
-    return this.http.post<User>(this.baseUrl, payload).pipe(
-      switchMap(() => { this.clearCache(); return this.refreshUsers(true); }),
+    return this.http.get<ApiResponse<User>>(`${this.baseUrl}/${id}`).pipe(
+      map(resp => {
+        if (!resp?.success) throw resp;
+        return resp.data;
+      }),
       catchError(err => this.handleError(err))
     );
   }
 
-  updateUser(id: string, payload: Partial<User>): Observable<User[]> {
-    return this.http.put<User>(`${this.baseUrl}/${id}`, payload).pipe(
-      switchMap(() => { this.clearCache(); return this.refreshUsers(true); }),
+  createUser(payload: Partial<User>): Observable<User> {
+    return this.http.post<ApiResponse<User>>(this.baseUrl, payload).pipe(
+      map(resp => {
+        if (!resp?.success) throw resp;
+        return resp.data;
+      }),
+      tap(() => {
+        this.clearCache();
+        // refresh async pour mettre à jour la liste en fond
+        this.triggerRefresh();
+      }),
       catchError(err => this.handleError(err))
     );
   }
 
-  changePassword(id: string, newPassword: string): Observable<any> {
-    return this.http.put(`${this.baseUrl}/${id}/password`, { password: newPassword }).pipe(
+  updateUser(id: string, payload: Partial<User>): Observable<User> {
+    return this.http.put<ApiResponse<User>>(`${this.baseUrl}/${id}`, payload).pipe(
+      map(resp => {
+        if (!resp?.success) throw resp;
+        return resp.data;
+      }),
+      tap(() => {
+        this.clearCache();
+        this.triggerRefresh();
+      }),
       catchError(err => this.handleError(err))
     );
   }
 
-  deleteUser(id: string): Observable<User[]> {
-    return this.http.delete(`${this.baseUrl}/${id}`).pipe(
-      switchMap(() => { this.clearCache(); return this.refreshUsers(true); }),
+  deleteUser(id: string): Observable<void> {
+    return this.http.delete<ApiResponse<any>>(`${this.baseUrl}/${id}`).pipe(
+      map(resp => {
+        if (!resp?.success) throw resp;
+        return void 0;
+      }),
+      tap(() => {
+        this.clearCache();
+        this.triggerRefresh();
+      }),
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  changePassword(id: string, newPassword: string): Observable<void> {
+    return this.http.put<ApiResponse<any>>(`${this.baseUrl}/${id}/password`, { password: newPassword }).pipe(
+      map(resp => {
+        if (!resp?.success) throw resp;
+        return void 0;
+      }),
       catchError(err => this.handleError(err))
     );
   }
@@ -109,6 +170,12 @@ export class UserService {
   // -----------------------------
   // Utilitaires
   // -----------------------------
-  triggerRefresh(): void { this.refreshUsers(true).subscribe({ next: () => {}, error: () => {} }); }
-  clearCache(): void { this._usersRequest$ = undefined; }
+  triggerRefresh(): void {
+    // On évite de spammer si déjà en cache : force = true pour être sûr d’actualiser
+    this.refreshUsers(true).subscribe({ next: () => {}, error: () => {} });
+  }
+
+  clearCache(): void {
+    this._usersRequest$ = undefined;
+  }
 }
