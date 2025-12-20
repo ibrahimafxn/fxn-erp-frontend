@@ -1,0 +1,44 @@
+/* ===============================
+   BUTTONS
+================================ */
+
+button {
+  font-family: inherit;
+}
+
+.btn-primary,
+.btn-outline,
+.btn-danger {
+  padding: 0.55rem 1rem;
+  border-radius: var(--fxn-radius-md);
+  border: 1px solid var(--fxn-border);
+  cursor: pointer;
+  transition: background .15s ease, filter .15s ease;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: var(--fxn-primary-soft);
+  color: var(--fxn-primary);
+}
+
+.btn-danger {
+  background: var(--fxn-danger-soft);
+  color: var(--fxn-danger);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--fxn-text);
+}
+
+.btn-primary:hover,
+.btn-danger:hover,
+.btn-outline:hover {
+  filter: brightness(1.15);
+}
+
+button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}

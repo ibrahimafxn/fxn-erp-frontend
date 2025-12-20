@@ -14,13 +14,18 @@
 
   <!-- Messages de statut global -->
   <div class="status-bar">
-    <div class="status loading" *ngIf="loading()">
-      Chargement des données...
-    </div>
+    @if (loading()) {
+      <div class="status loading">
+        Chargement des données...
+      </div>
+    }
 
+    @if (!loading() && error()) {
+
+    }
     <div class="status error" *ngIf="!loading() && error() as err">
       <span>Une erreur est survenue :</span>
-      <code>{{ err.message || err }}</code>
+      <code>{{ error().message || err }}</code>
     </div>
   </div>
 

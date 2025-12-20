@@ -1,0 +1,76 @@
+<section class="page">
+  <header class="page-header card">
+    <div>
+      <h1>Consommables</h1>
+      <p class="subtitle">Gestion du stock consommable</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()">Dashboard</button>
+      <button class="btn-outline" type="button" (click)="refresh(true)">
+        Recharger
+      </button>
+      <button class="btn-primary" type="button" (click)="createNew()">
+        Nouveau
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (hasError()) {
+    <div class="state error card">
+      <strong>Erreur :</strong> {{ errorMessage() }}
+    </div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucun consommable.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Unité</th>
+          <th>Quantité</th>
+          <th>Dépôt</th>
+          <th>Créé</th>
+          <th class="actions">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (c of list(); track c._id) {
+            <tr>
+              <td class="main">
+                <div class="name">{{ c.name }}</div>
+              </td>
+
+              <td>{{ c.unit }}</td>
+              <td>{{ c.quantity }}</td>
+              <td>{{ depotLabel(c) }}</td>
+
+              <td>
+                @if (createdAtValue(c)) {
+                  {{ createdAtValue(c) | date: 'short' }}
+                } @else {
+                  —
+                }
+              </td>
+
+              <td class="actions">
+                <button
+                  class="btn-danger"
+                  type="button"
+                  [disabled]="deletingId() === c._id"
+                  (click)="delete(c)"
+                >
+                  @if (deletingId() === c._id) { Suppression… } @else { Supprimer }
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

@@ -1,0 +1,243 @@
+<section class="depot-detail">
+  <!-- HEADER -->
+  <header class="page-header card">
+    <div class="header-left">
+      <div class="title-row">
+        <div class="title">
+          @if (hasDepot()) {
+            {{ depotName() }}
+          } @else {
+            Détail dépôt
+          }
+        </div>
+        @if (hasDepot()) {
+          <span class="pill">Dépôt</span>
+        }
+      </div>
+
+      <div class="subtitle">
+        Vue synthèse : informations clés, gestionnaire, techniciens et indicateurs.
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()">Retour</button>
+      <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasDepot()">Modifier</button>
+      <button class="btn-outline" type="button" (click)="load()">Recharger</button>
+    </div>
+  </header>
+
+  <!-- STATES -->
+  @if (loading()) {
+    <div class="state loading card">Chargement du dépôt…</div>
+  } @else if (error()) {
+    <div class="state error card">
+      <strong>Erreur :</strong> {{ error() }}
+    </div>
+  } @else if (!hasDepot()) {
+    <div class="state empty card">Aucune donnée dépôt.</div>
+  } @else {
+    <section class="grid">
+
+      <!-- IDENTITÉ -->
+      <article class="card">
+        <div class="identity">
+          <div class="avatar">
+            {{ depotName().slice(0, 2).toUpperCase() }}
+          </div>
+
+          <div class="identity-text">
+            <div class="name">{{ depotName() }}</div>
+            <div class="meta">
+              <span class="chip">{{ depotCity() || '—' }}</span>
+              <span class="chip">{{ depotPhone() || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Adresse</label>
+            <span>{{ depotAddress() || '—' }}</span>
+          </div>
+
+          <div class="info-item">
+            <label>Gestionnaire</label>
+            <span class="manager">
+              {{ managerLabel() }}
+              @if (managerEmail()) {
+                <small>· {{ managerEmail() }}</small>
+              }
+            </span>
+          </div>
+
+          <div class="info-item">
+            <label>Gestionnaire</label>
+
+            <div class="manager-row">
+    <span class="manager">
+      {{ managerLabel() }}
+      @if (managerEmail()) {
+        <small>· {{ managerEmail() }}</small>
+      }
+    </span>
+
+              <button class="btn-outline btn-xs" type="button" (click)="openManagerEdit()">
+                Changer
+              </button>
+            </div>
+
+            @if (managerEditOpen()) {
+              <div class="manager-panel">
+                @if (managerCandidatesLoading()) {
+                  <div class="state loading">Chargement…</div>
+                } @else {
+                  <label class="sub-label">Sélection</label>
+
+                  <select
+                    class="select"
+                    [value]="selectedManagerId() || ''"
+                    (change)="onManagerSelect($event)"
+                  >
+                    <option value="">— Aucun —</option>
+
+                    @for (u of managerCandidates(); track u._id) {
+                      <option [value]="u._id">
+                        {{ u.firstName }} {{ u.lastName || '' }} · {{ u.email || '—' }}
+                      </option>
+                    }
+                  </select>
+                }
+
+                @if (managerError()) {
+                  <div class="state error">{{ managerError() }}</div>
+                }
+
+                <div class="panel-actions">
+                  <button
+                    class="btn-outline btn-xs"
+                    type="button"
+                    (click)="closeManagerEdit()"
+                    [disabled]="managerSaving()"
+                  >
+                    Annuler
+                  </button>
+
+                  <button
+                    class="btn-danger btn-xs"
+                    type="button"
+                    (click)="removeManager()"
+                    [disabled]="managerSaving()"
+                  >
+                    Retirer
+                  </button>
+
+                  <button
+                    class="btn-primary btn-xs"
+                    type="button"
+                    (click)="saveManager()"
+                    [disabled]="managerSaving()"
+                  >
+                    @if (managerSaving()) { Enregistrement… } @else { Enregistrer }
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="info-item">
+            <label>Créé le</label>
+            <span>
+              @if (depotCreatedAt()) {
+                {{ depotCreatedAt() | date:'fullDate' }}
+              } @else {
+                —
+              }
+            </span>
+          </div>
+
+          <div class="info-item">
+            <label>ID</label>
+            <span class="mono">{{ id }}</span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="card-actions">
+          <button class="btn-outline" type="button" (click)="load()">Actualiser</button>
+          <button class="btn-primary" type="button" (click)="edit()">Modifier</button>
+        </div>
+      </article>
+
+      <!-- KPIs -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Indicateurs</h2>
+          <span class="hint">Bientôt /stats</span>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">Matériels</div>
+            <div class="kpi-value">{{ kpis().materials }}</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi-label">Consommables</div>
+            <div class="kpi-value">{{ kpis().consumables }}</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi-label">Techniciens</div>
+            <div class="kpi-value">{{ kpis().technicians }}</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi-label">Véhicules</div>
+            <div class="kpi-value">{{ kpis().vehicles }}</div>
+          </div>
+        </div>
+
+        <p class="note">
+          Endpoint attendu : <span class="mono">/api/depots/:id/stats</span>
+        </p>
+      </article>
+
+      <!-- TECHNICIENS -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Techniciens rattachés</h2>
+          <span class="pill">{{ technicians().length }}</span>
+        </div>
+
+        @if (techLoading()) {
+          <div class="state loading">Chargement des techniciens…</div>
+        } @else if (techError()) {
+          <div class="state error">{{ techError() }}</div>
+        } @else if (technicians().length === 0) {
+          <div class="state empty">Aucun technicien rattaché à ce dépôt.</div>
+        } @else {
+          <div class="mini-list">
+            @for (t of technicians(); track t._id) {
+              <div class="mini-row">
+                <div class="mini-left">
+                  <div class="mini-name">{{ t.firstName }} {{ t.lastName || '' }}</div>
+                  <div class="mini-sub">
+                    <span>{{ t.email || '—' }}</span>
+                    <span class="dot">•</span>
+                    <span>{{ t.phone || '—' }}</span>
+                  </div>
+                </div>
+
+                <div class="mini-right">
+                  <span class="role-badge">TECHNICIEN</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+    </section>
+  }
+</section>

@@ -1,0 +1,21 @@
+/* ===============================
+   CARDS
+================================ */
+
+.card {
+  background: var(--fxn-surface);
+  border: 1px solid var(--fxn-border);
+  border-radius: var(--fxn-radius-lg);
+  padding: var(--fxn-space-md);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-subtitle {
+  color: var(--fxn-text-muted);
+  font-size: .9rem;
+}

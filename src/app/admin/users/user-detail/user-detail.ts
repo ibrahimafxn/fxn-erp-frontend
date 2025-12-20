@@ -1,112 +1,117 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { UserService } from '../../../core/services/user.service';
 import { User } from '../../../core/models';
-
-type LoadState = 'idle' | 'loading' | 'error' | 'ready';
 
 @Component({
   standalone: true,
   selector: 'app-user-detail',
   templateUrl: './user-detail.html',
   styleUrls: ['./user-detail.scss'],
-  imports: [CommonModule, RouterModule, DatePipe]
+  imports: [CommonModule],
+  providers: [DatePipe]
 })
 export class UserDetail {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
-  private users = inject(UserService);
+  private userService = inject(UserService);
+  private datePipe = inject(DatePipe);
 
-  readonly state = signal<LoadState>('idle');
+  readonly loading = signal(true);
   readonly error = signal<string | null>(null);
+  readonly deleting = signal(false);
 
-  readonly userId = computed(() => this.route.snapshot.paramMap.get('id') || '');
-
-  /** User chargé (signal local) */
   readonly user = signal<User | null>(null);
 
-  /** UI helpers */
-  readonly displayName = computed(() => {
-    const u = this.user();
-    if (!u) return '—';
-    const fn = (u.firstName || '').trim();
-    const ln = (u.lastName || '').trim();
-    return `${fn} ${ln}`.trim() || u.email || '—';
+  /** Champs "optionnels" qui existent dans Mongo mais pas forcément dans ton interface User */
+  readonly createdAtText = computed(() => {
+    const u = this.user() as any;
+    const dt = u?.createdAt;
+    return dt ? (this.datePipe.transform(dt, 'short') ?? '—') : '—';
   });
 
-  readonly initials = computed(() => {
-    const u = this.user();
-    if (!u) return '?';
-    const a = (u.firstName || '').trim().charAt(0);
-    const b = (u.lastName || '').trim().charAt(0);
-    const s = `${a}${b}`.toUpperCase();
-    return s || (u.email ? u.email.charAt(0).toUpperCase() : '?');
+  readonly updatedAtText = computed(() => {
+    const u = this.user() as any;
+    const dt = u?.updatedAt;
+    return dt ? (this.datePipe.transform(dt, 'short') ?? '—') : '—';
   });
 
-  /** “Accès activé” si username présent (et/ou password existant côté back) */
-  readonly hasAccess = computed(() => {
-    const u = this.user();
-    return !!(u && (u.username || (u as any).hasCredentials));
+  readonly usernameText = computed(() => {
+    const u = this.user() as any;
+    return u?.username ? String(u.username) : '—';
+  });
+
+  readonly idDepotText = computed(() => {
+    const u = this.user() as any;
+    return u?.idDepot ? String(u.idDepot) : 'Non affecté';
+  });
+
+  readonly vehicleText = computed(() => {
+    const u = this.user() as any;
+    return u?.assignedVehicle ? String(u.assignedVehicle) : 'Aucun';
   });
 
   constructor() {
     this.load();
   }
 
+  private getId(): string {
+    return this.route.snapshot.paramMap.get('id') || '';
+  }
+
   load(): void {
-    const id = this.userId();
+    const id = this.getId();
     if (!id) {
-      this.router.navigate(['/admin/users']).then();
+      this.error.set('ID utilisateur manquant dans l’URL');
+      this.loading.set(false);
       return;
     }
 
-    this.state.set('loading');
+    this.loading.set(true);
     this.error.set(null);
 
-    this.users.getUser(id).subscribe({
-      next: (u) => {
-        // Si ton API renvoie {success,data}, adapte ici.
-        this.user.set((u as any)?.data ?? u);
-        this.state.set('ready');
+    this.userService.getUser(id).subscribe({
+      next: (resp) => {
+        const u = (resp as any)?.data ?? resp; // support {success,data} ou objet direct
+        this.user.set(u as User);
+        this.loading.set(false);
       },
       error: (err) => {
-        this.state.set('error');
         this.error.set(err?.error?.message || 'Impossible de charger la fiche utilisateur');
+        this.loading.set(false);
       }
     });
   }
 
-  backToList(): void {
-    this.router.navigate(['/admin/users']).then();
+  goBack(): void {
+    this.router.navigate(['/admin/users']);
   }
 
-  edit(): void {
-    // si tu as /admin/users/:id/edit, adapte
-    this.router.navigate(['/admin/users', this.userId(), 'edit']).then();
+  edit(u: User): void {
+    const id = ((u as any)?._id || (u as any)?.id || this.getId()) as string;
+    this.router.navigate(['/admin/users', id, 'edit']);
   }
 
-  /** Exemple: aller vers une page give-access */
-  goGiveAccess(): void {
-    this.router.navigate(['/admin/users', this.userId(), 'access']).then();
-  }
+  delete(u: User): void {
+    const id = ((u as any)?._id || (u as any)?.id || this.getId()) as string;
+    const label = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || id;
 
-  /** Exemple: changer password */
-  goChangePassword(): void {
-    this.router.navigate(['/admin/users', this.userId(), 'password']).then();
-  }
+    if (!confirm(`Supprimer "${label}" ? Cette action est irréversible.`)) return;
 
-  delete(): void {
-    const u = this.user();
-    if (!u) return;
+    this.deleting.set(true);
+    this.error.set(null);
 
-    const ok = confirm(`Supprimer ${this.displayName()} ? Cette action est irréversible.`);
-    if (!ok) return;
-
-    this.users.deleteUser((u as any)._id || (u as any).id || this.userId()).subscribe({
-      next: () => this.router.navigate(['/admin/users']),
-      error: (err) => this.error.set(err?.error?.message || 'Suppression impossible')
+    this.userService.deleteUser(id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.router.navigate(['/admin/users']);
+      },
+      error: (err) => {
+        this.deleting.set(false);
+        this.error.set(err?.error?.message || 'Suppression impossible');
+      }
     });
   }
 }

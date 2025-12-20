@@ -1,220 +1,216 @@
-import {Component, computed, effect, inject, signal} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {Router, RouterModule} from '@angular/router';
-import {FormBuilder, ReactiveFormsModule} from '@angular/forms';
+import { Component, computed, inject, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
-import {UserService} from '../../../core/services/user.service';
-import {User} from '../../../core/models';
-import {Role} from '../../../core/models/roles.model';
+import { UserService } from '../../../core/services/user.service';
+import { User } from '../../../core/models/user.model';
+import { Role } from '../../../core/models/roles.model';
+import { UserListResult } from '../../../core/models/user-list-result.model';
+
+/** Réponse standard du backend */
+type ApiResponse<T> = { success: boolean; data: T; message?: string; errors?: any };
+
+/**
+ * ViewModel pour le template :
+ * - évite les "as any" dans le HTML
+ * - fournit des champs "prêts à afficher"
+ */
+type UserRowVM = User & {
+  id: string;
+  fullName: string;
+  createdAtText: string;
+};
 
 @Component({
   standalone: true,
   selector: 'app-user-list',
   templateUrl: './user-list.html',
   styleUrls: ['./user-list.scss'],
-  imports: [CommonModule, RouterModule, ReactiveFormsModule]
+  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  providers: [DatePipe]
 })
 export class UserList {
-  private usersService = inject(UserService);
+  private userService = inject(UserService);
   private router = inject(Router);
-  private fb = inject(FormBuilder);
+  private datePipe = inject(DatePipe);
 
   // -----------------------------
-  // Signals exposés par le service
+  // UI state
   // -----------------------------
-  readonly users = this.usersService.users;     // Signal<User[]>
-  readonly meta = this.usersService.meta;       // Signal<{total,page,limit} | null>
-  readonly loading = this.usersService.loading; // Signal<boolean>
-  readonly error = this.usersService.error;     // Signal<any>
-
-  // -----------------------------
-  // UI state (local au composant)
-  // -----------------------------
-
-  /**
-   * Form de filtres (q = recherche texte, role = filtre par rôle)
-   * -> on envoie ces valeurs au backend via refreshUsers()
-   */
-  readonly filtersForm = this.fb.group({
-    q: [''],
-    role: ['']
-  });
-
-  /**
-   * Pagination : page courante et nombre d’éléments par page
-   * (on les envoie au backend)
-   */
-  readonly page = signal(1);
-  readonly limit = signal(25);
-
-  /**
-   * Pour gérer le bouton "Supprimer" (désactiver pendant la suppression)
-   */
+  /** ID en cours de suppression (pour désactiver le bouton + afficher "Suppression…") */
   readonly deletingId = signal<string | null>(null);
 
-  /**
-   * Liste des rôles (doit matcher ton enum backend)
-   */
-  readonly roles = [
-    { value: '', label: 'Tous les rôles' },
-    { value: Role.DIRIGEANT, label: 'Dirigeant' },
-    { value: Role.ADMIN, label: 'Administrateur' },
-    { value: Role.GESTION_DEPOT, label: 'Gestion dépôt' },
-    { value: Role.TECHNICIEN, label: 'Technicien' }
+  // -----------------------------
+  // Filters (Reactive Forms)
+  // -----------------------------
+  /** Recherche libre (backend: query param "q") */
+  readonly q = new FormControl<string>('', { nonNullable: true });
+
+  /** Filtre rôle */
+  readonly role = new FormControl<Role | 'ALL'>('ALL', { nonNullable: true });
+
+  /** Options pour select rôle */
+  readonly roleOptions: Array<{ label: string; value: Role | 'ALL' }> = [
+    { label: 'Tous', value: 'ALL' },
+    { label: 'Dirigeant', value: Role.DIRIGEANT },
+    { label: 'Admin', value: Role.ADMIN },
+    { label: 'Gestion dépôt', value: Role.GESTION_DEPOT },
+    { label: 'Technicien', value: Role.TECHNICIEN }
   ];
 
-  /**
-   * Un petit computed pratique pour afficher "Page X / Y"
-   */
+  // -----------------------------
+  // Pagination (basée sur l’API)
+  // -----------------------------
+  readonly page = signal<number>(1);
+  readonly limit = signal<number>(25);
+
+  /** Résultat complet (total/page/limit/items) */
+  readonly result = signal<UserListResult | null>(null);
+
+  /** Total pages (arrondi au dessus) */
   readonly totalPages = computed(() => {
-    const m = this.meta();
-    if (!m) return 1;
-    const pages = Math.ceil((m.total || 0) / (m.limit || 1));
+    const r = this.result();
+    if (!r) return 1;
+    const pages = Math.ceil((r.total || 0) / (r.limit || 25));
     return Math.max(1, pages);
   });
 
+  // -----------------------------
+  // State du service
+  // -----------------------------
+  readonly loading = this.userService.loading;
+
+  /** Erreur affichable proprement */
+  readonly errorText = computed(() => {
+    const e = this.userService.error();
+    return e?.error?.message || e?.message || (typeof e === 'string' ? e : null);
+  });
+
+  // -----------------------------
+  // ViewModel (pour le template)
+  // -----------------------------
+  readonly rows = computed<UserRowVM[]>(() => {
+    const r = this.result();
+    const list = r?.items || [];
+
+    return list.map((u) => {
+      const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email;
+
+      const createdAtText = u.createdAt
+        ? (this.datePipe.transform(u.createdAt, 'short') ?? '—')
+        : '—';
+
+      return {
+        ...u,
+        id: u._id,
+        fullName,
+        createdAtText
+      };
+    });
+  });
+
+  // -----------------------------
+  // Init
+  // -----------------------------
   constructor() {
     // Chargement initial
-    this.load();
+    this.load(true);
 
-    /**
-     * Auto-reload quand :
-     * - q change
-     * - role change
-     * - page change
-     * - limit change
-     *
-     * NOTE : on remet la page à 1 quand on change q/role/limit.
-     */
-    effect(() => {
-      const q = (this.filtersForm.value.q || '').trim();
-      const role = (this.filtersForm.value.role || '').trim();
-      const page = this.page();
-      const limit = this.limit();
-
-      // Important : si l’utilisateur change q/role, et qu’il était en page 3,
-      // ça peut renvoyer 0 résultat => on force page=1 au prochain "vrai" changement.
-      // Ici on ne peut pas distinguer proprement sans écouteur dédié,
-      // donc on gère via méthodes onSearch()/onRoleChange() plus bas.
-      this.usersService.refreshUsers(false, { q: q || undefined, role: role || undefined, page, limit }).subscribe({
-        error: () => {}
+    // Recherche: debounce pour éviter de spam l’API à chaque frappe
+    this.q.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe(() => {
+        this.page.set(1);
+        this.load(true);
       });
+
+    // Filtre rôle: recharge immédiate
+    this.role.valueChanges.subscribe(() => {
+      this.page.set(1);
+      this.load(true);
     });
   }
 
   // -----------------------------
-  // Actions
+  // API load
   // -----------------------------
+  load(force = false): void {
+    const roleVal = this.role.value === 'ALL' ? undefined : this.role.value;
 
-  /**
-   * Recharge en forçant le cache (force=true) : utile bouton "Recharger"
-   */
-  reload(): void {
-    this.load(true);
+    this.userService
+      .refreshUsers(force, {
+        q: this.q.value?.trim() || undefined,
+        role: roleVal,
+        page: this.page(),
+        limit: this.limit()
+      })
+      .subscribe({
+        next: (res) => {
+          // refreshUsers retourne UserListResult (déjà map(resp.data) côté service)
+          this.result.set(res);
+        },
+        error: () => {
+          // l'erreur est déjà stockée dans userService.error()
+          this.result.set(null);
+        }
+      });
   }
 
-  /**
-   * Charge (ou recharge) la liste depuis le backend.
-   */
-  private load(force = false): void {
-    const q = (this.filtersForm.value.q || '').trim();
-    const role = (this.filtersForm.value.role || '').trim();
-
-    this.usersService.refreshUsers(force, {
-      q: q || undefined,
-      role: role || undefined,
-      page: this.page(),
-      limit: this.limit()
-    }).subscribe({ error: () => {} });
+  // -----------------------------
+  // Navigation / Actions
+  // -----------------------------
+  create(): void {
+    this.router.navigate(['/admin/users/new']);
   }
 
-  /**
-   * Quand on tape une recherche, on repart en page 1.
-   */
-  onSearch(): void {
-    this.page.set(1);
-    this.load(true);
+  open(u: UserRowVM): void {
+    this.router.navigate(['/admin/users', u.id]);
   }
 
-  /**
-   * Quand on change le rôle, on repart en page 1.
-   */
-  onRoleChange(): void {
-    this.page.set(1);
-    this.load(true);
+  edit(u: UserRowVM): void {
+    this.router.navigate(['/admin/users', u.id, 'edit']);
   }
 
-  /**
-   * Changement du nombre de lignes par page => page 1 + reload
-   */
-  onLimitChange(newLimit: number): void {
-    this.limit.set(newLimit);
-    this.page.set(1);
-    this.load(true);
+  delete(u: UserRowVM): void {
+    const label = u.fullName || u.email || u.id;
+    if (!confirm(`Supprimer "${label}" ?`)) return;
+
+    this.deletingId.set(u.id);
+
+    this.userService.deleteUser(u.id).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        this.load(true);
+      },
+      error: () => {
+        this.deletingId.set(null);
+      }
+    });
   }
 
-  /**
-   * Pagination : page précédente
-   */
-  prevPage(): void {
+  // -----------------------------
+  // Pagination actions
+  // -----------------------------
+  prev(): void {
     if (this.page() <= 1) return;
     this.page.set(this.page() - 1);
     this.load(true);
   }
 
-  /**
-   * Pagination : page suivante
-   */
-  nextPage(): void {
+  next(): void {
     if (this.page() >= this.totalPages()) return;
     this.page.set(this.page() + 1);
     this.load(true);
   }
 
-  /**
-   * Aller vers la création
-   */
-  goCreate(): void {
-    this.router.navigate(['/admin/users/new']).then();
+  back(): void {
+    this.router.navigate(['/admin/dashboard']);
   }
 
-  /**
-   * Aller vers l’édition (utilise _id mongo)
-   */
-  edit(u: User): void {
-    this.router.navigate(['/admin/users', (u as any)._id]).then();
-  }
-
-  /**
-   * Suppression avec confirmation
-   */
-  delete(u: User): void {
-    const id = (u as any)._id as string;
-    if (!id) return;
-
-    const label = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || id;
-    if (!confirm(`Supprimer l'utilisateur "${label}" ?`)) return;
-
-    this.deletingId.set(id);
-    this.usersService.deleteUser(id).subscribe({
-      next: () => this.deletingId.set(null),
-      error: () => this.deletingId.set(null)
-    });
-  }
-
-  /**
-   * trackBy pour @for (performance)
-   */
-// user-list.ts (dans la classe)
-  trackById = (_: number, u: User) => this.userId(u);
-
-  /** Renvoie l'id Mongo */
-  userId(u: User): string {
-    return (u as unknown as { _id: string })._id;
-  }
-
-  /** Renvoie createdAt si présent */
-  userCreatedAt(u: User): string | null {
-    return (u as unknown as { createdAt?: string }).createdAt ?? null;
-  }
+  // -----------------------------
+  // TrackBy
+  // -----------------------------
+  trackById = (_: number, u: UserRowVM) => u.id;
 }

@@ -1,0 +1,74 @@
+.page {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, .10);
+  background: rgba(255, 255, 255, .06);
+  padding: 1rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+
+  h1 { margin: 0; font-size: 1.35rem; }
+  .subtitle { margin: .25rem 0 0; opacity: .75; }
+}
+
+.header-actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.state {
+  border-radius: 1rem;
+  padding: 1rem;
+
+  &.loading { opacity: .9; }
+  &.error { background: rgba(255, 0, 60, .12); }
+  &.empty { opacity: .8; }
+}
+
+.table {
+  padding: 0;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    text-align: left;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+  }
+
+  th { font-size: .85rem; opacity: .8; }
+  tr:hover td { background: rgba(255, 255, 255, .04); }
+
+  .main .name { font-weight: 700; }
+  .actions { width: 1%; white-space: nowrap; }
+}
+
+/* boutons */
+.btn-outline, .btn-primary, .btn-danger {
+  border-radius: .8rem;
+  padding: .55rem .9rem;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .06);
+  cursor: pointer;
+}
+
+.btn-primary { background: rgba(0, 120, 255, .18); }
+.btn-danger { background: rgba(255, 0, 60, .16); }
+
+.btn-outline:hover, .btn-primary:hover, .btn-danger:hover {
+  filter: brightness(1.05);
+}

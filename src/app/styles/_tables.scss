@@ -1,0 +1,25 @@
+/* ===============================
+   TABLES
+================================ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem;
+  text-align: left;
+}
+
+thead {
+  background: var(--fxn-surface-soft);
+}
+
+tbody tr {
+  border-top: 1px solid var(--fxn-border);
+}
+
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}

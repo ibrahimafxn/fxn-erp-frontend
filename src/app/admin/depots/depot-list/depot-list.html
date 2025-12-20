@@ -1,1 +1,98 @@
-<p>depot-list works!</p>
+<section class="depot-list">
+  <header class="page-header">
+    <div>
+      <h1>Dépôts</h1>
+      <p class="subtitle">Recherche, création et accès rapide aux détails d’un dépôt.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()">Dashboard</button>
+      <button class="btn-outline" type="button" (click)="refresh(true)">Recharger</button>
+      <button class="btn-primary" type="button" (click)="createNew()">Nouveau dépôt</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
+      <input
+        type="text"
+        formControlName="q"
+        placeholder="Rechercher (nom, ville, adresse, téléphone)…"
+      />
+      <button class="btn-outline" type="submit">Rechercher</button>
+      <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error">
+      <strong>Erreur :</strong> {{ error()?.message || error() }}
+    </div>
+  } @else if (items().length === 0) {
+    <div class="state empty">Aucun dépôt trouvé.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Dépôt</th>
+          <th>Ville</th>
+          <th>Téléphone</th>
+          <th>Gestionnaire</th>
+          <th>Création</th>
+          <th class="actions">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (d of items(); track trackById) {
+            <tr class="row" (click)="openDetail(d)">
+              <td class="main">
+                <div class="name">{{ d.name }}</div>
+                <div class="sub">{{ d.address || '—' }}</div>
+              </td>
+
+              <td>{{ d.city || '—' }}</td>
+              <td>{{ d.phone || '—' }}</td>
+              <td>
+                <span class="badge">{{ managerLabel(d) }}</span>
+              </td>
+
+              <td>
+                @if (d.createdAt) { {{ d.createdAt | date:'short' }} } @else { — }
+              </td>
+
+              <td class="actions" (click)="$event.stopPropagation()">
+                <button
+                  class="btn-danger"
+                  type="button"
+                  [disabled]="deletingId() === d._id"
+                  (click)="delete(d)"
+                >
+                  @if (deletingId() === d._id) { Suppression… } @else { Supprimer }
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+        ← Précédent
+      </button>
+
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()">
+        Suivant →
+      </button>
+    </footer>
+  }
+</section>

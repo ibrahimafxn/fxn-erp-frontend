@@ -34,10 +34,16 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./depots/depot-form/depot-form').then(m => m.DepotForm)
   },
 
-  // /admin/depots/:id
+  // /admin/depots/:id (édition)
   {
-    path: 'depots/:id',
+    path: 'depots/:id/edit',
     loadComponent: () => import('./depots/depot-form/depot-form').then(m => m.DepotForm)
+  },
+
+  // /admin/depots/:id/view (détail)
+  {
+    path: 'depots/:id/view',
+    loadComponent: () => import('./depots/depot-detail/depot-detail').then(m => m.DepotDetail)
   },
 
   // /admin/history
@@ -57,8 +63,19 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'resources/consumables',
     loadComponent: () =>
-      import('./resources/consumables-list/consumables-list').then(m => m.ConsumablesList)
+      import('./resources/consumables/consumables-list/consumables-list').then(m => m.ConsumablesList)
   },
+  {
+    path: 'resources/consumables/new',
+    loadComponent: () =>
+      import('./resources/consumables/consumables-form/consumables-form').then(m => m.ConsumablesForm)
+  },
+  {
+    path: 'resources/consumables/:id',
+    loadComponent: () =>
+      import('./resources/consumables/consumables-detail/consumables-detail').then(m => m.ConsumablesDetail)
+  },
+
 
   // /admin/resources/vehicles
   {

@@ -1,0 +1,35 @@
+/* ===============================
+   FXN GLOBAL THEME
+================================ */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--fxn-font);
+  background: var(--fxn-bg);
+  color: var(--fxn-text);
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Titres */
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 700;
+}
+
+/* Liens */
+a {
+  color: var(--fxn-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

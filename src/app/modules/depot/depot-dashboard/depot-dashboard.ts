@@ -49,7 +49,6 @@ export class DepotDashboard {
 
     this.loading.set(true);
 
-    this.depotService.loadStats(depotId).subscribe();
   }
 
   // --- Action utilisateur pour rafraîchir ---
