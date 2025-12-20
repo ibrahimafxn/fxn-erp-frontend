@@ -5,12 +5,13 @@ import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { DepotListResult } from '../models/depot-list-result.model';
 import { Depot } from '../models';
+import {DepotStats} from '../models/depotStats.model';
 
 type ApiResponse<T> = { success: boolean; data: T; message?: string; errors?: any };
 
 @Injectable({ providedIn: 'root' })
 export class DepotService {
-  private apiBase = (environment.apiBaseUrl || '').replace(/\/+$/, '');
+  private apiBase = environment.apiBaseUrl;
   private baseUrl = `${this.apiBase}/depots`;
 
   private _loading = signal(false);
@@ -115,5 +116,10 @@ export class DepotService {
       );
   }
 
-
+  // get depot stats
+  getDepotStats(depotId: string) {
+    return this.http.get<ApiResponse<DepotStats>>(`${this.baseUrl}/${depotId}/stats`).pipe(
+      map(r => r.data)
+    );
+  }
 }

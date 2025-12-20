@@ -8,6 +8,7 @@ import { DepotService } from '../../../core/services/depot.service';
 import { UserService } from '../../../core/services/user.service';
 import { Depot, DepotManager } from '../../../core/models';
 import { User } from '../../../core/models';
+import {DepotStats} from '../../../core/models/depotStats.model';
 
 @Component({
   standalone: true,
@@ -48,17 +49,23 @@ export class DepotDetail {
   /* -----------------------------
    * KPIs (préparés pour API future)
    * ----------------------------- */
-  readonly kpis = computed(() => ({
-    materials: '—',
-    consumables: '—',
-    technicians: String(this.technicians().length),
-    vehicles: '—'
-  }));
+  /** KPIs dynamiques (fallback si stats pas encore chargées) */
+  readonly kpis = computed(() => {
+    const s = this.stats();
+    return {
+      materials: s ? String(s.materials) : '—',
+      consumables: s ? String(s.consumables) : '—',
+      technicians: s ? String(s.technicians) : String(this.technicians().length),
+      vehicles: s ? String(s.vehicles) : '—',
+    };
+  });
 
   /* -----------------------------
    * ID courant
    * ----------------------------- */
   protected readonly id = this.route.snapshot.paramMap.get('id') ?? '';
+
+  readonly stats = signal<DepotStats | null>(null);
 
   constructor() {
     this.load();
@@ -141,6 +148,7 @@ export class DepotDetail {
         this.depot.set(depot);
         this.loading.set(false);
         this.loadTechnicians(depot._id);
+        this.loadStats(depot._id);
       },
       error: err => {
         this.loading.set(false);
@@ -259,5 +267,12 @@ export class DepotDetail {
   removeManager(): void {
     this.selectedManagerId.set(null);
     this.saveManager();
+  }
+
+  private loadStats(depotId: string): void {
+    this.depotService.getDepotStats(depotId).subscribe({
+      next: s => this.stats.set(s),
+      error: () => this.stats.set(null),
+    });
   }
 }

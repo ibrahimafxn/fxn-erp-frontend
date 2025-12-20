@@ -1,6 +1,7 @@
+// DepotStats
 export interface DepotStats {
-  totalTechnicians: number;
-  totalVehicles: number;
-  totalConsumables: number;
-  depotName: string;
+  technicians: number;
+  vehicles: number;
+  consumables: number;
+  materials: number;
 }
