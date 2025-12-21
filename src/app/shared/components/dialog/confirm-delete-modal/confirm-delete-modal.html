@@ -1,0 +1,45 @@
+@if (open) {
+  <div class="modal-backdrop" (click)="onBackdropClick()" (keydown)="onKeydown($event)" tabindex="-1">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Confirmation suppression"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div class="modal-title">Confirmer la suppression</div>
+
+        <button type="button" class="icon-btn" (click)="onCancel()" aria-label="Fermer">
+          ✕
+        </button>
+      </header>
+
+      <section class="modal-body">
+        <p class="lead">
+          Voulez-vous vraiment supprimer {{ entityLabel }}
+          <span class="strong">{{ displayName() }}</span> ?
+        </p>
+
+        <p class="hint">{{ dangerHint }}</p>
+
+        @if (entityId) {
+          <div class="meta">
+            <span class="label">ID</span>
+            <span class="mono">{{ entityId }}</span>
+          </div>
+        }
+      </section>
+
+      <footer class="modal-actions">
+        <button type="button" class="btn-outline" (click)="onCancel()" [disabled]="confirming">
+          {{ cancelText }}
+        </button>
+
+        <button type="button" class="btn-danger" (click)="onConfirm()" [disabled]="confirming">
+          @if (confirming) { Suppression… } @else { {{ confirmText }} }
+        </button>
+      </footer>
+    </div>
+  </div>
+}

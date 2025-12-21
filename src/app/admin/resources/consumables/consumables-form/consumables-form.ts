@@ -151,7 +151,6 @@ export class ConsumablesForm {
         next: () => {
           this.saving.set(false);
           this.consumableService.clearCache();
-          // retour liste
           this.router.navigate(['/admin/resources/consumables']);
         },
         error: (err) => {

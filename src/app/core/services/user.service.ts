@@ -31,6 +31,9 @@ export class UserService {
   private _error = signal<any | null>(null);
   readonly error: Signal<any | null> = this._error.asReadonly();
 
+  private _result = signal<UserListResult | null>(null);
+  readonly result = this._result.asReadonly();
+
   // -----------------------------
   // Cache RxJS
   // -----------------------------
@@ -52,8 +55,7 @@ export class UserService {
   // -----------------------------
   refreshUsers(
     force = false,
-    filter?: { q?: string; role?: string; depot?: string; page?: number; limit?: number }
-  ): Observable<UserListResult> {
+    filter?: { q?: string; role?: string; depot?: string; page?: number; limit?: number }  ): Observable<UserListResult> {
     if (!force && this._usersRequest$) return this._usersRequest$;
 
     this._loading.set(true);
@@ -66,18 +68,15 @@ export class UserService {
     if (filter?.page) params = params.set('page', String(filter.page));
     if (filter?.limit) params = params.set('limit', String(filter.limit));
 
-    const req$ = this.http
-      .get<ApiResponse<UserListResult>>(this.baseUrl, { params })
-      .pipe(
+    const req$ = this.http.get<ApiResponse<UserListResult>>(this.baseUrl, { params }).pipe(
         map(resp => {
           if (!resp?.success) {
             throw resp;
           }
           return resp.data;
         }),
-        tap(result => {
-          const items = result?.items ?? [];
-          this._users.set(items);
+        tap((result) => {
+          this._result.set(result);
           this._meta.set({ total: result.total, page: result.page, limit: result.limit });
         }),
         shareReplay({ bufferSize: 1, refCount: true }),

@@ -1,216 +1,217 @@
-import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { Component, Signal, computed, inject, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { UserService } from '../../../core/services/user.service';
-import { User } from '../../../core/models/user.model';
-import { Role } from '../../../core/models/roles.model';
+import { DepotService } from '../../../core/services/depot.service';
+import {User, Depot} from '../../../core/models';
 import { UserListResult } from '../../../core/models/user-list-result.model';
-
-/** Réponse standard du backend */
-type ApiResponse<T> = { success: boolean; data: T; message?: string; errors?: any };
-
-/**
- * ViewModel pour le template :
- * - évite les "as any" dans le HTML
- * - fournit des champs "prêts à afficher"
- */
-type UserRowVM = User & {
-  id: string;
-  fullName: string;
-  createdAtText: string;
-};
+import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import {DATE_FORMAT_FR} from '../../../core/constant/date-format';
 
 @Component({
   standalone: true,
   selector: 'app-user-list',
+  providers: [DatePipe],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './user-list.html',
   styleUrls: ['./user-list.scss'],
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
-  providers: [DatePipe]
 })
 export class UserList {
+
+  readonly deleteModalOpen = signal(false);
+  readonly pendingDeleteId = signal<string | null>(null);
+  readonly pendingDeleteName = signal<string>('');
+  readonly pendingDeleteLabel = signal<string>('élément');
+
   private userService = inject(UserService);
+  private depotSvc = inject(DepotService);
   private router = inject(Router);
+  private fb = inject(FormBuilder);
   private datePipe = inject(DatePipe);
 
-  // -----------------------------
+  // service signals
+  readonly loading = this.userService.loading;
+  readonly error = this.userService.error;
+
+  // ⚠️ tu dois exposer result dans UserService comme pour depots/consumables
+  readonly result: Signal<UserListResult | null> = this.userService.result;
+
   // UI state
-  // -----------------------------
-  /** ID en cours de suppression (pour désactiver le bouton + afficher "Suppression…") */
   readonly deletingId = signal<string | null>(null);
 
-  // -----------------------------
-  // Filters (Reactive Forms)
-  // -----------------------------
-  /** Recherche libre (backend: query param "q") */
-  readonly q = new FormControl<string>('', { nonNullable: true });
+  // Pagination state
+  readonly page = signal(1);
+  readonly limit = signal(25);
 
-  /** Filtre rôle */
-  readonly role = new FormControl<Role | 'ALL'>('ALL', { nonNullable: true });
+  // Depots (filtre)
+  readonly depots = signal<Depot[]>([]);
+  readonly depotsLoading = signal(false);
 
-  /** Options pour select rôle */
-  readonly roleOptions: Array<{ label: string; value: Role | 'ALL' }> = [
-    { label: 'Tous', value: 'ALL' },
-    { label: 'Dirigeant', value: Role.DIRIGEANT },
-    { label: 'Admin', value: Role.ADMIN },
-    { label: 'Gestion dépôt', value: Role.GESTION_DEPOT },
-    { label: 'Technicien', value: Role.TECHNICIEN }
-  ];
-
-  // -----------------------------
-  // Pagination (basée sur l’API)
-  // -----------------------------
-  readonly page = signal<number>(1);
-  readonly limit = signal<number>(25);
-
-  /** Résultat complet (total/page/limit/items) */
-  readonly result = signal<UserListResult | null>(null);
-
-  /** Total pages (arrondi au dessus) */
-  readonly totalPages = computed(() => {
-    const r = this.result();
-    if (!r) return 1;
-    const pages = Math.ceil((r.total || 0) / (r.limit || 25));
-    return Math.max(1, pages);
+  // Filtres
+  readonly filterForm = this.fb.nonNullable.group({
+    q: this.fb.nonNullable.control(''),
+    role: this.fb.nonNullable.control(''),
+    depot: this.fb.nonNullable.control(''),
   });
 
-  // -----------------------------
-  // State du service
-  // -----------------------------
-  readonly loading = this.userService.loading;
-
-  /** Erreur affichable proprement */
-  readonly errorText = computed(() => {
-    const e = this.userService.error();
-    return e?.error?.message || e?.message || (typeof e === 'string' ? e : null);
+  // derived
+  readonly items = computed(() => this.result()?.items ?? []);
+  readonly total = computed(() => this.result()?.total ?? 0);
+  readonly pageCount = computed(() => {
+    const t = this.total();
+    const l = this.limit();
+    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
   });
 
-  // -----------------------------
-  // ViewModel (pour le template)
-  // -----------------------------
-  readonly rows = computed<UserRowVM[]>(() => {
-    const r = this.result();
-    const list = r?.items || [];
-
-    return list.map((u) => {
-      const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email;
-
-      const createdAtText = u.createdAt
-        ? (this.datePipe.transform(u.createdAt, 'short') ?? '—')
-        : '—';
-
-      return {
-        ...u,
-        id: u._id,
-        fullName,
-        createdAtText
-      };
-    });
-  });
-
-  // -----------------------------
-  // Init
-  // -----------------------------
   constructor() {
-    // Chargement initial
-    this.load(true);
-
-    // Recherche: debounce pour éviter de spam l’API à chaque frappe
-    this.q.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged())
-      .subscribe(() => {
-        this.page.set(1);
-        this.load(true);
-      });
-
-    // Filtre rôle: recharge immédiate
-    this.role.valueChanges.subscribe(() => {
-      this.page.set(1);
-      this.load(true);
-    });
+    this.loadDepots();
+    this.refresh(true);
   }
 
-  // -----------------------------
-  // API load
-  // -----------------------------
-  load(force = false): void {
-    const roleVal = this.role.value === 'ALL' ? undefined : this.role.value;
-
-    this.userService
-      .refreshUsers(force, {
-        q: this.q.value?.trim() || undefined,
-        role: roleVal,
-        page: this.page(),
-        limit: this.limit()
-      })
-      .subscribe({
-        next: (res) => {
-          // refreshUsers retourne UserListResult (déjà map(resp.data) côté service)
-          this.result.set(res);
-        },
-        error: () => {
-          // l'erreur est déjà stockée dans userService.error()
-          this.result.set(null);
-        }
-      });
+  formatDate(date: string | Date | undefined): string {
+    if (!date) return '';
+    return this.datePipe.transform(date, DATE_FORMAT_FR) ?? '';
   }
 
-  // -----------------------------
-  // Navigation / Actions
-  // -----------------------------
-  create(): void {
-    this.router.navigate(['/admin/users/new']);
+  refresh(force = false): void {
+    const v = this.filterForm.getRawValue();
+
+    this.userService.refreshUsers(force, {
+      q: v.q.trim() || undefined,
+      role: v.role || undefined,
+      depot: v.depot || undefined,
+      page: this.page(),
+      limit: this.limit(),
+    }).subscribe({ error: () => {} });
   }
 
-  open(u: UserRowVM): void {
-    this.router.navigate(['/admin/users', u.id]);
+  search(): void {
+    this.page.set(1);
+    this.refresh(true);
   }
 
-  edit(u: UserRowVM): void {
-    this.router.navigate(['/admin/users', u.id, 'edit']);
+  clearSearch(): void {
+    this.filterForm.setValue({ q: '', role: '', depot: '' });
+    this.page.set(1);
+    this.refresh(true);
   }
 
-  delete(u: UserRowVM): void {
-    const label = u.fullName || u.email || u.id;
-    if (!confirm(`Supprimer "${label}" ?`)) return;
+  prevPage(): void {
+    if (this.page() <= 1) return;
+    this.page.set(this.page() - 1);
+    this.refresh(true);
+  }
 
-    this.deletingId.set(u.id);
+  nextPage(): void {
+    if (this.page() >= this.pageCount()) return;
+    this.page.set(this.page() + 1);
+    this.refresh(true);
+  }
 
-    this.userService.deleteUser(u.id).subscribe({
+  onLimitChange(event: Event): void {
+    const el = event.target instanceof HTMLSelectElement ? event.target : null;
+    if (!el) return;
+
+    const v = Number(el.value);
+    if (!Number.isFinite(v) || v <= 0) return;
+
+    this.setLimit(v);
+  }
+
+  setLimit(v: number): void {
+    this.limit.set(v);
+    this.page.set(1);
+    this.refresh(true);
+  }
+
+  createNew(): void {
+    this.router.navigate(['/admin/users/new']).then();
+  }
+
+  edit(u: User): void {
+    this.router.navigate(['/admin/users', u._id, 'edit']).then();
+  }
+
+  openDetail(u: User): void {
+    // route détail (à ajouter dans admin.routes.ts si pas encore)
+    this.router.navigate(['/admin/users/', u._id, 'detail']).then();
+  }
+
+  openDeleteModal(entityLabel: string, entityId: string, entityName: string): void {
+    this.pendingDeleteLabel.set(entityLabel);
+    this.pendingDeleteId.set(entityId);
+    this.pendingDeleteName.set(entityName);
+    this.deleteModalOpen.set(true);
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalOpen.set(false);
+    this.pendingDeleteId.set(null);
+    this.pendingDeleteName.set('');
+    this.pendingDeleteLabel.set('élément');
+  }
+
+  confirmDelete(): void {
+    const id = this.pendingDeleteId();
+    if (!id) return;
+
+    this.deleteModalOpen.set(false);
+    this.deletingId.set(id);
+
+    // ⚠️ adapte ici selon le service de la page
+    this.userService.deleteUser(id).subscribe({
       next: () => {
         this.deletingId.set(null);
-        this.load(true);
+        this.refresh(true);
+        this.closeDeleteModal();
       },
       error: () => {
         this.deletingId.set(null);
+        this.closeDeleteModal();
       }
     });
   }
 
-  // -----------------------------
-  // Pagination actions
-  // -----------------------------
-  prev(): void {
-    if (this.page() <= 1) return;
-    this.page.set(this.page() - 1);
-    this.load(true);
+  // helpers
+  errorMessage(): string {
+    const err = this.error() as HttpErrorResponse | null;
+    if (!err) return '';
+    const apiMsg =
+      typeof err.error === 'object' && err.error !== null && 'message' in err.error
+        ? String((err.error as { message?: unknown }).message ?? '')
+        : '';
+    return apiMsg || err.message || 'Erreur inconnue';
   }
 
-  next(): void {
-    if (this.page() >= this.totalPages()) return;
-    this.page.set(this.page() + 1);
-    this.load(true);
+  createdAtValue(u: User): string | Date | null {
+    return u.createdAt ?? null;
   }
 
-  back(): void {
-    this.router.navigate(['/admin/dashboard']);
+  // dépôt label (si idDepot peuplé)
+  depotLabel(u: User): string {
+    const d = u.idDepot;
+    if (!d) return '—';
+
+    if (typeof d === 'object' && '_id' in d) {
+      const obj: { _id: string; name?: string } = d as { _id: string; name?: string };
+      return obj.name ?? '—';
+    }
+    return '—';
   }
 
-  // -----------------------------
-  // TrackBy
-  // -----------------------------
-  trackById = (_: number, u: UserRowVM) => u.id;
+  private loadDepots(): void {
+    this.depotsLoading.set(true);
+    this.depotSvc.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
+      next: (res) => {
+        this.depots.set(res.items ?? []);
+        this.depotsLoading.set(false);
+      },
+      error: () => this.depotsLoading.set(false),
+    });
+  }
+
+  trackById = (_: number, u: User) => u._id;
 }

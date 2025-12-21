@@ -1,19 +1,27 @@
-<section class="depot-list">
+<section class="materials-list">
   <header class="page-header">
     <div>
-      <h1>Dépôts</h1>
-      <p class="subtitle">Recherche, création et accès rapide aux détails d’un dépôt.</p>
+      <h1>Matériels</h1>
+      <p class="subtitle">Recherche, pagination et accès rapide aux détails.</p>
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="refresh(true)">Recharger</button>
-      <button class="btn-primary" type="button" (click)="createNew()">Nouveau dépôt</button>
+      <button class="btn-outline" type="button" (click)="refresh(true)">
+        Recharger
+      </button>
+      <button class="btn-primary" type="button" (click)="createNew()">
+        Nouveau matériel
+      </button>
     </div>
   </header>
 
   <section class="toolbar card">
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
-      <input type="text" formControlName="q" placeholder="Rechercher (nom, ville, adresse, téléphone)…" />
+      <input
+        type="text"
+        formControlName="q"
+        placeholder="Rechercher (nom, ref, série...)"
+      />
       <button class="btn-outline" type="submit">Rechercher</button>
       <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
     </form>
@@ -21,16 +29,6 @@
     <div class="meta">
       <span class="pill">Total : {{ total() }}</span>
       <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
-
-      <label class="limit">
-        <span>Par page</span>
-        <select [value]="limit()" (change)="onLimitChange($event)">
-          <option [value]="10">10</option>
-          <option [value]="25">25</option>
-          <option [value]="50">50</option>
-          <option [value]="100">100</option>
-        </select>
-      </label>
     </div>
   </section>
 
@@ -41,49 +39,51 @@
       <strong>Erreur :</strong> {{ errorMessage() }}
     </div>
   } @else if (items().length === 0) {
-    <div class="state empty card">Aucun dépôt trouvé.</div>
+    <div class="state empty card">Aucun matériel trouvé.</div>
   } @else {
     <div class="table card">
       <table>
         <thead>
         <tr>
-          <th>Dépôt</th>
-          <th>Ville</th>
-          <th>Téléphone</th>
-          <th>Gestionnaire</th>
+          <th>Matériel</th>
+          <th>Réf</th>
+          <th>Statut</th>
           <th>Création</th>
           <th class="actions">Actions</th>
         </tr>
         </thead>
 
         <tbody>
-          @for (d of items(); track trackById) {
-            <tr class="row" (click)="openDetail(d)">
+          @for (m of items(); track trackById) {
+            <tr class="row" (click)="openDetail(m)">
               <td class="main">
-                <div class="name">{{ d.name }}</div>
-                <div class="sub">{{ d.address || '—' }}</div>
+                <div class="name">{{ m.name }}</div>
+                <div class="sub">{{ m.description || '—' }}</div>
               </td>
 
-              <td>{{ d.city || '—' }}</td>
-              <td>{{ d.phone || '—' }}</td>
-              <td><span class="badge">{{ managerLabel(d) }}</span></td>
+              <td>{{ m.ref || '—' }}</td>
+              <td>{{ m.status || '—' }}</td>
 
               <td>
-                @if (createdAtValue(d)) { {{ createdAtValue(d) | date:'short' }} } @else { — }
+                @if (createdAtValue(m)) {
+                  {{ formatDate(m.createdAt)}}
+                } @else {
+                  —
+                }
               </td>
 
               <td class="actions" (click)="$event.stopPropagation()">
-                <button class="btn-outline" type="button" (click)="edit(d)">
+                <button class="btn-outline" type="button" (click)="edit(m)">
                   Modifier
                 </button>
 
                 <button
                   class="btn-danger"
                   type="button"
-                  [disabled]="deletingId() === d._id"
-                  (click)="openDeleteModal(d)"
+                  [disabled]="deletingId() === m._id"
+                  (click)="askDelete(m)"
                 >
-                  @if (deletingId() === d._id) { Suppression… } @else { Supprimer }
+                  @if (deletingId() === m._id) { Suppression… } @else { Supprimer }
                 </button>
               </td>
             </tr>
@@ -102,15 +102,12 @@
       </button>
     </footer>
   }
-
-  <!-- ✅ MODAL suppression -->
   <app-confirm-delete-modal
     [open]="deleteModalOpen()"
-    entityLabel="le dépôt"
     [entityName]="pendingDeleteName()"
     [entityId]="pendingDeleteId()"
-    [confirming]="pendingDeleteId() !== null && deletingId() === pendingDeleteId()"
     (cancel)="closeDeleteModal()"
     (confirm)="confirmDelete()"
   />
+
 </section>

@@ -5,7 +5,7 @@ import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
 
 import {App} from './app/app';
 import {AppConfig} from './app/app.config';
-
+import {registerLocaleData} from '@angular/common';
 bootstrapApplication(App, {
   providers: [
     provideRouter(AppConfig.routes),

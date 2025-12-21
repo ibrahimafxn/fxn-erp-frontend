@@ -1,123 +1,148 @@
-<section class="user-list">
-
+<section class="users-list">
   <header class="page-header">
     <div>
       <h1>Utilisateurs</h1>
-      <p class="subtitle">Gestion des comptes employés / techniciens</p>
+      <p class="subtitle">Recherche, filtres, pagination et actions rapides.</p>
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="back()">Dashboard</button>
-      <button class="btn-outline" type="button" (click)="load(true)">Recharger</button>
-      <button class="btn-primary" type="button" (click)="create()">+ Nouvel utilisateur</button>
+      <button class="btn-outline" type="button" (click)="refresh(true)">Recharger</button>
+      <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
     </div>
   </header>
 
-  <!-- Toolbar -->
-  <div class="toolbar card">
-    <div class="field">
-      <label>Recherche</label>
+  <section class="toolbar card">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()" autocomplete="off">
+      <!-- ✅ Anti-autofill (cause de q=ibrahima...) -->
       <input
-        type="text"
-        [formControl]="q"
-        placeholder="Nom, email, téléphone, username…"
+        type="search"
+        formControlName="q"
+        placeholder="Rechercher (nom, email, téléphone, username)…"
+        autocomplete="new-password"
+        autocapitalize="off"
+        spellcheck="false"
       />
-    </div>
 
-    <div class="field">
-      <label>Rôle</label>
-      <select [formControl]="role">
-        @for (r of roleOptions; track r.value) {
-          <option [value]="r.value">{{ r.label }}</option>
+      <select formControlName="role">
+        <option value="">Tous les rôles</option>
+        <option value="DIRIGEANT">DIRIGEANT</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="GESTION_DEPOT">GESTION_DEPOT</option>
+        <option value="TECHNICIEN">TECHNICIEN</option>
+      </select>
+
+      <select formControlName="depot">
+        <option value="">Tous les dépôts</option>
+        @for (d of depots(); track d._id) {
+          <option [value]="d._id">{{ d.name }}</option>
         }
       </select>
-    </div>
-  </div>
 
-  <!-- States -->
+      <button class="btn-outline" type="submit">Rechercher</button>
+      <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
   @if (loading()) {
-    <div class="state loading">Chargement…</div>
-  } @else if (errorText()) {
-    <div class="state error">
-      Erreur : <code>{{ errorText() }}</code>
-    </div>
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ errorMessage() }}</div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucun utilisateur trouvé.</div>
   } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Email</th>
+          <th>Rôle</th>
+          <th>Dépôt</th>
+          <th>Création</th>
+          <th class="actions">Actions</th>
+        </tr>
+        </thead>
 
-    @if (rows().length === 0) {
-      <div class="state empty">Aucun utilisateur trouvé.</div>
-    } @else {
+        <tbody>
+          @for (u of items(); track trackById) {
+            <tr class="row" (click)="openDetail(u)">
+              <td class="main">
+                <div class="name">{{ u.firstName }} {{ u.lastName || '' }}</div>
+                <div class="sub">{{ u.phone || '—' }}</div>
+              </td>
 
-      <div class="table card">
-        <table>
-          <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Téléphone</th>
-            <th>Rôle</th>
-            <th>Créé le</th>
-            <th class="col-actions">Actions</th>
-          </tr>
-          </thead>
+              <td>{{ u.email || '—' }}</td>
 
-          <tbody>
-            @for (u of rows(); track trackById) {
-              <tr class="row-click" (click)="open(u)">
-                <td class="name">
-                  <div class="name-main">{{ u.fullName }}</div>
-                  <div class="name-sub">{{ u.id }}</div>
-                </td>
+              <td>
+                <span class="badge">{{ u.role || '—' }}</span>
+              </td>
 
-                <td>{{ u.email }}</td>
-                <td>{{ u.phone || '—' }}</td>
+              <td>{{ depotLabel(u) }}</td>
 
                 <td>
-                  <span class="role-badge role-{{ u.role.toLowerCase() }}">
-                    {{ u.role }}
-                  </span>
-                </td>
+                @if (createdAtValue(u)) {
+                  {{ formatDate(u.createdAt)}}
+                } @else {
+                  —
+                }
+              </td>
 
-                <td>{{ u.createdAtText }}</td>
-
-                <td class="row-actions" (click)="$event.stopPropagation()">
-                  <button type="button" class="btn-outline" (click)="edit(u)">
+              <!-- ✅ stopPropagation + espace entre boutons -->
+              <td class="actions" (click)="$event.stopPropagation()">
+                <div class="actions-group">
+                  <button class="btn-outline" type="button" (click)="edit(u)">
                     Modifier
                   </button>
 
                   <button
-                    type="button"
                     class="btn-danger"
-                    [disabled]="deletingId() === u.id"
-                    (click)="delete(u)"
+                    type="button"
+                    [disabled]="deletingId() === u._id"
+                    (click)="openDeleteModal('l’utilisateur', u._id, (u.firstName + ' ' + (u.lastName || '')).trim())"
                   >
-                    @if (deletingId() === u.id) { Suppression… } @else { Supprimer }
+                    @if (deletingId() === u._id) { Suppression… } @else { Supprimer }
                   </button>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      <div class="pager">
-        <button class="btn-outline" type="button" (click)="prev()" [disabled]="page() <= 1">
-          ← Précédent
-        </button>
-
-        <div class="pager-info">
-          Page {{ page() }} / {{ totalPages() }}
-          @if (result(); as r) {
-            <span class="muted"> · {{ r.total }} total</span>
+                </div>
+              </td>
+            </tr>
           }
-        </div>
+        </tbody>
+      </table>
+    </div>
 
-        <button class="btn-outline" type="button" (click)="next()" [disabled]="page() >= totalPages()">
-          Suivant →
-        </button>
-      </div>
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+        ← Précédent
+      </button>
 
-    }
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()">
+        Suivant →
+      </button>
+    </footer>
   }
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    [entityLabel]="pendingDeleteLabel()"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    [confirming]="pendingDeleteId() !== null && deletingId() === pendingDeleteId()"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()"
+  />
 
 </section>

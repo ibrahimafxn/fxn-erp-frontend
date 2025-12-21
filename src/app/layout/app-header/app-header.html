@@ -1,0 +1,43 @@
+<header class="app-header">
+  <!-- LEFT -->
+  <div class="left">
+    <div class="brand" routerLink="/admin/dashboard">
+      FXN <span>ERP</span>
+    </div>
+
+    <div class="page-title">
+      {{ pageTitle() }}
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  @if (user()) {
+    <div class="right">
+      <button class="btn-outline" (click)="goDashboard()">
+        Dashboard
+      </button>
+
+      <!-- USER MENU -->
+      <div class="user-menu">
+        <button class="user-trigger" (click)="toggleMenu()">
+          <div class="avatar">{{ initials() }}</div>
+          <span class="chevron">▾</span>
+        </button>
+
+        @if (menuOpen()) {
+          <div class="dropdown">
+            <div class="user-meta">
+              <div class="name">{{ displayName() }}</div>
+              <div class="role">{{ roleLabel() }}</div>
+            </div>
+
+            <div class="divider"></div>
+
+            <button (click)="goProfile()">Mon profil</button>
+            <button class="danger" (click)="logout()">Déconnexion</button>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</header>

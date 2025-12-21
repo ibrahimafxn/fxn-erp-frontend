@@ -1,169 +1,224 @@
-.user-list {
-  padding: var(--fxn-space-lg);
+/* -------------------------------------------------
+   Page
+------------------------------------------------- */
+.users-list {
+  padding: 1.25rem;
   display: grid;
-  gap: var(--fxn-space-md);
+  gap: 1rem;
 }
 
+/* -------------------------------------------------
+   Header
+------------------------------------------------- */
 .page-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  gap: var(--fxn-space-md);
+  justify-content: space-between;
+  gap: 1rem;
 
   h1 {
     margin: 0;
     font-size: 1.35rem;
+    font-weight: 750;
   }
 
   .subtitle {
     margin: .25rem 0 0;
     opacity: .75;
     font-size: .9rem;
-    color: var(--fxn-text-muted);
   }
 
   .header-actions {
     display: flex;
-    gap: var(--fxn-space-sm);
+    gap: .5rem;
     flex-wrap: wrap;
   }
 }
 
+/* -------------------------------------------------
+   Card
+------------------------------------------------- */
 .card {
-  background: var(--fxn-surface);
-  border: 1px solid var(--fxn-border);
-  border-radius: var(--fxn-radius-lg);
-  padding: var(--fxn-space-md);
+  background: rgba(0, 0, 0, .05);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 1rem;
+  padding: 1rem;
 }
 
+/* -------------------------------------------------
+   Toolbar (search + meta)
+------------------------------------------------- */
 .toolbar {
   display: grid;
-  grid-template-columns: 1fr 240px;
-  gap: var(--fxn-space-md);
+  gap: .85rem;
 
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
+  .search {
+    display: grid;
+    grid-template-columns: 1.4fr .9fr auto auto;
+    gap: .6rem;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
   }
 
-  .field {
-    display: grid;
-    gap: .35rem;
+  input,
+  select {
+    padding: .55rem .65rem;
+    border-radius: .7rem;
+    border: 1px solid rgba(255, 255, 255, .15);
+    background: rgba(255, 255, 255, .06);
+    color: inherit;
+    outline: none;
+  }
 
-    label {
+  input:focus,
+  select:focus {
+    border-color: rgba(0, 120, 255, .6);
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    padding: .25rem .55rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .12);
+  }
+
+  .limit {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+
+    span {
       font-size: .85rem;
       opacity: .75;
-      color: var(--fxn-text-muted);
     }
 
-    input, select {
-      padding: .6rem .75rem;
-      border-radius: var(--fxn-radius-md);
-      border: 1px solid var(--fxn-border);
-      background: var(--fxn-surface-soft);
-      color: var(--fxn-text);
-      outline: none;
+    select {
+      padding: .35rem .5rem;
+      border-radius: .65rem;
     }
   }
 }
 
+/* -------------------------------------------------
+   States
+------------------------------------------------- */
 .state {
-  padding: var(--fxn-space-md);
-  border-radius: var(--fxn-radius-lg);
-  border: 1px solid var(--fxn-border);
-  background: var(--fxn-surface);
+  padding: 1rem;
+  border-radius: .9rem;
+  background: rgba(0, 0, 0, .06);
+  border: 1px solid rgba(255, 255, 255, .06);
 
+  &.loading { opacity: .85; }
+  &.empty { opacity: .8; }
   &.error {
-    background: rgba(255, 77, 109, 0.12);
-  }
-
-  code {
-    display: inline-block;
-    margin-left: .5rem;
-    padding: .25rem .5rem;
-    border-radius: .6rem;
-    background: rgba(0, 0, 0, .25);
+    background: rgba(255, 0, 0, .08);
   }
 }
 
+/* -------------------------------------------------
+   Table
+------------------------------------------------- */
 .table {
   padding: 0;
-  overflow: hidden;
-}
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead {
-  background: var(--fxn-surface-soft);
-}
-
-th, td {
-  padding: .85rem;
-  border-bottom: 1px solid var(--fxn-border);
-  vertical-align: middle;
-}
-
-.col-actions {
-  width: 240px;
-  text-align: right;
-}
-
-.row-click {
-  cursor: pointer;
-}
-
-.row-click:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.name {
-  .name-main {
-    font-weight: 800;
+  table {
+    width: 100%;
+    border-collapse: collapse;
   }
 
-  .name-sub {
+  thead th {
+    text-align: left;
     font-size: .8rem;
-    opacity: .7;
-    margin-top: .15rem;
-    color: var(--fxn-text-muted);
+    opacity: .75;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    vertical-align: middle;
+  }
+
+  .actions {
+    text-align: right;
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  .row {
+    cursor: pointer;
+  }
+
+  .row:hover {
+    background: rgba(255, 255, 255, .03);
+  }
+
+  .main {
+    .name {
+      font-weight: 750;
+    }
   }
 }
 
-.row-actions {
-  display: flex;
-  gap: .5rem;
-  justify-content: flex-end;
-}
-
-.role-badge {
-  font-size: .8rem;
-  padding: .25rem .55rem;
-  border-radius: 999px;
-  border: 1px solid var(--fxn-border);
-  background: rgba(255, 255, 255, .06);
-  font-weight: 800;
-}
-
-/* Styles par rôle (optionnel) */
-.role-dirigeant { background: rgba(255, 200, 0, .14); }
-.role-admin { background: rgba(79, 140, 255, .14); }
-.role-gestion_depot { background: rgba(61, 220, 151, .14); }
-.role-technicien { background: rgba(255, 255, 255, .06); }
-
+/* -------------------------------------------------
+   Pager
+------------------------------------------------- */
 .pager {
   display: flex;
   justify-content: space-between;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+/* -------------------------------------------------
+   Buttons (cohérent depot)
+------------------------------------------------- */
+.btn-outline,
+.btn-primary,
+.btn-danger {
+  border-radius: .8rem;
+  padding: .55rem .9rem;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .06);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: rgba(0, 120, 255, .16);
+}
+
+.btn-danger {
+  background: rgba(255, 0, 60, .14);
+}
+
+.btn-outline:hover,
+.btn-primary:hover,
+.btn-danger:hover {
+  filter: brightness(1.05);
+}
+
+button[disabled] {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.actions-group {
+  display: inline-flex;
+  gap: .5rem; // ✅ espace entre Modifier et Supprimer
   align-items: center;
-  gap: var(--fxn-space-md);
 }
 
-.pager-info {
-  opacity: .85;
 
-  .muted {
-    opacity: .7;
-    color: var(--fxn-text-muted);
-  }
-}

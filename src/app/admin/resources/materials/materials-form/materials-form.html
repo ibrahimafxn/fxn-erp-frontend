@@ -1,0 +1,133 @@
+<section class="materials-form">
+  <!-- HEADER -->
+  <header class="page-header card">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p class="subtitle">Créer ou modifier un matériel du stock.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="cancel()">
+        Retour
+      </button>
+
+      <button
+        class="btn-primary"
+        type="button"
+        (click)="submit()"
+        [disabled]="!canSubmit()"
+      >
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </header>
+
+  <!-- STATES -->
+  @if (loading()) {
+    <div class="state loading card">Chargement du matériel…</div>
+  } @else if (error()) {
+    <div class="state error card">
+      <strong>Erreur :</strong> {{ error() }}
+    </div>
+  }
+
+  <!-- FORM -->
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <!-- Nom -->
+      <div class="field">
+        <label>Nom *</label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Ex : Marteau à plaque"
+        />
+        @if (isInvalid('name')) {
+          <small class="hint error">
+            Nom requis (minimum 2 caractères)
+          </small>
+        }
+      </div>
+
+      <!-- Catégorie -->
+      <div class="field">
+        <label>Catégorie *</label>
+        <select formControlName="category">
+          <option [ngValue]="null" disabled>
+            — Sélectionner une catégorie —
+          </option>
+          <option [ngValue]="'OUTIL'">Outil</option>
+          <option [ngValue]="'EPI'">EPI</option>
+        </select>
+
+        @if (isInvalid('category')) {
+          <small class="hint error">
+            La catégorie est obligatoire
+          </small>
+        }
+      </div>
+
+      <!-- Description -->
+      <div class="field">
+        <label>Description</label>
+        <input
+          type="text"
+          formControlName="description"
+          placeholder="Ex : SN-12345 / référence interne"
+        />
+      </div>
+
+      <!-- Quantité -->
+      <div class="field">
+        <label>Quantité *</label>
+        <input
+          type="number"
+          formControlName="quantity"
+          min="0"
+        />
+        @if (isInvalid('quantity')) {
+          <small class="hint error">
+            Quantité invalide
+          </small>
+        }
+      </div>
+
+      <!-- Dépôt -->
+      <div class="field">
+        <label>Dépôt</label>
+
+        @if (depotsLoading()) {
+          <div class="hint">Chargement des dépôts…</div>
+        } @else if (depotsError()) {
+          <div class="hint error">{{ depotsError() }}</div>
+        } @else {
+          <select formControlName="idDepot">
+            <option [ngValue]="null">— Aucun dépôt —</option>
+            @for (d of depots(); track d._id) {
+              <option [ngValue]="d._id">{{ d.name }}</option>
+            }
+          </select>
+        }
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="actions">
+      <button
+        class="btn-outline"
+        type="button"
+        (click)="cancel()"
+      >
+        Annuler
+      </button>
+
+      <button
+        class="btn-primary"
+        type="submit"
+        [disabled]="!canSubmit()"
+      >
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </form>
+</section>

@@ -22,44 +22,74 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./dashboard/dashboard').then(m => m.Dashboard)
   },
 
+  // -----------------------------
+  // DEPOTS
+  // -----------------------------
+
   // /admin/depots
   {
     path: 'depots',
     loadComponent: () => import('./depots/depot-list/depot-list').then(m => m.DepotList)
   },
-
   // /admin/depots/new
   {
     path: 'depots/new',
     loadComponent: () => import('./depots/depot-form/depot-form').then(m => m.DepotForm)
   },
-
   // /admin/depots/:id (édition)
   {
     path: 'depots/:id/edit',
     loadComponent: () => import('./depots/depot-form/depot-form').then(m => m.DepotForm)
   },
-
   // /admin/depots/:id/view (détail)
   {
-    path: 'depots/:id/view',
+    path: 'depots/:id/detail',
     loadComponent: () => import('./depots/depot-detail/depot-detail').then(m => m.DepotDetail)
   },
 
-  // /admin/history
+  // -----------------------------
+  // HISTORY
+  // -----------------------------
+
   {
     path: 'history',
     loadComponent: () => import('./history/history-list/history-list').then(m => m.HistoryList)
   },
 
+  // -----------------------------
+  // MATERIALS
+  // -----------------------------
+
   // /admin/resources/materials
   {
     path: 'resources/materials',
     loadComponent: () =>
-      import('./resources/materials-list/materials-list').then(m => m.MaterialsList)
+      import('./resources/materials/materials-list/materials-list').then(m => m.MaterialsList)
+  },
+  // /admin/resources/materials/new
+  {
+    path: 'resources/materials/new',
+    loadComponent: () =>
+      import('./resources/materials/materials-form/materials-form').then(m => m.MaterialsForm)
+  },
+  // /admin/resources/materials/:id
+  {
+    path: 'resources/materials/:id',
+    loadComponent: () =>
+      import('./resources/materials/materials-detail/materials-detail').then(m => m.MaterialsDetail)
+  },
+  // /admin/resources/materials/:id/edit
+  {
+    path: 'resources/materials/:id/edit',
+    loadComponent: () =>
+      import('./resources/materials/materials-form/materials-form').then(m => m.MaterialsForm)
   },
 
-  // /admin/resources/consumables
+
+  // -----------------------------
+  // CONSUMABLES
+  // -----------------------------
+
   {
     path: 'resources/consumables',
     loadComponent: () =>
@@ -75,37 +105,43 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () =>
       import('./resources/consumables/consumables-detail/consumables-detail').then(m => m.ConsumablesDetail)
   },
+  {
+    path: 'resources/consumables/:id/edit',
+    loadComponent: () =>
+      import('./resources/consumables/consumables-form/consumables-form').then(m => m.ConsumablesForm)
+  },
 
 
-  // /admin/resources/vehicles
+  // -----------------------------
+  // VEHICLES
+  // -----------------------------
+
   {
     path: 'resources/vehicles',
     loadComponent: () =>
       import('./resources/vehicles-list/vehicles-list').then(m => m.VehiclesList)
   },
 
+
   // -----------------------------
   // USERS
   // -----------------------------
 
-  // /admin/users (liste)
+  // liste
   {
     path: 'users',
     loadComponent: () => import('./users/user-list/user-list').then(m => m.UserList)
   },
-
   // /admin/users/new (création)
   {
     path: 'users/new',
     loadComponent: () => import('./users/user-form/user-form').then(m => m.UserForm)
   },
-
   // /admin/users/:id (détail)
   {
-    path: 'users/:id',
+    path: 'users/:id/detail',
     loadComponent: () => import('./users/user-detail/user-detail').then(m => m.UserDetail)
   },
-
   // /admin/users/:id/edit (édition)
   {
     path: 'users/:id/edit',
