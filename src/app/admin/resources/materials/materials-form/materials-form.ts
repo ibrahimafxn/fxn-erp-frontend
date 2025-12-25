@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { MaterialService } from '../../../../core/services/material.service';
 import { DepotService } from '../../../../core/services/depot.service';
-import {Depot, DepotLite, Material} from '../../../../core/models';
+import { Depot, Material } from '../../../../core/models';
 import { MaterialCategory } from '../../../../core/models/MaterialCategory.model';
 
 type Mode = 'create' | 'edit';
@@ -22,11 +22,13 @@ export class MaterialsForm {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  private materialService = inject(MaterialService);
+  private materials = inject(MaterialService);
   private depotsSvc = inject(DepotService);
 
   // -----------------------------
-  // Routing (id piloté par signal)
+  // Routing
+  // /admin/resources/materials/new
+  // /admin/resources/materials/:id/edit
   // -----------------------------
   readonly id = this.route.snapshot.paramMap.get('id') ?? '';
   readonly mode = computed<Mode>(() => (this.id ? 'edit' : 'create'));
@@ -45,29 +47,32 @@ export class MaterialsForm {
   readonly current = signal<Material | null>(null);
 
   // -----------------------------
-  // Form (✅ category bien typé)
+  // Form (✅ correction category)
   // -----------------------------
   readonly form = this.fb.nonNullable.group({
     name: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
+
+    // ✅ ICI : valeur initiale + validators séparés
     category: this.fb.nonNullable.control<MaterialCategory>(MaterialCategory.OUTIL, [Validators.required]),
+
     description: this.fb.nonNullable.control(''),
     quantity: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+
+    // dépôt optionnel
     idDepot: this.fb.control<string | null>(null),
   });
 
-  readonly title = computed(() =>
-    this.mode() === 'create' ? 'Nouveau matériel' : 'Modifier matériel'
-  );
-
-  canSubmit(): boolean {
-    return !this.saving() && this.form.valid;
-  }
+  readonly title = computed(() => (this.mode() === 'create' ? 'Nouveau matériel' : 'Modifier matériel'));
+  readonly canSubmit = computed(() => !this.saving() && this.form.valid);
 
   constructor() {
     this.loadDepots();
     if (this.mode() === 'edit') this.loadMaterial();
   }
 
+  // -----------------------------
+  // Depots (select)
+  // -----------------------------
   private loadDepots(): void {
     this.depotsLoading.set(true);
     this.depotsError.set(null);
@@ -84,22 +89,24 @@ export class MaterialsForm {
     });
   }
 
+  // -----------------------------
+  // Load material (edit)
+  // -----------------------------
   private loadMaterial(): void {
+    if (!this.id) return;
+
     this.loading.set(true);
     this.error.set(null);
 
-    this.materialService.getById(this.id).subscribe({
+    this.materials.getById(this.id).subscribe({
       next: (mat) => {
         this.current.set(mat);
 
-        function isDepotLite(v: unknown): v is DepotLite {
-          return !!v && typeof v === 'object' && '_id' in v;
-        }
-
+        // ✅ idDepot peut être string OU objet populate
         const depotId =
           typeof mat.idDepot === 'string'
             ? mat.idDepot
-            : isDepotLite(mat.idDepot)
+            : mat.idDepot && typeof mat.idDepot === 'object' && '_id' in mat.idDepot
               ? mat.idDepot._id
               : null;
 
@@ -120,6 +127,9 @@ export class MaterialsForm {
     });
   }
 
+  // -----------------------------
+  // Submit
+  // -----------------------------
   submit(): void {
     if (!this.form.valid) {
       this.form.markAllAsTouched();
@@ -129,13 +139,12 @@ export class MaterialsForm {
     this.saving.set(true);
     this.error.set(null);
 
-    const payload = this.form.getRawValue();
+    const payload = this.form.getRawValue(); // category est bien MaterialCategory, plus un tableau
 
     if (this.mode() === 'create') {
-      this.materialService.create(payload).subscribe({
+      this.materials.create(payload).subscribe({
         next: () => {
           this.saving.set(false);
-          this.materialService.clearCache();
           this.router.navigate(['/admin/resources/materials']);
         },
         error: (err) => {
@@ -147,10 +156,9 @@ export class MaterialsForm {
     }
 
     // edit
-    this.materialService.update(this.id, payload).subscribe({
+    this.materials.update(this.id, payload).subscribe({
       next: () => {
         this.saving.set(false);
-        this.materialService.clearCache();
         this.router.navigate(['/admin/resources/materials']);
       },
       error: (err) => {
@@ -164,9 +172,13 @@ export class MaterialsForm {
     this.router.navigate(['/admin/resources/materials']);
   }
 
-  isInvalid(name: 'name' | 'category' | 'quantity' | 'idDepot'): boolean {
+  // -----------------------------
+  // Helpers template (0 any)
+  // -----------------------------
+  isInvalid(name: 'name' | 'category' | 'quantity' | 'idDepot' | 'description'): boolean {
     const c = this.form.get(name);
     return !!c && c.invalid && (c.dirty || c.touched);
   }
 
+  protected readonly MaterialCategory = MaterialCategory;
 }

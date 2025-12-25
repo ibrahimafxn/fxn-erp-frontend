@@ -1,27 +1,27 @@
-<section class="materials-list">
+<section class="materials-list" xmlns="http://www.w3.org/1999/html">
   <header class="page-header">
     <div>
       <h1>Matériels</h1>
-      <p class="subtitle">Recherche, pagination et accès rapide aux détails.</p>
+      <p class="subtitle">Recherche, filtres, pagination et actions rapides.</p>
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="refresh(true)">
-        Recharger
-      </button>
-      <button class="btn-primary" type="button" (click)="createNew()">
-        Nouveau matériel
-      </button>
+      <button class="btn-outline" type="button" (click)="refresh(true)">Recharger</button>
+      <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
     </div>
   </header>
 
   <section class="toolbar card">
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
-      <input
-        type="text"
-        formControlName="q"
-        placeholder="Rechercher (nom, ref, série...)"
-      />
+      <input type="text" formControlName="q" placeholder="Rechercher (nom, catégorie, ref…)…" />
+
+      <select formControlName="depot">
+        <option value="">Tous les dépôts</option>
+        @for (d of depots(); track d._id) {
+          <option [value]="d._id">{{ d.name }}</option>
+        }
+      </select>
+
       <button class="btn-outline" type="submit">Rechercher</button>
       <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
     </form>
@@ -29,15 +29,23 @@
     <div class="meta">
       <span class="pill">Total : {{ total() }}</span>
       <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
     </div>
   </section>
 
   @if (loading()) {
     <div class="state loading card">Chargement…</div>
   } @else if (error()) {
-    <div class="state error card">
-      <strong>Erreur :</strong> {{ errorMessage() }}
-    </div>
+    <div class="state error card"><strong>Erreur :</strong> {{ errorMessage() }}</div>
   } @else if (items().length === 0) {
     <div class="state empty card">Aucun matériel trouvé.</div>
   } @else {
@@ -46,8 +54,9 @@
         <thead>
         <tr>
           <th>Matériel</th>
-          <th>Réf</th>
-          <th>Statut</th>
+          <th>Catégorie</th>
+          <th>Quantité</th>
+          <th>Dépôt</th>
           <th>Création</th>
           <th class="actions">Actions</th>
         </tr>
@@ -55,36 +64,36 @@
 
         <tbody>
           @for (m of items(); track trackById) {
-            <tr class="row" (click)="openDetail(m)">
+            <tr class="row">
               <td class="main">
                 <div class="name">{{ m.name }}</div>
                 <div class="sub">{{ m.description || '—' }}</div>
               </td>
 
-              <td>{{ m.ref || '—' }}</td>
-              <td>{{ m.status || '—' }}</td>
+              <td>{{ m.category || '—' }}</td>
+              <td>{{ m.quantity ?? 0 }}</td>
+              <td>{{ depotLabel(m) }}</td>
 
               <td>
-                @if (createdAtValue(m)) {
-                  {{ formatDate(m.createdAt)}}
-                } @else {
-                  —
-                }
+                @if (createdAtValue(m)) { {{ createdAtValue(m) | date:'short' }} } @else { — }
               </td>
 
-              <td class="actions" (click)="$event.stopPropagation()">
-                <button class="btn-outline" type="button" (click)="edit(m)">
-                  Modifier
-                </button>
+              <td class="actions">
+                <!-- ✅ Ajouter un peu d’espace entre les boutons -->
+                <div class="actions-row">
+                  <button class="btn-outline" type="button" (click)="edit(m)">
+                    Modifier
+                  </button>
 
-                <button
-                  class="btn-danger"
-                  type="button"
-                  [disabled]="deletingId() === m._id"
-                  (click)="askDelete(m)"
-                >
-                  @if (deletingId() === m._id) { Suppression… } @else { Supprimer }
-                </button>
+                  <button
+                    class="btn-danger"
+                    type="button"
+                    [disabled]="deletingId() === m._id"
+                    (click)="openDeleteModal(m)"
+                  >
+                    @if (deletingId() === m._id) { Suppression… } @else { Supprimer }
+                  </button>
+                </div>
               </td>
             </tr>
           }
@@ -93,21 +102,23 @@
     </div>
 
     <footer class="pager">
-      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">
         ← Précédent
       </button>
 
-      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()">
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">
         Suivant →
       </button>
     </footer>
   }
+  <!-- ✅ MODAL suppression -->
   <app-confirm-delete-modal
     [open]="deleteModalOpen()"
+    entityLabel="le matériel"
     [entityName]="pendingDeleteName()"
     [entityId]="pendingDeleteId()"
+    [confirming]="pendingDeleteId() !== null && deletingId() === pendingDeleteId()"
     (cancel)="closeDeleteModal()"
-    (confirm)="confirmDelete()"
-  />
-
+    (confirm)="confirmDelete()">
+  </app-confirm-delete-modal>
 </section>

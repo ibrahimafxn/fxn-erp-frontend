@@ -8,7 +8,11 @@ import {AuthInterceptor} from './core/interceptors/auth.interceptor';
 import {DEPOT_ROUTES} from './modules/depot/depot.routes';
 import {ADMIN_ROUTES} from './admin/admin.routes';
 import {Role} from './core/models/roles.model';
+import {LOCALE_ID} from '@angular/core';
+import {registerLocaleData} from '@angular/common';
+import localeFr from '@angular/common/locales/fr';
 
+registerLocaleData(localeFr);
 /**
  * AppConfig : centralise les routes et providers globaux
  */
@@ -68,6 +72,7 @@ export const AppConfig = {
   ],
 
   providers: [
+    { provide: LOCALE_ID, useValue: 'fr-FR' },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ]
 };

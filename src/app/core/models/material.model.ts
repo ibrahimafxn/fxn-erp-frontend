@@ -1,5 +1,5 @@
+// core/models/material.model.ts
 import {MaterialCategory} from './MaterialCategory.model';
-
 export interface Material {
   _id: string;
   idMaterial?: string;

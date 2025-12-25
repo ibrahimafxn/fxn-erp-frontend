@@ -1,10 +1,9 @@
-// src/app/core/services/material.service.ts
 import { Injectable, Signal, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Material } from '../models/material.model';
+import { Material } from '../models';
 
 export interface MaterialListResult {
   total: number;
@@ -49,7 +48,7 @@ export class MaterialService {
     this._request$ = undefined;
   }
 
-  /** Liste paginée + filtres (q, depot, page, limit) */
+  /** Liste paginée + filtres */
   refresh(force = false, filter?: MaterialFilter): Observable<MaterialListResult> {
     if (!force && this._request$) return this._request$;
 
@@ -66,17 +65,18 @@ export class MaterialService {
       map(resp => resp.data),
       tap(result => this._result.set(result)),
       tap(() => this._loading.set(false)),
-      catchError(err => this.handleError(err)),
-      shareReplay({ bufferSize: 1, refCount: true })
+      catchError(err => this.handleError(err))
     );
 
-    this._request$ = req$;
-    return req$;
+    // cache rx
+    this._request$ = req$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    return this._request$;
   }
 
-  /** GET /materials/:id */
+  /** GET /materials/:id (enveloppe API) */
   getById(id: string): Observable<Material> {
-    return this.http.get<Material>(`${this.baseUrl}/${id}`).pipe(
+    return this.http.get<ApiResponse<Material>>(`${this.baseUrl}/${id}`).pipe(
+      map(resp => resp.data),
       catchError(err => this.handleError(err))
     );
   }
@@ -84,7 +84,8 @@ export class MaterialService {
   /** POST /materials */
   create(payload: Partial<Material>): Observable<Material> {
     this.clearCache();
-    return this.http.post<Material>(this.baseUrl, payload).pipe(
+    return this.http.post<ApiResponse<Material>>(this.baseUrl, payload).pipe(
+      map(resp => resp.data),
       catchError(err => this.handleError(err))
     );
   }
@@ -92,15 +93,17 @@ export class MaterialService {
   /** PUT /materials/:id */
   update(id: string, payload: Partial<Material>): Observable<Material> {
     this.clearCache();
-    return this.http.put<Material>(`${this.baseUrl}/${id}`, payload).pipe(
+    return this.http.put<ApiResponse<Material>>(`${this.baseUrl}/${id}`, payload).pipe(
+      map(resp => resp.data),
       catchError(err => this.handleError(err))
     );
   }
 
   /** DELETE /materials/:id */
-  remove(id: string): Observable<{ message: string }> {
+  remove(id: string): Observable<{ _id: string }> {
     this.clearCache();
-    return this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`).pipe(
+    return this.http.delete<ApiResponse<{ _id: string }>>(`${this.baseUrl}/${id}`).pipe(
+      map(resp => resp.data),
       catchError(err => this.handleError(err))
     );
   }

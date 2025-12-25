@@ -6,6 +6,7 @@ export interface DepotLite {
 }
 
 export interface Consumable {
+  assignedQuantity: number;
   _id: string;
   idConsumable?: string;
   ref?: string;

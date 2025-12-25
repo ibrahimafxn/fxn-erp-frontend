@@ -111,6 +111,6 @@
     [entityId]="pendingDeleteId()"
     [confirming]="pendingDeleteId() !== null && deletingId() === pendingDeleteId()"
     (cancel)="closeDeleteModal()"
-    (confirm)="confirmDelete()"
-  />
+    (confirm)="confirmDelete()">
+  </app-confirm-delete-modal>
 </section>

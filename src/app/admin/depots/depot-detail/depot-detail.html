@@ -57,30 +57,19 @@
 
         <div class="info-grid">
           <div class="info-item">
-            <label>Adresse</label>
-            <span>{{ depotAddress() || '—' }}</span>
+            <label>Adresse: </label>
+            <div>{{ depotAddress() || '—' }}</div>
           </div>
 
           <div class="info-item">
-            <label>Gestionnaire</label>
-            <span class="manager">
-              {{ managerLabel() }}
-              @if (managerEmail()) {
-                <small>· {{ managerEmail() }}</small>
-              }
-            </span>
-          </div>
-
-          <div class="info-item">
-            <label>Gestionnaire</label>
-
+            <label>Gestionnaire: </label>
             <div class="manager-row">
-    <span class="manager">
-      {{ managerLabel() }}
-      @if (managerEmail()) {
-        <small>· {{ managerEmail() }}</small>
-      }
-    </span>
+              <span class="manager">
+                {{ managerLabel() }}
+                @if (managerEmail()) {
+                  <small>· {{ managerEmail() }}</small>
+                }
+              </span>
 
               <button class="btn-outline btn-xs" type="button" (click)="openManagerEdit()">
                 Changer
@@ -138,7 +127,11 @@
                     (click)="saveManager()"
                     [disabled]="managerSaving()"
                   >
-                    @if (managerSaving()) { Enregistrement… } @else { Enregistrer }
+                    @if (managerSaving()) {
+                      Enregistrement…
+                    } @else {
+                      Enregistrer
+                    }
                   </button>
                 </div>
               </div>
@@ -149,17 +142,13 @@
             <label>Créé le</label>
             <span>
               @if (depotCreatedAt()) {
-                {{ depotCreatedAt() | date:'fullDate' }}
+                {{ depotCreatedAt() | frDate:'full' }}
               } @else {
                 —
               }
             </span>
           </div>
 
-          <div class="info-item">
-            <label>ID</label>
-            <span class="mono">{{ id }}</span>
-          </div>
         </div>
 
         <div class="divider"></div>
@@ -238,6 +227,135 @@
           </div>
         }
       </article>
+
+      <!-- MATERIELS -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Matériels rattachés</h2>
+          <span class="pill">{{ materials().length }}</span>
+        </div>
+
+        <div class="card-actions" style="justify-content:flex-start">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllMaterials()">
+            Voir tout
+          </button>
+        </div>
+
+        @if (materialsLoading()) {
+          <div class="state loading">Chargement des matériels…</div>
+        } @else if (materialsError()) {
+          <div class="state error">{{ materialsError() }}</div>
+        } @else if (materials().length === 0) {
+          <div class="state empty">Aucun matériel rattaché à ce dépôt.</div>
+        } @else {
+          <div class="mini-list">
+            @for (m of materials(); track m._id) {
+              <div class="mini-row">
+                <div class="mini-left">
+                  <div class="mini-name">{{ m.name }}</div>
+                  <div class="mini-sub">
+                    <span>{{ m.category || '—' }}</span>
+                    <span class="dot">•</span>
+                    <span>{{ materialQtyLabel(m) }}</span>
+                  </div>
+                </div>
+
+                <div class="mini-right">
+                  <button class="btn-outline btn-xs" type="button" (click)="$event.stopPropagation(); editMaterial(m)">
+                    Modifier
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <!-- CONSOMMABLES -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Consommables rattachés</h2>
+          <span class="pill">{{ consumables().length }}</span>
+        </div>
+
+        <div class="card-actions" style="justify-content:flex-start">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllConsumables()">
+            Voir tout
+          </button>
+        </div>
+
+        @if (consumablesLoading()) {
+          <div class="state loading">Chargement des consommables…</div>
+        } @else if (consumablesError()) {
+          <div class="state error">{{ consumablesError() }}</div>
+        } @else if (consumables().length === 0) {
+          <div class="state empty">Aucun consommable rattaché à ce dépôt.</div>
+        } @else {
+          <div class="mini-list">
+            @for (c of consumables(); track c._id) {
+              <div class="mini-row">
+                <div class="mini-left">
+                  <div class="mini-name">{{ c.name }}</div>
+                  <div class="mini-sub">
+                    <span>{{ c.unit || 'pcs' }}</span>
+                    <span class="dot">•</span>
+                    <span>{{ consumableQtyLabel(c) }}</span>
+                  </div>
+                </div>
+
+                <div class="mini-right">
+                  <button class="btn-primary btn-xs" type="button" (click)="$event.stopPropagation(); reserveConsumable(c)">
+                    Réserver
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <!-- VEHICULES -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Véhicules au dépôt</h2>
+          <span class="pill">{{ vehicles().length }}</span>
+        </div>
+
+        @if (vehiclesLoading()) {
+          <div class="state loading">Chargement des véhicules…</div>
+        } @else if (vehiclesError()) {
+          <div class="state error">{{ vehiclesError() }}</div>
+        } @else if (vehicles().length === 0) {
+          <div class="state empty">Aucun véhicule présent à ce dépôt.</div>
+        } @else {
+          <div class="mini-list">
+            @for (v of vehicles(); track v._id) {
+              <div class="mini-row">
+                <div class="mini-left">
+                  <div class="mini-name">
+                    {{ vehiclePlate(v) }}
+                    <span class="dot">•</span>
+                    {{ vehicleLabel(v) }}
+                  </div>
+
+                  <div class="mini-sub">
+                    <span>Année : {{ vehicleYear(v) }}</span>
+                  </div>
+                </div>
+
+                <div class="mini-right">
+                  @if (vehicleState(v) === 'AU_DEPOT') {
+                    <span class="role-badge">AU DÉPÔT</span>
+                  } @else {
+                    <span class="role-badge">ASSIGNÉ</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
     </section>
   }
 </section>

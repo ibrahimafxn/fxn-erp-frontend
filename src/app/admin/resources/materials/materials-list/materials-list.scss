@@ -144,3 +144,9 @@ td.actions {
   align-items: center;
   white-space: nowrap;
 }
+.actions-row {
+  display: flex;
+  gap: .5rem; /* ✅ espace entre Modifier / Supprimer */
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
