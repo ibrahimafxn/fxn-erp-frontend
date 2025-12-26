@@ -115,13 +115,33 @@ export const ADMIN_ROUTES: Routes = [
   // -----------------------------
   // VEHICLES
   // -----------------------------
-
+// /admin/resources/vehicles
   {
     path: 'resources/vehicles',
     loadComponent: () =>
-      import('./resources/vehicles-list/vehicles-list').then(m => m.VehiclesList)
+      import('./resources/vehicles/vehicles-list/vehicles-list').then(m => m.VehiclesList)
   },
 
+// /admin/resources/vehicles/new
+  {
+    path: 'resources/vehicles/new',
+    loadComponent: () =>
+      import('./resources/vehicles/vehicles-form/vehicles-form').then(m => m.VehiclesForm)
+  },
+
+// /admin/resources/vehicles/:id/edit
+  {
+    path: 'resources/vehicles/:id/edit',
+    loadComponent: () =>
+      import('./resources/vehicles/vehicles-form/vehicles-form').then(m => m.VehiclesForm)
+  },
+
+// /admin/resources/vehicles/:id/detail
+  {
+    path: 'resources/vehicles/:id/detail',
+    loadComponent: () =>
+      import('./resources/vehicles/vehicles-detail/vehicles-detail').then(m => m.VehiclesDetail)
+  },
 
   // -----------------------------
   // USERS

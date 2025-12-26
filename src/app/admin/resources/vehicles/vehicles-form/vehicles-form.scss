@@ -1,0 +1,149 @@
+/* ===============================
+   VEHICLES FORM
+   =============================== */
+
+.vehicles-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* -------------------------------
+   PAGE HEADER
+   ------------------------------- */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  .subtitle {
+    margin-top: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+}
+
+/* -------------------------------
+   STATES
+   ------------------------------- */
+.state {
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+
+  &.loading {
+    background: var(--bg-soft);
+    color: var(--text-muted);
+  }
+
+  &.error {
+    background: rgba(220, 38, 38, 0.08);
+    color: var(--danger);
+  }
+}
+
+/* -------------------------------
+   FORM CARD
+   ------------------------------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* -------------------------------
+   GRID
+   ------------------------------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem 1.5rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* -------------------------------
+   FIELD
+   ------------------------------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  input,
+  select {
+    height: 40px;
+    padding: 0 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    color: var(--text);
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+  }
+
+  input[type='number'] {
+    padding-right: 0.4rem;
+  }
+
+  small,
+  .hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+
+    &.error {
+      color: var(--danger);
+    }
+  }
+}
+
+/* -------------------------------
+   ACTIONS
+   ------------------------------- */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+
+  @media (max-width: 600px) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+/* -------------------------------
+   UTILITIES
+   ------------------------------- */
+.btn-xs {
+  height: 28px;
+  font-size: 0.75rem;
+  padding: 0 0.5rem;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow-soft);
+}

@@ -137,6 +137,11 @@
   filter: brightness(1.05);
 }
 
+button[disabled] {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 td.actions {
   display: flex;
   gap: .5rem;

@@ -6,7 +6,7 @@ import {ActivatedRoute, Router, RouterModule} from '@angular/router';
 
 import {DepotService} from '../../../core/services/depot.service';
 import {UserService} from '../../../core/services/user.service';
-import {Consumable, User, Depot, DepotManager, Material, Vehicule} from '../../../core/models';
+import {Consumable, User, Depot, DepotManager, Material, Vehicle} from '../../../core/models';
 import {DepotStats} from '../../../core/models/depotStats.model';
 import {FrDatePipe} from '../../../core/pipes/fr-date.pipe';
 import {MaterialService} from '../../../core/services/material.service';
@@ -66,7 +66,7 @@ export class DepotDetail {
    * ----------------------------- */
   readonly vehiclesLoading = signal(false);
   readonly vehiclesError = signal<string | null>(null);
-  readonly vehicles = signal<Vehicule[]>([]);
+  readonly vehicles = signal<Vehicle[]>([]);
 
   /* -----------------------------
    * Techniciens du dépôt
@@ -291,40 +291,40 @@ export class DepotDetail {
   /* -----------------------------
  * Helpers UI (évite filter(Boolean) dans HTML)
  * ----------------------------- */
-  vehicleLabel(v: Vehicule): string {
+  vehicleLabel(v: Vehicle): string {
     const brand = (v.brand ?? '').trim();
     const model = (v.model ?? '').trim();
     const text = `${brand} ${model}`.trim();
     return text || '—';
   }
 
-  vehiclePlate(v: Vehicule): string {
+  vehiclePlate(v: Vehicle): string {
     return (v.plateNumber ?? '').trim() || '—';
   }
 
-  vehicleYear(v: Vehicule): string {
+  vehicleYear(v: Vehicle): string {
     return typeof v.year === 'number' && Number.isFinite(v.year) ? String(v.year) : '—';
   }
 
   // Dans le cas "au dépôt", assignedTo devrait être null,
   // mais on garde une protection.
-  vehicleState(v: Vehicule): 'AU_DEPOT' | 'ASSIGNE' {
+  vehicleState(v: Vehicle): 'AU_DEPOT' | 'ASSIGNE' {
     return v.assignedTo ? 'ASSIGNE' : 'AU_DEPOT';
   }
 
-  /** ✅ Convertit ce que renvoie VehicleService (any[]) en Vehicule[] sans `any` dans ce composant */
-  private toVehicules(value: unknown): Vehicule[] {
+  /** ✅ Convertit ce que renvoie VehicleService (any[]) en Vehicle[] sans `any` dans ce composant */
+  private toVehicles(value: unknown): Vehicle[] {
     if (!Array.isArray(value)) return [];
-    const out: Vehicule[] = [];
+    const out: Vehicle[] = [];
 
     for (const it of value) {
-      const v = this.parseVehicule(it);
+      const v = this.parseVehicle(it);
       if (v) out.push(v);
     }
     return out;
   }
 
-  private parseVehicule(it: unknown): Vehicule | null {
+  private parseVehicle(it: unknown): Vehicle | null {
     if (!it || typeof it !== 'object') return null;
 
     // lecture safe via Record<string, unknown>
@@ -338,8 +338,8 @@ export class DepotDetail {
 
     const brand = typeof o['brand'] === 'string' ? o['brand'] : undefined;
     const model = typeof o['model'] === 'string' ? o['model'] : undefined;
-    const assignedTo = typeof o['assignedTo'] === 'string' ? o['assignedTo'] : null;
-    const idDepot = typeof o['idDepot'] === 'string' ? o['idDepot'] : null;
+    const assignedTo = typeof o['assignedTo'] === 'string' ? o['assignedTo'] : undefined;
+    const idDepot = typeof o['idDepot'] === 'string' ? o['idDepot'] : undefined;
 
     return {
       _id,
@@ -377,7 +377,7 @@ export class DepotDetail {
   }
 
   // pas de détail véhicule encore -> on garde simple
-  openVehicle(v: Vehicule): void {
+  openVehicle(v: Vehicle): void {
     this.router.navigate(['/admin/resources/vehicles'], {queryParams: {depot: this.id}});
   }
 
@@ -511,7 +511,7 @@ export class DepotDetail {
   }
 
 
-  reserveConsumable(c: Consumable): void {
+  modifierConsumable(c: Consumable): void {
     this.router.navigate(['/admin/resources/consumables', c._id, 'edit']);
     // ou ouvrir un modal plus tard
   }
