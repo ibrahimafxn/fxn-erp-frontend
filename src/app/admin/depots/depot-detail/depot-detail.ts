@@ -1,17 +1,21 @@
-// depotDetail.ts
+// admin/depots/depot-detail/depot-detail.ts
+// Drop-in complet et commenté (Angular Signals + services paginés)
 
-import {Component, computed, inject, signal} from '@angular/core';
-import {CommonModule, DatePipe} from '@angular/common';
-import {ActivatedRoute, Router, RouterModule} from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 
-import {DepotService} from '../../../core/services/depot.service';
-import {UserService} from '../../../core/services/user.service';
-import {Consumable, User, Depot, DepotManager, Material, Vehicle} from '../../../core/models';
-import {DepotStats} from '../../../core/models/depotStats.model';
-import {FrDatePipe} from '../../../core/pipes/fr-date.pipe';
-import {MaterialService} from '../../../core/services/material.service';
-import {ConsumableService} from '../../../core/services/consumable.service';
-import {VehicleService} from '../../../core/services/vehicle.service';
+import { DepotService } from '../../../core/services/depot.service';
+import { UserService } from '../../../core/services/user.service';
+import { MaterialService } from '../../../core/services/material.service';
+import { ConsumableService } from '../../../core/services/consumable.service';
+import { VehicleService } from '../../../core/services/vehicle.service';
+
+import { FrDatePipe } from '../../../core/pipes/fr-date.pipe';
+
+import { Consumable, User, Depot, DepotManager, Material, Vehicle } from '../../../core/models';
+import { DepotStats } from '../../../core/models/depotStats.model';
+import {DetailBack} from '../../../core/utils/detail-back';
 
 @Component({
   standalone: true,
@@ -19,18 +23,82 @@ import {VehicleService} from '../../../core/services/vehicle.service';
   providers: [DatePipe],
   imports: [CommonModule, RouterModule, FrDatePipe],
   templateUrl: './depot-detail.html',
-  styleUrls: ['./depot-detail.scss']
+  styleUrls: ['./depot-detail.scss'],
 })
-export class DepotDetail {
-
+export class DepotDetail extends DetailBack{
+  // -----------------------------
+  // DI
+  // -----------------------------
   private materialService = inject(MaterialService);
   private consumableService = inject(ConsumableService);
   private vehicleService = inject(VehicleService);
   private depotService = inject(DepotService);
   private userService = inject(UserService);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  // -----------------------------
+  // ID courant (route: /admin/depots/:id)
+  // -----------------------------
+  protected readonly id = this.route.snapshot.paramMap.get('id') ?? '';
+
+  // -----------------------------
+  // État principal
+  // -----------------------------
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly depot = signal<Depot | null>(null);
+
+  // -----------------------------
+  // KPIs / Stats
+  // -----------------------------
+  readonly stats = signal<DepotStats | null>(null);
+
+  /**
+   * KPIs dynamiques :
+   * - si stats API dispo => utilise stats
+   * - sinon fallback : techniciens length / autres = '—'
+   */
+  readonly kpis = computed(() => {
+    const s = this.stats();
+    return {
+      materials: s ? String((s as any).materials ?? s.materials ?? '—') : '—',
+      consumables: s ? String((s as any).consumables ?? s.consumables ?? '—') : '—',
+      technicians: s ? String((s as any).technicians ?? s.technicians ?? this.technicians().length) : String(this.technicians().length),
+      vehicles: s ? String((s as any).vehicles ?? s.vehicles ?? '—') : '—',
+    };
+  });
+
+  // -----------------------------
+  // Matériels du dépôt
+  // -----------------------------
+  readonly materialsLoading = signal(false);
+  readonly materialsError = signal<string | null>(null);
+  readonly materials = signal<Material[]>([]);
+
+  // -----------------------------
+  // Consommables du dépôt
+  // -----------------------------
+  readonly consumablesLoading = signal(false);
+  readonly consumablesError = signal<string | null>(null);
+  readonly consumables = signal<Consumable[]>([]);
+
+  // -----------------------------
+  // Véhicules du dépôt
+  // -----------------------------
+  readonly vehiclesLoading = signal(false);
+  readonly vehiclesError = signal<string | null>(null);
+  readonly vehicles = signal<Vehicle[]>([]);
+
+  // -----------------------------
+  // Techniciens du dépôt
+  // -----------------------------
+  readonly techLoading = signal(false);
+  readonly techError = signal<string | null>(null);
+  readonly technicians = signal<User[]>([]);
+
+  // -----------------------------
+  // Manager Edit UI
+  // -----------------------------
   readonly managerEditOpen = signal(false);
   readonly managerSaving = signal(false);
   readonly managerError = signal<string | null>(null);
@@ -39,64 +107,8 @@ export class DepotDetail {
   readonly managerCandidates = signal<User[]>([]);
   readonly selectedManagerId = signal<string | null>(null);
 
-
-  /* -----------------------------
-   * État principal
-   * ----------------------------- */
-  readonly loading = signal(false);
-  readonly error = signal<string | null>(null);
-  readonly depot = signal<Depot | null>(null);
-
-  /* -----------------------------
- * Matériels du dépôt
- * ----------------------------- */
-  readonly materialsLoading = signal(false);
-  readonly materialsError = signal<string | null>(null);
-  readonly materials = signal<Material[]>([]);
-
-  /* -----------------------------
-   * Consommables du dépôt
-   * ----------------------------- */
-  readonly consumablesLoading = signal(false);
-  readonly consumablesError = signal<string | null>(null);
-  readonly consumables = signal<Consumable[]>([]);
-
-  /* -----------------------------
-   * Véhicules du dépôt
-   * ----------------------------- */
-  readonly vehiclesLoading = signal(false);
-  readonly vehiclesError = signal<string | null>(null);
-  readonly vehicles = signal<Vehicle[]>([]);
-
-  /* -----------------------------
-   * Techniciens du dépôt
-   * ----------------------------- */
-  readonly techLoading = signal(false);
-  readonly techError = signal<string | null>(null);
-  readonly technicians = signal<User[]>([]);
-
-  /* -----------------------------
-   * KPIs (préparés pour API future)
-   * ----------------------------- */
-  /** KPIs dynamiques (fallback si stats pas encore chargées) */
-  readonly kpis = computed(() => {
-    const s = this.stats();
-    return {
-      materials: s ? String(s.materials) : '—',
-      consumables: s ? String(s.consumables) : '—',
-      technicians: s ? String(s.technicians) : String(this.technicians().length),
-      vehicles: s ? String(s.vehicles) : '—',
-    };
-  });
-
-  /* -----------------------------
-   * ID courant
-   * ----------------------------- */
-  protected readonly id = this.route.snapshot.paramMap.get('id') ?? '';
-
-  readonly stats = signal<DepotStats | null>(null);
-
   constructor() {
+    super();
     this.load();
   }
 
@@ -133,12 +145,13 @@ export class DepotDetail {
    * ============================= */
 
   private managerRaw(): string | DepotManager | null {
-    return this.depot()?.managerId ?? null;
+    // backend: managerId peut être string ObjectId OU objet populate
+    return (this.depot()?.managerId as unknown as string | DepotManager | null) ?? null;
   }
 
   manager(): DepotManager | null {
     const m = this.managerRaw();
-    return m && typeof m === 'object' ? m : null;
+    return m && typeof m === 'object' ? (m as DepotManager) : null;
   }
 
   managerLabel(): string {
@@ -162,6 +175,12 @@ export class DepotDetail {
   /* =============================
    * Chargement principal
    * ============================= */
+
+  /**
+   * Charge:
+   * 1) dépôt
+   * 2) puis toutes les listes liées (techniciens, matériels, consommables, véhicules, stats)
+   */
   load(): void {
     if (!this.id) {
       this.error.set('ID dépôt manquant dans l’URL');
@@ -172,59 +191,29 @@ export class DepotDetail {
     this.error.set(null);
 
     this.depotService.getDepot(this.id).subscribe({
-      next: depot => {
-        this.depot.set(depot);
+      next: (d) => {
+        this.depot.set(d);
         this.loading.set(false);
 
-        // existant
-        this.loadTechnicians(depot._id);
-        this.loadVehicles(depot._id); // ✅ AJOUT
-        this.loadStats(depot._id);
+        // Charge toutes les ressources rattachées
+        const depotId = d._id;
 
-        if (!this.id) {
-          this.error.set('ID dépôt manquant dans l’URL');
-          return;
-        }
-
-        this.loading.set(true);
-        this.error.set(null);
-
-        this.depotService.getDepot(this.id).subscribe({
-          next: depot => {
-            this.depot.set(depot);
-            this.loading.set(false);
-
-            // existant
-            this.loadTechnicians(depot._id);
-
-            // ✅ nouveaux
-            this.loadMaterials(depot._id);
-            this.loadConsumables(depot._id);
-            this.loadVehicles(depot._id);
-
-            // stats si tu as déjà
-            this.loadStats(depot._id);
-          },
-          error: err => {
-            this.loading.set(false);
-            this.error.set(err?.error?.message || 'Erreur chargement dépôt');
-          }
-        });
-
-        // ✅ nouveaux chargements
-        this.loadMaterials(depot._id);
-        this.loadConsumables(depot._id);
-        this.loadVehicles(depot._id);
-
-        // si tu as stats:
-        this.loadStats(depot._id);
+        this.loadTechnicians(depotId);
+        this.loadMaterials(depotId);
+        this.loadConsumables(depotId);
+        this.loadVehicles(depotId);
+        this.loadStats(depotId);
       },
-      error: err => {
+      error: (err) => {
         this.loading.set(false);
         this.error.set(err?.error?.message || 'Erreur chargement dépôt');
-      }
+      },
     });
   }
+
+  /* =============================
+   * LOAD : Matériels / Consommables / Véhicules / Techniciens
+   * ============================= */
 
   // -----------------------------
   // LOAD MATERIELS (paginé)
@@ -233,7 +222,7 @@ export class DepotDetail {
     this.materialsLoading.set(true);
     this.materialsError.set(null);
 
-    this.materialService.refresh(true, {depot: depotId, page: 1, limit: 50}).subscribe({
+    this.materialService.refresh(true, { depot: depotId, page: 1, limit: 50 }).subscribe({
       next: (res) => {
         this.materials.set(res.items ?? []);
         this.materialsLoading.set(false);
@@ -241,7 +230,7 @@ export class DepotDetail {
       error: (err) => {
         this.materialsLoading.set(false);
         this.materialsError.set(err?.error?.message || 'Erreur chargement matériels');
-      }
+      },
     });
   }
 
@@ -252,8 +241,7 @@ export class DepotDetail {
     this.consumablesLoading.set(true);
     this.consumablesError.set(null);
 
-    // ✅ Ton service consumable renvoie un result paginé (comme tu l’as fait)
-    this.consumableService.refresh(true, {depot: depotId, page: 1, limit: 50}).subscribe({
+    this.consumableService.refresh(true, { depot: depotId, page: 1, limit: 50 }).subscribe({
       next: (res) => {
         this.consumables.set(res.items ?? []);
         this.consumablesLoading.set(false);
@@ -261,22 +249,18 @@ export class DepotDetail {
       error: (err) => {
         this.consumablesLoading.set(false);
         this.consumablesError.set(err?.error?.message || 'Erreur chargement consommables');
-      }
+      },
     });
   }
 
   // -----------------------------
-  // LOAD VEHICULES (tableau direct backend)
+  // LOAD VEHICULES (paginé via VehicleService.refresh)
   // -----------------------------
   private loadVehicles(depotId: string): void {
     this.vehiclesLoading.set(true);
     this.vehiclesError.set(null);
 
-    this.vehicleService.refresh(true, {
-      depot: depotId,
-      page: 1,
-      limit: 50
-    }).subscribe({
+    this.vehicleService.refresh(true, { depot: depotId, page: 1, limit: 50 }).subscribe({
       next: (res) => {
         this.vehicles.set(res.items ?? []);
         this.vehiclesLoading.set(false);
@@ -284,13 +268,65 @@ export class DepotDetail {
       error: (err) => {
         this.vehiclesLoading.set(false);
         this.vehiclesError.set(err?.error?.message || 'Erreur chargement véhicules');
-      }
+      },
     });
   }
 
-  /* -----------------------------
- * Helpers UI (évite filter(Boolean) dans HTML)
- * ----------------------------- */
+  // -----------------------------
+  // LOAD TECHNICIENS (paginé via UserService)
+  // -----------------------------
+  private loadTechnicians(depotId: string): void {
+    this.techLoading.set(true);
+    this.techError.set(null);
+
+    this.userService.refreshUsers(true, {
+      depot: depotId,
+      role: 'TECHNICIEN',
+      page: 1,
+      limit: 50,
+    }).subscribe({
+      next: (result) => {
+        this.technicians.set(result.items ?? []);
+        this.techLoading.set(false);
+      },
+      error: (err) => {
+        this.techLoading.set(false);
+        this.techError.set(err?.error?.message || 'Erreur chargement techniciens');
+      },
+    });
+  }
+
+  // -----------------------------
+  // LOAD STATS (si endpoint dispo)
+  // -----------------------------
+  private loadStats(depotId: string): void {
+    this.depotService.getDepotStats(depotId).subscribe({
+      next: (s) => this.stats.set(s),
+      error: () => this.stats.set(null),
+    });
+  }
+
+  /* =============================
+   * Helpers UI (évite logique dans HTML)
+   * ============================= */
+
+  // Matériel : label quantité
+  materialQtyLabel(m: Material): string {
+    const q = typeof m.quantity === 'number' ? m.quantity : 0;
+    const a = typeof m.assignedQuantity === 'number' ? m.assignedQuantity : 0;
+    const free = Math.max(0, q - a);
+    return `stock ${q} • attribué ${a} • dispo ${free}`;
+  }
+
+  // Consommable : label quantité
+  consumableQtyLabel(c: Consumable): string {
+    const q = typeof c.quantity === 'number' ? c.quantity : 0;
+    const a = typeof (c as any).assignedQuantity === 'number' ? (c as any).assignedQuantity : 0;
+    const free = Math.max(0, q - a);
+    return `stock ${q} • réservé ${a} • dispo ${free}`;
+  }
+
+  // Véhicule : libellé marque+modèle
   vehicleLabel(v: Vehicle): string {
     const brand = (v.brand ?? '').trim();
     const model = (v.model ?? '').trim();
@@ -306,129 +342,56 @@ export class DepotDetail {
     return typeof v.year === 'number' && Number.isFinite(v.year) ? String(v.year) : '—';
   }
 
-  // Dans le cas "au dépôt", assignedTo devrait être null,
-  // mais on garde une protection.
-  vehicleState(v: Vehicle): 'AU_DEPOT' | 'ASSIGNE' {
-    return v.assignedTo ? 'ASSIGNE' : 'AU_DEPOT';
+  /**
+   * Label d'état (évite condition dans HTML)
+   * - Si assignedTo => ASSIGNÉ
+   * - Sinon si idDepot => AU DÉPÔT
+   * - Sinon —
+   */
+  vehicleStateLabel(v: Vehicle): string {
+    if ((v as any).assignedTo) return 'ASSIGNÉ';
+    if ((v as any).idDepot) return 'AU DÉPÔT';
+    return '—';
   }
 
-  /** ✅ Convertit ce que renvoie VehicleService (any[]) en Vehicle[] sans `any` dans ce composant */
-  private toVehicles(value: unknown): Vehicle[] {
-    if (!Array.isArray(value)) return [];
-    const out: Vehicle[] = [];
+  /* =============================
+   * Actions UI : "Voir tout" + "Modifier"
+   * (alignées sur Matériels/Consommables)
+   * ============================= */
 
-    for (const it of value) {
-      const v = this.parseVehicle(it);
-      if (v) out.push(v);
-    }
-    return out;
-  }
-
-  private parseVehicle(it: unknown): Vehicle | null {
-    if (!it || typeof it !== 'object') return null;
-
-    // lecture safe via Record<string, unknown>
-    const o = it as Record<string, unknown>;
-    const _id = typeof o['_id'] === 'string' ? o['_id'] : '';
-    if (!_id) return null;
-
-    const plateNumber = typeof o['plateNumber'] === 'string'
-      ? o['plateNumber']
-      : (typeof o['plate'] === 'string' ? o['plate'] : undefined); // compat si backend = plate
-
-    const brand = typeof o['brand'] === 'string' ? o['brand'] : undefined;
-    const model = typeof o['model'] === 'string' ? o['model'] : undefined;
-    const assignedTo = typeof o['assignedTo'] === 'string' ? o['assignedTo'] : undefined;
-    const idDepot = typeof o['idDepot'] === 'string' ? o['idDepot'] : undefined;
-
-    return {
-      _id,
-      plateNumber,
-      brand,
-      model,
-      assignedTo,
-      idDepot,
-      createdAt: typeof o['createdAt'] === 'string' || o['createdAt'] instanceof Date ? (o['createdAt'] as string | Date) : undefined,
-      updatedAt: typeof o['updatedAt'] === 'string' || o['updatedAt'] instanceof Date ? (o['updatedAt'] as string | Date) : undefined,
-    };
-  }
-
-  // -----------------------------
-  // UI actions
-  // -----------------------------
+  // ----- Voir tout
   openAllMaterials(): void {
-    this.router.navigate(['/admin/resources/materials'], {queryParams: {depot: this.id}});
+    this.router.navigate(['/admin/resources/materials'], { queryParams: { depot: this.id } });
   }
 
   openAllConsumables(): void {
-    this.router.navigate(['/admin/resources/consumables'], {queryParams: {depot: this.id}});
+    this.router.navigate(['/admin/resources/consumables'], { queryParams: { depot: this.id } });
   }
 
   openAllVehicles(): void {
-    this.router.navigate(['/admin/resources/vehicles'], {queryParams: {depot: this.id}});
+    this.router.navigate(['/admin/resources/vehicles'], { queryParams: { depot: this.id } });
   }
 
+  openAllTechnicians(): void {
+    this.router.navigate(['/admin/users'], { queryParams: { depot: this.id, role: 'TECHNICIEN' } });
+  }
+
+  // ----- Modifier
   editMaterial(m: Material): void {
     this.router.navigate(['/admin/resources/materials', m._id, 'edit']);
   }
 
-  editConsumable(c: Consumable): void {
+  modifierConsumable(c: Consumable): void {
+    // tu avais déjà cette méthode, on la garde (nom FR)
     this.router.navigate(['/admin/resources/consumables', c._id, 'edit']);
   }
 
-  // pas de détail véhicule encore -> on garde simple
-  openVehicle(v: Vehicle): void {
-    this.router.navigate(['/admin/resources/vehicles'], {queryParams: {depot: this.id}});
+  editVehicle(v: Vehicle): void {
+    this.router.navigate(['/admin/resources/vehicles', v._id, 'edit']);
   }
 
-  // -----------------------------
-  // Labels (lisibles et utiles)
-  // -----------------------------
-  materialQtyLabel(m: Material): string {
-    const q = typeof m.quantity === 'number' ? m.quantity : 0;
-    const a = typeof m.assignedQuantity === 'number' ? m.assignedQuantity : 0;
-    const free = Math.max(0, q - a);
-    return `stock ${q} • attribué ${a} • dispo ${free}`;
-  }
-
-  consumableQtyLabel(c: Consumable): string {
-    const q = typeof c.quantity === 'number' ? c.quantity : 0;
-    const a = typeof c.assignedQuantity === 'number' ? c.assignedQuantity : 0;
-    const free = Math.max(0, q - a);
-    return `stock ${q} • réservé ${a} • dispo ${free}`;
-  }
-
-  /* =============================
-   * Chargement techniciens
-   * ============================= */
-
-  private loadTechnicians(depotId: string): void {
-    this.techLoading.set(true);
-    this.techError.set(null);
-
-    this.userService.refreshUsers(true, {
-      depot: depotId,
-      role: 'TECHNICIEN',
-      page: 1,
-      limit: 50
-    }).subscribe({
-      next: result => {
-        this.technicians.set(result.items ?? []);
-        this.techLoading.set(false);
-      },
-      error: err => {
-        this.techLoading.set(false);
-        this.techError.set(err?.error?.message || 'Erreur chargement techniciens');
-      }
-    });
-  }
-
-  /* =============================
-   * Navigation
-   * ============================= */
-
-  back(): void {
-    this.router.navigate(['/admin/depots']);
+  editTechnician(t: User): void {
+    this.router.navigate(['/admin/users', t._id, 'edit']);
   }
 
   edit(): void {
@@ -446,11 +409,13 @@ export class DepotDetail {
     // managerId peut être string (ObjectId) OU objet peuplé (DepotManager)
     const raw = this.depot()?.managerId ?? null;
     const currentId =
-      raw && typeof raw === 'object' ? raw._id : (typeof raw === 'string' ? raw : null);
+      raw && typeof raw === 'object'
+        ? (raw as any)._id
+        : (typeof raw === 'string' ? raw : null);
 
     this.selectedManagerId.set(currentId);
 
-    // charge candidats (on part sur GESTION_DEPOT uniquement)
+    // charge candidats (role GESTION_DEPOT)
     this.loadManagerCandidates();
   }
 
@@ -460,7 +425,7 @@ export class DepotDetail {
   }
 
   onManagerSelect(event: Event): void {
-    const target = event.target as HTMLSelectElement | null;
+    const target = event.target instanceof HTMLSelectElement ? event.target : null;
     const value = target?.value ?? '';
     this.selectedManagerId.set(value ? value : null);
   }
@@ -469,19 +434,15 @@ export class DepotDetail {
     this.managerCandidatesLoading.set(true);
     this.managerError.set(null);
 
-    this.userService.refreshUsers(true, {
-      role: 'GESTION_DEPOT',
-      page: 1,
-      limit: 100
-    }).subscribe({
-      next: result => {
+    this.userService.refreshUsers(true, { role: 'GESTION_DEPOT', page: 1, limit: 100 }).subscribe({
+      next: (result) => {
         this.managerCandidates.set(result.items ?? []);
         this.managerCandidatesLoading.set(false);
       },
-      error: err => {
+      error: (err) => {
         this.managerCandidatesLoading.set(false);
         this.managerError.set(err?.error?.message || 'Erreur chargement des gestionnaires');
-      }
+      },
     });
   }
 
@@ -492,16 +453,17 @@ export class DepotDetail {
     this.managerSaving.set(true);
     this.managerError.set(null);
 
+    // assignManager(depotId, managerId|null)
     this.depotService.assignManager(depotId, this.selectedManagerId()).subscribe({
-      next: updated => {
+      next: (updated) => {
         this.depot.set(updated);
         this.managerSaving.set(false);
         this.managerEditOpen.set(false);
       },
-      error: err => {
+      error: (err) => {
         this.managerSaving.set(false);
         this.managerError.set(err?.error?.message || 'Erreur assignation gestionnaire');
-      }
+      },
     });
   }
 
@@ -510,18 +472,12 @@ export class DepotDetail {
     this.saveManager();
   }
 
-
-  modifierConsumable(c: Consumable): void {
-    this.router.navigate(['/admin/resources/consumables', c._id, 'edit']);
-    // ou ouvrir un modal plus tard
+  openTechnician(t: { _id: string }): void {
+    this.router.navigate(['/admin/users', t._id, 'detail']); // adapte si ta route diffère
   }
 
-  private loadStats(depotId: string): void {
-    this.depotService.getDepotStats(depotId).subscribe({
-      next: s => this.stats.set(s),
-      error: () => this.stats.set(null),
-    });
+  openVehicleDetail(v: { _id: string }): void {
+    this.router.navigate(['/admin/resources/vehicles', v._id, 'detail']);
   }
 
-  protected readonly Boolean = Boolean;
 }

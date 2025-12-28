@@ -3,8 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Consumable } from '../models';
-import { ConsumableListResult } from '../models/consumable-list-result.model';
+import {AttributionHistoryResult, ConsumableListResult, Consumable} from '../models';
 
 /**
  * Enveloppe API standard côté backend :
@@ -59,6 +58,12 @@ function isApiResponse<T>(v: unknown): v is ApiResponse<T> {
 @Injectable({ providedIn: 'root' })
 export class ConsumableService {
   private baseUrl = `${environment.apiBaseUrl}/consumables`;
+
+  private handleError(err: HttpErrorResponse) {
+    this._error.set(err);
+    this._loading.set(false);
+    return throwError(() => err);
+  }
 
   // -----------------------------
   // Signals (state moderne)
@@ -206,4 +211,22 @@ export class ConsumableService {
       .post<ReserveConsumableResult>(`${this.baseUrl}/reserve`, payload)
       .pipe(catchError((err: HttpErrorResponse) => this.handleHttpError(err)));
   }
+
+  // -----------------------------
+  // HISTORY
+  // -----------------------------
+  history(consumableId: string, page = 1, limit = 25): Observable<AttributionHistoryResult> {
+    const safePage = page > 0 ? page : 1;
+    const safeLimit = limit > 0 ? limit : 25;
+
+    let params = new HttpParams()
+      .set('page', String(safePage))
+      .set('limit', String(safeLimit));
+
+    return this.http.get<ApiResponse<AttributionHistoryResult>>(`${this.baseUrl}/${consumableId}/history`, { params }).pipe(
+      map(resp => resp.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+
 }

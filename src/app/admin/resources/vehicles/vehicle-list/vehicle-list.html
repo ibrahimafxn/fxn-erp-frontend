@@ -1,7 +1,7 @@
-<section class="users-list">
+<section class="vehicles-list">
   <header class="page-header">
     <div>
-      <h1>Utilisateurs</h1>
+      <h1>Véhicules</h1>
       <p class="subtitle">Recherche, filtres, pagination et actions rapides.</p>
     </div>
 
@@ -12,24 +12,8 @@
   </header>
 
   <section class="toolbar card">
-    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()" autocomplete="off">
-      <!-- ✅ Anti-autofill (cause de q=ibrahima...) -->
-      <input
-        type="search"
-        formControlName="q"
-        placeholder="Rechercher (nom, email, téléphone, username)…"
-        autocomplete="new-password"
-        autocapitalize="off"
-        spellcheck="false"
-      />
-
-      <select formControlName="role">
-        <option value="">Tous les rôles</option>
-        <option value="DIRIGEANT">DIRIGEANT</option>
-        <option value="ADMIN">ADMIN</option>
-        <option value="GESTION_DEPOT">GESTION_DEPOT</option>
-        <option value="TECHNICIEN">TECHNICIEN</option>
-      </select>
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
+      <input type="text" formControlName="q" placeholder="Rechercher (plaque, marque, modèle)…" />
 
       <select formControlName="depot">
         <option value="">Tous les dépôts</option>
@@ -63,59 +47,46 @@
   } @else if (error()) {
     <div class="state error card"><strong>Erreur :</strong> {{ errorMessage() }}</div>
   } @else if (items().length === 0) {
-    <div class="state empty card">Aucun utilisateur trouvé.</div>
+    <div class="state empty card">Aucun véhicule trouvé.</div>
   } @else {
     <div class="table card">
       <table>
         <thead>
         <tr>
-          <th>Utilisateur</th>
-          <th>Email</th>
-          <th>Rôle</th>
-          <th>Dépôt</th>
+          <th>Véhicule</th>
+          <th>Plaque</th>
+          <th>État</th>
           <th>Création</th>
           <th class="actions">Actions</th>
         </tr>
         </thead>
 
         <tbody>
-          @for (u of items(); track trackById) {
-            <tr class="row" (click)="openDetail(u)">
+          @for (v of items(); track trackById) {
+            <tr class="row" (click)="openDetail(v)">
               <td class="main">
-                <div class="name">{{ u.firstName }} {{ u.lastName || '' }}</div>
-                <div class="sub">{{ u.phone || '—' }}</div>
+                <div class="name">{{ title(v) }}</div>
+                <div class="sub">{{ v.year || '—' }}</div>
               </td>
 
-              <td>{{ u.email || '—' }}</td>
+              <td>{{ plate(v) }}</td>
+              <td>{{ v.state || '—' }}</td>
 
               <td>
-                <span class="badge">{{ u.role || '—' }}</span>
+                @if (createdAtValue(v)) { {{ createdAtValue(v) | date:'short' }} } @else { — }
               </td>
 
-              <td>{{ depotLabel(u) }}</td>
-
-                <td>
-                @if (createdAtValue(u)) {
-                  {{ formatDate(u.createdAt)}}
-                } @else {
-                  —
-                }
-              </td>
-
-              <!-- ✅ stopPropagation + espace entre boutons -->
               <td class="actions" (click)="$event.stopPropagation()">
-                <div class="actions-group">
-                  <button class="btn-outline" type="button" (click)="edit(u)">
-                    Modifier
-                  </button>
+                <div class="actions-row">
+                  <button class="btn-outline" type="button" (click)="edit(v)">Modifier</button>
 
                   <button
                     class="btn-danger"
                     type="button"
-                    [disabled]="deletingId() === u._id"
-                    (click)="openDeleteModal('l’utilisateur', u._id, (u.firstName + ' ' + (u.lastName || '')).trim())"
+                    [disabled]="deletingId() === v._id"
+                    (click)="openDeleteModal(v)"
                   >
-                    @if (deletingId() === u._id) { Suppression… } @else { Supprimer }
+                    @if (deletingId() === v._id) { Suppression… } @else { Supprimer }
                   </button>
                 </div>
               </td>
@@ -126,23 +97,25 @@
     </div>
 
     <footer class="pager">
-      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">
         ← Précédent
       </button>
 
-      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()">
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">
         Suivant →
       </button>
     </footer>
   }
+
   <app-confirm-delete-modal
     [open]="deleteModalOpen()"
     [entityLabel]="pendingDeleteLabel()"
     [entityName]="pendingDeleteName()"
     [entityId]="pendingDeleteId()"
-    [confirming]="pendingDeleteId() !== null && deletingId() === pendingDeleteId()"
+    [confirming]="confirmingDelete()"
     (cancel)="closeDeleteModal()"
-    (confirm)="confirmDelete()"
-  />
+    (confirm)="confirmDelete()">
+  </app-confirm-delete-modal>
+
 
 </section>

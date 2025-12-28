@@ -10,9 +10,6 @@
             Détail dépôt
           }
         </div>
-        @if (hasDepot()) {
-          <span class="pill">Dépôt</span>
-        }
       </div>
 
       <div class="subtitle">
@@ -22,7 +19,6 @@
 
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="back()">Retour</button>
-      <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasDepot()">Modifier</button>
       <button class="btn-outline" type="button" (click)="load()">Recharger</button>
     </div>
   </header>
@@ -148,14 +144,12 @@
               }
             </span>
           </div>
-
         </div>
 
         <div class="divider"></div>
 
         <div class="card-actions">
-          <button class="btn-outline" type="button" (click)="load()">Actualiser</button>
-          <button class="btn-primary" type="button" (click)="edit()">Modifier</button>
+          <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasDepot()">Modifier</button>
         </div>
       </article>
 
@@ -188,16 +182,19 @@
           </div>
         </div>
 
-        <p class="note">
+        <span class="note">
           Endpoint attendu : <span class="mono">/api/depots/:id/stats</span>
-        </p>
+        </span>
       </article>
 
       <!-- TECHNICIENS -->
       <article class="card">
         <div class="card-title-row">
           <h2>Techniciens rattachés</h2>
-          <span class="pill">{{ technicians().length }}</span>
+        </div>
+
+        <div class="card-actions left">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllTechnicians()">Voir tout</button>
         </div>
 
         @if (techLoading()) {
@@ -209,7 +206,7 @@
         } @else {
           <div class="mini-list">
             @for (t of technicians(); track t._id) {
-              <div class="mini-row">
+              <div class="mini-row clickable" (click)="openTechnician(t)">
                 <div class="mini-left">
                   <div class="mini-name">{{ t.firstName }} {{ t.lastName || '' }}</div>
                   <div class="mini-sub">
@@ -219,8 +216,10 @@
                   </div>
                 </div>
 
-                <div class="mini-right">
-                  <span class="role-badge">TECHNICIEN</span>
+                <div class="mini-right" (click)="$event.stopPropagation()">
+                  <button class="btn-outline btn-xs" type="button" (click)="editTechnician(t)">
+                    Modifier
+                  </button>
                 </div>
               </div>
             }
@@ -232,13 +231,10 @@
       <article class="card">
         <div class="card-title-row">
           <h2>Matériels rattachés</h2>
-          <span class="pill">{{ materials().length }}</span>
         </div>
 
-        <div class="card-actions" style="justify-content:flex-start">
-          <button class="btn-outline btn-xs" type="button" (click)="openAllMaterials()">
-            Voir tout
-          </button>
+        <div class="card-actions left">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllMaterials()">Voir tout</button>
         </div>
 
         @if (materialsLoading()) {
@@ -275,13 +271,10 @@
       <article class="card">
         <div class="card-title-row">
           <h2>Consommables rattachés</h2>
-          <span class="pill">{{ consumables().length }}</span>
         </div>
 
-        <div class="card-actions" style="justify-content:flex-start">
-          <button class="btn-outline btn-xs" type="button" (click)="openAllConsumables()">
-            Voir tout
-          </button>
+        <div class="card-actions left">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllConsumables()">Voir tout</button>
         </div>
 
         @if (consumablesLoading()) {
@@ -318,7 +311,10 @@
       <article class="card">
         <div class="card-title-row">
           <h2>Véhicules au dépôt</h2>
-          <span class="pill">{{ vehicles().length }}</span>
+        </div>
+
+        <div class="card-actions left">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllVehicles()">Voir tout</button>
         </div>
 
         @if (vehiclesLoading()) {
@@ -330,7 +326,7 @@
         } @else {
           <div class="mini-list">
             @for (v of vehicles(); track v._id) {
-              <div class="mini-row">
+              <div class="mini-row clickable" (click)="openVehicleDetail(v)">
                 <div class="mini-left">
                   <div class="mini-name">
                     {{ vehiclePlate(v) }}
@@ -340,15 +336,15 @@
 
                   <div class="mini-sub">
                     <span>Année : {{ vehicleYear(v) }}</span>
+                    <span class="dot">•</span>
+                    <span>{{ vehicleStateLabel(v) }}</span>
                   </div>
                 </div>
 
-                <div class="mini-right">
-                  @if (vehicleState(v) === 'AU_DEPOT') {
-                    <span class="role-badge">AU DÉPÔT</span>
-                  } @else {
-                    <span class="role-badge">ASSIGNÉ</span>
-                  }
+                <div class="mini-right" (click)="$event.stopPropagation()">
+                  <button class="btn-outline btn-xs" type="button" (click)="editVehicle(v)">
+                    Modifier
+                  </button>
                 </div>
               </div>
             }

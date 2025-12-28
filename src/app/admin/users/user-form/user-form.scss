@@ -74,6 +74,18 @@
   opacity: 1;
 }
 
+.inline-actions {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
 .form-actions {
   margin-top: 1rem;
   display: flex;

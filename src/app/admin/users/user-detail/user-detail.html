@@ -7,8 +7,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="goBack()">← Retour</button>
-      <button class="btn-outline" type="button" (click)="load()">Recharger</button>
+      <button class="btn-outline" type="button" (click)="back()">← Retour</button>
     </div>
   </header>
 
@@ -49,7 +48,7 @@
 
         <div class="info-item">
           <label>Dépôt</label>
-          <span>{{ idDepotText() }}</span>
+          <span>{{ depotText() }}</span>
         </div>
 
         <div class="info-item">
@@ -85,4 +84,16 @@
   } @else {
     <div class="state empty">Utilisateur introuvable.</div>
   }
+
+  <!-- ✅ Modal suppression -->
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    entityLabel="l’utilisateur"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    [confirming]="deleting()"
+    dangerHint="Cette action est irréversible."
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()"
+  />
 </section>

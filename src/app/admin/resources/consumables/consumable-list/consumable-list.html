@@ -1,19 +1,27 @@
-<section class="depot-list">
+<section class="consumables-list">
   <header class="page-header">
     <div>
-      <h1>Dépôts</h1>
-      <p class="subtitle">Recherche, création et accès rapide aux détails d’un dépôt.</p>
+      <h1>Consommables</h1>
+      <p class="subtitle">Recherche, tri simple, pagination et actions rapides.</p>
     </div>
 
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="back()">Retour</button>
-      <button class="btn-primary" type="button" (click)="createNew()">Nouveau dépôt</button>
+      <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
     </div>
   </header>
 
   <section class="toolbar card">
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
-      <input type="text" formControlName="q" placeholder="Rechercher (nom, ville, adresse, téléphone)…" />
+      <input type="text" formControlName="q" placeholder="Rechercher (nom, unité)…" />
+
+      <select formControlName="depot">
+        <option value="">Tous les dépôts</option>
+        @for (d of depots(); track d._id) {
+          <option [value]="d._id">{{ d.name }}</option>
+        }
+      </select>
+
       <button class="btn-outline" type="submit">Rechercher</button>
       <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
     </form>
@@ -41,49 +49,52 @@
       <strong>Erreur :</strong> {{ errorMessage() }}
     </div>
   } @else if (items().length === 0) {
-    <div class="state empty card">Aucun dépôt trouvé.</div>
+    <div class="state empty card">Aucun consommable trouvé.</div>
   } @else {
     <div class="table card">
       <table>
         <thead>
         <tr>
+          <th>Consommable</th>
+          <th>Unité</th>
+          <th>Quantité</th>
           <th>Dépôt</th>
-          <th>Ville</th>
-          <th>Téléphone</th>
-          <th>Gestionnaire</th>
           <th>Création</th>
           <th class="actions">Actions</th>
         </tr>
         </thead>
 
         <tbody>
-          @for (d of items(); track trackById) {
-            <tr class="row" (click)="openDetail(d)">
+          @for (c of items(); track trackById) {
+            <tr class="row">
               <td class="main">
-                <div class="name">{{ d.name }}</div>
-                <div class="sub">{{ d.address || '—' }}</div>
+                <div class="name">{{ c.name }}</div>
               </td>
 
-              <td>{{ d.city || '—' }}</td>
-              <td>{{ d.phone || '—' }}</td>
-              <td><span class="badge">{{ managerLabel(d) }}</span></td>
+              <td>{{ c.unit }}</td>
+              <td>{{ c.quantity }}</td>
+              <td>{{ depotLabel(c) }}</td>
 
               <td>
-                @if (createdAtValue(d)) { {{ createdAtValue(d) | date:'short' }} } @else { — }
+                @if (createdAtValue(c)) {
+                  {{ createdAtValue(c) | date: 'short' }}
+                } @else {
+                  —
+                }
               </td>
 
               <td class="actions" (click)="$event.stopPropagation()">
-                <button class="btn-outline" type="button" (click)="edit(d)">
+                <button class="btn-outline" type="button" (click)="edit(c)">
                   Modifier
                 </button>
 
                 <button
                   class="btn-danger"
                   type="button"
-                  [disabled]="deletingId() === d._id"
-                  (click)="openDeleteModal(d)"
+                  [disabled]="deletingId() === c._id"
+                  (click)="openDeleteModal(c)"
                 >
-                  @if (deletingId() === d._id) { Suppression… } @else { Supprimer }
+                  @if (deletingId() === c._id) { Suppression… } @else { Supprimer }
                 </button>
               </td>
             </tr>
@@ -106,7 +117,7 @@
   <!-- ✅ MODAL suppression -->
   <app-confirm-delete-modal
     [open]="deleteModalOpen()"
-    entityLabel="le dépôt"
+    entityLabel="le consommable"
     [entityName]="pendingDeleteName()"
     [entityId]="pendingDeleteId()"
     [confirming]="pendingDeleteId() !== null && deletingId() === pendingDeleteId()"

@@ -21,6 +21,10 @@
 
   @media (max-width: 900px) { grid-template-columns: 1fr; }
 }
+/* Optionnel : sécurise au cas où une card serait encore stretchée */
+.grid > .card {
+  align-self: start;
+}
 
 .card {
   padding: 1rem;
@@ -137,4 +141,30 @@
   padding: .4rem .65rem;
   border-radius: .7rem;
   font-size: .85rem;
+}
+
+/* Alignement cohérent des actions "Voir tout" */
+.card-actions.left {
+  justify-content: flex-start;
+}
+
+.mini-row.clickable {
+  cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+
+  &:hover {
+    border-color: rgba(255,255,255,.18);
+    background: rgba(255,255,255,.06);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+/* Bonus UX : zone bouton clairement séparée */
+.mini-right {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
 }

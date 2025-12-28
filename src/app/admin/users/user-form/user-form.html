@@ -1,93 +1,124 @@
-<section class="user-form-page">
-
-  <header class="page-header">
+<section class="user-form">
+  <header class="page-header card">
     <div>
-      <h1>
-        @if (isEdit()) { Modifier un utilisateur } @else { Créer un utilisateur }
-      </h1>
-      <p class="subtitle">
-        Renseigne les informations principales. Tu pourras lier dépôt / véhicule plus tard.
-      </p>
+      <h1>@if (isEdit()) { Modifier utilisateur } @else { Nouvel utilisateur }</h1>
+      <p class="subtitle">Création / modification d’un utilisateur + rattachements.</p>
     </div>
 
-    <button type="button" class="btn-outline" (click)="cancel()">Retour</button>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()">Retour</button>
+      <button class="btn-primary" type="button" (click)="submit()" [disabled]="saving()">
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
   </header>
 
-  <!-- Statuts -->
   @if (loading()) {
-    <div class="status">Chargement…</div>
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (success()) {
+    <div class="state success card">{{ success() }}</div>
   }
 
-  @if (!loading() && error()) {
-    @let err = error();
-    <div class="status error">
-      <span>Erreur :</span>
-      <code>{{ err }}</code>
-    </div>
-  }
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <div class="field">
+        <label>Prénom *</label>
+        <input type="text" formControlName="firstName" placeholder="Ex: Ibrahima" />
+        @if (fieldError('firstName')) {
+          <small class="hint error">{{ fieldError('firstName') }}</small>
+        }
+      </div>
 
-  @if (!loading() && success()) {
-    <div class="status success">{{ success() }}</div>
-  }
+      <div class="field">
+        <label>Nom</label>
+        <input type="text" formControlName="lastName" placeholder="Ex: COULIBALY" />
+      </div>
 
-  <!-- Formulaire -->
-  @if (!loading()) {
-    <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field">
+        <label>Email *</label>
+        <input type="email" formControlName="email" placeholder="ex: ibrahima@fxn.fr" />
+        @if (fieldError('email')) {
+          <small class="hint error">{{ fieldError('email') }}</small>
+        }
+      </div>
 
-      <div class="grid">
-        <div class="field">
-          <label>Prénom *</label>
-          <input type="text" formControlName="firstName" placeholder="Ex: Ibrahima" />
-          @if (fieldError('firstName')) {
-            <div class="hint error">{{ fieldError('firstName') }}</div>
+      <div class="field">
+        <label>Téléphone</label>
+        <input type="text" formControlName="phone" placeholder="06…" />
+      </div>
+
+      <div class="field">
+        <label>Rôle *</label>
+        <select formControlName="role">
+          @for (r of roles; track r.value) {
+            <option [value]="r.value">{{ r.label }}</option>
           }
-        </div>
+        </select>
+      </div>
 
-        <div class="field">
-          <label>Nom</label>
-          <input type="text" formControlName="lastName" placeholder="Ex: Coulibaly" />
-        </div>
+      <!-- Dépôt (select par nom) -->
+      <div class="field">
+        <label>Dépôt</label>
 
-        <div class="field">
-          <label>Email *</label>
-          <input type="email" formControlName="email" placeholder="ex: admin@fxn.local" />
-          @if (fieldError('email')) {
-            <div class="hint error">{{ fieldError('email') }}</div>
-          }
-        </div>
-
-        <div class="field">
-          <label>Téléphone</label>
-          <input type="text" formControlName="phone" placeholder="06..." />
-        </div>
-
-        <div class="field">
-          <label>Rôle *</label>
-          <select formControlName="role">
-            @for (r of roles; track r.value) {
-              <option [value]="r.value">{{ r.label }}</option>
+        @if (depotsLoading()) {
+          <div class="hint">Chargement des dépôts…</div>
+        } @else {
+          <select formControlName="idDepot">
+            <option value="">— Aucun dépôt —</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ d.name }} @if (d.city) { · {{ d.city }} }</option>
             }
           </select>
-        </div>
-
-        <div class="field">
-          <label>ID Dépôt (optionnel)</label>
-          <input type="text" formControlName="idDepot" placeholder="ObjectId Mongo" />
-        </div>
-
-        <div class="field">
-          <label>Véhicule attribué (optionnel)</label>
-          <input type="text" formControlName="assignedVehicle" placeholder="ObjectId Mongo" />
-        </div>
+          <small class="hint">Sélection actuelle : {{ depotLabelById(form.get('idDepot')?.value || '') }}</small>
+        }
       </div>
 
-      <div class="form-actions">
-        <button type="button" class="btn-outline" (click)="cancel()">Annuler</button>
+      <!-- Véhicule (désactivé si rôle != TECHNICIEN) -->
+      <div class="field">
+        <label>Véhicule</label>
 
-        <button type="submit" class="btn-primary" [disabled]="saving()">
-          @if (saving()) { Enregistrement… } @else { Enregistrer }
-        </button>
+        @if (!isTechnician()) {
+          <div class="hint">
+            Le véhicule est assignable uniquement aux <strong>Techniciens</strong>.
+          </div>
+        }
+
+        <div class="inline-actions">
+          <label class="checkbox">
+            <input
+              type="checkbox"
+              [checked]="showOnlyAvailableVehicles()"
+              (change)="onToggleAvailable($event)"
+              [disabled]="!isTechnician()"
+            />
+            <span>Afficher uniquement les véhicules disponibles</span>
+          </label>
+        </div>
+
+        @if (vehiclesLoading()) {
+          <div class="hint">Chargement des véhicules…</div>
+        } @else {
+          <select formControlName="assignedVehicle" [disabled]="!isTechnician()">
+            <option value="">— Aucun véhicule —</option>
+            @for (v of vehicleOptions(); track v._id) {
+              <option [value]="v._id">{{ vehicleLabel(v) }}</option>
+            }
+          </select>
+
+          @if (isTechnician()) {
+            <small class="hint">Astuce : en édition, le véhicule déjà assigné reste visible.</small>
+          }
+        }
       </div>
-    </form>
-  }
+    </div>
+
+    <div class="actions">
+      <button class="btn-outline" type="button" (click)="cancel()">Annuler</button>
+      <button class="btn-primary" type="submit" [disabled]="saving() || form.invalid">
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </form>
 </section>

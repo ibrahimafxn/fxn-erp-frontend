@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { Material } from '../models';
+import {AttributionHistoryResult, Material} from '../models';
 
 export interface MaterialListResult {
   total: number;
@@ -107,4 +107,22 @@ export class MaterialService {
       catchError(err => this.handleError(err))
     );
   }
+
+  // -----------------------------
+  // HISTORY
+  // -----------------------------
+  history(materialId: string, page = 1, limit = 25): Observable<AttributionHistoryResult> {
+    const safePage = page > 0 ? page : 1;
+    const safeLimit = limit > 0 ? limit : 25;
+
+    let params = new HttpParams()
+      .set('page', String(safePage))
+      .set('limit', String(safeLimit));
+
+    return this.http.get<ApiResponse<AttributionHistoryResult>>(`${this.baseUrl}/${materialId}/history`, { params }).pipe(
+      map(resp => resp.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+
 }

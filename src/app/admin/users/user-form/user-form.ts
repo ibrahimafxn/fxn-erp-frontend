@@ -1,24 +1,30 @@
-import {Component, computed, inject, signal} from '@angular/core';
-import {CommonModule} from '@angular/common';
-import {FormBuilder, ReactiveFormsModule, Validators} from '@angular/forms';
-import {ActivatedRoute, Router, RouterModule} from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 
-import {UserService} from '../../../core/services/user.service';
-import {User} from '../../../core/models';
-import {Role} from '../../../core/models/roles.model';
+import { UserService } from '../../../core/services/user.service';
+import { DepotService } from '../../../core/services/depot.service';
+import { VehicleService } from '../../../core/services/vehicle.service';
+
+import { Role, User, Depot, Vehicle } from '../../../core/models';
+import {DetailBack} from '../../../core/utils/detail-back';
+
+type IdOrPopulated = string | { _id: string } | null | undefined;
 
 @Component({
   standalone: true,
   selector: 'app-user-form',
   templateUrl: './user-form.html',
   styleUrls: ['./user-form.scss'],
-  imports: [CommonModule, ReactiveFormsModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
 })
-export class UserForm {
+export class UserForm extends DetailBack {
   private fb = inject(FormBuilder);
   private usersService = inject(UserService);
+  private depotService = inject(DepotService);
+  private vehicleService = inject(VehicleService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
 
   // -----------------------------
   // Mode page : create vs edit
@@ -35,41 +41,124 @@ export class UserForm {
   readonly success = signal<string | null>(null);
 
   // -----------------------------
+  // Depots & Vehicles pour selects
+  // -----------------------------
+  readonly depots = signal<Depot[]>([]);
+  readonly depotsLoading = signal(false);
+
+  readonly vehicles = signal<Vehicle[]>([]);
+  readonly vehiclesLoading = signal(false);
+
+  // UX: filtre véhicules disponibles
+  readonly showOnlyAvailableVehicles = signal(true);
+
+  // -----------------------------
   // Roles (doit matcher backend)
   // -----------------------------
   readonly roles = [
     { value: Role.DIRIGEANT, label: 'Dirigeant' },
     { value: Role.ADMIN, label: 'Administrateur' },
     { value: Role.GESTION_DEPOT, label: 'Gestion dépôt' },
-    { value: Role.TECHNICIEN, label: 'Technicien' }
+    { value: Role.TECHNICIEN, label: 'Technicien' },
   ];
 
   // -----------------------------
   // Formulaire
   // -----------------------------
-  readonly form = this.fb.group({
-    firstName: ['', [Validators.required, Validators.minLength(2)]],
-    lastName: [''],
-    email: ['', [Validators.required, Validators.email]],
-    phone: [''],
-    role: [Role.TECHNICIEN as any, [Validators.required]],
+  readonly form = this.fb.nonNullable.group({
+    firstName: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
+    lastName: this.fb.nonNullable.control(''),
+    email: this.fb.nonNullable.control('', [Validators.required, Validators.email]),
+    phone: this.fb.nonNullable.control(''),
+    role: this.fb.nonNullable.control(Role.TECHNICIEN, [Validators.required]),
 
-    /**
-     * idDepot et assignedVehicle : optionnels, souvent renseignés plus tard
-     * (on les laisse en champ texte pour le moment, tu mettras des selects plus tard)
-     */
-    idDepot: [''],
-    assignedVehicle: ['']
+    // selects (ids)
+    idDepot: this.fb.nonNullable.control(''),          // '' => null côté payload
+    assignedVehicle: this.fb.nonNullable.control(''),  // '' => null côté payload
+  });
+
+  // -----------------------------
+  // UX computed
+  // -----------------------------
+  readonly isTechnician = computed(() => this.form.controls.role.value === Role.TECHNICIEN);
+
+  /** Liste de véhicules à proposer dans le select */
+  readonly vehicleOptions = computed(() => {
+    const all = this.vehicles() ?? [];
+    const onlyAvail = this.showOnlyAvailableVehicles();
+
+    // valeur sélectionnée (en edit, peut être un véhicule déjà assigné)
+    const selectedId = this.form.controls.assignedVehicle.value || '';
+
+    const normalizeAvail = (v: Vehicle): boolean => {
+      // Disponible si non assigné (assignedTo null/undefined/'')
+      return !v.assignedTo;
+    };
+
+    let list = all;
+
+    if (onlyAvail) {
+      list = all.filter((v) => normalizeAvail(v) || v._id === selectedId);
+    }
+
+    // Tri: disponibles d’abord puis par plaque
+    list = [...list].sort((a, b) => {
+      const aAvail = normalizeAvail(a) ? 0 : 1;
+      const bAvail = normalizeAvail(b) ? 0 : 1;
+      if (aAvail !== bAvail) return aAvail - bAvail;
+
+      const ap = (a.plateNumber ?? '').toLowerCase();
+      const bp = (b.plateNumber ?? '').toLowerCase();
+      return ap.localeCompare(bp);
+    });
+
+    return list;
   });
 
   constructor() {
-    // Récupère l'id dans l’URL : /admin/users/:id
+    super();
+    this.loadDepots();
+    this.loadVehicles();
+
     const id = this.route.snapshot.paramMap.get('id');
-    // Si id === "new" (au cas où), on ignore
     if (id && id !== 'new') {
       this.userId.set(id);
       this.loadUser(id);
     }
+
+    // ✅ UX: si role change et devient ≠ TECHNICIEN -> on vide assignedVehicle
+    this.form.controls.role.valueChanges.subscribe((role) => {
+      if (role !== Role.TECHNICIEN) {
+        this.form.controls.assignedVehicle.setValue('');
+      }
+    });
+  }
+
+  // -----------------------------
+  // Data loading selects
+  // -----------------------------
+  private loadDepots(): void {
+    this.depotsLoading.set(true);
+
+    this.depotService.refreshDepots(true, { page: 1, limit: 500 }).subscribe({
+      next: (res) => {
+        this.depots.set(res.items ?? []);
+        this.depotsLoading.set(false);
+      },
+      error: () => this.depotsLoading.set(false),
+    });
+  }
+
+  private loadVehicles(): void {
+    this.vehiclesLoading.set(true);
+
+    this.vehicleService.refresh(true, { page: 1, limit: 500 }).subscribe({
+      next: (res) => {
+        this.vehicles.set(res.items ?? []);
+        this.vehiclesLoading.set(false);
+      },
+      error: () => this.vehiclesLoading.set(false),
+    });
   }
 
   // -----------------------------
@@ -81,15 +170,19 @@ export class UserForm {
 
     this.usersService.getUser(id).subscribe({
       next: (u: User) => {
-        // Patch minimal : on ne patch pas password
+        const idDepot = this.extractId((u as unknown as { idDepot?: IdOrPopulated }).idDepot) ?? '';
+        const assignedVehicle =
+          this.extractId((u as unknown as { assignedVehicle?: IdOrPopulated }).assignedVehicle) ?? '';
+
         this.form.patchValue({
           firstName: u.firstName || '',
           lastName: u.lastName || '',
           email: u.email || '',
           phone: u.phone || '',
-          role: (u.role as any) || Role.TECHNICIEN,
-          idDepot: (u as any).idDepot || '',
-          assignedVehicle: (u as any).assignedVehicle || ''
+          role: (u.role as Role) || Role.TECHNICIEN,
+
+          idDepot,
+          assignedVehicle,
         });
 
         this.loading.set(false);
@@ -97,8 +190,36 @@ export class UserForm {
       error: (err) => {
         this.loading.set(false);
         this.error.set(err?.error?.message || err?.message || 'Erreur chargement utilisateur');
-      }
+      },
     });
+  }
+
+  private extractId(x: IdOrPopulated): string | null {
+    if (!x) return null;
+    if (typeof x === 'string') return x;
+    if (typeof x === 'object' && '_id' in x) return x._id;
+    return null;
+  }
+
+  // -----------------------------
+  // Labels UI
+  // -----------------------------
+  depotLabelById(id: string): string {
+    if (!id) return '—';
+    const d = this.depots().find((x) => x._id === id);
+    return d ? `${d.name}${d.city ? ' · ' + d.city : ''}` : '—';
+  }
+
+  vehicleLabel(v: Vehicle): string {
+    const plate = v.plateNumber ?? '—';
+    const parts: string[] = [];
+    if (v.brand) parts.push(v.brand);
+    if (v.model) parts.push(v.model);
+    const model = parts.join(' ').trim();
+
+    // Badge dispo/assigné en texte (simple)
+    const status = v.assignedTo ? 'Assigné' : 'Disponible';
+    return model ? `${plate} · ${model} — ${status}` : `${plate} — ${status}`;
   }
 
   // -----------------------------
@@ -114,40 +235,41 @@ export class UserForm {
     this.error.set(null);
     this.success.set(null);
 
-    // Prépare payload propre
     const raw = this.form.getRawValue();
 
-    // On supprime les champs vides inutiles
-    const payload: any = {
-      firstName: raw.firstName?.trim(),
-      lastName: raw.lastName?.trim() || undefined,
-      email: raw.email?.trim()?.toLowerCase(),
-      phone: raw.phone?.trim() || undefined,
+    // ✅ Sécurité UX: si pas technicien -> assignedVehicle null
+    const assignedVehicle =
+      raw.role === Role.TECHNICIEN && raw.assignedVehicle ? raw.assignedVehicle : undefined;
+
+    const payload: Partial<User> & {
+      idDepot?: string;
+      assignedVehicle?: string;
+    } = {
+      firstName: raw.firstName.trim(),
+      lastName: raw.lastName.trim() || undefined,
+      email: raw.email.trim().toLowerCase(),
+      phone: raw.phone.trim() || undefined,
       role: raw.role,
 
-      idDepot: raw.idDepot?.trim() ? raw.idDepot.trim() : null,
-      assignedVehicle: raw.assignedVehicle?.trim() ? raw.assignedVehicle.trim() : null
+      idDepot: raw.idDepot ? raw.idDepot : undefined,
+      assignedVehicle,
     };
 
-    // CREATE
     if (!this.isEdit()) {
       this.usersService.createUser(payload).subscribe({
         next: (created) => {
           this.saving.set(false);
           this.success.set(`Utilisateur créé : ${created.firstName} ${created.lastName || ''}`.trim());
-
-          // Redirige vers la liste après création
           setTimeout(() => this.router.navigate(['/admin/users']), 400);
         },
         error: (err) => {
           this.saving.set(false);
           this.error.set(err?.error?.message || err?.message || 'Erreur création utilisateur');
-        }
+        },
       });
       return;
     }
 
-    // UPDATE
     const id = this.userId();
     if (!id) return;
 
@@ -159,7 +281,7 @@ export class UserForm {
       error: (err) => {
         this.saving.set(false);
         this.error.set(err?.error?.message || err?.message || 'Erreur mise à jour utilisateur');
-      }
+      },
     });
   }
 
@@ -167,10 +289,9 @@ export class UserForm {
   // Navigation
   // -----------------------------
   cancel(): void {
-    this.router.navigate(['/admin/users']);
+    this.router.navigate(['/admin/users']).then();
   }
 
-  // Helpers template
   fieldError(name: string): string | null {
     const c = this.form.get(name);
     if (!c || !c.touched || !c.errors) return null;
@@ -181,4 +302,12 @@ export class UserForm {
 
     return 'Valeur invalide';
   }
+
+  onToggleAvailable(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    this.showOnlyAvailableVehicles.set(!!input?.checked);
+  }
+
+
+  protected readonly HTMLInputElement = HTMLInputElement;
 }

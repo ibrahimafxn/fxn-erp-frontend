@@ -1,12 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { DepotService } from '../../../core/services/depot.service';
 import { UserService } from '../../../core/services/user.service';
-import { Depot } from '../../../core/models/depot.model';
-import { User } from '../../../core/models/user.model';
+import { Depot } from '../../../core/models';
+import { User } from '../../../core/models';
+import {DetailBack} from '../../../core/utils/detail-back';
 
 type Mode = 'create' | 'edit';
 
@@ -27,12 +28,11 @@ type ApiValidationError = {
   templateUrl: './depot-form.html',
   styleUrls: ['./depot-form.scss']
 })
-export class DepotForm {
+export class DepotForm extends DetailBack {
   private fb = inject(FormBuilder);
   private depotService = inject(DepotService);
   private userService = inject(UserService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
 
   // -----------------------------
   // State
@@ -70,6 +70,7 @@ export class DepotForm {
   });
 
   constructor() {
+    super();
     this.loadManagers();
 
     if (this.mode() === 'edit') {
@@ -85,10 +86,6 @@ export class DepotForm {
 
   canSubmit(): boolean {
     return this.form.valid && !this.saving();
-  }
-
-  back(): void {
-    this.router.navigate(['/admin/depots']);
   }
 
   /** Récupère l’erreur d’un champ */

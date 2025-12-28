@@ -6,10 +6,12 @@ import {catchError, finalize, map, shareReplay, tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {toObservable} from '@angular/core/rxjs-interop';
 
-import {User} from '../models';
-import {UserListResult} from '../models/user-list-result.model';
+import {User, UserListResult} from '../models';
 
 type ApiResponse<T> = { success: boolean; data: T; message?: string; errors?: any };
+// ✅ payloads
+export type SetAccessPayload = { password: string; mustChangePassword?: boolean };
+export type AccessResult = { _id: string; authEnabled: boolean; mustChangePassword?: boolean };
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -53,9 +55,7 @@ export class UserService {
   // -----------------------------
   // Chargement / refresh
   // -----------------------------
-  refreshUsers(
-    force = false,
-    filter?: { q?: string; role?: string; depot?: string; page?: number; limit?: number }  ): Observable<UserListResult> {
+  refreshUsers(force = false, filter?: { q?: string; role?: string; depot?: string; page?: number; limit?: number }  ): Observable<UserListResult> {
     if (!force && this._usersRequest$) return this._usersRequest$;
 
     this._loading.set(true);
@@ -167,13 +167,28 @@ export class UserService {
   }
 
   // -----------------------------
+  // Connexion
+  // -----------------------------
+
+  setAccess(userId: string, payload: SetAccessPayload) {
+    return this.http.put<{ success: boolean; data: AccessResult }>(`${this.baseUrl}/${userId}/access`, payload);
+  }
+
+  resetPassword(userId: string, payload: SetAccessPayload) {
+    return this.http.put<{ success: boolean; data: AccessResult }>(`${this.baseUrl}/${userId}/reset-password`, payload);
+  }
+
+  disableAccess(userId: string) {
+    return this.http.put<{ success: boolean; data: AccessResult }>(`${this.baseUrl}/${userId}/disable-access`, {});
+  }
+
+  // -----------------------------
   // Utilitaires
   // -----------------------------
   triggerRefresh(): void {
     // On évite de spammer si déjà en cache : force = true pour être sûr d’actualiser
     this.refreshUsers(true).subscribe({ next: () => {}, error: () => {} });
   }
-
   clearCache(): void {
     this._usersRequest$ = undefined;
   }

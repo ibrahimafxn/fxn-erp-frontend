@@ -1,43 +1,41 @@
+// admin/resources/consumables/consumable-list
+
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, Signal, computed, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
-import { UserService } from '../../../core/services/user.service';
-import { DepotService } from '../../../core/services/depot.service';
-import {User, Depot} from '../../../core/models';
-import { UserListResult } from '../../../core/models/user-list-result.model';
-import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
-import {DATE_FORMAT_FR} from '../../../core/constant/date-format';
-import {DetailBack} from '../../../core/utils/detail-back';
+import { ConsumableService } from '../../../../core/services/consumable.service';
+import { DepotService } from '../../../../core/services/depot.service';
+import {Consumable} from '../../../../core/models';
+import { Depot } from '../../../../core/models';
+import { ConsumableListResult } from '../../../../core/models';
+import {ConfirmDeleteModal} from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import {DetailBack} from '../../../../core/utils/detail-back';
 
 @Component({
   standalone: true,
-  selector: 'app-user-list',
+  selector: 'app-consumable-list',
   providers: [DatePipe],
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],
-  templateUrl: './user-list.html',
-  styleUrls: ['./user-list.scss'],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, DatePipe, ConfirmDeleteModal],
+  templateUrl: './consumable-list.html',
+  styleUrls: ['./consumable-list.scss'],
 })
-export class UserList extends DetailBack {
-
+export class ConsumableList extends DetailBack {
   readonly deleteModalOpen = signal(false);
   readonly pendingDeleteId = signal<string | null>(null);
   readonly pendingDeleteName = signal<string>('');
   readonly pendingDeleteLabel = signal<string>('élément');
 
-  private userService = inject(UserService);
-  private depotSvc = inject(DepotService);
+  private consumableService = inject(ConsumableService);
+  private depotService = inject(DepotService);
   private fb = inject(FormBuilder);
-  private datePipe = inject(DatePipe);
 
-  // service signals
-  readonly loading = this.userService.loading;
-  readonly error = this.userService.error;
-
-  // ⚠️ tu dois exposer result dans UserService comme pour depots/consumables
-  readonly result: Signal<UserListResult | null> = this.userService.result;
+  // Service signals
+  readonly loading = this.consumableService.loading;
+  readonly error = this.consumableService.error;
+  readonly result: Signal<ConsumableListResult | null> = this.consumableService.result;
 
   // UI state
   readonly deletingId = signal<string | null>(null);
@@ -46,18 +44,17 @@ export class UserList extends DetailBack {
   readonly page = signal(1);
   readonly limit = signal(25);
 
-  // Depots (filtre)
+  // Depots (select)
   readonly depots = signal<Depot[]>([]);
   readonly depotsLoading = signal(false);
 
-  // Filtres
+  // Filtres (q + depot)
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control(''),
-    role: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control(''),
   });
 
-  // derived
+  // Derived data
   readonly items = computed(() => this.result()?.items ?? []);
   readonly total = computed(() => this.result()?.total ?? 0);
   readonly pageCount = computed(() => {
@@ -72,18 +69,11 @@ export class UserList extends DetailBack {
     this.refresh(true);
   }
 
-  formatDate(date: string | Date | undefined): string {
-    if (!date) return '';
-    return this.datePipe.transform(date, DATE_FORMAT_FR) ?? '';
-  }
-
   refresh(force = false): void {
-    const v = this.filterForm.getRawValue();
-
-    this.userService.refreshUsers(force, {
-      q: v.q.trim() || undefined,
-      role: v.role || undefined,
-      depot: v.depot || undefined,
+    const { q, depot } = this.filterForm.getRawValue();
+    this.consumableService.refresh(force, {
+      q: q.trim() || undefined,
+      depot: depot || undefined,
       page: this.page(),
       limit: this.limit(),
     }).subscribe({ error: () => {} });
@@ -95,7 +85,7 @@ export class UserList extends DetailBack {
   }
 
   clearSearch(): void {
-    this.filterForm.setValue({ q: '', role: '', depot: '' });
+    this.filterForm.setValue({ q: '', depot: '' });
     this.page.set(1);
     this.refresh(true);
   }
@@ -129,32 +119,23 @@ export class UserList extends DetailBack {
   }
 
   createNew(): void {
-    this.router.navigate(['/admin/users/new']).then();
+    this.router.navigate(['/admin/resources/consumables/new']).then();
   }
 
-  edit(u: User): void {
-    this.router.navigate(['/admin/users', u._id, 'edit']).then();
+  edit(c: Consumable): void {
+    this.router.navigate(['/admin/resources/consumables', c._id, 'edit']).then();
   }
 
-  openDetail(u: User): void {
-    // route détail (à ajouter dans admin.routes.ts si pas encore)
-    this.router.navigate(['/admin/users/', u._id, 'detail']).then();
-  }
-
-  openDeleteModal(entityLabel: string, entityId: string, entityName: string): void {
-    this.pendingDeleteLabel.set(entityLabel);
-    this.pendingDeleteId.set(entityId);
-    this.pendingDeleteName.set(entityName);
+  openDeleteModal(c: Consumable): void {
+    this.pendingDeleteLabel.set(c._id);
+    this.pendingDeleteName.set(c.name ?? '');
     this.deleteModalOpen.set(true);
   }
-
   closeDeleteModal(): void {
     this.deleteModalOpen.set(false);
     this.pendingDeleteId.set(null);
     this.pendingDeleteName.set('');
-    this.pendingDeleteLabel.set('élément');
   }
-
   confirmDelete(): void {
     const id = this.pendingDeleteId();
     if (!id) return;
@@ -163,7 +144,7 @@ export class UserList extends DetailBack {
     this.deletingId.set(id);
 
     // ⚠️ adapte ici selon le service de la page
-    this.userService.deleteUser(id).subscribe({
+    this.consumableService.remove(id).subscribe({
       next: () => {
         this.deletingId.set(null);
         this.refresh(true);
@@ -176,9 +157,8 @@ export class UserList extends DetailBack {
     });
   }
 
-  // helpers
   errorMessage(): string {
-    const err = this.error() as HttpErrorResponse | null;
+    const err: HttpErrorResponse | null = this.error();
     if (!err) return '';
     const apiMsg =
       typeof err.error === 'object' && err.error !== null && 'message' in err.error
@@ -187,39 +167,27 @@ export class UserList extends DetailBack {
     return apiMsg || err.message || 'Erreur inconnue';
   }
 
-  createdAtValue(u: User): string | Date | null {
-    return u.createdAt ?? null;
+  createdAtValue(c: Consumable): string | Date | null {
+    return c.createdAt ?? null;
   }
 
-  // dépôt label (si idDepot peuplé)
-  readonly depotNameById = computed(() => {
-    const map = new Map<string, string>();
-    for (const d of this.depots()) map.set(d._id, d.name);
-    return map;
-  });
-
-  depotLabel(u: User): string {
-    const d = u.idDepot;
+  /** Label dépôt (si idDepot est peuplé côté backend -> objet) */
+  depotLabel(c: Consumable): string {
+    const d = c.idDepot;
     if (!d) return '—';
 
-    // populate -> objet
-    if (typeof d === 'object' && d !== null && '_id' in d) {
-      const obj = d as { _id: string; name?: string };
-      return obj.name ?? this.depotNameById().get(obj._id) ?? '—';
-    }
-
-    // id seul -> on cherche dans la liste des dépôts chargés
-    if (typeof d === 'string') {
-      return this.depotNameById().get(d) ?? '—';
+    if (typeof d === 'object' && '_id' in d) {
+      const obj: { _id: string; name?: string } = d;
+      return obj.name ?? '—';
     }
 
     return '—';
   }
 
-
   private loadDepots(): void {
     this.depotsLoading.set(true);
-    this.depotSvc.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
+
+    this.depotService.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
       next: (res) => {
         this.depots.set(res.items ?? []);
         this.depotsLoading.set(false);
@@ -228,5 +196,5 @@ export class UserList extends DetailBack {
     });
   }
 
-  trackById = (_: number, u: User) => u._id;
+  trackById = (_: number, c: Consumable) => c._id;
 }

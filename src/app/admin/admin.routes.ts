@@ -64,25 +64,25 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'resources/materials',
     loadComponent: () =>
-      import('./resources/materials/materials-list/materials-list').then(m => m.MaterialsList)
+      import('./resources/materials/material-list/material-list').then(m => m.MaterialList)
   },
   // /admin/resources/materials/new
   {
     path: 'resources/materials/new',
     loadComponent: () =>
-      import('./resources/materials/materials-form/materials-form').then(m => m.MaterialsForm)
+      import('./resources/materials/material-form/material-form').then(m => m.MaterialForm)
   },
   // /admin/resources/materials/:id
   {
     path: 'resources/materials/:id',
     loadComponent: () =>
-      import('./resources/materials/materials-detail/materials-detail').then(m => m.MaterialsDetail)
+      import('./resources/materials/material-detail/material-detail').then(m => m.MaterialDetail)
   },
   // /admin/resources/materials/:id/edit
   {
     path: 'resources/materials/:id/edit',
     loadComponent: () =>
-      import('./resources/materials/materials-form/materials-form').then(m => m.MaterialsForm)
+      import('./resources/materials/material-form/material-form').then(m => m.MaterialForm)
   },
 
 
@@ -93,22 +93,22 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'resources/consumables',
     loadComponent: () =>
-      import('./resources/consumables/consumables-list/consumables-list').then(m => m.ConsumablesList)
+      import('./resources/consumables/consumable-list/consumable-list').then(m => m.ConsumableList)
   },
   {
     path: 'resources/consumables/new',
     loadComponent: () =>
-      import('./resources/consumables/consumables-form/consumables-form').then(m => m.ConsumablesForm)
+      import('./resources/consumables/consumable-form/consumables-form').then(m => m.ConsumablesForm)
   },
   {
     path: 'resources/consumables/:id',
     loadComponent: () =>
-      import('./resources/consumables/consumables-detail/consumables-detail').then(m => m.ConsumablesDetail)
+      import('./resources/consumables/consumable-detail/consumables-detail').then(m => m.ConsumablesDetail)
   },
   {
     path: 'resources/consumables/:id/edit',
     loadComponent: () =>
-      import('./resources/consumables/consumables-form/consumables-form').then(m => m.ConsumablesForm)
+      import('./resources/consumables/consumable-form/consumables-form').then(m => m.ConsumablesForm)
   },
 
 
@@ -119,28 +119,28 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'resources/vehicles',
     loadComponent: () =>
-      import('./resources/vehicles/vehicles-list/vehicles-list').then(m => m.VehiclesList)
+      import('./resources/vehicles/vehicle-list/vehicle-list').then(m => m.VehicleList)
   },
 
 // /admin/resources/vehicles/new
   {
     path: 'resources/vehicles/new',
     loadComponent: () =>
-      import('./resources/vehicles/vehicles-form/vehicles-form').then(m => m.VehiclesForm)
+      import('./resources/vehicles/vehicle-form/vehicle-form').then(m => m.VehicleForm)
   },
 
 // /admin/resources/vehicles/:id/edit
   {
     path: 'resources/vehicles/:id/edit',
     loadComponent: () =>
-      import('./resources/vehicles/vehicles-form/vehicles-form').then(m => m.VehiclesForm)
+      import('./resources/vehicles/vehicle-form/vehicle-form').then(m => m.VehicleForm)
   },
 
 // /admin/resources/vehicles/:id/detail
   {
     path: 'resources/vehicles/:id/detail',
     loadComponent: () =>
-      import('./resources/vehicles/vehicles-detail/vehicles-detail').then(m => m.VehiclesDetail)
+      import('./resources/vehicles/vehicle-detail/vehicle-detail').then(m => m.VehicleDetail)
   },
 
   // -----------------------------
@@ -167,6 +167,11 @@ export const ADMIN_ROUTES: Routes = [
     path: 'users/:id/edit',
     loadComponent: () => import('./users/user-form/user-form').then(m => m.UserForm)
   },
+
+  {
+    path: 'security/user-access',
+    loadComponent: () => import('./security/access-users/access-users').then(m => m.AccessUsers),
+  }
 
   // Optionnel (on fera après)
   // {

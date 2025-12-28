@@ -6,8 +6,9 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { DepotService } from '../../../core/services/depot.service';
 import { Depot } from '../../../core/models';
-import { DepotListResult } from '../../../core/models/depot-list-result.model';
+import { DepotListResult } from '../../../core/models';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import {DetailBack} from '../../../core/utils/detail-back';
 
 @Component({
   standalone: true,
@@ -17,9 +18,8 @@ import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-dele
   templateUrl: './depot-list.html',
   styleUrls: ['./depot-list.scss'],
 })
-export class DepotList {
+export class DepotList extends DetailBack {
   private svc = inject(DepotService);
-  private router = inject(Router);
   private fb = inject(FormBuilder);
 
   // Service signals
@@ -56,6 +56,7 @@ export class DepotList {
   readonly pendingDeleteName = signal<string>('');
 
   constructor() {
+    super();
     this.refresh(true);
   }
 

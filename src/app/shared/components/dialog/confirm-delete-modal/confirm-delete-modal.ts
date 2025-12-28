@@ -1,3 +1,4 @@
+// confirm-delete-modal.ts
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 

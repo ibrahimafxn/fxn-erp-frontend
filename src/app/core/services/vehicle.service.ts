@@ -6,6 +6,7 @@ import {catchError, map, shareReplay, tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {Vehicle} from '../models';
 import {VehicleListResult} from '../models';
+import {VehicleHistoryResult} from '../models/vehicle-history.model';
 type TxApiResponse = ApiResponse<unknown> | unknown;
 type ApiResponse<T> = { success: boolean; data: T; message?: string; errors?: unknown };
 
@@ -75,7 +76,6 @@ export class VehicleService {
   private isApiResponse<T>(x: unknown): x is ApiResponse<T> {
     return !!x && typeof x === 'object' && 'success' in x && 'data' in x;
   }
-
   /** Convertit (plate/km) -> (plateNumber/year/...) si besoin */
   private normalizeVehicle(v: Vehicle): Vehicle {
     // Certains backends utilisent "plate" au lieu de "plateNumber"
@@ -90,7 +90,6 @@ export class VehicleService {
       plateNumber,
     };
   }
-
   private normalizeListResponse(resp: VehiclesApiShape, fallbackPage: number, fallbackLimit: number): VehicleListResult {
     // format 1: tableau direct
     if (Array.isArray(resp)) {
@@ -123,7 +122,6 @@ export class VehicleService {
 
     return {total: 0, page: fallbackPage, limit: fallbackLimit, items: []};
   }
-
   private normalizeOneResponse(resp: VehicleApiShape): Vehicle | null {
     // format direct
     if (resp && typeof resp === 'object' && !this.isApiResponse<unknown>(resp)) {
@@ -200,7 +198,6 @@ export class VehicleService {
       catchError((err) => this.handleError(err as HttpErrorResponse))
     );
   }
-
   update(id: string, payload: Partial<Vehicle>): Observable<Vehicle> {
     this.clearCache();
     return this.http.put<VehicleApiShape>(`${this.baseUrl}/${id}`, payload).pipe(
@@ -212,10 +209,26 @@ export class VehicleService {
       catchError((err) => this.handleError(err as HttpErrorResponse))
     );
   }
-
   remove(id: string): Observable<{ _id: string } | { message: string }> {
     this.clearCache();
     return this.http.delete<{ _id: string } | { message: string }>(`${this.baseUrl}/${id}`).pipe(
+      catchError((err) => this.handleError(err))
+    );
+  }
+
+  // -----------------------------
+  // HISTORY
+  // -----------------------------
+  history(vehicleId: string, page = 1, limit = 25): Observable<VehicleHistoryResult> {
+    const safePage = page > 0 ? page : 1;
+    const safeLimit = limit > 0 ? limit : 25;
+
+    let params = new HttpParams()
+      .set('page', String(safePage))
+      .set('limit', String(safeLimit));
+
+    return this.http.get<ApiResponse<VehicleHistoryResult>>(`${this.baseUrl}/${vehicleId}/history`, { params }).pipe(
+      map((resp) => resp.data),
       catchError((err) => this.handleError(err))
     );
   }

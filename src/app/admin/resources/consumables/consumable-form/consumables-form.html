@@ -1,0 +1,96 @@
+<section class="page">
+  <header class="page-header card">
+    <div class="left">
+      <h1>{{ title() }}</h1>
+      <p class="subtitle">
+        @if (mode() === 'create') {
+          Crée un consommable (PTO, étiquettes, jarretières, etc.)
+        } @else {
+          Mets à jour les infos du consommable
+        }
+      </p>
+    </div>
+
+    <div class="actions">
+      <button class="btn-outline" type="button" (click)="back()">Retour</button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state card">Chargement…</div>
+  } @else {
+    @if (error()) {
+      <div class="state error card">
+        <strong>Erreur :</strong> {{ errorText() }}
+      </div>
+    }
+
+    <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="grid">
+        <!-- Nom -->
+        <div class="field">
+          <label>Nom *</label>
+          <input
+            type="text"
+            formControlName="name"
+            placeholder="Ex: PTO, Étiquette verte, Jarretière…"
+          />
+          @if (isInvalid('name')) {
+            <small class="hint error">Le nom est requis (min 2 caractères).</small>
+          }
+        </div>
+
+        <!-- Unité -->
+        <div class="field">
+          <label>Unité *</label>
+          <select formControlName="unit">
+            <option value="pcs">pcs</option>
+            <option value="m">m</option>
+            <option value="rouleau">rouleau</option>
+            <option value="boîte">boîte</option>
+          </select>
+          @if (isInvalid('unit')) {
+            <small class="hint error">Unité obligatoire.</small>
+          }
+        </div>
+
+        <!-- Quantité -->
+        <div class="field">
+          <label>Quantité *</label>
+          <input type="number" formControlName="quantity" min="0" step="1" />
+          @if (isInvalid('quantity')) {
+            <small class="hint error">Quantité >= 0.</small>
+          }
+        </div>
+
+        <!-- Dépôt -->
+        <div class="field">
+          <label>Dépôt</label>
+
+          @if (depotsLoading()) {
+            <div class="inline-state">Chargement des dépôts…</div>
+          } @else if (depotsError()) {
+            <div class="inline-state error">{{ depotsError() }}</div>
+          } @else {
+            <select formControlName="idDepot">
+              <option [ngValue]="null">— Non assigné —</option>
+              @for (d of depots(); track d._id) {
+                <option [ngValue]="d._id">{{ d.name }} @if (d.city) { · {{ d.city }} }</option>
+              }
+            </select>
+          }
+
+          <small class="hint">Optionnel : assigne le consommable à un dépôt précis.</small>
+        </div>
+      </div>
+
+      <div class="footer">
+        <button class="btn-outline" type="button" (click)="cancel()">Annuler</button>
+
+        <button class="btn-primary" type="submit" [disabled]="!canSubmit()">
+          @if (saving()) { Enregistrement… } @else { Enregistrer }
+        </button>
+      </div>
+    </form>
+  }
+</section>
