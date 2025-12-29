@@ -16,6 +16,7 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../../core/utils/text-format';
+import { downloadBlob } from '../../../../core/utils/download';
 
 @Component({
   standalone: true,
@@ -134,6 +135,28 @@ export class ConsumableList extends DetailBack {
   createNew(): void {
     if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/consumables/new']).then();
+  }
+
+  exportCsv(): void {
+    const { q, depot } = this.filterForm.getRawValue();
+    this.consumableService.exportCsv({
+      q: q.trim() || undefined,
+      depot: depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `consumables-${new Date().toISOString().slice(0, 10)}.csv`),
+      error: () => {}
+    });
+  }
+
+  exportPdf(): void {
+    const { q, depot } = this.filterForm.getRawValue();
+    this.consumableService.exportPdf({
+      q: q.trim() || undefined,
+      depot: depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `consumables-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: () => {}
+    });
   }
 
   edit(c: Consumable): void {

@@ -62,6 +62,10 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/admin/history']);
   }
 
+  goToOnboarding(): void {
+    this.router.navigate(['/admin/onboarding']);
+  }
+
   trackHistory(index: number, item: HistoryItem): string {
     return (item as any).id || `${index}`;
   }

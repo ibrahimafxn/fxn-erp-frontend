@@ -233,6 +233,24 @@ export class VehicleService {
     );
   }
 
+  exportCsv(filter?: VehicleFilter): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.q) params = params.set('q', filter.q);
+    if (filter?.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/export`, { params, responseType: 'blob' }).pipe(
+      catchError((err) => this.handleError(err as HttpErrorResponse))
+    );
+  }
+
+  exportPdf(filter?: VehicleFilter): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.q) params = params.set('q', filter.q);
+    if (filter?.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' }).pipe(
+      catchError((err) => this.handleError(err as HttpErrorResponse))
+    );
+  }
+
   /** PUT /api/vehicles/:id/assign  { techId, author?, note? } */
   assignVehicle(vehicleId: string, payload: AssignVehiclePayload): Observable<Vehicle> {
     // PUT /api/vehicles/:id/assign  { techId, author?, note? }

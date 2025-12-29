@@ -10,6 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
 import { Depot, Movement, MovementListResult, User } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { downloadBlob } from '../../../core/utils/download';
 
 @Component({
   selector: 'app-history-list',
@@ -91,6 +92,44 @@ export class HistoryList {
       page: this.page(),
       limit: this.limit(),
     }).subscribe({ error: () => {} });
+  }
+
+  exportCsv(): void {
+    const f = this.filterForm.getRawValue();
+    const depotId = this.isDepotManager() ? this.managerDepotId() : null;
+    this.movementService.exportCsv({
+      resourceType: f.resourceType || undefined,
+      action: f.action || undefined,
+      status: f.status || undefined,
+      depotId: depotId || undefined,
+      resourceId: f.resourceId.trim() || undefined,
+      fromType: f.fromType || undefined,
+      fromId: f.fromId.trim() || undefined,
+      toType: f.toType || undefined,
+      toId: f.toId.trim() || undefined,
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `movements-${new Date().toISOString().slice(0, 10)}.csv`),
+      error: () => {}
+    });
+  }
+
+  exportPdf(): void {
+    const f = this.filterForm.getRawValue();
+    const depotId = this.isDepotManager() ? this.managerDepotId() : null;
+    this.movementService.exportPdf({
+      resourceType: f.resourceType || undefined,
+      action: f.action || undefined,
+      status: f.status || undefined,
+      depotId: depotId || undefined,
+      resourceId: f.resourceId.trim() || undefined,
+      fromType: f.fromType || undefined,
+      fromId: f.fromId.trim() || undefined,
+      toType: f.toType || undefined,
+      toId: f.toId.trim() || undefined,
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `movements-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: () => {}
+    });
   }
 
   search(): void {

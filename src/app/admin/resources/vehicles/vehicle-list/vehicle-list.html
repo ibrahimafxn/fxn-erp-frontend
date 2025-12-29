@@ -7,6 +7,8 @@
 
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="back()">Retour</button>
+      <button class="btn-outline" type="button" (click)="exportCsv()">Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()">Exporter PDF</button>
       @if (!isDepotManager()) {
         <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
       }

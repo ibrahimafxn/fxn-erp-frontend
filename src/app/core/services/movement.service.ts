@@ -86,4 +86,36 @@ export class MovementService {
   refresh(force = false, filter?: Parameters<MovementService['listMovements']>[1]) {
     return this.listMovements(force, filter);
   }
+
+  exportCsv(filter?: Parameters<MovementService['listMovements']>[1]): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.resourceType) params = params.set('resourceType', filter.resourceType);
+    if (filter?.resourceId) params = params.set('resourceId', filter.resourceId);
+    if (filter?.action) params = params.set('action', filter.action);
+    if (filter?.status) params = params.set('status', filter.status);
+    if (filter?.depotId) params = params.set('depotId', filter.depotId);
+    if (filter?.fromType) params = params.set('fromType', filter.fromType);
+    if (filter?.fromId) params = params.set('fromId', filter.fromId);
+    if (filter?.toType) params = params.set('toType', filter.toType);
+    if (filter?.toId) params = params.set('toId', filter.toId);
+    return this.http.get(`${this.baseUrl}/export`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  exportPdf(filter?: Parameters<MovementService['listMovements']>[1]): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.resourceType) params = params.set('resourceType', filter.resourceType);
+    if (filter?.resourceId) params = params.set('resourceId', filter.resourceId);
+    if (filter?.action) params = params.set('action', filter.action);
+    if (filter?.status) params = params.set('status', filter.status);
+    if (filter?.depotId) params = params.set('depotId', filter.depotId);
+    if (filter?.fromType) params = params.set('fromType', filter.fromType);
+    if (filter?.fromId) params = params.set('fromId', filter.fromId);
+    if (filter?.toType) params = params.set('toType', filter.toType);
+    if (filter?.toId) params = params.set('toId', filter.toId);
+    return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
 }

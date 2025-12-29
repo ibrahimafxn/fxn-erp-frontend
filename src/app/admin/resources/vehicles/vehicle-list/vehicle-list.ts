@@ -13,6 +13,7 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
+import { downloadBlob } from '../../../../core/utils/download';
 
 
 @Component({
@@ -135,6 +136,28 @@ export class VehicleList extends DetailBack {
   createNew(): void {
     if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/vehicles/new']).then();
+  }
+
+  exportCsv(): void {
+    const { q, depot } = this.filterForm.getRawValue();
+    this.svc.exportCsv({
+      q: q.trim() || undefined,
+      depot: depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `vehicles-${new Date().toISOString().slice(0, 10)}.csv`),
+      error: () => {}
+    });
+  }
+
+  exportPdf(): void {
+    const { q, depot } = this.filterForm.getRawValue();
+    this.svc.exportPdf({
+      q: q.trim() || undefined,
+      depot: depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `vehicles-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: () => {}
+    });
   }
 
   openDetail(v: Vehicle): void {

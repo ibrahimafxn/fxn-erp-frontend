@@ -13,6 +13,7 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
 import { formatResourceName, formatDepotName } from '../../../../core/utils/text-format';
+import { downloadBlob } from '../../../../core/utils/download';
 
 @Component({
   standalone: true,
@@ -186,6 +187,28 @@ export class MaterialList extends DetailBack {
   createNew(): void {
     if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/materials/new']).then();
+  }
+
+  exportCsv(): void {
+    const { q, depot } = this.filterForm.getRawValue();
+    this.materialService.exportCsv({
+      q: q.trim() || undefined,
+      depot: depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `materials-${new Date().toISOString().slice(0, 10)}.csv`),
+      error: () => {}
+    });
+  }
+
+  exportPdf(): void {
+    const { q, depot } = this.filterForm.getRawValue();
+    this.materialService.exportPdf({
+      q: q.trim() || undefined,
+      depot: depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `materials-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: () => {}
+    });
   }
 
   // ✅ route edit: /admin/resources/materials/:id/edit (comme consumables)

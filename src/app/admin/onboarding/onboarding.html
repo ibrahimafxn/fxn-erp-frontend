@@ -1,0 +1,65 @@
+<section class="onboarding">
+  <header class="page-header">
+    <div>
+      <h1>Onboarding</h1>
+      <p class="subtitle">Import CSV rapide pour démarrer un nouveau client.</p>
+    </div>
+  </header>
+
+  <section class="stepper card">
+    <div class="step-list">
+      @for (s of steps; track s.id) {
+        <button
+          type="button"
+          class="step"
+          [class.active]="activeStep() === s.id"
+          (click)="setStep(s.id)"
+        >
+          <span class="step-title">{{ s.title }}</span>
+          <span class="step-desc">{{ s.description }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="step-content">
+      @if (activeConfig(); as cfg) {
+        <div class="content-head">
+          <div>
+            <h2>{{ cfg.title }}</h2>
+            <p>{{ cfg.description }}</p>
+          </div>
+
+          <button class="btn-outline" type="button" (click)="downloadTemplate()">
+            Télécharger le modèle CSV
+          </button>
+        </div>
+
+        <div class="upload-card">
+          <label class="file-label">
+            <input type="file" accept=".csv,text/csv" (change)="onFileChange($event)" />
+            <span>Choisir un fichier CSV</span>
+          </label>
+
+          @if (loading()) {
+            <div class="state loading">Import en cours…</div>
+          } @else if (error()) {
+            <div class="state error">{{ error() }}</div>
+          } @else if (result(); as r) {
+            <div class="state success">
+              Import terminé — Créés: {{ r.created }}, Ignorés: {{ r.skipped }}, Erreurs: {{ r.errors.length }}
+            </div>
+            @if (r.errors.length) {
+              <div class="errors">
+                @for (e of r.errors; track e.row) {
+                  <div class="error-item">Ligne {{ e.row }} — {{ e.message }}</div>
+                }
+              </div>
+            }
+          } @else {
+            <div class="hint">Sélectionne un fichier CSV pour lancer l’import.</div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+</section>

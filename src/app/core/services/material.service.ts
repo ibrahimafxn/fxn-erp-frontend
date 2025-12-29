@@ -108,6 +108,24 @@ export class MaterialService {
     );
   }
 
+  exportCsv(filter?: MaterialFilter): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.q) params = params.set('q', filter.q);
+    if (filter?.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/export`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  exportPdf(filter?: MaterialFilter): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.q) params = params.set('q', filter.q);
+    if (filter?.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
   // -----------------------------
   // HISTORY
   // -----------------------------
