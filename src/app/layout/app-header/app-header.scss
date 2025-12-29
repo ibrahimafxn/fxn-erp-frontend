@@ -2,14 +2,14 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  height: 64px;
-  padding: 0 1.25rem;
+  height: 72px;
+  padding: 0 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
 
-  background: rgba(15, 15, 18, 0.75);
-  backdrop-filter: blur(12px);
+  background: rgba(10, 17, 24, 0.8);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -23,6 +23,8 @@
 
 .brand {
   font-weight: 800;
+  font-family: var(--fxn-font-display);
+  letter-spacing: 0.04em;
   cursor: pointer;
 
   span {
@@ -33,6 +35,7 @@
 .page-title {
   font-size: 0.95rem;
   opacity: 0.8;
+  color: var(--fxn-text-soft);
 }
 
 /* RIGHT */
@@ -53,10 +56,11 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(20, 32, 45, 0.8);
   border-radius: 999px;
   padding: 0.3rem 0.5rem;
   cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .avatar {
@@ -66,7 +70,7 @@
   display: grid;
   place-items: center;
   font-weight: 800;
-  background: rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, rgba(33, 182, 182, 0.35), rgba(246, 166, 9, 0.35));
 }
 
 .chevron {
@@ -82,9 +86,10 @@
   top: calc(100% + 0.5rem);
   min-width: 200px;
   border-radius: 0.8rem;
-  background: rgba(30, 30, 36, 0.95);
+  background: rgba(17, 27, 38, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0.5rem;
+  box-shadow: var(--fxn-shadow-md);
 }
 
 .user-meta {
@@ -110,7 +115,7 @@
 }
 
 .dropdown button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(33, 182, 182, 0.12);
 }
 
 .dropdown .danger {

@@ -57,6 +57,13 @@ export const AppConfig = {
     },
 
     {
+      path: 'profile',
+      canActivate: [AuthGuard],
+      loadComponent: () =>
+        import('./modules/auth/profile/profile').then(m => m.Profile)
+    },
+
+    {
       path: '',
       canActivate: [AuthGuard],
       loadComponent: () =>

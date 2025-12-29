@@ -6,9 +6,10 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 
 import { DepotService } from '../../../../core/services/depot.service';
 import { VehicleService } from '../../../../core/services/vehicle.service';
-import { Depot } from '../../../../core/models';
+import {Depot, UserLite} from '../../../../core/models';
 import { Vehicle } from '../../../../core/models';
 import {DetailBack} from '../../../../core/utils/detail-back';
+import { formatDepotName } from '../../../../core/utils/text-format';
 
 type Mode = 'create' | 'edit';
 
@@ -39,6 +40,10 @@ export class VehicleForm extends DetailBack {
 
   readonly current = signal<Vehicle | null>(null);
 
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
+  }
+
   readonly form = this.fb.nonNullable.group({
     plateNumber: this.fb.nonNullable.control('', [Validators.minLength(2)]),
     brand: this.fb.nonNullable.control(''),
@@ -46,7 +51,7 @@ export class VehicleForm extends DetailBack {
     year: this.fb.control<number | null>(null),
     state: this.fb.nonNullable.control(''),
     idDepot: this.fb.control<string | null>(null),
-    assignedTo: this.fb.control<string | null>(null),
+    assignedTo: this.fb.control<string | UserLite | null>(null),
   });
 
   readonly title = computed(() =>

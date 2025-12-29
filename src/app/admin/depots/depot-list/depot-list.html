@@ -60,7 +60,7 @@
           @for (d of items(); track trackById) {
             <tr class="row" (click)="openDetail(d)">
               <td class="main">
-                <div class="name">{{ d.name }}</div>
+                <div class="name">{{ depotName(d) }}</div>
                 <div class="sub">{{ d.address || '—' }}</div>
               </td>
 

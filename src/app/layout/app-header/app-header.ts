@@ -3,6 +3,7 @@ import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService, AuthUser } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
+import { formatPersonName } from '../../core/utils/text-format';
 
 @Component({
   standalone: true,
@@ -40,7 +41,7 @@ export class AppHeader {
   readonly displayName = computed(() => {
     const u = this.user();
     if (!u) return '';
-    return `${u.firstName}${u.lastName ? ' ' + u.lastName : ''}`;
+    return formatPersonName(u.firstName ?? '', u.lastName ?? '') || '';
   });
 
   readonly initials = computed(() => {
@@ -59,6 +60,17 @@ export class AppHeader {
     }
   });
 
+  readonly isDepotManager = computed(() => this.user()?.role === 'GESTION_DEPOT');
+
+  readonly canManageAccess = computed(() => {
+    const role = this.user()?.role;
+    return role === 'DIRIGEANT' || role === 'ADMIN';
+  });
+
+  readonly canViewMovements = computed(() => this.canManageAccess() || this.isDepotManager());
+  readonly dashboardLink = computed(() => (this.isDepotManager() ? '/depot' : '/admin/dashboard'));
+  readonly movementsLink = computed(() => (this.isDepotManager() ? '/depot/history' : '/admin/history'));
+
   /* ---------------------------
    * Actions
    * --------------------------- */
@@ -68,11 +80,19 @@ export class AppHeader {
   }
 
   goDashboard(): void {
-    this.router.navigate(['/admin/dashboard']);
+    this.router.navigate([this.dashboardLink()]).then();
   }
 
   goProfile(): void {
     this.router.navigate(['/profile']);
+  }
+
+  goUserAccess(): void {
+    this.router.navigate(['/admin/security/user-access']);
+  }
+
+  goMovements(): void {
+    this.router.navigate([this.movementsLink()]).then();
   }
 
   logout(): void {
@@ -83,8 +103,16 @@ export class AppHeader {
    * Title resolver (simple)
    * --------------------------- */
   private computeTitle(url: string): string {
+    if (url.startsWith('/depot')) {
+      if (url.includes('/resources/vehicles')) return 'Véhicules';
+      if (url.includes('/resources/materials')) return 'Matériels';
+      if (url.includes('/resources/consumables')) return 'Consommables';
+      if (url.includes('/history')) return 'Mouvements';
+      return 'Dépôt';
+    }
     if (url.includes('/depots')) return 'Dépôts';
     if (url.includes('/users')) return 'Utilisateurs';
+    if (url.includes('/security/user-access')) return 'Accès connexion';
     if (url.includes('/consumables')) return 'Consommables';
     if (url.includes('/materials')) return 'Matériels';
     return 'Dashboard';

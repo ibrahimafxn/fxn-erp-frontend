@@ -1,7 +1,7 @@
 <header class="app-header">
   <!-- LEFT -->
   <div class="left">
-    <div class="brand" routerLink="/admin/dashboard">
+    <div class="brand" [routerLink]="dashboardLink()">
       FXN <span>ERP</span>
     </div>
 
@@ -33,6 +33,12 @@
 
             <div class="divider"></div>
 
+            @if (canManageAccess()) {
+              <button (click)="goUserAccess()">Accès connexion</button>
+            }
+            @if (canViewMovements()) {
+              <button (click)="goMovements()">Journal des mouvements</button>
+            }
             <button (click)="goProfile()">Mon profil</button>
             <button class="danger" (click)="logout()">Déconnexion</button>
           </div>

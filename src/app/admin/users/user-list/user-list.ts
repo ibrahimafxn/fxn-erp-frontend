@@ -11,6 +11,7 @@ import { UserListResult } from '../../../core/models/user-list-result.model';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DATE_FORMAT_FR} from '../../../core/constant/date-format';
 import {DetailBack} from '../../../core/utils/detail-back';
+import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 
 @Component({
   standalone: true,
@@ -75,6 +76,11 @@ export class UserList extends DetailBack {
   formatDate(date: string | Date | undefined): string {
     if (!date) return '';
     return this.datePipe.transform(date, DATE_FORMAT_FR) ?? '';
+  }
+
+  userName(u: User): string {
+    const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
+    return name || u.email || u._id;
   }
 
   refresh(force = false): void {
@@ -194,7 +200,7 @@ export class UserList extends DetailBack {
   // dépôt label (si idDepot peuplé)
   readonly depotNameById = computed(() => {
     const map = new Map<string, string>();
-    for (const d of this.depots()) map.set(d._id, d.name);
+    for (const d of this.depots()) map.set(d._id, formatDepotName(d.name ?? '') || d.name || '—');
     return map;
   });
 
@@ -205,7 +211,7 @@ export class UserList extends DetailBack {
     // populate -> objet
     if (typeof d === 'object' && d !== null && '_id' in d) {
       const obj = d as { _id: string; name?: string };
-      return obj.name ?? this.depotNameById().get(obj._id) ?? '—';
+      return formatDepotName(obj.name ?? '') || this.depotNameById().get(obj._id) || '—';
     }
 
     // id seul -> on cherche dans la liste des dépôts chargés
@@ -214,6 +220,10 @@ export class UserList extends DetailBack {
     }
 
     return '—';
+  }
+
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
   }
 
 

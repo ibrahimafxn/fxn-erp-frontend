@@ -11,6 +11,7 @@ import { VehicleService } from '../../../core/services/vehicle.service';
 import { User, Depot, Vehicle } from '../../../core/models';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../core/utils/detail-back';
+import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 
 // ✅ Modal suppression (ne change pas ton modal)
 
@@ -47,7 +48,7 @@ export class UserDetail extends DetailBack {
   // Map id -> name (dépôts)
   readonly depotNameById = computed(() => {
     const map = new Map<string, string>();
-    for (const d of this.depots()) map.set(d._id, d.name);
+    for (const d of this.depots()) map.set(d._id, formatDepotName(d.name ?? '') || d.name || '—');
     return map;
   });
 
@@ -88,12 +89,13 @@ export class UserDetail extends DetailBack {
     // populate -> objet
     if (typeof d === 'object' && d !== null && '_id' in d) {
       const obj = d as { _id: string; name?: string };
-      return obj.name ?? this.depotNameById().get(obj._id) ?? '—';
+      return formatDepotName(obj.name) || this.depotNameById().get(obj._id) || '—';
     }
 
     // id string -> map
     if (typeof d === 'string') {
-      return this.depotNameById().get(d) ?? d; // fallback = id si pas trouvé
+      const name = this.depotNameById().get(d);
+      return formatDepotName(name) || d; // fallback = id si pas trouvé
     }
 
     return '—';
@@ -234,7 +236,7 @@ export class UserDetail extends DetailBack {
   // -----------------------------
   delete(u: User): void {
     const id = ((u as any)?._id || (u as any)?.id || this.getId()) as string;
-    const label = `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || id;
+    const label = formatPersonName(u.firstName ?? '', u.lastName ?? '') || u.email || id;
 
     this.pendingDeleteId.set(id);
     this.pendingDeleteName.set(label);
@@ -266,5 +268,10 @@ export class UserDetail extends DetailBack {
         this.error.set(err?.error?.message || 'Suppression impossible');
       }
     });
+  }
+
+  userName(u: User): string {
+    const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
+    return name || u.email || u._id;
   }
 }

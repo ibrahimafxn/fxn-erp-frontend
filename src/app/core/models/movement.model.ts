@@ -1,0 +1,25 @@
+export type MovementEndpointType = 'DEPOT' | 'USER' | 'SUPPLIER' | 'EXTERNAL' | 'NONE';
+export type MovementAction = 'IN' | 'OUT' | 'TRANSFER' | 'ASSIGN' | 'RELEASE' | 'ADJUST';
+export type MovementStatus = 'COMMITTED' | 'CANCELED';
+
+export interface MovementEndpoint {
+  type: MovementEndpointType;
+  id: string | null;
+}
+
+export interface Movement {
+  _id: string;
+  resourceType: 'MATERIAL' | 'CONSUMABLE' | 'VEHICLE';
+  resourceId: string;
+  action: MovementAction;
+  from: MovementEndpoint;
+  to: MovementEndpoint;
+  quantity: number;
+  unit: string;
+  author?: string | null;
+  reason?: string;
+  note?: string;
+  status: MovementStatus;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}

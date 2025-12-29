@@ -8,6 +8,7 @@ import { UserService } from '../../../core/services/user.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { Depot, User, Vehicle } from '../../../core/models';
+import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 
 import { AccessCredentialsModal } from '../../../shared/ui/access-credentials-modal/access-credentials-modal';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
@@ -149,15 +150,22 @@ export class AccessUsers {
   // Labels
   // -----------------------------
   userLabel(u: User): string {
-    return `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email || u._id;
+    return formatPersonName(u.firstName ?? '', u.lastName ?? '') || u.email || u._id;
   }
 
   depotLabel(u: User): string {
     const d: any = (u as any).idDepot;
     if (!d) return '—';
-    if (typeof d === 'object' && '_id' in d) return d.name ?? '—';
-    if (typeof d === 'string') return this.depots().find(x => x._id === d)?.name ?? '—';
+    if (typeof d === 'object' && '_id' in d) return formatDepotName(d.name) || '—';
+    if (typeof d === 'string') {
+      const name = this.depots().find(x => x._id === d)?.name ?? '';
+      return formatDepotName(name) || '—';
+    }
     return '—';
+  }
+
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
   }
 
   vehicleLabel(u: User): string {

@@ -3,10 +3,11 @@
 ================================ */
 
 .card {
-  background: var(--fxn-surface);
+  background: var(--fxn-surface-glass);
   border: 1px solid var(--fxn-border);
   border-radius: var(--fxn-radius-lg);
-  padding: var(--fxn-space-md);
+  padding: var(--fxn-space-lg);
+  box-shadow: var(--fxn-shadow-sm);
 }
 
 .card-header {

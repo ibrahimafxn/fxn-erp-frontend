@@ -7,6 +7,7 @@ import {DepotService} from '../../../../core/services/depot.service';
 import {Consumable, Depot, DepotLite} from '../../../../core/models';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {DetailBack} from '../../../../core/utils/detail-back';
+import { formatDepotName } from '../../../../core/utils/text-format';
 
 type Mode = 'create' | 'edit';
 
@@ -36,6 +37,10 @@ export class ConsumablesForm extends DetailBack {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
+  }
 
   // Liste dépôts (select)
   readonly depots = signal<Depot[]>([]);

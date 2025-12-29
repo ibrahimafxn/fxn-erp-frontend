@@ -1,4 +1,4 @@
-@if (open) {
+@if (open()) {
   <div class="modal-backdrop" (click)="onBackdropClick()" (keydown)="onKeydown($event)" tabindex="-1">
     <div
       class="modal"
@@ -17,27 +17,27 @@
 
       <section class="modal-body">
         <p class="lead">
-          Voulez-vous vraiment supprimer {{ entityLabel }}
+          Voulez-vous vraiment supprimer {{ entityLabel() }}
           <span class="strong">{{ displayName() }}</span> ?
         </p>
 
-        <p class="hint">{{ dangerHint }}</p>
+        <p class="hint">{{ dangerHint() }}</p>
 
-        @if (entityId) {
+        @if (entityId()) {
           <div class="meta">
             <span class="label">ID</span>
-            <span class="mono">{{ entityId }}</span>
+            <span class="mono">{{ entityId() }}</span>
           </div>
         }
       </section>
 
       <footer class="modal-actions">
-        <button type="button" class="btn-outline" (click)="onCancel()" [disabled]="confirming">
-          {{ cancelText }}
+        <button type="button" class="btn-outline" (click)="onCancel()" [disabled]="confirming()">
+          {{ cancelText() }}
         </button>
 
-        <button type="button" class="btn-danger" (click)="onConfirm()" [disabled]="confirming">
-          @if (confirming) { Suppression… } @else { {{ confirmText }} }
+        <button type="button" class="btn-danger" (click)="onConfirm()" [disabled]="confirming()">
+          @if (confirming()) { Suppression… } @else { {{ confirmText() }} }
         </button>
       </footer>
     </div>

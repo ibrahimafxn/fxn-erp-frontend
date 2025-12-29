@@ -88,7 +88,7 @@
 
                     @for (u of managerCandidates(); track u._id) {
                       <option [value]="u._id">
-                        {{ u.firstName }} {{ u.lastName || '' }} · {{ u.email || '—' }}
+                        {{ userName(u) }} · {{ u.email || '—' }}
                       </option>
                     }
                   </select>
@@ -208,7 +208,7 @@
             @for (t of technicians(); track t._id) {
               <div class="mini-row clickable" (click)="openTechnician(t)">
                 <div class="mini-left">
-                  <div class="mini-name">{{ t.firstName }} {{ t.lastName || '' }}</div>
+                  <div class="mini-name">{{ userName(t) }}</div>
                   <div class="mini-sub">
                     <span>{{ t.email || '—' }}</span>
                     <span class="dot">•</span>

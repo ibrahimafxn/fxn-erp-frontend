@@ -1,1 +1,62 @@
-<p>profile works!</p>
+<section class="profile-page">
+  <header class="profile-hero">
+    <div class="hero-left">
+      <div class="avatar">{{ initials() }}</div>
+      <div class="hero-text">
+        <span class="hero-label">Profil utilisateur</span>
+        <h1>{{ displayName() }}</h1>
+        <div class="role-pill">{{ roleLabel() }}</div>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <button class="btn-outline" type="button" (click)="goHome()">Retour tableau de bord</button>
+      <button class="btn-danger" type="button" (click)="logout()">Déconnexion</button>
+    </div>
+  </header>
+
+  @if (!user()) {
+    <div class="state error card">Aucun utilisateur connecté.</div>
+  } @else {
+    <section class="profile-grid">
+      <article class="card">
+        <div class="card-title">Informations principales</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Email</span>
+            <span class="value">{{ user()?.email || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Téléphone</span>
+            <span class="value">{{ user()?.phone || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Rôle</span>
+            <span class="value">{{ roleLabel() }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Dépôt</span>
+            <span class="value">{{ user()?.idDepot || '—' }}</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-title">Affectations</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Véhicule assigné</span>
+            <span class="value">{{ user()?.assignedVehicle || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Statut</span>
+            <span class="value">Actif</span>
+          </div>
+        </div>
+        <p class="hint">
+          Besoin de modifier tes informations ? Contacte un administrateur.
+        </p>
+      </article>
+    </section>
+  }
+</section>

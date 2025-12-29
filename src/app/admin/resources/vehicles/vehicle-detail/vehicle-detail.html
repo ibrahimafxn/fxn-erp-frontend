@@ -58,7 +58,9 @@
               @if (createdAtValue()) { {{ createdAtValue() | date:'fullDate' }} } @else { — }
             </div>
           </div>
-          <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasVehicle()">Modifier</button>
+          @if (!isDepotManager()) {
+            <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasVehicle()">Modifier</button>
+          }
         </div>
       </article>
 
@@ -101,10 +103,19 @@
                 <option value="">— Sélectionner —</option>
                 @for (t of technicians(); track t._id) {
                   <option [value]="t._id">
-                    {{ t.firstName }} {{ t.lastName || '' }} · {{ t.email || '—' }}
+                    {{ technicianLabel(t) }} · {{ t.email || '—' }}
                   </option>
                 }
               </select>
+
+              <label class="sub-label">Note</label>
+              <textarea
+                class="note-input"
+                rows="3"
+                placeholder="Optionnel : raison, chantier, commentaire..."
+                [value]="assignNote()"
+                (input)="onAssignNoteChange($event)"
+              ></textarea>
 
               <div class="panel-actions">
                 <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()">
@@ -137,9 +148,18 @@
               <select class="select" [value]="selectedDepotId()" (change)="onDepotSelect($event)">
                 <option value="">— Sélectionner —</option>
                 @for (d of depots(); track d._id) {
-                  <option [value]="d._id">{{ d.name }} @if (d.city) { · {{ d.city }} }</option>
+                  <option [value]="d._id">{{ depotOptionLabel(d) }} @if (d.city) { · {{ d.city }} }</option>
                 }
               </select>
+
+              <label class="sub-label">Note</label>
+              <textarea
+                class="note-input"
+                rows="3"
+                placeholder="Optionnel : raison, dépôt de retour, commentaire..."
+                [value]="releaseNote()"
+                (input)="onReleaseNoteChange($event)"
+              ></textarea>
 
               <div class="panel-actions">
                 <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()">

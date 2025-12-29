@@ -34,7 +34,7 @@
       <select formControlName="depot">
         <option value="">Tous les dépôts</option>
         @for (d of depots(); track d._id) {
-          <option [value]="d._id">{{ d.name }}</option>
+          <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
         }
       </select>
 
@@ -82,7 +82,7 @@
           @for (u of items(); track trackById) {
             <tr class="row" (click)="openDetail(u)">
               <td class="main">
-                <div class="name">{{ u.firstName }} {{ u.lastName || '' }}</div>
+                <div class="name">{{ userName(u) }}</div>
                 <div class="sub">{{ u.phone || '—' }}</div>
               </td>
 
@@ -113,7 +113,7 @@
                     class="btn-danger"
                     type="button"
                     [disabled]="deletingId() === u._id"
-                    (click)="openDeleteModal('l’utilisateur', u._id, (u.firstName + ' ' + (u.lastName || '')).trim())"
+                    (click)="openDeleteModal('l’utilisateur', u._id, userName(u))"
                   >
                     @if (deletingId() === u._id) { Suppression… } @else { Supprimer }
                   </button>

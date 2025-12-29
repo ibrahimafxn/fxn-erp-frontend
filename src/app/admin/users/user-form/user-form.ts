@@ -9,6 +9,7 @@ import { VehicleService } from '../../../core/services/vehicle.service';
 
 import { Role, User, Depot, Vehicle } from '../../../core/models';
 import {DetailBack} from '../../../core/utils/detail-back';
+import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 
 type IdOrPopulated = string | { _id: string } | null | undefined;
 
@@ -207,7 +208,12 @@ export class UserForm extends DetailBack {
   depotLabelById(id: string): string {
     if (!id) return '—';
     const d = this.depots().find((x) => x._id === id);
-    return d ? `${d.name}${d.city ? ' · ' + d.city : ''}` : '—';
+    const name = d ? formatDepotName(d.name ?? '') : '';
+    return name ? `${name}${d?.city ? ' · ' + d.city : ''}` : '—';
+  }
+
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
   }
 
   vehicleLabel(v: Vehicle): string {
@@ -259,7 +265,7 @@ export class UserForm extends DetailBack {
       this.usersService.createUser(payload).subscribe({
         next: (created) => {
           this.saving.set(false);
-          this.success.set(`Utilisateur créé : ${created.firstName} ${created.lastName || ''}`.trim());
+          this.success.set(`Utilisateur créé : ${formatPersonName(created.firstName ?? '', created.lastName ?? '')}`.trim());
           setTimeout(() => this.router.navigate(['/admin/users']), 400);
         },
         error: (err) => {
@@ -285,13 +291,6 @@ export class UserForm extends DetailBack {
     });
   }
 
-  // -----------------------------
-  // Navigation
-  // -----------------------------
-  cancel(): void {
-    this.router.navigate(['/admin/users']).then();
-  }
-
   fieldError(name: string): string | null {
     const c = this.form.get(name);
     if (!c || !c.touched || !c.errors) return null;
@@ -307,7 +306,6 @@ export class UserForm extends DetailBack {
     const input = event.target as HTMLInputElement | null;
     this.showOnlyAvailableVehicles.set(!!input?.checked);
   }
-
 
   protected readonly HTMLInputElement = HTMLInputElement;
 }

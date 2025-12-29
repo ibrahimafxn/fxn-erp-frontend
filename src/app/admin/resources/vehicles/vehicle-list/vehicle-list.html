@@ -7,7 +7,9 @@
 
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="back()">Retour</button>
-      <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
+      @if (!isDepotManager()) {
+        <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
+      }
     </div>
   </header>
 
@@ -15,12 +17,14 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <input type="text" formControlName="q" placeholder="Rechercher (plaque, marque, modèle)…" />
 
-      <select formControlName="depot">
-        <option value="">Tous les dépôts</option>
-        @for (d of depots(); track d._id) {
-          <option [value]="d._id">{{ d.name }}</option>
-        }
-      </select>
+      @if (!isDepotManager()) {
+        <select formControlName="depot">
+          <option value="">Tous les dépôts</option>
+          @for (d of depots(); track d._id) {
+          <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+          }
+        </select>
+      }
 
       <button class="btn-outline" type="submit">Rechercher</button>
       <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
@@ -56,8 +60,11 @@
           <th>Véhicule</th>
           <th>Plaque</th>
           <th>État</th>
+          <th>Assignation</th>
           <th>Création</th>
-          <th class="actions">Actions</th>
+          @if (!isDepotManager()) {
+            <th class="actions">Actions</th>
+          }
         </tr>
         </thead>
 
@@ -71,25 +78,28 @@
 
               <td>{{ plate(v) }}</td>
               <td>{{ v.state || '—' }}</td>
+              <td>{{ assignedLabel(v) }}</td>
 
               <td>
                 @if (createdAtValue(v)) { {{ createdAtValue(v) | date:'short' }} } @else { — }
               </td>
 
-              <td class="actions" (click)="$event.stopPropagation()">
-                <div class="actions-row">
-                  <button class="btn-outline" type="button" (click)="edit(v)">Modifier</button>
+              @if (!isDepotManager()) {
+                <td class="actions" (click)="$event.stopPropagation()">
+                  <div class="actions-row">
+                    <button class="btn-outline" type="button" (click)="edit(v)">Modifier</button>
 
-                  <button
-                    class="btn-danger"
-                    type="button"
-                    [disabled]="deletingId() === v._id"
-                    (click)="openDeleteModal(v)"
-                  >
-                    @if (deletingId() === v._id) { Suppression… } @else { Supprimer }
-                  </button>
-                </div>
-              </td>
+                    <button
+                      class="btn-danger"
+                      type="button"
+                      [disabled]="deletingId() === v._id"
+                      (click)="openDeleteModal(v)"
+                    >
+                      @if (deletingId() === v._id) { Suppression… } @else { Supprimer }
+                    </button>
+                  </div>
+                </td>
+              }
             </tr>
           }
         </tbody>

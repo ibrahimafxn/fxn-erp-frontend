@@ -28,7 +28,7 @@
         </div>
 
         <div class="identity-text">
-          <h2>{{ u.firstName }} {{ u.lastName }}</h2>
+          <h2>{{ userName(u) }}</h2>
           <span class="role-badge role-{{ (u.role || '').toLowerCase() }}">
             {{ u.role || '—' }}
           </span>

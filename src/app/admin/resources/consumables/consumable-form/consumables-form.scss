@@ -1,14 +1,15 @@
 .page {
-  padding: 1.25rem;
+  padding: 1.5rem 0 2rem;
   display: grid;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .card {
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  padding: 1rem;
+  border-radius: var(--fxn-radius-lg);
+  background: var(--fxn-surface-glass);
+  border: 1px solid var(--fxn-border);
+  padding: 1.25rem;
+  box-shadow: var(--fxn-shadow-sm);
 }
 
 .page-header {
@@ -19,12 +20,12 @@
 
   h1 {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1.5rem;
   }
 
   .subtitle {
     margin: .25rem 0 0;
-    opacity: .75;
+    color: var(--fxn-text-muted);
     font-size: .95rem;
   }
 
@@ -65,34 +66,34 @@
 
   label {
     font-size: .9rem;
-    opacity: .85;
+    color: var(--fxn-text-muted);
   }
 
   input,
   select {
     width: 100%;
-    border-radius: .85rem;
+    border-radius: var(--fxn-radius-md);
     padding: .6rem .75rem;
-    border: 1px solid rgba(255, 255, 255, .14);
-    background: rgba(0, 0, 0, .18);
+    border: 1px solid var(--fxn-border-strong);
+    background: rgba(8, 14, 22, 0.6);
     color: inherit;
     outline: none;
   }
 
   .hint {
-    opacity: .7;
+    color: var(--fxn-text-muted);
     font-size: .85rem;
 
     &.error {
       opacity: 1;
-      color: #ff6b84;
+      color: var(--fxn-danger);
     }
   }
 
   .inline-state {
     padding: .6rem .75rem;
-    border-radius: .85rem;
-    background: rgba(0, 0, 0, .12);
+    border-radius: var(--fxn-radius-md);
+    background: rgba(8, 14, 22, 0.6);
 
     &.error {
       background: rgba(255, 0, 60, .10);
@@ -110,15 +111,12 @@
 /* Boutons minimal */
 .btn-outline,
 .btn-primary {
-  border-radius: .85rem;
-  padding: .55rem .9rem;
-  border: 1px solid rgba(255, 255, 255, .14);
-  background: rgba(255, 255, 255, .06);
-  cursor: pointer;
+  border-radius: var(--fxn-radius-md);
+  padding: .55rem .95rem;
 }
 
 .btn-primary {
-  background: rgba(0, 120, 255, .18);
+  background: linear-gradient(135deg, rgba(33, 182, 182, 0.2), rgba(15, 191, 159, 0.35));
 }
 
 .btn-outline:hover,

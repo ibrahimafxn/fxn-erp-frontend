@@ -7,7 +7,9 @@
 
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="back()">Retour</button>
-      <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
+      @if (!isDepotManager()) {
+        <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
+      }
     </div>
   </header>
 
@@ -15,12 +17,14 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <input type="text" formControlName="q" placeholder="Rechercher (nom, unité)…" />
 
-      <select formControlName="depot">
-        <option value="">Tous les dépôts</option>
-        @for (d of depots(); track d._id) {
-          <option [value]="d._id">{{ d.name }}</option>
-        }
-      </select>
+      @if (!isDepotManager()) {
+        <select formControlName="depot">
+          <option value="">Tous les dépôts</option>
+          @for (d of depots(); track d._id) {
+          <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+          }
+        </select>
+      }
 
       <button class="btn-outline" type="submit">Rechercher</button>
       <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
@@ -60,19 +64,21 @@
           <th>Quantité</th>
           <th>Dépôt</th>
           <th>Création</th>
-          <th class="actions">Actions</th>
+          @if (!isDepotManager()) {
+            <th class="actions">Actions</th>
+          }
         </tr>
         </thead>
 
         <tbody>
           @for (c of items(); track trackById) {
-            <tr class="row">
+            <tr class="row" (click)="openDetail(c)">
               <td class="main">
-                <div class="name">{{ c.name }}</div>
+                <div class="name">{{ consumableName(c) }}</div>
               </td>
 
-              <td>{{ c.unit }}</td>
-              <td>{{ c.quantity }}</td>
+              <td><span class="tag">{{ c.unit }}</span></td>
+              <td><span class="qty">{{ c.quantity }}</span></td>
               <td>{{ depotLabel(c) }}</td>
 
               <td>
@@ -83,20 +89,22 @@
                 }
               </td>
 
+              @if (!isDepotManager()) {
               <td class="actions" (click)="$event.stopPropagation()">
-                <button class="btn-outline" type="button" (click)="edit(c)">
-                  Modifier
-                </button>
+                  <button class="btn-outline" type="button" (click)="edit(c)">
+                    Modifier
+                  </button>
 
-                <button
-                  class="btn-danger"
-                  type="button"
-                  [disabled]="deletingId() === c._id"
-                  (click)="openDeleteModal(c)"
-                >
-                  @if (deletingId() === c._id) { Suppression… } @else { Supprimer }
-                </button>
-              </td>
+                  <button
+                    class="btn-danger"
+                    type="button"
+                    [disabled]="deletingId() === c._id"
+                    (click)="openDeleteModal(c)"
+                  >
+                    @if (deletingId() === c._id) { Suppression… } @else { Supprimer }
+                  </button>
+                </td>
+              }
             </tr>
           }
         </tbody>

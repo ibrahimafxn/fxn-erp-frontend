@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, computed, inject } from '@angular/core';
+import { Component, EventEmitter, Output, computed, inject, input } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { User } from '../../../core/models';
 
@@ -18,12 +18,12 @@ import { User } from '../../../core/models';
 export class AccessCredentialsModal {
   private fb = inject(FormBuilder);
 
-  @Input({ required: true }) open = false;
-  @Input() mode: 'enable' | 'reset' = 'enable';
-  @Input() user: User | null = null;
+  readonly open = input(false);
+  readonly mode = input<'enable' | 'reset'>('enable');
+  readonly user = input<User | null>(null);
 
-  @Input() saving = false;
-  @Input() error: string | null = null;
+  readonly saving = input(false);
+  readonly error = input<string | null>(null);
 
   @Output() cancel = new EventEmitter<void>();
   @Output() confirm = new EventEmitter<{ password: string; mustChangePassword: boolean }>();
@@ -33,21 +33,21 @@ export class AccessCredentialsModal {
     mustChangePassword: this.fb.nonNullable.control(true),
   });
 
-  readonly title = computed(() => (this.mode === 'reset' ? 'Réinitialiser mot de passe' : 'Activer l’accès'));
+  readonly title = computed(() => (this.mode() === 'reset' ? 'Réinitialiser mot de passe' : 'Activer l’accès'));
   readonly userLabel = computed(() => {
-    const u = this.user;
+    const u = this.user();
     if (!u) return '—';
     const name = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim();
     return name || u.email || u._id;
   });
 
   onBackdropClick(): void {
-    if (this.saving) return;
+    if (this.saving()) return;
     this.cancel.emit();
   }
 
   onKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && !this.saving) this.cancel.emit();
+    if (event.key === 'Escape' && !this.saving()) this.cancel.emit();
   }
 
   /** Génère un mot de passe simple (admin peut modifier) */
@@ -71,7 +71,7 @@ export class AccessCredentialsModal {
   }
 
   submit(): void {
-    if (this.saving) return;
+    if (this.saving()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

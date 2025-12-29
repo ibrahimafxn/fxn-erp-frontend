@@ -7,7 +7,9 @@
 
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="back()">Retour</button>
-      <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
+      @if (!isDepotManager()) {
+        <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
+      }
     </div>
   </header>
 
@@ -15,12 +17,14 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <input type="text" formControlName="q" placeholder="Rechercher (nom, catégorie, ref…)…" />
 
-      <select formControlName="depot">
-        <option value="">Tous les dépôts</option>
-        @for (d of depots(); track d._id) {
-          <option [value]="d._id">{{ d.name }}</option>
-        }
-      </select>
+      @if (!isDepotManager()) {
+        <select formControlName="depot">
+          <option value="">Tous les dépôts</option>
+          @for (d of depots(); track d._id) {
+          <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+          }
+        </select>
+      }
 
       <button class="btn-outline" type="submit">Rechercher</button>
       <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
@@ -58,43 +62,47 @@
           <th>Quantité</th>
           <th>Dépôt</th>
           <th>Création</th>
-          <th class="actions">Actions</th>
+          @if (!isDepotManager()) {
+            <th class="actions">Actions</th>
+          }
         </tr>
         </thead>
 
         <tbody>
           @for (m of items(); track trackById) {
-            <tr class="row">
+            <tr class="row" (click)="openDetail(m)">
               <td class="main">
-                <div class="name">{{ m.name }}</div>
+                <div class="name">{{ materialName(m) }}</div>
                 <div class="sub">{{ m.description || '—' }}</div>
               </td>
 
-              <td>{{ m.category || '—' }}</td>
-              <td>{{ m.quantity ?? 0 }}</td>
+              <td><span class="tag">{{ m.category || '—' }}</span></td>
+              <td><span class="qty">{{ m.quantity ?? 0 }}</span></td>
               <td>{{ depotLabel(m) }}</td>
 
               <td>
                 @if (createdAtValue(m)) { {{ createdAtValue(m) | date:'short' }} } @else { — }
               </td>
 
-              <td class="actions">
-                <!-- ✅ Ajouter un peu d’espace entre les boutons -->
-                <div class="actions-row">
-                  <button class="btn-outline" type="button" (click)="edit(m)">
-                    Modifier
-                  </button>
+              @if (!isDepotManager()) {
+                <td class="actions" (click)="$event.stopPropagation()">
+                  <!-- ✅ Ajouter un peu d’espace entre les boutons -->
+                  <div class="actions-row">
+                    <button class="btn-outline" type="button" (click)="edit(m)">
+                      Modifier
+                    </button>
 
-                  <button
-                    class="btn-danger"
-                    type="button"
-                    [disabled]="deletingId() === m._id"
-                    (click)="openDeleteModal(m)"
-                  >
-                    @if (deletingId() === m._id) { Suppression… } @else { Supprimer }
-                  </button>
-                </div>
-              </td>
+                    <button
+                      class="btn-danger"
+                      type="button"
+                      [disabled]="deletingId() === m._id"
+                      (click)="openDeleteModal(m)"
+                    >
+                      @if (deletingId() === m._id) { Suppression… } @else { Supprimer }
+                    </button>
+                  </div>
+                </td>
+              }
             </tr>
           }
         </tbody>

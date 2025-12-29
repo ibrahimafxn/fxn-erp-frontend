@@ -1,1 +1,168 @@
-<p>history-list works!</p>
+<section class="movement-history">
+  <header class="page-header">
+    <div>
+      <h1>Journal des mouvements</h1>
+      <p class="subtitle">Traçabilité des entrées, sorties, transferts, attributions et reprises.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="refresh(true)">Recharger</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
+      <select formControlName="resourceType">
+        <option value="">Toutes ressources</option>
+        <option value="MATERIAL">Matériels</option>
+        <option value="CONSUMABLE">Consommables</option>
+        <option value="VEHICLE">Véhicules</option>
+      </select>
+
+      <select formControlName="action">
+        <option value="">Toutes actions</option>
+        <option value="IN">Entrée</option>
+        <option value="OUT">Sortie</option>
+        <option value="TRANSFER">Transfert</option>
+        <option value="ASSIGN">Attribution</option>
+        <option value="RELEASE">Reprise</option>
+        <option value="ADJUST">Ajustement</option>
+      </select>
+
+      <select formControlName="status">
+        <option value="">Tous statuts</option>
+        <option value="COMMITTED">Validé</option>
+        <option value="CANCELED">Annulé</option>
+      </select>
+
+      <input type="text" formControlName="resourceId" placeholder="ID ressource" />
+
+      <select formControlName="fromType">
+        <option value="">Origine</option>
+        <option value="DEPOT">Dépôt</option>
+        <option value="USER">Utilisateur</option>
+        <option value="SUPPLIER">Fournisseur</option>
+        <option value="EXTERNAL">Externe</option>
+      </select>
+
+      @if (filterForm.controls.fromType.value === 'USER') {
+        <select formControlName="fromId" [disabled]="usersLoading()">
+          <option value="">{{ usersLoading() ? 'Chargement…' : 'Tous utilisateurs' }}</option>
+          @for (u of users(); track u._id) {
+            <option [value]="u._id">{{ userLabel(u) }}</option>
+          }
+        </select>
+      } @else if (filterForm.controls.fromType.value === 'DEPOT') {
+        <select formControlName="fromId" [disabled]="depotsLoading()">
+          <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
+          @for (d of depots(); track d._id) {
+            <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+          }
+        </select>
+      } @else {
+        <input type="text" formControlName="fromId" placeholder="ID origine" />
+      }
+
+      <select formControlName="toType">
+        <option value="">Destination</option>
+        <option value="DEPOT">Dépôt</option>
+        <option value="USER">Utilisateur</option>
+        <option value="SUPPLIER">Fournisseur</option>
+        <option value="EXTERNAL">Externe</option>
+      </select>
+
+      @if (filterForm.controls.toType.value === 'USER') {
+        <select formControlName="toId" [disabled]="usersLoading()">
+          <option value="">{{ usersLoading() ? 'Chargement…' : 'Tous utilisateurs' }}</option>
+          @for (u of users(); track u._id) {
+            <option [value]="u._id">{{ userLabel(u) }}</option>
+          }
+        </select>
+      } @else if (filterForm.controls.toType.value === 'DEPOT') {
+        <select formControlName="toId" [disabled]="depotsLoading()">
+          <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
+          @for (d of depots(); track d._id) {
+            <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+          }
+        </select>
+      } @else {
+        <input type="text" formControlName="toId" placeholder="ID destination" />
+      }
+
+      <div class="actions">
+        <button class="btn-outline" type="submit">Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
+      </div>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ errorMessage() }}</div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucun mouvement trouvé.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>Ressource</th>
+          <th>Action</th>
+          <th>Origine</th>
+          <th>Destination</th>
+          <th>Quantité</th>
+          <th>Statut</th>
+          <th>Note</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (m of items(); track m._id) {
+            <tr>
+              <td>{{ createdAtText(m) }}</td>
+              <td class="mono">{{ resourceLabel(m) }}</td>
+              <td><span class="badge">{{ actionLabel(m.action) }}</span></td>
+              <td class="mono">{{ endpointLabel(m.from.type, m.from.id) }}</td>
+              <td class="mono">{{ endpointLabel(m.to.type, m.to.id) }}</td>
+              <td>{{ m.quantity }} {{ m.unit }}</td>
+              <td>
+                @if (m.status === 'CANCELED') {
+                  <span class="pill danger">{{ statusLabel(m.status) }}</span>
+                } @else {
+                  <span class="pill ok">{{ statusLabel(m.status) }}</span>
+                }
+              </td>
+              <td class="note">{{ m.note || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">
+        ← Précédent
+      </button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">
+        Suivant →
+      </button>
+    </footer>
+  }
+</section>

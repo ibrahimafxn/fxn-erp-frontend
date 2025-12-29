@@ -1,1 +1,123 @@
-<p>materials-detail works!</p>
+<section class="resource-detail">
+  <header class="page-header">
+    <div>
+      <h1>Matériel</h1>
+      <p class="subtitle">Détails et historique complet.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()">Retour</button>
+      <button class="btn-outline" type="button" (click)="refresh()">Rafraîchir</button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (!material()) {
+    <div class="state empty card">Matériel introuvable.</div>
+  } @else {
+    <section class="grid">
+      <article class="card info-card">
+        <div class="info-title">{{ materialName() }}</div>
+        <div class="info-sub">{{ material()?.description || '—' }}</div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Catégorie</label>
+            <div>{{ categoryLabel() }}</div>
+          </div>
+          <div class="info-item">
+            <label>Dépôt</label>
+            <div>{{ depotName() }}</div>
+          </div>
+          <div class="info-item">
+            <label>Quantité</label>
+            <div>{{ material()?.quantity ?? 0 }}</div>
+          </div>
+          <div class="info-item">
+            <label>Attribué</label>
+            <div>{{ material()?.assignedQuantity ?? 0 }}</div>
+          </div>
+          <div class="info-item">
+            <label>Disponible</label>
+            <div>{{ availableQty() }}</div>
+          </div>
+          <div class="info-item">
+            <label>Créé le</label>
+            <div>
+              @if (material()?.createdAt) { {{ material()?.createdAt | date:'short' }} } @else { — }
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card history-card">
+        <div class="card-title-row">
+          <h2>Historique</h2>
+          <div class="history-meta">
+            <span class="pill">Total : {{ historyTotal() }}</span>
+            <label class="limit">
+              <span>Par page</span>
+              <select [value]="historyLimit()" (change)="setHistoryLimit($event)">
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        @if (historyLoading()) {
+          <div class="state loading">Chargement historique…</div>
+        } @else if (historyError()) {
+          <div class="state error">{{ historyError() }}</div>
+        } @else if (historyItems().length === 0) {
+          <div class="state empty">Aucun historique.</div>
+        } @else {
+          <div class="table">
+            <table>
+              <thead>
+              <tr>
+                <th>Date</th>
+                <th>Action</th>
+                <th>Quantité</th>
+                <th>Auteur</th>
+                <th>Technicien</th>
+                <th>Dépôt</th>
+                <th>Note</th>
+              </tr>
+              </thead>
+              <tbody>
+                @for (it of historyItems(); track it._id) {
+                  <tr>
+                    <td>
+                      @if (createdAtValue(it)) { {{ createdAtValue(it) | date:'short' }} } @else { — }
+                    </td>
+                    <td><span class="badge">{{ actionLabel(it?.attribution?.action) }}</span></td>
+                    <td>{{ it?.attribution?.quantity ?? 1 }}</td>
+                    <td>{{ authorLabel(it) }}</td>
+                    <td>{{ toUserLabel(it) }}</td>
+                    <td>{{ depotLabel(it) }}</td>
+                    <td class="note">{{ noteLabel(it) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <footer class="pager">
+            <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()">
+              ← Précédent
+            </button>
+            <span class="pill">Page {{ historyPage() }} / {{ historyPageCount() }}</span>
+            <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()">
+              Suivant →
+            </button>
+          </footer>
+        }
+      </article>
+    </section>
+  }
+</section>

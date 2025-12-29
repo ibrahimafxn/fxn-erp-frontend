@@ -9,6 +9,7 @@ import { Depot } from '../../../core/models';
 import { DepotListResult } from '../../../core/models';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../core/utils/detail-back';
+import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 
 @Component({
   standalone: true,
@@ -130,7 +131,7 @@ export class DepotList extends DetailBack {
   // ─────────────────────────────────────────────
   openDeleteModal(d: Depot): void {
     this.pendingDeleteId.set(d._id);
-    this.pendingDeleteName.set(d.name ?? '');
+    this.pendingDeleteName.set(formatDepotName(d.name ?? '') || '');
     this.deleteModalOpen.set(true);
   }
 
@@ -184,11 +185,15 @@ export class DepotList extends DetailBack {
 
     if (typeof m === 'object' && '_id' in m) {
       const obj: { _id: string; firstName?: string; lastName?: string; email?: string } = m;
-      const name = `${obj.firstName ?? ''} ${obj.lastName ?? ''}`.trim();
+      const name = formatPersonName(obj.firstName ?? '', obj.lastName ?? '');
       return name || obj.email || '—';
     }
 
     return '—';
+  }
+
+  depotName(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
   }
 
   trackById = (_: number, d: Depot) => d._id;

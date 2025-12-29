@@ -13,6 +13,9 @@ import { Depot } from '../../../../core/models';
 import { ConsumableListResult } from '../../../../core/models';
 import {ConfirmDeleteModal} from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../../core/utils/detail-back';
+import { AuthService } from '../../../../core/services/auth.service';
+import { Role } from '../../../../core/models/roles.model';
+import { formatDepotName, formatResourceName } from '../../../../core/utils/text-format';
 
 @Component({
   standalone: true,
@@ -30,6 +33,7 @@ export class ConsumableList extends DetailBack {
 
   private consumableService = inject(ConsumableService);
   private depotService = inject(DepotService);
+  private auth = inject(AuthService);
   private fb = inject(FormBuilder);
 
   // Service signals
@@ -62,10 +66,13 @@ export class ConsumableList extends DetailBack {
     const l = this.limit();
     return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
   });
+  readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
 
   constructor() {
     super();
-    this.loadDepots();
+    if (!this.isDepotManager()) {
+      this.loadDepots();
+    }
     this.refresh(true);
   }
 
@@ -118,15 +125,24 @@ export class ConsumableList extends DetailBack {
     this.refresh(true);
   }
 
+  openDetail(c: Consumable): void {
+    const base = this.isDepotManager() ? '/depot/resources/consumables' : '/admin/resources/consumables';
+    const tail = this.isDepotManager() ? ['detail'] : [];
+    this.router.navigate([base, c._id, ...tail]).then();
+  }
+
   createNew(): void {
+    if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/consumables/new']).then();
   }
 
   edit(c: Consumable): void {
+    if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/consumables', c._id, 'edit']).then();
   }
 
   openDeleteModal(c: Consumable): void {
+    if (this.isDepotManager()) return;
     this.pendingDeleteLabel.set(c._id);
     this.pendingDeleteName.set(c.name ?? '');
     this.deleteModalOpen.set(true);
@@ -137,6 +153,7 @@ export class ConsumableList extends DetailBack {
     this.pendingDeleteName.set('');
   }
   confirmDelete(): void {
+    if (this.isDepotManager()) return;
     const id = this.pendingDeleteId();
     if (!id) return;
 
@@ -178,13 +195,22 @@ export class ConsumableList extends DetailBack {
 
     if (typeof d === 'object' && '_id' in d) {
       const obj: { _id: string; name?: string } = d;
-      return obj.name ?? '—';
+      return formatDepotName(obj.name) || '—';
     }
 
     return '—';
   }
 
+  consumableName(c: Consumable): string {
+    return formatResourceName(c.name) || '—';
+  }
+
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
+  }
+
   private loadDepots(): void {
+    if (this.isDepotManager()) return;
     this.depotsLoading.set(true);
 
     this.depotService.refreshDepots(true, { page: 1, limit: 200 }).subscribe({

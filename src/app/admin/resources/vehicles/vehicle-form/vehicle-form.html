@@ -57,7 +57,7 @@
           <select formControlName="idDepot">
             <option [ngValue]="null">— Aucun dépôt —</option>
             @for (d of depots(); track d._id) {
-              <option [value]="d._id">{{ d.name }}</option>
+              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
             }
           </select>
         }

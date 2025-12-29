@@ -260,6 +260,17 @@
   background: rgba(255, 255, 255, .06);
 }
 
+.note-input {
+  width: 100%;
+  border-radius: .8rem;
+  padding: .55rem .75rem;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: rgba(255, 255, 255, .06);
+  color: inherit;
+  resize: vertical;
+  min-height: 68px;
+}
+
 .panel-actions {
   display: flex;
   justify-content: flex-end;

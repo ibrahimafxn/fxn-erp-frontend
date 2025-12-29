@@ -10,6 +10,9 @@ import { DepotService } from '../../../../core/services/depot.service';
 import {Material, Depot} from '../../../../core/models';
 import {ConfirmDeleteModal} from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../../core/utils/detail-back';
+import { AuthService } from '../../../../core/services/auth.service';
+import { Role } from '../../../../core/models/roles.model';
+import { formatResourceName, formatDepotName } from '../../../../core/utils/text-format';
 
 @Component({
   standalone: true,
@@ -28,6 +31,7 @@ export class MaterialList extends DetailBack {
 
   private materialService = inject(MaterialService);
   private depotSvc = inject(DepotService);
+  private auth = inject(AuthService);
   private fb = inject(FormBuilder);
 
   // -----------------------------
@@ -71,14 +75,18 @@ export class MaterialList extends DetailBack {
   // Boutons pager (désactivation propre)
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
 
   constructor() {
     super();
-    this.loadDepots();
+    if (!this.isDepotManager()) {
+      this.loadDepots();
+    }
     this.refresh(true);
   }
 
   openDeleteModal(m: Material): void {
+    if (this.isDepotManager()) return;
     this.pendingDeleteLabel.set(m._id);
     this.pendingDeleteName.set(m.name ?? '');
     this.deleteModalOpen.set(true);
@@ -91,6 +99,7 @@ export class MaterialList extends DetailBack {
   }
 
   confirmDelete(): void {
+    if (this.isDepotManager()) return;
     const id = this.pendingDeleteId();
     if (!id) return;
 
@@ -168,16 +177,25 @@ export class MaterialList extends DetailBack {
   // -----------------------------
   // Actions
   // -----------------------------
+  openDetail(m: Material): void {
+    const base = this.isDepotManager() ? '/depot/resources/materials' : '/admin/resources/materials';
+    const tail = this.isDepotManager() ? ['detail'] : [];
+    this.router.navigate([base, m._id, ...tail]).then();
+  }
+
   createNew(): void {
+    if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/materials/new']).then();
   }
 
   // ✅ route edit: /admin/resources/materials/:id/edit (comme consumables)
   edit(m: Material): void {
+    if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/materials', m._id, 'edit']).then();
   }
 
   delete(m: Material): void {
+    if (this.isDepotManager()) return;
     this.deletingId.set(m._id);
 
     this.materialService.remove(m._id).subscribe({
@@ -218,16 +236,25 @@ export class MaterialList extends DetailBack {
     // populate → objet { _id, name }
     if (typeof d === 'object' && '_id' in d) {
       const obj: { _id: string; name?: string } = d;
-      return obj.name ?? '—';
+      return formatDepotName(obj.name) || '—';
     }
 
     return '—';
+  }
+
+  materialName(m: Material): string {
+    return formatResourceName(m.name) || '—';
+  }
+
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
   }
 
   // -----------------------------
   // Depots pour le filtre
   // -----------------------------
   private loadDepots(): void {
+    if (this.isDepotManager()) return;
     this.depotsLoading.set(true);
 
     this.depotSvc.refreshDepots(true, { page: 1, limit: 200 }).subscribe({

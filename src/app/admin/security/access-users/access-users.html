@@ -24,7 +24,7 @@
 
       <select formControlName="depot">
         <option value="">Tous les dépôts</option>
-        @for (d of depots(); track d._id) { <option [value]="d._id">{{ d.name }}</option> }
+        @for (d of depots(); track d._id) { <option [value]="d._id">{{ depotOptionLabel(d) }}</option> }
       </select>
 
       <label class="check">

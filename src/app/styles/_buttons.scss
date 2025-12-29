@@ -9,33 +9,39 @@ button {
 .btn-primary,
 .btn-outline,
 .btn-danger {
-  padding: 0.55rem 1rem;
+  padding: 0.6rem 1.1rem;
   border-radius: var(--fxn-radius-md);
-  border: 1px solid var(--fxn-border);
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: background .15s ease, filter .15s ease;
-  font-weight: 600;
+  transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .btn-primary {
-  background: var(--fxn-primary-soft);
-  color: var(--fxn-primary);
+  background: linear-gradient(135deg, rgba(33, 182, 182, 0.2), rgba(15, 191, 159, 0.35));
+  color: var(--fxn-text);
+  border-color: rgba(33, 182, 182, 0.35);
+  box-shadow: var(--fxn-shadow-sm);
 }
 
 .btn-danger {
-  background: var(--fxn-danger-soft);
-  color: var(--fxn-danger);
+  background: linear-gradient(135deg, rgba(255, 92, 124, 0.2), rgba(255, 122, 87, 0.25));
+  color: var(--fxn-text);
+  border-color: rgba(255, 92, 124, 0.35);
 }
 
 .btn-outline {
-  background: transparent;
+  background: rgba(20, 32, 45, 0.65);
   color: var(--fxn-text);
+  border-color: var(--fxn-border-strong);
 }
 
 .btn-primary:hover,
 .btn-danger:hover,
 .btn-outline:hover {
-  filter: brightness(1.15);
+  transform: translateY(-1px);
+  box-shadow: var(--fxn-shadow-md);
 }
 
 button:disabled {

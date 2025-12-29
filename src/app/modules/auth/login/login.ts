@@ -51,8 +51,10 @@ export class Login {
         const role = this.auth.getUserRole();
 
         // redirection par rôle (exemple)
-        if (role === 'GESTION_DEPOT' || role === 'TECHNICIEN') {
+        if (role === 'GESTION_DEPOT') {
           this.router.navigate(['/depot']);
+        } else if (role === 'TECHNICIEN') {
+          this.router.navigate(['/unauthorized']);
         } else if (role === 'ADMIN' || role === 'DIRIGEANT') {
           this.router.navigate(['/admin/dashboard']);
         } else {

@@ -68,57 +68,12 @@
           <select formControlName="idDepot">
             <option value="">— Aucun dépôt —</option>
             @for (d of depots(); track d._id) {
-              <option [value]="d._id">{{ d.name }} @if (d.city) { · {{ d.city }} }</option>
+              <option [value]="d._id">{{ depotOptionLabel(d) }} @if (d.city) { · {{ d.city }} }</option>
             }
           </select>
           <small class="hint">Sélection actuelle : {{ depotLabelById(form.get('idDepot')?.value || '') }}</small>
         }
       </div>
-
-      <!-- Véhicule (désactivé si rôle != TECHNICIEN) -->
-      <div class="field">
-        <label>Véhicule</label>
-
-        @if (!isTechnician()) {
-          <div class="hint">
-            Le véhicule est assignable uniquement aux <strong>Techniciens</strong>.
-          </div>
-        }
-
-        <div class="inline-actions">
-          <label class="checkbox">
-            <input
-              type="checkbox"
-              [checked]="showOnlyAvailableVehicles()"
-              (change)="onToggleAvailable($event)"
-              [disabled]="!isTechnician()"
-            />
-            <span>Afficher uniquement les véhicules disponibles</span>
-          </label>
-        </div>
-
-        @if (vehiclesLoading()) {
-          <div class="hint">Chargement des véhicules…</div>
-        } @else {
-          <select formControlName="assignedVehicle" [disabled]="!isTechnician()">
-            <option value="">— Aucun véhicule —</option>
-            @for (v of vehicleOptions(); track v._id) {
-              <option [value]="v._id">{{ vehicleLabel(v) }}</option>
-            }
-          </select>
-
-          @if (isTechnician()) {
-            <small class="hint">Astuce : en édition, le véhicule déjà assigné reste visible.</small>
-          }
-        }
-      </div>
-    </div>
-
-    <div class="actions">
-      <button class="btn-outline" type="button" (click)="cancel()">Annuler</button>
-      <button class="btn-primary" type="submit" [disabled]="saving() || form.invalid">
-        @if (saving()) { Enregistrement… } @else { Enregistrer }
-      </button>
     </div>
   </form>
 </section>

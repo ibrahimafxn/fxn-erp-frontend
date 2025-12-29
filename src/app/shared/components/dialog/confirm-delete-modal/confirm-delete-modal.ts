@@ -1,5 +1,5 @@
 // confirm-delete-modal.ts
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Output, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -11,51 +11,53 @@ import { CommonModule } from '@angular/common';
 })
 export class ConfirmDeleteModal {
   /** Affiche/masque */
-  @Input({ required: true }) open = false;
+  readonly open = input(false);
 
   /** Libellé d’entité (ex: "utilisateur", "dépôt", "consommable", "matériel") */
-  @Input() entityLabel = 'élément';
+  readonly entityLabel = input('élément');
 
   /** Nom affiché (ex: "Heidi HAMOU") */
-  @Input() entityName = '';
+  readonly entityName = input('');
 
   /** ID optionnel pour contexte */
-  @Input() entityId: string | null = null;
+  readonly entityId = input<string | null>(null);
 
   /** Texte d’avertissement */
-  @Input() dangerHint = 'Cette action est irréversible.';
+  readonly dangerHint = input('Cette action est irréversible.');
 
   /** Personnalisation boutons */
-  @Input() cancelText = 'Annuler';
-  @Input() confirmText = 'Supprimer';
+  readonly cancelText = input('Annuler');
+  readonly confirmText = input('Supprimer');
 
   /** Si tu veux bloquer le bouton "Supprimer" pendant une requête */
-  @Input() confirming = false;
+  readonly confirming = input(false);
 
   /** Events */
   @Output() cancel = new EventEmitter<void>();
   @Output() confirm = new EventEmitter<void>();
 
   onBackdropClick(): void {
+    if (this.confirming()) return;
     this.cancel.emit();
   }
 
   onCancel(): void {
+    if (this.confirming()) return;
     this.cancel.emit();
   }
 
   onConfirm(): void {
-    if (this.confirming) return;
+    if (this.confirming()) return;
     this.confirm.emit();
   }
 
   onKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') this.cancel.emit();
+    if (event.key === 'Escape' && !this.confirming()) this.cancel.emit();
   }
 
   /** Texte affiché si le nom est vide */
-  displayName(): string {
-    const n = this.entityName.trim();
-    return n ? `« ${n} »` : this.entityLabel;
-  }
+  readonly displayName = computed(() => {
+    const n = this.entityName().trim();
+    return n ? `« ${n} »` : this.entityLabel();
+  });
 }

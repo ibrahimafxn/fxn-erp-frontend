@@ -1,48 +1,212 @@
-<div class="dashboard-container">
-
-  <!-- Loader -->
-  @if (loading()){
-    <div class="loader">
-      <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
-      <p>Chargement des statistiques du dépôt...</p>
+<section class="depot-dashboard">
+  <header class="page-header">
+    <div>
+      <h1>Tableau dépôt</h1>
+      <p class="subtitle">Attributions rapides et suivi des stocks du dépôt.</p>
     </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="goMaterials()">Matériels</button>
+      <button class="btn-outline" type="button" (click)="goConsumables()">Consommables</button>
+      <button class="btn-outline" type="button" (click)="goVehicles()">Véhicules</button>
+      <button class="btn-outline" type="button" (click)="goHistory()">Historique</button>
+      <button class="btn-outline" type="button" (click)="refresh()">Rafraîchir</button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement des statistiques…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
   }
 
+  @if (stats()) {
+    <section class="stats-grid">
+      <article class="card stat-card">
+        <div class="stat-label">Techniciens</div>
+        <div class="stat-value">{{ stats()?.technicians }}</div>
+      </article>
 
-  <!-- Erreur -->
-  @if (error()){
-    <div class="error">
-      <mat-card>
-        <mat-card-title>Erreur</mat-card-title>
-        <mat-card-content>{{ error() }}</mat-card-content>
-      </mat-card>
-    </div>
+      <article class="card stat-card">
+        <div class="stat-label">Consommables</div>
+        <div class="stat-value">{{ stats()?.consumables }}</div>
+      </article>
 
+      <article class="card stat-card">
+        <div class="stat-label">Total véhicules</div>
+        <div class="stat-value">{{ stats()?.vehicles }}</div>
+      </article>
+
+      <article class="card stat-card">
+        <div class="stat-label">Matériels</div>
+        <div class="stat-value">{{ stats()?.materials }}</div>
+      </article>
+    </section>
   }
 
-  <!-- Stats -->
-  @if (stats()){
-    <div class="stats-grid">
-      <mat-card class="stat-card">
-        <mat-card-title>Total assignés</mat-card-title>
-        <mat-card-content>{{ stats()?.totalAssigned }}</mat-card-content>
-      </mat-card>
+  <section class="card assign-card">
+    <div class="card-title">Attribuer du stock à un technicien</div>
+    <p class="card-subtitle">
+      Sélectionne un matériel ou un consommable, puis un technicien du dépôt.
+    </p>
 
-      <mat-card class="stat-card">
-        <mat-card-title>Total disponibles</mat-card-title>
-        <mat-card-content>{{ stats()?.totalAvailable }}</mat-card-content>
-      </mat-card>
+    @if (assignError()) {
+      <div class="state error">Erreur : {{ assignError() }}</div>
+    }
+    @if (assignSuccess()) {
+      <div class="state success">{{ assignSuccess() }}</div>
+    }
 
-      <mat-card class="stat-card">
-        <mat-card-title>Total véhicules</mat-card-title>
-        <mat-card-content>{{ stats()?.totalVehicles }}</mat-card-content>
-      </mat-card>
+    <form class="assign-form" [formGroup]="assignForm" (ngSubmit)="submitAssign()">
+      <div class="field">
+        <label>Type</label>
+        <select formControlName="resourceType">
+          <option value="MATERIAL">Matériel</option>
+          <option value="CONSUMABLE">Consommable</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Ressource</label>
+        @if (resourcesLoading()) {
+          <div class="hint">Chargement des ressources…</div>
+        } @else {
+          <select formControlName="resourceId">
+            <option value="">— Sélectionner —</option>
+            @for (item of resourceOptions(); track item._id) {
+              <option [value]="item._id">{{ resourceLabel(item) }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <div class="field">
+        <label>Technicien</label>
+        @if (techniciansLoading()) {
+          <div class="hint">Chargement des techniciens…</div>
+        } @else {
+          <select formControlName="techId">
+            <option value="">— Sélectionner —</option>
+            @for (t of technicians(); track t._id) {
+              <option [value]="t._id">{{ techLabel(t) }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <div class="field">
+        <label>Quantité</label>
+        <input type="number" min="1" formControlName="quantity" />
+      </div>
+
+      <div class="field span-2">
+        <label>Note</label>
+        <textarea rows="3" formControlName="note" placeholder="Optionnel : chantier, motif..."></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="btn-outline" type="button" (click)="assignForm.reset({ resourceType: 'CONSUMABLE', quantity: 1 })">
+          Effacer
+        </button>
+        <button class="btn-primary" type="submit" [disabled]="assigning() || assignForm.invalid">
+          @if (assigning()) { Attribution… } @else { Attribuer }
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card tech-card">
+    <div class="card-title">Ressources par technicien</div>
+    <p class="card-subtitle">Consulte les ressources attribuées à un technicien du dépôt.</p>
+
+    <div class="tech-toolbar">
+      <label>Technicien</label>
+      @if (techniciansLoading()) {
+        <div class="hint">Chargement des techniciens…</div>
+      } @else {
+        <select [value]="selectedTechViewId()" (change)="onTechViewSelect($event)">
+          <option value="">— Sélectionner —</option>
+          @for (t of technicians(); track t._id) {
+            <option [value]="t._id">{{ techLabel(t) }}</option>
+          }
+        </select>
+      }
     </div>
 
-    <div class="refresh-button">
-      <button mat-raised-button color="primary" (click)="refresh()">Rafraîchir</button>
-    </div>
+    @if (!selectedTechViewId()) {
+      <div class="state">Sélectionne un technicien pour afficher ses attributions.</div>
+    } @else if (techAttributionsLoading()) {
+      <div class="state loading">Chargement des attributions…</div>
+    } @else if (techAttributionsError()) {
+      <div class="state error">{{ techAttributionsError() }}</div>
+    } @else if (techResourceSummary().length === 0) {
+      <div class="state empty">Aucune ressource attribuée.</div>
+    } @else {
+      <div class="tech-summary">
+        @for (item of techResourceSummary(); track item.label) {
+          <div class="tech-summary-item">
+            <div class="name">{{ item.label }}</div>
+            <div class="meta">
+              <span class="pill">{{ item.type }}</span>
+              <span class="qty">x {{ item.qty }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
 
-  }
+    @if (selectedTechViewId() && techAttributions().length > 0) {
+      <div class="tech-history">
+        <div class="tech-history-header">
+          <span class="pill">Total : {{ techAttributionsTotal() }}</span>
 
-</div>
+          <label class="limit">
+            <span>Par page</span>
+            <select [value]="techAttributionsLimit()" (change)="setTechAttributionsLimit($event)">
+              <option [value]="5">5</option>
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="table card">
+          <table>
+            <thead>
+            <tr>
+              <th>Date</th>
+              <th>Action</th>
+              <th>Ressource</th>
+              <th>Quantité</th>
+              <th>Note</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (item of techAttributions(); track item._id) {
+                <tr>
+                  <td>
+                    @if (item.createdAt) { {{ item.createdAt | date:'short' }} } @else { — }
+                  </td>
+                  <td><span class="pill">{{ actionLabel(item.action) }}</span></td>
+                  <td>{{ attributionResourceLabel(item) }}</td>
+                  <td>{{ item.quantity ?? 1 }}</td>
+                  <td class="note">{{ item.note || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="pager">
+          <button class="btn-outline" type="button" (click)="prevTechAttributions()" [disabled]="!canPrevTechAttributions()">
+            ← Précédent
+          </button>
+          <span class="pill">Page {{ techAttributionsPage() }} / {{ techAttributionsPageCount() }}</span>
+          <button class="btn-outline" type="button" (click)="nextTechAttributions()" [disabled]="!canNextTechAttributions()">
+            Suivant →
+          </button>
+        </footer>
+      </div>
+    }
+  </section>
+</section>

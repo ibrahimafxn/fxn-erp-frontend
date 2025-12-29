@@ -7,10 +7,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { VehicleService, AssignVehiclePayload, ReleaseVehiclePayload } from '../../../../core/services/vehicle.service';
 import { DepotService } from '../../../../core/services/depot.service';
 import { UserService } from '../../../../core/services/user.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { Role } from '../../../../core/models/roles.model';
 
 import { Vehicle, Depot, User } from '../../../../core/models';
 import { VehicleHistoryItem, VehicleHistoryResult } from '../../../../core/models/vehicle-history.model';
 import {DetailBack} from '../../../../core/utils/detail-back';
+import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
 
 type AssignMode = 'idle' | 'assign' | 'release';
 
@@ -26,6 +29,7 @@ export class VehicleDetail extends DetailBack {
   private depotSvc = inject(DepotService);
   private userSvc = inject(UserService);
   private route = inject(ActivatedRoute);
+  private auth = inject(AuthService);
 
   readonly id = this.route.snapshot.paramMap.get('id') ?? '';
 
@@ -61,6 +65,8 @@ export class VehicleDetail extends DetailBack {
 
   readonly selectedTechId = signal<string>('');
   readonly selectedDepotId = signal<string>('');
+  readonly assignNote = signal<string>('');
+  readonly releaseNote = signal<string>('');
 
   // -----------------------------
   // History (timeline)
@@ -92,6 +98,7 @@ export class VehicleDetail extends DetailBack {
   });
 
   readonly statusLabel = computed(() => (this.isAssigned() ? 'Assigné' : 'Disponible'));
+  readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
 
   constructor() {
     super();
@@ -137,7 +144,7 @@ export class VehicleDetail extends DetailBack {
 
     if (typeof d === 'object' && '_id' in d) {
       const obj = d as { _id: string; name?: string };
-      return obj.name ?? '—';
+      return formatDepotName(obj.name) || '—';
     }
 
     return '—';
@@ -150,11 +157,20 @@ export class VehicleDetail extends DetailBack {
     const a = v.assignedTo;
     if (typeof a === 'object' && '_id' in a) {
       const u = a as { _id: string; firstName?: string; lastName?: string; email?: string };
-      const name = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim();
+      const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
       return name || u.email || '—';
     }
 
     return '—';
+  }
+
+  technicianLabel(t: User): string {
+    const name = formatPersonName(t.firstName ?? '', t.lastName ?? '');
+    return name || t.email || t._id;
+  }
+
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
   }
 
   // -----------------------------
@@ -295,16 +311,22 @@ export class VehicleDetail extends DetailBack {
   openAssign(): void {
     this.assignMode.set('assign');
     this.actionError.set(null);
+    this.selectedTechId.set('');
+    this.assignNote.set('');
   }
 
   openRelease(): void {
     this.assignMode.set('release');
     this.actionError.set(null);
+    this.selectedDepotId.set('');
+    this.releaseNote.set('');
   }
 
   closeActions(): void {
     this.assignMode.set('idle');
     this.actionError.set(null);
+    this.assignNote.set('');
+    this.releaseNote.set('');
   }
 
   // Si tu as un AuthService, remplace ici par auth.userId()
@@ -328,6 +350,7 @@ export class VehicleDetail extends DetailBack {
     const payload: AssignVehiclePayload = {
       techId,
       author: this.authorId() ?? undefined,
+      note: this.assignNote().trim() || undefined,
     };
 
     this.svc.assignVehicle(v._id, payload).subscribe({
@@ -335,6 +358,7 @@ export class VehicleDetail extends DetailBack {
         this.actionSaving.set(false);
         this.assignMode.set('idle');
         this.selectedTechId.set('');
+        this.assignNote.set('');
         this.load(); // refresh + history refresh
       },
       error: (err: HttpErrorResponse) => {
@@ -360,12 +384,14 @@ export class VehicleDetail extends DetailBack {
     const payload: ReleaseVehiclePayload = {
       depotId,
       author: this.authorId() ?? undefined,
+      note: this.releaseNote().trim() || undefined,
     };
 
     this.svc.releaseVehicle(v._id, payload).subscribe({
       next: () => {
         this.actionSaving.set(false);
         this.assignMode.set('idle');
+        this.releaseNote.set('');
         this.load();
       },
       error: (err: HttpErrorResponse) => {
@@ -373,6 +399,16 @@ export class VehicleDetail extends DetailBack {
         this.actionError.set(this.apiError(err, 'Erreur reprise véhicule'));
       },
     });
+  }
+
+  onAssignNoteChange(event: Event): void {
+    const el = event.target instanceof HTMLTextAreaElement ? event.target : null;
+    this.assignNote.set(el?.value ?? '');
+  }
+
+  onReleaseNoteChange(event: Event): void {
+    const el = event.target instanceof HTMLTextAreaElement ? event.target : null;
+    this.releaseNote.set(el?.value ?? '');
   }
 
   // -----------------------------
@@ -400,7 +436,7 @@ export class VehicleDetail extends DetailBack {
 
     if (typeof a === 'object' && '_id' in a) {
       const u = a as { firstName?: string; lastName?: string; email?: string };
-      const name = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim();
+      const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
       return name || u.email || '—';
     }
     return '—';
@@ -412,7 +448,7 @@ export class VehicleDetail extends DetailBack {
 
     if (typeof u === 'object' && '_id' in u) {
       const x = u as { firstName?: string; lastName?: string; email?: string };
-      const name = `${x.firstName ?? ''} ${x.lastName ?? ''}`.trim();
+      const name = formatPersonName(x.firstName ?? '', x.lastName ?? '');
       return name || x.email || '—';
     }
     return '—';
@@ -424,7 +460,7 @@ export class VehicleDetail extends DetailBack {
 
     if (typeof d === 'object' && '_id' in d) {
       const x = d as { name?: string; city?: string };
-      const base = x.name ?? '—';
+      const base = formatDepotName(x.name) || '—';
       return x.city ? `${base} · ${x.city}` : base;
     }
     return '—';
@@ -447,6 +483,7 @@ export class VehicleDetail extends DetailBack {
   }
 
   edit(): void {
+    if (this.isDepotManager()) return;
     if (!this.id) return;
     this.router.navigate(['/admin/resources/vehicles', this.id, 'edit']).then();
   }

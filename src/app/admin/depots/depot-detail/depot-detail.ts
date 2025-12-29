@@ -16,6 +16,7 @@ import { FrDatePipe } from '../../../core/pipes/fr-date.pipe';
 import { Consumable, User, Depot, DepotManager, Material, Vehicle } from '../../../core/models';
 import { DepotStats } from '../../../core/models/depotStats.model';
 import {DetailBack} from '../../../core/utils/detail-back';
+import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 
 @Component({
   standalone: true,
@@ -121,7 +122,7 @@ export class DepotDetail extends DetailBack{
   }
 
   depotName(): string {
-    return this.depot()?.name ?? '';
+    return formatDepotName(this.depot()?.name ?? '') || '';
   }
 
   depotCity(): string {
@@ -158,7 +159,7 @@ export class DepotDetail extends DetailBack{
     const m = this.manager();
     if (!m) return '—';
 
-    const name = `${m.firstName ?? ''} ${m.lastName ?? ''}`.trim();
+    const name = formatPersonName(m.firstName ?? '', m.lastName ?? '');
     return name || m.email || '—';
   }
 
@@ -170,6 +171,11 @@ export class DepotDetail extends DetailBack{
     const m = this.manager();
     if (!m) return '—';
     return `${(m.firstName?.[0] ?? '')}${(m.lastName?.[0] ?? '')}`.toUpperCase();
+  }
+
+  userName(u: User): string {
+    const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
+    return name || u.email || u._id;
   }
 
   /* =============================

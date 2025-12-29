@@ -1,4 +1,5 @@
 // core/models/vehicle.model.ts
+import { UserLite } from './user-lite.model';
 export interface Vehicle {
   _id: string;
   idVehicule?: string;
@@ -9,7 +10,7 @@ export interface Vehicle {
   year?: number;
   state?: string;
   idDepot?: string;     // dépôt où il se trouve si non assigné
-  assignedTo?: string;// idUser si en utilisation
+  assignedTo?: string | UserLite | null; // idUser ou user populate
   isAvailable?: boolean;     // helper: true si idDep present and assignedTo null
   createdBy?: string;
   createdAt?: string | Date;

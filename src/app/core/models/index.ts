@@ -14,6 +14,9 @@ export * from './material.model';
 export * from './material-list-result-model';
 export * from './MaterialCategory.model'
 
+export * from './movement.model';
+export * from './movement-list-result.model';
+
 export * from './user.model';
 export * from './user-list-result.model';
 export * from './user-lite.model';
@@ -24,4 +27,3 @@ export * from './vehicle-list-result.model';
 export * from './roles.model';
 export * from './tool.model';
 export * from './resource-movement.model';
-

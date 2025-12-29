@@ -9,7 +9,9 @@ html, body {
 body {
   margin: 0;
   font-family: var(--fxn-font);
-  background: var(--fxn-bg);
+  background: radial-gradient(1200px 700px at 15% -10%, rgba(33, 182, 182, 0.2), transparent 60%),
+              radial-gradient(900px 600px at 110% 0%, rgba(246, 166, 9, 0.18), transparent 55%),
+              linear-gradient(160deg, var(--fxn-bg), var(--fxn-bg-2));
   color: var(--fxn-text);
   line-height: 1.5;
 }
@@ -18,10 +20,28 @@ body {
   box-sizing: border-box;
 }
 
+::selection {
+  background: rgba(33, 182, 182, 0.3);
+}
+
+main.app-content {
+  padding: var(--fxn-space-xl);
+  min-height: calc(100vh - 64px);
+  animation: fxn-fade-up .35s ease;
+}
+
+@media (max-width: 900px) {
+  main.app-content {
+    padding: var(--fxn-space-lg);
+  }
+}
+
 /* Titres */
 h1, h2, h3, h4 {
   margin: 0;
   font-weight: 700;
+  font-family: var(--fxn-font-display);
+  letter-spacing: -0.02em;
 }
 
 /* Liens */
@@ -32,4 +52,19 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+input, select, textarea {
+  font-family: var(--fxn-font);
+  color: inherit;
+}
+
+input:focus, select:focus, textarea:focus, button:focus {
+  outline: none;
+  box-shadow: var(--fxn-ring);
+}
+
+@keyframes fxn-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

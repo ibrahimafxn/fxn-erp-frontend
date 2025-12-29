@@ -10,6 +10,9 @@ import { VehicleService } from '../../../../core/services/vehicle.service';
 import { Depot, Vehicle, VehicleListResult } from '../../../../core/models';
 import {ConfirmDeleteModal} from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../../core/utils/detail-back';
+import { AuthService } from '../../../../core/services/auth.service';
+import { Role } from '../../../../core/models/roles.model';
+import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
 
 
 @Component({
@@ -23,6 +26,7 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 export class VehicleList extends DetailBack {
   private svc = inject(VehicleService);
   private depotSvc = inject(DepotService);
+  private auth = inject(AuthService);
   private fb = inject(FormBuilder);
 
   // service signals
@@ -64,6 +68,7 @@ export class VehicleList extends DetailBack {
 
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
 
   // ✅ confirming = on supprime exactement l’item en attente
   readonly confirmingDelete = computed(() => {
@@ -73,7 +78,9 @@ export class VehicleList extends DetailBack {
 
   constructor() {
     super();
-    this.loadDepots();
+    if (!this.isDepotManager()) {
+      this.loadDepots();
+    }
     this.refresh(true);
   }
 
@@ -126,14 +133,17 @@ export class VehicleList extends DetailBack {
   }
 
   createNew(): void {
+    if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/vehicles/new']).then();
   }
 
   openDetail(v: Vehicle): void {
-    this.router.navigate(['/admin/resources/vehicles', v._id, 'detail']).then();
+    const base = this.isDepotManager() ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    this.router.navigate([base, v._id, 'detail']).then();
   }
 
   edit(v: Vehicle): void {
+    if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/vehicles', v._id, 'edit']).then();
   }
 
@@ -141,6 +151,7 @@ export class VehicleList extends DetailBack {
   // Confirm Delete Modal (fix)
   // -----------------------------
   openDeleteModal(v: Vehicle): void {
+    if (this.isDepotManager()) return;
     this.pendingDeleteId.set(v._id);
     this.pendingDeleteLabel.set('véhicule');
     this.pendingDeleteName.set(this.title(v));
@@ -158,6 +169,7 @@ export class VehicleList extends DetailBack {
   }
 
   confirmDelete(): void {
+    if (this.isDepotManager()) return;
     const id = this.pendingDeleteId();
     if (!id) return;
 
@@ -197,6 +209,14 @@ export class VehicleList extends DetailBack {
     return label || (v.plateNumber ?? 'Véhicule');
   }
 
+  assignedLabel(v: Vehicle): string {
+    const a = v.assignedTo;
+    if (!a) return 'Libre';
+    if (typeof a === 'string') return a;
+    const name = formatPersonName(a.firstName ?? '', a.lastName ?? '');
+    return name || a.email || a._id;
+  }
+
   plate(v: Vehicle): string {
     return v.plateNumber ?? '—';
   }
@@ -206,6 +226,7 @@ export class VehicleList extends DetailBack {
   }
 
   private loadDepots(): void {
+    if (this.isDepotManager()) return;
     this.depotsLoading.set(true);
     this.depotSvc.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
       next: (res) => {
@@ -217,4 +238,8 @@ export class VehicleList extends DetailBack {
   }
 
   trackById = (_: number, v: Vehicle) => v._id;
+
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
+  }
 }

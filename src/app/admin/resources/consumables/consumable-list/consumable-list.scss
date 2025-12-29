@@ -2,9 +2,9 @@
    Page
 ------------------------------------------------- */
 .consumables-list {
-  padding: 1.25rem;
+  padding: 1.5rem 0 2rem;
   display: grid;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 /* -------------------------------------------------
@@ -18,13 +18,13 @@
 
   h1 {
     margin: 0;
-    font-size: 1.35rem;
-    font-weight: 750;
+    font-size: 1.6rem;
+    font-weight: 700;
   }
 
   .subtitle {
     margin: .25rem 0 0;
-    opacity: .75;
+    color: var(--fxn-text-muted);
     font-size: .9rem;
   }
 
@@ -39,10 +39,11 @@
    Card
 ------------------------------------------------- */
 .card {
-  background: rgba(0, 0, 0, .05);
-  border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 1rem;
+  background: var(--fxn-surface-glass);
+  border: 1px solid var(--fxn-border);
+  border-radius: var(--fxn-radius-lg);
   padding: 1rem;
+  box-shadow: var(--fxn-shadow-sm);
 }
 
 /* -------------------------------------------------
@@ -64,17 +65,12 @@
 
   input,
   select {
-    padding: .55rem .65rem;
-    border-radius: .7rem;
-    border: 1px solid rgba(255, 255, 255, .15);
-    background: rgba(255, 255, 255, .06);
+    padding: .6rem .75rem;
+    border-radius: var(--fxn-radius-md);
+    border: 1px solid var(--fxn-border-strong);
+    background: rgba(8, 14, 22, 0.6);
     color: inherit;
     outline: none;
-  }
-
-  input:focus,
-  select:focus {
-    border-color: rgba(0, 120, 255, .6);
   }
 
   .meta {
@@ -86,12 +82,12 @@
   }
 
   .pill {
-    padding: .25rem .55rem;
+    padding: .25rem .6rem;
     border-radius: 999px;
     font-size: .8rem;
     font-weight: 700;
     background: rgba(255, 255, 255, .06);
-    border: 1px solid rgba(255, 255, 255, .12);
+    border: 1px solid var(--fxn-border);
   }
 
   .limit {
@@ -164,7 +160,7 @@
   }
 
   .row:hover {
-    background: rgba(255, 255, 255, .03);
+    background: rgba(33, 182, 182, 0.08);
   }
 
   .main {
@@ -187,37 +183,30 @@
 /* -------------------------------------------------
    Buttons (cohérent depot)
 ------------------------------------------------- */
-.btn-outline,
-.btn-primary,
-.btn-danger {
-  border-radius: .8rem;
-  padding: .55rem .9rem;
-  border: 1px solid rgba(255, 255, 255, .14);
-  background: rgba(255, 255, 255, .06);
-  cursor: pointer;
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(246, 166, 9, 0.4);
+  background: rgba(246, 166, 9, 0.18);
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
 }
 
-.btn-primary {
-  background: rgba(0, 120, 255, .16);
-}
-
-.btn-danger {
-  background: rgba(255, 0, 60, .14);
-}
-
-.btn-outline:hover,
-.btn-primary:hover,
-.btn-danger:hover {
-  filter: brightness(1.05);
-}
-
-button[disabled] {
-  opacity: .5;
-  cursor: not-allowed;
+.qty {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 25, 35, 0.6);
+  font-weight: 700;
 }
 .actions {
   display: flex;
   gap: .5rem; // ✅ espace entre Modifier & Supprimer
   white-space: nowrap;
 }
-

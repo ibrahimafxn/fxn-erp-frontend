@@ -1,0 +1,157 @@
+.resource-detail {
+  padding: 1.5rem 0 2rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.6rem;
+  }
+
+  .subtitle {
+    margin: .25rem 0 0;
+    color: var(--fxn-text-muted);
+    font-size: .95rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--fxn-surface-glass);
+  border: 1px solid var(--fxn-border);
+  border-radius: var(--fxn-radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--fxn-shadow-sm);
+}
+
+.info-card {
+  display: grid;
+  gap: .75rem;
+}
+
+.info-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.info-sub {
+  color: var(--fxn-text-muted);
+}
+
+.info-grid {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.info-item {
+  display: grid;
+  gap: .3rem;
+
+  label {
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--fxn-text-muted);
+  }
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.history-meta .limit {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .85rem;
+  color: var(--fxn-text-muted);
+}
+
+.history-meta select {
+  border-radius: var(--fxn-radius-md);
+  padding: .35rem .5rem;
+  border: 1px solid var(--fxn-border-strong);
+  background: rgba(8, 14, 22, 0.6);
+  color: inherit;
+}
+
+.table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .95rem;
+}
+
+th,
+td {
+  padding: .8rem .9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--fxn-border);
+}
+
+th {
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--fxn-text-muted);
+}
+
+td.note {
+  max-width: 320px;
+  color: var(--fxn-text-muted);
+}
+
+.pager {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: .75rem;
+}
+
+.state {
+  padding: .9rem 1rem;
+  border-radius: .9rem;
+  background: rgba(0, 0, 0, .06);
+  border: 1px solid rgba(255, 255, 255, .06);
+  &.error { background: rgba(255, 0, 60, .12); }
+}
+
+@media (max-width: 900px) {
+  .card-title-row {
+    align-items: flex-start;
+  }
+}

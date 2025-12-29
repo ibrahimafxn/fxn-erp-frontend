@@ -20,5 +20,68 @@ export const DEPOT_ROUTES: Routes = [
       // tu peux aussi ouvrir aux techniciens si tu veux :
       // RoleGuard([Role.GESTION_DEPOT, Role.TECHNICIEN])
     ]
+  },
+  {
+    path: 'resources/materials',
+    loadComponent: () =>
+      import('../../admin/resources/materials/material-list/material-list').then(m => m.MaterialList),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'resources/materials/:id/detail',
+    loadComponent: () =>
+      import('../../admin/resources/materials/material-detail/material-detail').then(m => m.MaterialDetail),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'resources/consumables',
+    loadComponent: () =>
+      import('../../admin/resources/consumables/consumable-list/consumable-list').then(m => m.ConsumableList),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'resources/consumables/:id/detail',
+    loadComponent: () =>
+      import('../../admin/resources/consumables/consumable-detail/consumables-detail').then(m => m.ConsumablesDetail),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'resources/vehicles',
+    loadComponent: () =>
+      import('../../admin/resources/vehicles/vehicle-list/vehicle-list').then(m => m.VehicleList),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'resources/vehicles/:id/detail',
+    loadComponent: () =>
+      import('../../admin/resources/vehicles/vehicle-detail/vehicle-detail').then(m => m.VehicleDetail),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'history',
+    loadComponent: () =>
+      import('../../admin/history/history-list/history-list').then(m => m.HistoryList),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
   }
 ];

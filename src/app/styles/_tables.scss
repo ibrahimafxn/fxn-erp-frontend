@@ -13,7 +13,10 @@ th, td {
 }
 
 thead {
-  background: var(--fxn-surface-soft);
+  background: rgba(20, 32, 45, 0.85);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 tbody tr {
@@ -21,5 +24,5 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(33, 182, 182, 0.08);
 }

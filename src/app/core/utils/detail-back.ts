@@ -22,6 +22,7 @@ export abstract class DetailBack {
       this.location.back();
       return;
     }
-    this.router.navigateByUrl(fallbackUrl).then();
+    const resolvedFallback = fallbackUrl || (this.router.url.startsWith('/depot') ? '/depot' : '/admin/dashboard');
+    this.router.navigateByUrl(resolvedFallback).then();
   }
 }

@@ -8,6 +8,7 @@ import { UserService } from '../../../core/services/user.service';
 import { Depot } from '../../../core/models';
 import { User } from '../../../core/models';
 import {DetailBack} from '../../../core/utils/detail-back';
+import { formatPersonName } from '../../../core/utils/text-format';
 
 type Mode = 'create' | 'edit';
 
@@ -42,6 +43,11 @@ export class DepotForm extends DetailBack {
 
   /** Erreur globale (ex: 500, ou message générique) */
   readonly error = signal<string | null>(null);
+
+  userName(u: User): string {
+    const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
+    return name || u.email || u._id;
+  }
 
   /**
    * Erreurs par champ (issues de express-validator)
