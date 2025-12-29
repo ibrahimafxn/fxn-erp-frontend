@@ -4,9 +4,11 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { MaterialService } from '../../../../core/services/material.service';
+import { MovementService } from '../../../../core/services/movement.service';
 import { AttributionHistoryItem, AttributionHistoryResult, Material } from '../../../../core/models';
 import { DetailBack } from '../../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName, formatResourceName } from '../../../../core/utils/text-format';
+import { downloadBlob } from '../../../../core/utils/download';
 
 @Component({
   selector: 'app-material-detail',
@@ -17,6 +19,7 @@ import { formatDepotName, formatPersonName, formatResourceName } from '../../../
 })
 export class MaterialDetail extends DetailBack {
   private svc = inject(MaterialService);
+  private movementSvc = inject(MovementService);
   private route = inject(ActivatedRoute);
 
   readonly id = this.route.snapshot.paramMap.get('id') ?? '';
@@ -92,6 +95,29 @@ export class MaterialDetail extends DetailBack {
   refresh(): void {
     this.load();
     this.loadHistory(true);
+  }
+
+  // Export PDF des mouvements (entrées/sorties) liés à la ressource.
+  exportPdf(): void {
+    if (!this.id) return;
+    this.movementSvc.exportPdf({
+      resourceType: 'MATERIAL',
+      resourceId: this.id
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `materials-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: () => {}
+    });
+  }
+
+  exportCsv(): void {
+    if (!this.id) return;
+    this.movementSvc.exportCsv({
+      resourceType: 'MATERIAL',
+      resourceId: this.id
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `materials-${new Date().toISOString().slice(0, 10)}.csv`),
+      error: () => {}
+    });
   }
 
   prevHistory(): void {

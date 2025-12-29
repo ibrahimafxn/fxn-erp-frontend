@@ -4,6 +4,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../../../core/services/auth.service';
+import { Role } from '../../../core/models/roles.model';
 
 import { DepotService } from '../../../core/services/depot.service';
 import { UserService } from '../../../core/services/user.service';
@@ -17,12 +20,13 @@ import { Consumable, User, Depot, DepotManager, Material, Vehicle } from '../../
 import { DepotStats } from '../../../core/models/depotStats.model';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { formatResourceName } from '../../../core/utils/text-format';
 
 @Component({
   standalone: true,
   selector: 'app-depot-detail',
   providers: [DatePipe],
-  imports: [CommonModule, RouterModule, FrDatePipe],
+  imports: [CommonModule, RouterModule, FrDatePipe, ReactiveFormsModule],
   templateUrl: './depot-detail.html',
   styleUrls: ['./depot-detail.scss'],
 })
@@ -36,6 +40,8 @@ export class DepotDetail extends DetailBack{
   private depotService = inject(DepotService);
   private userService = inject(UserService);
   private route = inject(ActivatedRoute);
+  private fb = inject(FormBuilder);
+  private auth = inject(AuthService);
 
   // -----------------------------
   // ID courant (route: /admin/depots/:id)
@@ -108,9 +114,47 @@ export class DepotDetail extends DetailBack{
   readonly managerCandidates = signal<User[]>([]);
   readonly selectedManagerId = signal<string | null>(null);
 
+  // -----------------------------
+  // Transfert de stock (admin/dirigeant)
+  // -----------------------------
+  readonly transferLoading = signal(false);
+  readonly transferError = signal<string | null>(null);
+  readonly transferSuccess = signal<string | null>(null);
+  readonly depots = signal<Depot[]>([]);
+  readonly depotsLoading = signal(false);
+
+  readonly canTransfer = computed(() => {
+    const role = this.auth.getUserRole();
+    return role === Role.ADMIN || role === Role.DIRIGEANT;
+  });
+
+  // Formulaire transfert : ressource + quantité + dépôt cible.
+  readonly transferForm = this.fb.nonNullable.group({
+    resourceType: this.fb.nonNullable.control<'MATERIAL' | 'CONSUMABLE'>('CONSUMABLE'),
+    resourceId: this.fb.nonNullable.control('', [Validators.required]),
+    quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
+    toDepot: this.fb.nonNullable.control('', [Validators.required]),
+    note: this.fb.nonNullable.control('')
+  });
+
+  // Options de ressource selon le type sélectionné.
+  readonly transferResourceOptions = computed(() => {
+    return this.selectedTransferType() === 'MATERIAL'
+      ? this.materials()
+      : this.consumables();
+  });
+  readonly selectedTransferType = signal<'MATERIAL' | 'CONSUMABLE'>('CONSUMABLE');
+
   constructor() {
     super();
     this.load();
+    this.loadDepots();
+
+    // Reset la ressource quand le type change.
+    this.transferForm.controls.resourceType.valueChanges.subscribe((type) => {
+      this.selectedTransferType.set(type);
+      this.transferForm.controls.resourceId.setValue('');
+    });
   }
 
   /* =============================
@@ -178,6 +222,36 @@ export class DepotDetail extends DetailBack{
     return name || u.email || u._id;
   }
 
+  // Libellé dépôt homogène.
+  depotOptionLabel(d: Depot): string {
+    return formatDepotName(d.name ?? '') || '—';
+  }
+
+  // Libellé ressource + stock dispo.
+  resourceLabel(item: Material | Consumable): string {
+    const base = formatResourceName(item.name ?? '') || '—';
+    const available = this.availableQty(item);
+    if ('unit' in item) {
+      return `${base} · ${item.unit || 'unit'} · dispo ${available}`;
+    }
+    return `${base} · dispo ${available}`;
+  }
+
+  materialName(m: Material): string {
+    return formatResourceName(m.name ?? '') || '—';
+  }
+
+  consumableName(c: Consumable): string {
+    return formatResourceName(c.name ?? '') || '—';
+  }
+
+  // Quantité disponible = stock - attribué.
+  availableQty(item: Material | Consumable): number {
+    const total = item.quantity ?? 0;
+    const assigned = (item as any).assignedQuantity ?? 0;
+    return Math.max(0, total - assigned);
+  }
+
   /* =============================
    * Chargement principal
    * ============================= */
@@ -214,6 +288,55 @@ export class DepotDetail extends DetailBack{
         this.loading.set(false);
         this.error.set(err?.error?.message || 'Erreur chargement dépôt');
       },
+    });
+  }
+
+  // Liste des dépôts pour le dépôt cible.
+  private loadDepots(): void {
+    this.depotsLoading.set(true);
+    this.depotService.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
+      next: (res) => {
+        this.depots.set(res.items ?? []);
+        this.depotsLoading.set(false);
+      },
+      error: () => this.depotsLoading.set(false),
+    });
+  }
+
+  // Soumission transfert.
+  submitTransfer(): void {
+    if (!this.canTransfer()) return;
+    if (this.transferForm.invalid) {
+      this.transferForm.markAllAsTouched();
+      return;
+    }
+
+    const depotId = this.depot()?._id;
+    if (!depotId) return;
+
+    this.transferLoading.set(true);
+    this.transferError.set(null);
+    this.transferSuccess.set(null);
+
+    const raw = this.transferForm.getRawValue();
+    this.depotService.transferStock({
+      fromDepot: depotId,
+      toDepot: raw.toDepot,
+      resourceType: raw.resourceType,
+      resourceId: raw.resourceId,
+      quantity: Number(raw.quantity),
+      note: raw.note?.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.transferLoading.set(false);
+        this.transferSuccess.set('Transfert enregistré.');
+        this.transferForm.reset({ resourceType: raw.resourceType, quantity: 1 });
+        this.load();
+      },
+      error: (err) => {
+        this.transferLoading.set(false);
+        this.transferError.set(err?.error?.message || 'Erreur transfert');
+      }
     });
   }
 

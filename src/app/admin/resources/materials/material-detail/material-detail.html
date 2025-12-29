@@ -7,6 +7,8 @@
 
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="back()">Retour</button>
+      <button class="btn-outline" type="button" (click)="exportCsv()">Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()">Exporter PDF</button>
       <button class="btn-outline" type="button" (click)="refresh()">Rafraîchir</button>
     </div>
   </header>
@@ -55,7 +57,7 @@
 
       <article class="card history-card">
         <div class="card-title-row">
-          <h2>Historique</h2>
+          <h2>Historique (entrées/sorties)</h2>
           <div class="history-meta">
             <span class="pill">Total : {{ historyTotal() }}</span>
             <label class="limit">

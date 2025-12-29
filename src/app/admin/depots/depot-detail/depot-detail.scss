@@ -37,6 +37,66 @@
   h2 { margin:0; font-size: 1.05rem; }
 }
 
+.card-subtitle {
+  color: var(--fxn-text-muted);
+  margin-top: -.5rem;
+  margin-bottom: .75rem;
+}
+
+.transfer-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .9rem;
+}
+
+.transfer-form .field {
+  display: grid;
+  gap: .4rem;
+}
+
+.transfer-form .field label {
+  font-size: .85rem;
+  color: var(--fxn-text-muted);
+}
+
+.transfer-form input,
+.transfer-form select,
+.transfer-form textarea {
+  border-radius: var(--fxn-radius-md);
+  padding: .6rem .75rem;
+  border: 1px solid var(--fxn-border-strong);
+  background: rgba(8, 14, 22, 0.6);
+  color: inherit;
+  outline: none;
+}
+
+.transfer-form .span-2 {
+  grid-column: span 2;
+}
+
+.transfer-form .actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.state.success {
+  background: rgba(46, 207, 154, .12);
+}
+
+@media (max-width: 900px) {
+  .transfer-form {
+    grid-template-columns: 1fr;
+  }
+
+  .transfer-form .span-2,
+  .transfer-form .actions {
+    grid-column: span 1;
+  }
+}
+
 .identity {
   display:flex; gap:.9rem; align-items:center;
 

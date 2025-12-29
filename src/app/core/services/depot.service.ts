@@ -122,4 +122,18 @@ export class DepotService {
       map(r => r.data)
     );
   }
+
+  transferStock(payload: {
+    fromDepot: string;
+    toDepot: string;
+    resourceType: 'MATERIAL' | 'CONSUMABLE';
+    resourceId: string;
+    quantity: number;
+    note?: string;
+  }) {
+    const { fromDepot, ...body } = payload;
+    return this.http.post<ApiResponse<any>>(`${this.baseUrl}/${fromDepot}/transfer`, body).pipe(
+      map(resp => resp.data)
+    );
+  }
 }

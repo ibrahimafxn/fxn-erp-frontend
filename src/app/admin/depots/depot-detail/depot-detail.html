@@ -248,7 +248,7 @@
             @for (m of materials(); track m._id) {
               <div class="mini-row">
                 <div class="mini-left">
-                  <div class="mini-name">{{ m.name }}</div>
+                  <div class="mini-name">{{ materialName(m) }}</div>
                   <div class="mini-sub">
                     <span>{{ m.category || '—' }}</span>
                     <span class="dot">•</span>
@@ -288,7 +288,7 @@
             @for (c of consumables(); track c._id) {
               <div class="mini-row">
                 <div class="mini-left">
-                  <div class="mini-name">{{ c.name }}</div>
+                  <div class="mini-name">{{ consumableName(c) }}</div>
                   <div class="mini-sub">
                     <span>{{ c.unit || 'pcs' }}</span>
                     <span class="dot">•</span>
@@ -306,6 +306,79 @@
           </div>
         }
       </article>
+
+      <!-- TRANSFERT STOCK -->
+      @if (canTransfer()) {
+        <article class="card">
+          <div class="card-title-row">
+            <h2>Transfert de stock</h2>
+          </div>
+
+          <p class="card-subtitle">Déplacer du stock vers un autre dépôt.</p>
+
+          @if (transferError()) {
+            <div class="state error">{{ transferError() }}</div>
+          }
+          @if (transferSuccess()) {
+            <div class="state success">{{ transferSuccess() }}</div>
+          }
+
+          <form class="transfer-form" [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+            <div class="field">
+              <label>Type de ressource</label>
+              <select formControlName="resourceType">
+                <option value="MATERIAL">Matériel</option>
+                <option value="CONSUMABLE">Consommable</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Ressource</label>
+              <select formControlName="resourceId">
+                <option value="">— Sélectionner —</option>
+                @for (item of transferResourceOptions(); track item._id) {
+                  <option [value]="item._id">{{ resourceLabel(item) }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Quantité</label>
+              <input type="number" min="1" formControlName="quantity" />
+            </div>
+
+            <div class="field">
+              <label>Dépôt cible</label>
+              @if (depotsLoading()) {
+                <div class="hint">Chargement dépôts…</div>
+              } @else {
+                <select formControlName="toDepot">
+                  <option value="">— Sélectionner —</option>
+                  @for (d of depots(); track d._id) {
+                    @if (d._id !== depot()?._id) {
+                      <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+                    }
+                  }
+                </select>
+              }
+            </div>
+
+            <div class="field span-2">
+              <label>Note</label>
+              <textarea rows="3" formControlName="note" placeholder="Motif du transfert…"></textarea>
+            </div>
+
+            <div class="actions">
+              <button class="btn-outline" type="button" (click)="transferForm.reset({ resourceType: 'CONSUMABLE', quantity: 1 })">
+                Effacer
+              </button>
+              <button class="btn-primary" type="submit" [disabled]="transferLoading() || transferForm.invalid">
+                @if (transferLoading()) { Transfert… } @else { Transférer }
+              </button>
+            </div>
+          </form>
+        </article>
+      }
 
       <!-- VEHICULES -->
       <article class="card">
