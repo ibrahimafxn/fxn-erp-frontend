@@ -29,7 +29,11 @@ export class AccessCredentialsModal {
   @Output() confirm = new EventEmitter<{ password: string; mustChangePassword: boolean }>();
 
   readonly form = this.fb.nonNullable.group({
-    password: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(8)]),
+    password: this.fb.nonNullable.control('', [
+      Validators.required,
+      Validators.minLength(8),
+      Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/)
+    ]),
     mustChangePassword: this.fb.nonNullable.control(true),
   });
 
