@@ -1,4 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {RouterTestingModule} from '@angular/router/testing';
 
 import {VehicleForm} from './vehicle-form';
 
@@ -8,7 +10,7 @@ describe('VehicleForm', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [VehicleForm]
+      imports: [VehicleForm, HttpClientTestingModule, RouterTestingModule]
     })
     .compileComponents();
 

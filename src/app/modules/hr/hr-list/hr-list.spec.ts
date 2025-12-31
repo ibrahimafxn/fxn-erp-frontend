@@ -1,4 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {RouterTestingModule} from '@angular/router/testing';
 
 import {HrList} from './hr-list';
 
@@ -8,7 +10,7 @@ describe('HrList', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HrList]
+      imports: [HrList, HttpClientTestingModule, RouterTestingModule]
     })
     .compileComponents();
 

@@ -1,4 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {RouterTestingModule} from '@angular/router/testing';
 
 import {ConsumableForm} from './consumable-form';
 
@@ -8,7 +10,7 @@ describe('ConsumableForm', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ConsumableForm]
+      imports: [ConsumableForm, HttpClientTestingModule, RouterTestingModule]
     })
     .compileComponents();
 

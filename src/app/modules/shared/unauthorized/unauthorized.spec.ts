@@ -1,4 +1,6 @@
 import {ComponentFixture, TestBed} from '@angular/core/testing';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {RouterTestingModule} from '@angular/router/testing';
 
 import {Unauthorized} from './unauthorized';
 
@@ -8,7 +10,7 @@ describe('Unauthorized', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Unauthorized]
+      imports: [Unauthorized, HttpClientTestingModule, RouterTestingModule]
     })
     .compileComponents();
 
