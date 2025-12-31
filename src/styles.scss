@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-@import './app/styles/tokens';
-@import './app/styles/theme';
-@import './app/styles/buttons';
-@import './app/styles/cards';
-@import './app/styles/tables';
+@use './app/styles/tokens' as *;
+@use './app/styles/theme' as *;
+@use './app/styles/buttons' as *;
+@use './app/styles/cards' as *;
+@use './app/styles/tables' as *;
 /* You can add global styles to this file, and also import other style files */
