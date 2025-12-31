@@ -76,7 +76,7 @@
         </thead>
 
         <tbody>
-          @for (u of visibleItems(); track trackById) {
+          @for (u of visibleItems(); track trackById($index, u)) {
             <tr class="row">
               <td class="main">
                 <div class="name">{{ userLabel(u) }}</div>

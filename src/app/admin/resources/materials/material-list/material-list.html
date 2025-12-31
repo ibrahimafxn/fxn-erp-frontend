@@ -71,7 +71,7 @@
         </thead>
 
         <tbody>
-          @for (m of items(); track trackById) {
+          @for (m of items(); track trackById($index, m)) {
             <tr class="row" (click)="openDetail(m)">
               <td class="main">
                 <div class="name">{{ materialName(m) }}</div>

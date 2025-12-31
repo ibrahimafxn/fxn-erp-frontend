@@ -1,0 +1,198 @@
+<section class="receipt-page">
+  <header class="page-header">
+    <div>
+      <h1>Réception commande</h1>
+      <p class="subtitle">Ajoute les ressources au dépôt en consolidant l’existant.</p>
+    </div>
+  </header>
+
+  <article class="card">
+    <h2>Nouvelle réception</h2>
+    <form class="receipt-form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-grid">
+        @if (!isDepotManager()) {
+          <label>
+            Dépôt
+            <select formControlName="depotId" [disabled]="depotsLoading()">
+              <option value="">{{ depotsLoading() ? 'Chargement…' : 'Choisir un dépôt' }}</option>
+              @for (d of depots(); track d._id) {
+                <option [value]="d._id">{{ depotLabelById(d._id) }}</option>
+              }
+            </select>
+          </label>
+        }
+        <label>
+          Fournisseur
+          <input type="text" formControlName="supplier" placeholder="Ex: SFR / Partenaire" />
+        </label>
+        <label>
+          Référence commande
+          <input type="text" formControlName="reference" placeholder="Ex: CMD-2025-09" />
+        </label>
+      </div>
+
+      <label>
+        Note globale
+        <textarea rows="2" formControlName="note" placeholder="Commentaire global…"></textarea>
+      </label>
+
+      <div class="lines">
+        <div class="lines-header">
+          <h3>Lignes réception</h3>
+          <button class="btn-outline" type="button" (click)="addLine()">Ajouter une ligne</button>
+        </div>
+
+        @for (line of lines().controls; track $index) {
+          <div class="line-card" [formGroup]="lineGroup($index)">
+            <div class="line-grid">
+              <label>
+                Type
+                <select formControlName="resourceType">
+                  <option value="CONSUMABLE">Consommable</option>
+                  <option value="MATERIAL">Matériel</option>
+                </select>
+              </label>
+              <label>
+                Ressource
+                <select formControlName="resourceId">
+                  <option value="">— Sélectionner —</option>
+                  @for (opt of resourceOptions(line.get('resourceType')?.value || 'CONSUMABLE'); track opt._id) {
+                    <option [value]="opt._id">{{ opt.label }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                Quantité
+                <input type="number" min="1" formControlName="quantity" />
+              </label>
+            </div>
+            <div class="line-actions">
+              <button class="btn-outline" type="button" (click)="removeLine($index)" [disabled]="lines().length <= 1">
+                Retirer
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (submitError()) {
+        <div class="state error">{{ submitError() }}</div>
+      } @else if (submitSuccess()) {
+        <div class="state success">{{ submitSuccess() }}</div>
+      }
+
+      <div class="actions">
+        <button class="btn-primary" type="submit" [disabled]="submitting() || form.invalid">
+          Enregistrer la réception
+        </button>
+      </div>
+    </form>
+  </article>
+
+  <article class="card">
+    <header class="card-title-row">
+      <h2>Historique des réceptions</h2>
+      <div class="header-actions">
+        <button class="btn-outline" type="button" (click)="refreshHistory(true)">Recharger</button>
+        <button class="btn-outline" type="button" (click)="exportCsv()">Exporter CSV</button>
+        <button class="btn-outline" type="button" (click)="exportPdf()">Exporter PDF</button>
+      </div>
+    </header>
+
+    <form class="history-filters" [formGroup]="filterForm" (ngSubmit)="searchHistory()">
+      <label>
+        Type
+        <select formControlName="resourceType">
+          <option value="">Tous</option>
+          <option value="CONSUMABLE">Consommables</option>
+          <option value="MATERIAL">Matériels</option>
+        </select>
+      </label>
+      <label>
+        Ressource
+        <input type="text" formControlName="resourceName" placeholder="Nom ressource" />
+      </label>
+      @if (showDepotFilter()) {
+        <label>
+          Dépôt
+          <select formControlName="depot" [disabled]="depotsLoading()">
+            <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ depotLabelById(d._id) }}</option>
+            }
+          </select>
+        </label>
+      }
+      <label>
+        Du
+        <input type="date" formControlName="fromDate" />
+      </label>
+      <label>
+        Au
+        <input type="date" formControlName="toDate" />
+      </label>
+      <div class="actions">
+        <button class="btn-outline" type="submit">Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearHistory()">Effacer</button>
+      </div>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ historyTotal() }}</span>
+      <span class="pill">Page : {{ historyPage() }} / {{ historyPageCount() }}</span>
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="historyLimit()" (change)="setHistoryLimit($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+
+    @if (historyLoading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (historyError()) {
+      <div class="state error">Erreur : {{ historyError()?.message || 'Erreur' }}</div>
+    } @else if (historyItems().length === 0) {
+      <div class="state empty">Aucune réception trouvée.</div>
+    } @else {
+      <div class="table">
+        <table>
+          <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Ressource</th>
+            <th>Quantité</th>
+            <th>Origine</th>
+            <th>Note</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (m of historyItems(); track m._id) {
+              <tr>
+                <td>{{ createdAtText(m) }}</td>
+                <td>{{ m.resourceType }}</td>
+                <td>{{ movementResourceLabel(m) }}</td>
+                <td>{{ m.quantity }} {{ m.unit }}</td>
+                <td>{{ m.from.id ? depotLabelById(m.from.id) : '—' }}</td>
+                <td class="note">{{ m.note || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pager">
+        <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrev()">
+          ← Précédent
+        </button>
+        <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNext()">
+          Suivant →
+        </button>
+      </footer>
+    }
+  </article>
+</section>
