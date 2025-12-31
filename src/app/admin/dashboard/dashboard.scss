@@ -17,17 +17,6 @@
     overflow: hidden;
   }
 
-  .hero::after {
-    content: "";
-    position: absolute;
-    right: -120px;
-    top: -120px;
-    width: 320px;
-    height: 320px;
-    background: radial-gradient(circle, rgba(246, 166, 9, 0.35), transparent 70%);
-    opacity: 0.7;
-  }
-
   .hero-badge {
     display: inline-flex;
     align-items: center;
@@ -164,6 +153,7 @@
   .kpi-icon.kpi-materials { background: rgba(33, 182, 182, 0.18); border-color: rgba(33, 182, 182, 0.35); }
   .kpi-icon.kpi-consumables { background: rgba(46, 207, 154, 0.18); border-color: rgba(46, 207, 154, 0.35); }
   .kpi-icon.kpi-vehicles { background: rgba(255, 92, 124, 0.18); border-color: rgba(255, 92, 124, 0.35); }
+  .kpi-icon.kpi-alerts { background: rgba(255, 184, 28, 0.18); border-color: rgba(255, 184, 28, 0.35); }
 
   .kpi-label {
     font-size: 0.8rem;
@@ -215,26 +205,7 @@
   }
 
   .history-table {
-    width: 100%;
-    border-collapse: collapse;
     font-size: 0.85rem;
-
-    th,
-    td {
-      padding: 0.75rem 0.9rem;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    th {
-      font-weight: 600;
-      color: var(--fxn-text-soft);
-      background: rgba(255, 255, 255, 0.03);
-    }
-
-    tbody tr:hover {
-      background: rgba(33, 182, 182, 0.08);
-    }
   }
 
   @media (max-width: 980px) {
