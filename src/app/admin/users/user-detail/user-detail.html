@@ -24,7 +24,7 @@
 
       <div class="identity">
         <div class="avatar">
-          {{ u.firstName.charAt(0) }}{{ u.lastName.charAt(0) }}
+          {{ (u.firstName || '—').charAt(0) }}{{ (u.lastName || '—').charAt(0) }}
         </div>
 
         <div class="identity-text">
