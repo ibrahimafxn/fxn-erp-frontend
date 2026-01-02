@@ -38,6 +38,7 @@ export class HrList {
   readonly error = signal<string | null>(null);
 
   readonly employees = signal<EmployeeSummary[]>([]);
+  readonly employeeAll = signal<EmployeeSummary[]>([]);
   readonly selected = signal<EmployeeSummary | null>(null);
   readonly employeeTotal = signal(0);
   readonly employeePage = signal(1);
@@ -178,29 +179,27 @@ export class HrList {
   loadEmployees(): void {
     this.loading.set(true);
     this.error.set(null);
+    const complianceFilter = this.employeeCompliance();
+    const useComplianceFilter = Boolean(complianceFilter);
+    const bulkLimit = 1000;
     this.hr.listEmployees({
       q: this.employeeQuery(),
       role: this.employeeRole(),
       depot: this.employeeDepot(),
-      page: this.employeePage(),
-      limit: this.employeeLimit()
+      page: useComplianceFilter ? 1 : this.employeePage(),
+      limit: useComplianceFilter ? bulkLimit : this.employeeLimit()
     }).subscribe({
       next: (result: EmployeeListResult) => {
         let items = result?.items || [];
-        const complianceFilter = this.employeeCompliance();
-        if (complianceFilter) {
+        if (useComplianceFilter) {
           items = items.filter((item) => this.complianceStatus(item) === complianceFilter);
         }
-        const total = complianceFilter ? items.length : (result?.total || 0);
-        this.employeeTotal.set(total);
-        this.employees.set(items);
-        if (items.length) {
-          if (!this.selected() || !items.some((e) => e.user._id === this.selected()?.user._id)) {
-            this.selectEmployee(items[0]);
-          }
+        if (useComplianceFilter) {
+          this.employeeAll.set(items);
+          this.applyEmployeePagination(items);
         } else {
-          this.selected.set(null);
-          this.docs.set([]);
+          this.employeeAll.set([]);
+          this.setEmployeeList(items, result?.total || 0);
         }
         this.loading.set(false);
       },
@@ -228,6 +227,13 @@ export class HrList {
   prevEmployeePage(): void {
     const next = Math.max(1, this.employeePage() - 1);
     this.employeePage.set(next);
+    if (this.employeeCompliance()) {
+      const items = this.employeeAll();
+      if (items.length) {
+        this.applyEmployeePagination(items);
+        return;
+      }
+    }
     this.loadEmployees();
   }
 
@@ -235,6 +241,13 @@ export class HrList {
     const totalPages = Math.max(1, Math.ceil(this.employeeTotal() / this.employeeLimit()));
     const next = Math.min(totalPages, this.employeePage() + 1);
     this.employeePage.set(next);
+    if (this.employeeCompliance()) {
+      const items = this.employeeAll();
+      if (items.length) {
+        this.applyEmployeePagination(items);
+        return;
+      }
+    }
     this.loadEmployees();
   }
 
@@ -246,6 +259,31 @@ export class HrList {
     this.hr.listDocs({ user: userId }).subscribe((docs: EmployeeDoc[]) => this.docs.set(docs || []));
     this.refreshCompliance(userId);
     this.loadHistory(userId);
+  }
+
+  private applyEmployeePagination(items: EmployeeSummary[]): void {
+    const limit = this.employeeLimit() || 1;
+    const total = items.length;
+    const pageCount = Math.max(1, Math.ceil(total / limit));
+    if (this.employeePage() > pageCount) {
+      this.employeePage.set(pageCount);
+    }
+    const page = this.employeePage();
+    const start = (page - 1) * limit;
+    this.setEmployeeList(items.slice(start, start + limit), total);
+  }
+
+  private setEmployeeList(items: EmployeeSummary[], total: number): void {
+    this.employeeTotal.set(total);
+    this.employees.set(items);
+    if (items.length) {
+      if (!this.selected() || !items.some((e) => e.user._id === this.selected()?.user._id)) {
+        this.selectEmployee(items[0]);
+      }
+    } else {
+      this.selected.set(null);
+      this.docs.set([]);
+    }
   }
 
   patchProfile(profile: EmployeeProfile | null): void {

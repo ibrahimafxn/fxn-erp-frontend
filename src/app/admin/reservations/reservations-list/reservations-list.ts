@@ -262,10 +262,6 @@ export class ReservationsList {
 
   releaseFromRow(m: Movement): void {
     if (!this.canRelease(m)) return;
-    if (this.assignedForTech(m.to?.id) < Number(m.quantity || 0)) {
-      this.setRowActionError(m._id, 'Quantité supérieure au stock attribué au technicien');
-      return;
-    }
     const ok = window.confirm('Confirmer la reprise de cette réservation ?');
     if (!ok) return;
 
