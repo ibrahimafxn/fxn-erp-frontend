@@ -435,7 +435,7 @@ export class ReservationsList {
         this.authorLoading.delete(id);
       },
       error: (err: HttpErrorResponse) => {
-        if (err.status === 403) this.authorDenied.add(id);
+        if (err.status === 403 || err.status === 404) this.authorDenied.add(id);
         this.authorLoading.delete(id);
       }
     });
