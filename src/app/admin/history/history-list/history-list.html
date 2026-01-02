@@ -145,7 +145,18 @@
             <tr>
               <td>{{ createdAtText(m) }}</td>
               <td class="mono">{{ resourceLabel(m) }}</td>
-              <td><span class="badge">{{ actionLabel(m.action) }}</span></td>
+              <td>
+                <span
+                  class="badge"
+                  [class.assign]="m.action === 'ASSIGN'"
+                  [class.release]="m.action === 'RELEASE'"
+                  [class.in]="m.action === 'IN'"
+                  [class.out]="m.action === 'OUT'"
+                  [class.transfer]="m.action === 'TRANSFER'"
+                >
+                  {{ actionLabel(m.action) }}
+                </span>
+              </td>
               <td class="mono">{{ endpointLabel(m.from.type, m.from.id, $any(m).fromLabel) }}</td>
               <td class="mono">{{ endpointLabel(m.to.type, m.to.id, $any(m).toLabel) }}</td>
               <td>{{ m.quantity }} {{ m.unit }}</td>

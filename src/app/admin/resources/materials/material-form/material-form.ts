@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { MaterialService } from '../../../../core/services/material.service';
 import { DepotService } from '../../../../core/services/depot.service';
@@ -68,8 +69,12 @@ export class MaterialForm extends DetailBack {
     idDepot: this.fb.control<string | null>(null),
   });
 
+  private readonly formStatus = toSignal(this.form.statusChanges, {
+    initialValue: this.form.status,
+  });
+
   readonly title = computed(() => (this.mode() === 'create' ? 'Nouveau matériel' : 'Modifier matériel'));
-  readonly canSubmit = computed(() => !this.saving() && this.form.valid);
+  readonly canSubmit = computed(() => !this.saving() && this.formStatus() === 'VALID');
 
   constructor() {
     super();
@@ -119,7 +124,7 @@ export class MaterialForm extends DetailBack {
 
         this.form.patchValue({
           name: mat.name ?? '',
-          category: mat.category ?? MaterialCategory.OUTIL,
+          category: this.normalizeCategory(mat.category),
           description: mat.description ?? '',
           quantity: typeof mat.quantity === 'number' ? mat.quantity : 0,
           minQuantity: typeof mat.minQuantity === 'number' ? mat.minQuantity : 0,
@@ -189,4 +194,13 @@ export class MaterialForm extends DetailBack {
   }
 
   protected readonly MaterialCategory = MaterialCategory;
+
+  private normalizeCategory(value: Material['category']): MaterialCategory {
+    if (!value) return MaterialCategory.OUTIL;
+    if (value === MaterialCategory.EPI || value === MaterialCategory.OUTIL) return value;
+    const raw = String(value).trim().toUpperCase();
+    if (raw === 'EPI') return MaterialCategory.EPI;
+    if (raw === 'OUTIL' || raw === 'OUTILS' || raw === 'TOOL') return MaterialCategory.OUTIL;
+    return MaterialCategory.OUTIL;
+  }
 }

@@ -106,8 +106,3 @@ td.actions { width: 260px; }
 .actions-row { display:flex; gap:.5rem; justify-content:flex-end; flex-wrap:wrap; }
 
 .pager { display:flex; justify-content: space-between; gap:.75rem; flex-wrap: wrap; }
-
-.btn-outline,.btn-primary,.btn-danger { border-radius:.8rem; padding:.55rem .9rem; cursor:pointer; }
-.btn-outline{ border:1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); }
-.btn-primary{ border:1px solid rgba(0,120,255,.22); background: rgba(0,120,255,.18); }
-.btn-danger{ border:1px solid rgba(255,0,60,.22); background: rgba(255,0,60,.14); }

@@ -21,6 +21,25 @@ export type MaterialFilter = {
   limit?: number;
 };
 
+export type ReserveMaterialPayload = {
+  materialId: string;
+  qty: number;
+  toUser: string;
+  fromDepot?: string | null;
+  author?: string | null;
+  note?: string | null;
+};
+
+export type ReserveMaterialResult = {
+  success: boolean;
+  data?: {
+    material?: Material;
+    attribution?: unknown;
+  };
+  message?: string;
+  errors?: unknown;
+};
+
 @Injectable({ providedIn: 'root' })
 export class MaterialService {
   private baseUrl = `${environment.apiBaseUrl}/materials`;
@@ -106,6 +125,22 @@ export class MaterialService {
       map(resp => resp.data),
       catchError(err => this.handleError(err))
     );
+  }
+
+  // -----------------------------
+  // TRANSACTION : réserve un matériel
+  // -----------------------------
+
+  reserve(payload: ReserveMaterialPayload): Observable<ReserveMaterialResult> {
+    return this.http
+      .post<ReserveMaterialResult>(`${this.baseUrl}/reserve`, payload)
+      .pipe(catchError((err: HttpErrorResponse) => this.handleError(err)));
+  }
+
+  releaseReservation(payload: ReserveMaterialPayload): Observable<ReserveMaterialResult> {
+    return this.http
+      .post<ReserveMaterialResult>(`${this.baseUrl}/reserve/release`, payload)
+      .pipe(catchError((err: HttpErrorResponse) => this.handleError(err)));
   }
 
   exportCsv(filter?: MaterialFilter): Observable<Blob> {

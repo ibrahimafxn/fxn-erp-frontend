@@ -32,12 +32,15 @@
       </div>
 
       <div class="field">
-        <label>Nom</label>
+        <label>Nom *</label>
         <input type="text" formControlName="lastName" placeholder="Ex: COULIBALY" />
+        @if (fieldError('lastName')) {
+          <small class="hint error">{{ fieldError('lastName') }}</small>
+        }
       </div>
 
       <div class="field">
-        <label>Email *</label>
+        <label>Email</label>
         <input type="email" formControlName="email" placeholder="ex: ibrahima@fxn.fr" />
         @if (fieldError('email')) {
           <small class="hint error">{{ fieldError('email') }}</small>

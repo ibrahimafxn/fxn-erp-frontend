@@ -98,21 +98,6 @@
   }
 }
 
-.btn-outline,
-.btn-primary {
-  border-radius: var(--fxn-radius-md);
-  padding: 0.55rem 0.95rem;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, rgba(33, 182, 182, 0.2), rgba(15, 191, 159, 0.35));
-}
-
-.btn-outline:disabled,
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
 td.actions {
   display: flex;
   gap: .5rem;

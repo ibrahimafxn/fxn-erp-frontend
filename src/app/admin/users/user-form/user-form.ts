@@ -68,8 +68,8 @@ export class UserForm extends DetailBack {
   // -----------------------------
   readonly form = this.fb.nonNullable.group({
     firstName: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
-    lastName: this.fb.nonNullable.control(''),
-    email: this.fb.nonNullable.control('', [Validators.required, Validators.email]),
+    lastName: this.fb.nonNullable.control('', [Validators.required]),
+    email: this.fb.nonNullable.control('', [Validators.email]),
     phone: this.fb.nonNullable.control(''),
     role: this.fb.nonNullable.control(Role.TECHNICIEN, [Validators.required]),
 
@@ -242,6 +242,7 @@ export class UserForm extends DetailBack {
     this.success.set(null);
 
     const raw = this.form.getRawValue();
+    const email = raw.email.trim();
 
     // ✅ Sécurité UX: si pas technicien -> assignedVehicle null
     const assignedVehicle =
@@ -253,7 +254,7 @@ export class UserForm extends DetailBack {
     } = {
       firstName: raw.firstName.trim(),
       lastName: raw.lastName.trim() || undefined,
-      email: raw.email.trim().toLowerCase(),
+      email: email ? email.toLowerCase() : undefined,
       phone: raw.phone.trim() || undefined,
       role: raw.role,
 

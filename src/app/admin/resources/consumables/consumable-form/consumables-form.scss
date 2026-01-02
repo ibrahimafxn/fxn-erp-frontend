@@ -107,24 +107,3 @@
   gap: .5rem;
   flex-wrap: wrap;
 }
-
-/* Boutons minimal */
-.btn-outline,
-.btn-primary {
-  border-radius: var(--fxn-radius-md);
-  padding: .55rem .95rem;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, rgba(33, 182, 182, 0.2), rgba(15, 191, 159, 0.35));
-}
-
-.btn-outline:hover,
-.btn-primary:hover {
-  filter: brightness(1.05);
-}
-
-button:disabled {
-  opacity: .55;
-  cursor: not-allowed;
-}

@@ -238,6 +238,14 @@
   justify-content: flex-end;
 }
 
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
 .timeline {
   position: relative;
   display: grid;

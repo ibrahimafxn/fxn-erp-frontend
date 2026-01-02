@@ -1,6 +1,8 @@
 // confirm-delete-modal.ts
-import { Component, EventEmitter, Output, computed, input } from '@angular/core';
+import { Component, EventEmitter, Output, computed, input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../../core/services/auth.service';
+import { formatPersonName } from '../../../../core/utils/text-format';
 
 @Component({
   standalone: true,
@@ -10,6 +12,7 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./confirm-delete-modal.scss'],
 })
 export class ConfirmDeleteModal {
+  private auth = inject(AuthService);
   /** Affiche/masque */
   readonly open = input(false);
 
@@ -21,6 +24,9 @@ export class ConfirmDeleteModal {
 
   /** ID optionnel pour contexte */
   readonly entityId = input<string | null>(null);
+
+  /** Auteur de la suppression (optionnel) */
+  readonly authorName = input('');
 
   /** Texte d’avertissement */
   readonly dangerHint = input('Cette action est irréversible.');
@@ -59,5 +65,14 @@ export class ConfirmDeleteModal {
   readonly displayName = computed(() => {
     const n = this.entityName().trim();
     return n ? `« ${n} »` : this.entityLabel();
+  });
+
+  readonly authorLabel = computed(() => {
+    const inputName = this.authorName().trim();
+    if (inputName) return inputName;
+    const user = this.auth.getCurrentUser();
+    if (!user) return '';
+    const name = formatPersonName(user.firstName ?? '', user.lastName ?? '');
+    return name || user.email || '';
   });
 }

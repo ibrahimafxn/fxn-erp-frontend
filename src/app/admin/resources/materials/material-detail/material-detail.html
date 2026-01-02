@@ -59,6 +59,68 @@
         </div>
       </article>
 
+      @if (canReserve()) {
+        <article class="card reserve-card">
+          <div class="card-title-row">
+            <h2>Réservation matériel</h2>
+            <span class="pill">Disponible : {{ availableQty() }}</span>
+            <span class="pill">Attribué tech : {{ assignedForSelectedTech() }}</span>
+          </div>
+          <p class="subtitle">Attribue un matériel à un technicien de ce dépôt.</p>
+
+          <form class="reserve-form" [formGroup]="reserveForm">
+            <div class="form-grid">
+              <label>
+                Technicien
+                <select formControlName="toUser" [disabled]="techniciansLoading() || reserveLoading() || releaseLoading()">
+                  <option value="" disabled>Choisir un technicien</option>
+                  @for (t of technicians(); track t._id) {
+                    <option [value]="t._id">{{ technicianLabel(t) }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                Quantité
+                <input type="number" min="1" [attr.max]="availableQty()" formControlName="qty" [disabled]="reserveLoading() || releaseLoading()" />
+              </label>
+            </div>
+
+            <label>
+              Note
+              <textarea rows="3" formControlName="note" placeholder="Motif ou commentaire (facultatif)…"></textarea>
+            </label>
+
+            @if (techniciansLoading()) {
+              <div class="state loading">Chargement des techniciens…</div>
+            } @else if (techniciansError()) {
+              <div class="state error">{{ techniciansError() }}</div>
+            } @else if (technicians().length === 0) {
+              <div class="state empty">Aucun technicien disponible pour ce dépôt.</div>
+            }
+
+            @if (reserveError()) {
+              <div class="state error">{{ reserveError() }}</div>
+            } @else if (reserveSuccess()) {
+              <div class="state success">{{ reserveSuccess() }}</div>
+            } @else if (releaseError()) {
+              <div class="state error">{{ releaseError() }}</div>
+            } @else if (releaseSuccess()) {
+              <div class="state success">{{ releaseSuccess() }}</div>
+            }
+
+            <div class="actions">
+              <button class="btn-outline" type="button" (click)="clearReserve()">Effacer</button>
+              <button class="btn-outline" type="button" (click)="submitRelease()" [disabled]="releaseLoading() || reserveForm.invalid">
+                Reprendre
+              </button>
+              <button class="btn-primary" type="button" (click)="submitReserve()" [disabled]="reserveLoading() || reserveForm.invalid || availableQty() <= 0">
+                Réserver
+              </button>
+            </div>
+          </form>
+        </article>
+      }
+
       <article class="card history-card">
         <div class="card-title-row">
           <h2>Historique (entrées/sorties)</h2>

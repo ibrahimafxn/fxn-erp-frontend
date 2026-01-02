@@ -9,39 +9,40 @@ button {
 .btn-primary,
 .btn-outline,
 .btn-danger {
-  padding: 0.6rem 1.1rem;
-  border-radius: var(--fxn-radius-md);
+  padding: 0.65rem 1.15rem;
+  border-radius: 0.9rem;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+  transition: background .2s ease, transform .2s ease, box-shadow .2s ease, filter .2s ease;
   font-weight: 700;
   letter-spacing: 0.01em;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, rgba(33, 182, 182, 0.2), rgba(15, 191, 159, 0.35));
+  background: linear-gradient(135deg, rgba(26, 186, 164, 0.95), rgba(33, 128, 173, 0.95));
   color: var(--fxn-text);
-  border-color: rgba(33, 182, 182, 0.35);
-  box-shadow: var(--fxn-shadow-sm);
+  border-color: rgba(26, 186, 164, 0.55);
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, rgba(255, 92, 124, 0.2), rgba(255, 122, 87, 0.25));
+  background: linear-gradient(135deg, rgba(255, 90, 111, 0.95), rgba(255, 139, 91, 0.95));
   color: var(--fxn-text);
-  border-color: rgba(255, 92, 124, 0.35);
+  border-color: rgba(255, 90, 111, 0.55);
 }
 
 .btn-outline {
-  background: rgba(20, 32, 45, 0.65);
+  background: rgba(15, 24, 32, 0.55);
   color: var(--fxn-text);
-  border-color: var(--fxn-border-strong);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .btn-primary:hover,
 .btn-danger:hover,
 .btn-outline:hover {
   transform: translateY(-1px);
-  box-shadow: var(--fxn-shadow-md);
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.22);
+  filter: brightness(1.04);
 }
 
 button:disabled {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 import { DepotService } from '../../../../core/services/depot.service';
 import { VehicleService } from '../../../../core/services/vehicle.service';
@@ -54,11 +55,15 @@ export class VehicleForm extends DetailBack {
     assignedTo: this.fb.control<string | UserLite | null>(null),
   });
 
+  private readonly formStatus = toSignal(this.form.statusChanges, {
+    initialValue: this.form.status,
+  });
+
   readonly title = computed(() =>
     this.mode() === 'create' ? 'Nouveau véhicule' : 'Modifier véhicule'
   );
 
-  readonly canSubmit = computed(() => !this.saving() && this.form.valid);
+  readonly canSubmit = computed(() => !this.saving() && this.formStatus() === 'VALID');
 
   constructor() {
     super();
