@@ -23,12 +23,13 @@
 
         <p class="hint">{{ dangerHint() }}</p>
 
-        @if (entityId()) {
+        @if (authorLabel()) {
           <div class="meta">
-            <span class="label">ID</span>
-            <span class="mono">{{ entityId() }}</span>
+            <span class="label">Auteur</span>
+            <span>{{ authorLabel() }}</span>
           </div>
         }
+
       </section>
 
       <footer class="modal-actions">
