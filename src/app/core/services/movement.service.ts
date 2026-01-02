@@ -35,13 +35,17 @@ export class MovementService {
     filter?: {
       resourceType?: string;
       resourceId?: string;
+      resourceName?: string;
       action?: string;
+      reason?: string;
       status?: string;
       depotId?: string;
       fromType?: string;
       fromId?: string;
       toType?: string;
       toId?: string;
+      fromDate?: string;
+      toDate?: string;
       page?: number;
       limit?: number;
     }
@@ -54,13 +58,17 @@ export class MovementService {
     let params = new HttpParams();
     if (filter?.resourceType) params = params.set('resourceType', filter.resourceType);
     if (filter?.resourceId) params = params.set('resourceId', filter.resourceId);
+    if (filter?.resourceName) params = params.set('resourceName', filter.resourceName);
     if (filter?.action) params = params.set('action', filter.action);
+    if (filter?.reason) params = params.set('reason', filter.reason);
     if (filter?.status) params = params.set('status', filter.status);
     if (filter?.depotId) params = params.set('depotId', filter.depotId);
     if (filter?.fromType) params = params.set('fromType', filter.fromType);
     if (filter?.fromId) params = params.set('fromId', filter.fromId);
     if (filter?.toType) params = params.set('toType', filter.toType);
     if (filter?.toId) params = params.set('toId', filter.toId);
+    if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
+    if (filter?.toDate) params = params.set('toDate', filter.toDate);
     if (filter?.page) params = params.set('page', String(filter.page));
     if (filter?.limit) params = params.set('limit', String(filter.limit));
 
@@ -91,13 +99,17 @@ export class MovementService {
     let params = new HttpParams();
     if (filter?.resourceType) params = params.set('resourceType', filter.resourceType);
     if (filter?.resourceId) params = params.set('resourceId', filter.resourceId);
+    if (filter?.resourceName) params = params.set('resourceName', filter.resourceName);
     if (filter?.action) params = params.set('action', filter.action);
+    if (filter?.reason) params = params.set('reason', filter.reason);
     if (filter?.status) params = params.set('status', filter.status);
     if (filter?.depotId) params = params.set('depotId', filter.depotId);
     if (filter?.fromType) params = params.set('fromType', filter.fromType);
     if (filter?.fromId) params = params.set('fromId', filter.fromId);
     if (filter?.toType) params = params.set('toType', filter.toType);
     if (filter?.toId) params = params.set('toId', filter.toId);
+    if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
+    if (filter?.toDate) params = params.set('toDate', filter.toDate);
     return this.http.get(`${this.baseUrl}/export`, { params, responseType: 'blob' }).pipe(
       catchError(err => this.handleError(err))
     );
@@ -107,14 +119,25 @@ export class MovementService {
     let params = new HttpParams();
     if (filter?.resourceType) params = params.set('resourceType', filter.resourceType);
     if (filter?.resourceId) params = params.set('resourceId', filter.resourceId);
+    if (filter?.resourceName) params = params.set('resourceName', filter.resourceName);
     if (filter?.action) params = params.set('action', filter.action);
+    if (filter?.reason) params = params.set('reason', filter.reason);
     if (filter?.status) params = params.set('status', filter.status);
     if (filter?.depotId) params = params.set('depotId', filter.depotId);
     if (filter?.fromType) params = params.set('fromType', filter.fromType);
     if (filter?.fromId) params = params.set('fromId', filter.fromId);
     if (filter?.toType) params = params.set('toType', filter.toType);
     if (filter?.toId) params = params.set('toId', filter.toId);
+    if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
+    if (filter?.toDate) params = params.set('toDate', filter.toDate);
     return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  cancel(id: string, reason?: string): Observable<Movement> {
+    return this.http.post<ApiResponse<Movement>>(`${this.baseUrl}/${id}/cancel`, { reason }).pipe(
+      map((resp) => resp.data),
       catchError(err => this.handleError(err))
     );
   }

@@ -47,6 +47,10 @@
             <div>{{ availableQty() }}</div>
           </div>
           <div class="info-item">
+            <label>Seuil min</label>
+            <div>{{ material()?.minQuantity ?? 0 }}</div>
+          </div>
+          <div class="info-item">
             <label>Créé le</label>
             <div>
               @if (material()?.createdAt) { {{ material()?.createdAt | date:'short' }} } @else { — }

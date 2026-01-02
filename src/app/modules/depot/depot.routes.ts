@@ -83,5 +83,32 @@ export const DEPOT_ROUTES: Routes = [
       AuthGuard,
       RoleGuard([Role.GESTION_DEPOT])
     ]
+  },
+  {
+    path: 'reservations',
+    loadComponent: () =>
+      import('../../admin/reservations/reservations-list/reservations-list').then(m => m.ReservationsList),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'receipts',
+    loadComponent: () =>
+      import('../../admin/receipts/receipt-page/receipt-page').then(m => m.ReceiptPage),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'alerts/stock',
+    loadComponent: () =>
+      import('../../admin/alerts/stock-alerts/stock-alerts').then(m => m.StockAlerts),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
   }
 ];

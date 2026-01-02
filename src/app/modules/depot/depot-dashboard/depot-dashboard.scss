@@ -47,6 +47,17 @@
   gap: .35rem;
 }
 
+.stat-card.clickable {
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--fxn-shadow-md);
+  border-color: rgba(255, 184, 28, 0.35);
+}
+
 .stat-label {
   font-size: .8rem;
   text-transform: uppercase;

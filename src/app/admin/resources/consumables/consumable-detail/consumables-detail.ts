@@ -1,25 +1,34 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { ConsumableService } from '../../../../core/services/consumable.service';
+import { DepotService } from '../../../../core/services/depot.service';
 import { MovementService } from '../../../../core/services/movement.service';
-import { AttributionHistoryItem, AttributionHistoryResult, Consumable } from '../../../../core/models';
+import { UserService } from '../../../../core/services/user.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { AttributionHistoryItem, AttributionHistoryResult, Consumable, Depot, User } from '../../../../core/models';
 import { DetailBack } from '../../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName, formatResourceName } from '../../../../core/utils/text-format';
 import { downloadBlob } from '../../../../core/utils/download';
+import { Role } from '../../../../core/models/roles.model';
 
 @Component({
   selector: 'app-consumable-detail',
   standalone: true,
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule],
   templateUrl: './consumables-detail.html',
   styleUrl: './consumables-detail.scss',
 })
 export class ConsumablesDetail extends DetailBack {
+  private fb = inject(FormBuilder);
   private svc = inject(ConsumableService);
+  private depotSvc = inject(DepotService);
   private movementSvc = inject(MovementService);
+  private userSvc = inject(UserService);
+  private authSvc = inject(AuthService);
   private route = inject(ActivatedRoute);
 
   readonly id = this.route.snapshot.paramMap.get('id') ?? '';
@@ -27,6 +36,7 @@ export class ConsumablesDetail extends DetailBack {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly consumable = signal<Consumable | null>(null);
+  readonly depot = signal<Depot | null>(null);
 
   readonly historyLoading = signal(false);
   readonly historyError = signal<string | null>(null);
@@ -52,6 +62,28 @@ export class ConsumablesDetail extends DetailBack {
     return Math.max(0, total - assigned);
   });
 
+  readonly canReserve = computed(() =>
+    this.authSvc.hasRole([Role.ADMIN, Role.DIRIGEANT, Role.GESTION_DEPOT])
+  );
+
+  readonly technicians = signal<User[]>([]);
+  readonly techniciansLoading = signal(false);
+  readonly techniciansError = signal<string | null>(null);
+  readonly assignedByTech = signal<Record<string, number>>({});
+
+  readonly reserveLoading = signal(false);
+  readonly reserveError = signal<string | null>(null);
+  readonly reserveSuccess = signal<string | null>(null);
+  readonly releaseLoading = signal(false);
+  readonly releaseError = signal<string | null>(null);
+  readonly releaseSuccess = signal<string | null>(null);
+
+  readonly reserveForm = this.fb.nonNullable.group({
+    toUser: this.fb.nonNullable.control('', [Validators.required]),
+    qty: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
+    note: this.fb.nonNullable.control('')
+  });
+
   constructor() {
     super();
     this.load();
@@ -65,6 +97,16 @@ export class ConsumablesDetail extends DetailBack {
     this.svc.getById(this.id).subscribe({
       next: (c) => {
         this.consumable.set(c);
+        this.depot.set(null);
+        const depotId = this.depotIdValue(c);
+        if (depotId && typeof c.idDepot === 'string') {
+          this.depotSvc.getDepot(depotId).subscribe({
+            next: (d) => this.depot.set(d),
+            error: () => this.depot.set(null)
+          });
+        }
+        this.assignedByTech.set(this.computeAssignedByTechnician());
+        this.loadTechnicians(this.depotIdValue(c));
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -83,6 +125,7 @@ export class ConsumablesDetail extends DetailBack {
     this.svc.history(this.id, this.historyPage(), this.historyLimit()).subscribe({
       next: (res) => {
         this.history.set(res);
+        this.assignedByTech.set(this.computeAssignedByTechnician());
         this.historyLoading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -189,7 +232,8 @@ export class ConsumablesDetail extends DetailBack {
     const d = this.consumable()?.idDepot;
     if (!d) return '—';
     if (typeof d === 'object' && '_id' in d) return formatDepotName(d.name) || '—';
-    return '—';
+    const fallback = this.depot();
+    return fallback ? (formatDepotName(fallback.name ?? '') || '—') : '—';
   }
 
   consumableName(): string {
@@ -200,9 +244,173 @@ export class ConsumablesDetail extends DetailBack {
     return this.consumable()?.unit || '—';
   }
 
+  technicianLabel(u: User): string {
+    const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
+    return name ? `${name} · ${u.email}` : u.email;
+  }
+
+  assignedForSelectedTech(): number {
+    const techId = this.reserveForm.controls.toUser.value;
+    if (!techId) return 0;
+    return this.assignedByTech()[techId] ?? 0;
+  }
+
+  submitReserve(): void {
+    if (!this.reserveForm.valid || !this.id) {
+      this.reserveForm.markAllAsTouched();
+      return;
+    }
+
+    const available = this.availableQty();
+    const qty = Number(this.reserveForm.controls.qty.value);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      this.reserveError.set('Quantité invalide.');
+      return;
+    }
+    if (available <= 0 || qty > available) {
+      this.reserveError.set('Stock insuffisant pour cette réservation.');
+      return;
+    }
+
+    const currentUser = this.authSvc.getCurrentUser();
+    const noteValue = this.reserveForm.controls.note.value.trim();
+    const payload = {
+      consumableId: this.id,
+      qty,
+      toUser: this.reserveForm.controls.toUser.value,
+      fromDepot: this.depotIdValue(this.consumable()),
+      author: currentUser?._id ?? null,
+      note: noteValue ? noteValue : null
+    };
+
+    this.reserveLoading.set(true);
+    this.reserveError.set(null);
+    this.reserveSuccess.set(null);
+    this.releaseError.set(null);
+    this.releaseSuccess.set(null);
+
+    this.svc.reserve(payload).subscribe({
+      next: () => {
+        this.reserveLoading.set(false);
+        this.reserveSuccess.set('Réservation effectuée.');
+        this.reserveForm.reset({ toUser: '', qty: 1, note: '' });
+        this.load();
+        this.loadHistory(true);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.reserveLoading.set(false);
+        this.reserveError.set(this.apiError(err, 'Erreur réservation consommable'));
+      }
+    });
+  }
+
+  submitRelease(): void {
+    if (!this.reserveForm.valid || !this.id) {
+      this.reserveForm.markAllAsTouched();
+      return;
+    }
+
+    const qty = Number(this.reserveForm.controls.qty.value);
+    if (!Number.isFinite(qty) || qty <= 0) {
+      this.releaseError.set('Quantité invalide.');
+      return;
+    }
+    const assignedForTech = this.assignedForSelectedTech();
+    if (assignedForTech <= 0 || qty > assignedForTech) {
+      this.releaseError.set('Quantité supérieure au stock attribué à ce technicien.');
+      return;
+    }
+
+    const currentUser = this.authSvc.getCurrentUser();
+    const noteValue = this.reserveForm.controls.note.value.trim();
+    const payload = {
+      consumableId: this.id,
+      qty,
+      toUser: this.reserveForm.controls.toUser.value,
+      fromDepot: this.depotIdValue(this.consumable()),
+      author: currentUser?._id ?? null,
+      note: noteValue ? noteValue : null
+    };
+
+    this.releaseLoading.set(true);
+    this.releaseError.set(null);
+    this.releaseSuccess.set(null);
+    this.reserveError.set(null);
+    this.reserveSuccess.set(null);
+
+    this.svc.releaseReservation(payload).subscribe({
+      next: () => {
+        this.releaseLoading.set(false);
+        this.releaseSuccess.set('Reprise effectuée.');
+        this.reserveForm.reset({ toUser: '', qty: 1, note: '' });
+        this.load();
+        this.loadHistory(true);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.releaseLoading.set(false);
+        this.releaseError.set(this.apiError(err, 'Erreur reprise consommable'));
+      }
+    });
+  }
+
+  clearReserve(): void {
+    this.reserveForm.reset({ toUser: '', qty: 1, note: '' });
+    this.reserveError.set(null);
+    this.reserveSuccess.set(null);
+    this.releaseError.set(null);
+    this.releaseSuccess.set(null);
+  }
+
   private shortId(id?: string | null): string {
     if (!id) return '—';
     return id.length > 8 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id;
+  }
+
+  private loadTechnicians(depotId: string | null): void {
+    if (!depotId) {
+      this.technicians.set([]);
+      return;
+    }
+
+    this.techniciansLoading.set(true);
+    this.techniciansError.set(null);
+
+    this.userSvc.refreshUsers(true, { role: 'TECHNICIEN', depot: depotId, page: 1, limit: 200 }).subscribe({
+      next: (res) => {
+        this.technicians.set(res.items ?? []);
+        this.assignedByTech.set(this.computeAssignedByTechnician());
+        this.techniciansLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.techniciansLoading.set(false);
+        this.techniciansError.set(this.apiError(err, 'Erreur chargement techniciens'));
+      }
+    });
+  }
+
+  private depotIdValue(c: Consumable | null): string | null {
+    if (!c?.idDepot) return null;
+    if (typeof c.idDepot === 'string') return c.idDepot;
+    if (typeof c.idDepot === 'object' && '_id' in c.idDepot) {
+      return c.idDepot._id ?? null;
+    }
+    return null;
+  }
+
+  private computeAssignedByTechnician(): Record<string, number> {
+    const items = this.historyItems();
+    const totals: Record<string, number> = {};
+    for (const it of items) {
+      const attrib = it?.attribution;
+      if (!attrib || !attrib.toUser) continue;
+      const userId = typeof attrib.toUser === 'string' ? attrib.toUser : attrib.toUser._id;
+      if (!userId) continue;
+      const qty = Number(attrib.quantity ?? 1);
+      if (!Number.isFinite(qty)) continue;
+      const delta = attrib.action === 'REPRISE' ? -qty : (attrib.action === 'ATTRIBUTION' ? qty : 0);
+      totals[userId] = (totals[userId] || 0) + delta;
+    }
+    return totals;
   }
 
   private apiError(err: HttpErrorResponse, fallback: string): string {

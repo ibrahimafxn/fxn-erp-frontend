@@ -62,6 +62,7 @@ export class MaterialForm extends DetailBack {
 
     description: this.fb.nonNullable.control(''),
     quantity: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+    minQuantity: this.fb.nonNullable.control(0, [Validators.min(0)]),
 
     // dépôt optionnel
     idDepot: this.fb.control<string | null>(null),
@@ -121,6 +122,7 @@ export class MaterialForm extends DetailBack {
           category: mat.category ?? MaterialCategory.OUTIL,
           description: mat.description ?? '',
           quantity: typeof mat.quantity === 'number' ? mat.quantity : 0,
+          minQuantity: typeof mat.minQuantity === 'number' ? mat.minQuantity : 0,
           idDepot: depotId,
         });
 
@@ -181,7 +183,7 @@ export class MaterialForm extends DetailBack {
   // -----------------------------
   // Helpers template (0 any)
   // -----------------------------
-  isInvalid(name: 'name' | 'category' | 'quantity' | 'idDepot' | 'description'): boolean {
+  isInvalid(name: 'name' | 'category' | 'quantity' | 'minQuantity' | 'idDepot' | 'description'): boolean {
     const c = this.form.get(name);
     return !!c && c.invalid && (c.dirty || c.touched);
   }

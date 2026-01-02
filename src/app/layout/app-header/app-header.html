@@ -36,8 +36,25 @@
             @if (canManageAccess()) {
               <button (click)="goUserAccess()">Accès connexion</button>
             }
+            @if (canViewHr()) {
+              <button (click)="goHr()">Ressources humaines</button>
+            }
             @if (canViewMovements()) {
               <button (click)="goMovements()">Journal des mouvements</button>
+            }
+            @if (canViewMovements()) {
+              <button (click)="goReservations()">Réservations consommables</button>
+            }
+            @if (canViewMovements()) {
+              <button (click)="goReceipts()">Réceptions stock</button>
+            }
+            @if (canViewMovements()) {
+              <button (click)="goStockAlerts()">
+                Alertes
+                @if (alertsCount() > 0) {
+                  <span class="badge">{{ alertsCount() }}</span>
+                }
+              </button>
             }
             <button (click)="goProfile()">Mon profil</button>
             <button class="danger" (click)="logout()">Déconnexion</button>

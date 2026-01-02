@@ -4,4 +4,7 @@ export interface DepotStats {
   vehicles: number;
   consumables: number;
   materials: number;
+  lowStockConsumables?: number;
+  lowStockMaterials?: number;
+  vehicleAlerts?: number;
 }

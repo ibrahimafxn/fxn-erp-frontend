@@ -12,6 +12,7 @@ import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-dele
 import {DATE_FORMAT_FR} from '../../../core/constant/date-format';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { downloadBlob } from '../../../core/utils/download';
 
 @Component({
   standalone: true,
@@ -136,6 +137,42 @@ export class UserList extends DetailBack {
 
   createNew(): void {
     this.router.navigate(['/admin/users/new']).then();
+  }
+
+  exportCsv(): void {
+    const v = this.filterForm.getRawValue();
+    this.userService.exportCsv({
+      q: v.q.trim() || undefined,
+      role: v.role || undefined,
+      depot: v.depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.csv`),
+      error: () => {}
+    });
+  }
+
+  exportPdf(): void {
+    const v = this.filterForm.getRawValue();
+    this.userService.exportPdf({
+      q: v.q.trim() || undefined,
+      role: v.role || undefined,
+      depot: v.depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: () => {}
+    });
+  }
+
+  exportXlsx(): void {
+    const v = this.filterForm.getRawValue();
+    this.userService.exportXlsx({
+      q: v.q.trim() || undefined,
+      role: v.role || undefined,
+      depot: v.depot || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.xlsx`),
+      error: () => {}
+    });
   }
 
   edit(u: User): void {

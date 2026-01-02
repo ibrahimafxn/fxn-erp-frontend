@@ -5,7 +5,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { MaterialService } from '../../../../core/services/material.service';
 import { MovementService } from '../../../../core/services/movement.service';
-import { AttributionHistoryItem, AttributionHistoryResult, Material } from '../../../../core/models';
+import { DepotService } from '../../../../core/services/depot.service';
+import { AttributionHistoryItem, AttributionHistoryResult, Depot, Material } from '../../../../core/models';
 import { DetailBack } from '../../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName, formatResourceName } from '../../../../core/utils/text-format';
 import { downloadBlob } from '../../../../core/utils/download';
@@ -20,6 +21,7 @@ import { downloadBlob } from '../../../../core/utils/download';
 export class MaterialDetail extends DetailBack {
   private svc = inject(MaterialService);
   private movementSvc = inject(MovementService);
+  private depotSvc = inject(DepotService);
   private route = inject(ActivatedRoute);
 
   readonly id = this.route.snapshot.paramMap.get('id') ?? '';
@@ -27,6 +29,7 @@ export class MaterialDetail extends DetailBack {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly material = signal<Material | null>(null);
+  readonly depot = signal<Depot | null>(null);
 
   readonly historyLoading = signal(false);
   readonly historyError = signal<string | null>(null);
@@ -65,6 +68,14 @@ export class MaterialDetail extends DetailBack {
     this.svc.getById(this.id).subscribe({
       next: (m) => {
         this.material.set(m);
+        this.depot.set(null);
+        const depotId = this.depotIdValue(m);
+        if (depotId && typeof m.idDepot === 'string') {
+          this.depotSvc.getDepot(depotId).subscribe({
+            next: (d) => this.depot.set(d),
+            error: () => this.depot.set(null)
+          });
+        }
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -189,7 +200,8 @@ export class MaterialDetail extends DetailBack {
     const d = this.material()?.idDepot;
     if (!d) return '—';
     if (typeof d === 'object' && '_id' in d) return formatDepotName(d.name) || '—';
-    return '—';
+    const fallback = this.depot();
+    return fallback ? (formatDepotName(fallback.name ?? '') || '—') : '—';
   }
 
   materialName(): string {
@@ -210,6 +222,15 @@ export class MaterialDetail extends DetailBack {
   private shortId(id?: string | null): string {
     if (!id) return '—';
     return id.length > 8 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id;
+  }
+
+  private depotIdValue(m: Material | null): string | null {
+    if (!m?.idDepot) return null;
+    if (typeof m.idDepot === 'string') return m.idDepot;
+    if (typeof m.idDepot === 'object' && '_id' in m.idDepot) {
+      return m.idDepot._id ?? null;
+    }
+    return null;
   }
 
   private hasCategoryName(value: unknown): value is { name?: string } {

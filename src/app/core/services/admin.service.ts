@@ -15,6 +15,11 @@ export interface DashboardStats {
   totalMaterials: number;
   totalVehicles: number;
   totalConsumables: number;
+  totalLowStockConsumables?: number;
+  totalLowStockMaterials?: number;
+  totalLowStock?: number;
+  totalVehicleAlerts?: number;
+  totalAlerts?: number;
   // autres stats si nécessaire
 }
 

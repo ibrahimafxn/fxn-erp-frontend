@@ -94,6 +94,15 @@
         <div class="kpi-footer">Flotte opérationnelle</div>
       </div>
     </article>
+
+    <article class="kpi-card clickable" (click)="goToStockAlerts()">
+      <div class="kpi-icon kpi-alerts">!</div>
+      <div class="kpi-text">
+        <div class="kpi-label">Alertes</div>
+        <div class="kpi-value">{{ s.totalAlerts ?? s.totalLowStock ?? 0 }}</div>
+        <div class="kpi-footer">Stock + véhicules</div>
+      </div>
+    </article>
   </section>
 
   <section class="empty-state" *ngIf="!stats() && !loading() && !error()">

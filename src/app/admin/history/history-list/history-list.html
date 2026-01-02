@@ -29,6 +29,9 @@
         <option value="ASSIGN">Attribution</option>
         <option value="RELEASE">Reprise</option>
         <option value="ADJUST">Ajustement</option>
+        <option value="CREATE">Création</option>
+        <option value="UPDATE">Modification</option>
+        <option value="DELETE">Suppression</option>
       </select>
 
       <select formControlName="status">
@@ -130,8 +133,10 @@
           <th>Origine</th>
           <th>Destination</th>
           <th>Quantité</th>
+          <th>Auteur</th>
           <th>Statut</th>
           <th>Note</th>
+          <th>Action</th>
         </tr>
         </thead>
 
@@ -141,9 +146,10 @@
               <td>{{ createdAtText(m) }}</td>
               <td class="mono">{{ resourceLabel(m) }}</td>
               <td><span class="badge">{{ actionLabel(m.action) }}</span></td>
-              <td class="mono">{{ endpointLabel(m.from.type, m.from.id) }}</td>
-              <td class="mono">{{ endpointLabel(m.to.type, m.to.id) }}</td>
+              <td class="mono">{{ endpointLabel(m.from.type, m.from.id, $any(m).fromLabel) }}</td>
+              <td class="mono">{{ endpointLabel(m.to.type, m.to.id, $any(m).toLabel) }}</td>
               <td>{{ m.quantity }} {{ m.unit }}</td>
+              <td>{{ authorLabel(m) }}</td>
               <td>
                 @if (m.status === 'CANCELED') {
                   <span class="pill danger">{{ statusLabel(m.status) }}</span>
@@ -152,6 +158,18 @@
                 }
               </td>
               <td class="note">{{ m.note || '—' }}</td>
+              <td>
+                <button
+                  class="btn-outline"
+                  type="button"
+                  (click)="openCancelModal(m)"
+                  [disabled]="!canCancel(m) || cancelLoading()[m._id]">
+                  Annuler
+                </button>
+                @if (rowError(m)) {
+                  <div class="state error">{{ rowError(m) }}</div>
+                }
+              </td>
             </tr>
           }
         </tbody>
@@ -168,3 +186,13 @@
     </footer>
   }
 </section>
+
+<app-confirm-cancel-modal
+  [open]="cancelModalOpen()"
+  entityLabel="le mouvement"
+  [entityName]="cancelTarget() ? resourceLabel(cancelTarget()!) : ''"
+  [entityId]="cancelTarget()?._id ?? null"
+  [confirming]="cancelTarget() ? cancelLoading()[cancelTarget()!._id] : false"
+  (cancel)="closeCancelModal()"
+  (confirm)="confirmCancel($event)"
+></app-confirm-cancel-modal>

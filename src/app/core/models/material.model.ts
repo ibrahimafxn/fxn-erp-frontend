@@ -10,6 +10,7 @@ export interface Material {
   category?: MaterialCategory;
   quantity?: number;         // quantité totale en stock (au dépôt)
   assignedQuantity?: number; // nombre actuellement attribué à des techniciens
+  minQuantity?: number;
   idDepot?: string | { _id: string; name?: string } | null;
   assignedTo?: string | null;// idUser si entièrement affecté / utilisé
   createdBy?: string;
@@ -17,4 +18,3 @@ export interface Material {
   updatedAt?: string | Date;
   metadata?: Record<string, any>;
 }
-

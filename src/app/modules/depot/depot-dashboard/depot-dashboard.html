@@ -9,6 +9,7 @@
       <button class="btn-outline" type="button" (click)="goMaterials()">Matériels</button>
       <button class="btn-outline" type="button" (click)="goConsumables()">Consommables</button>
       <button class="btn-outline" type="button" (click)="goVehicles()">Véhicules</button>
+      <button class="btn-outline" type="button" (click)="goStockAlerts()">Alertes stock</button>
       <button class="btn-outline" type="button" (click)="goHistory()">Historique</button>
       <button class="btn-outline" type="button" (click)="refresh()">Rafraîchir</button>
     </div>
@@ -40,6 +41,11 @@
       <article class="card stat-card">
         <div class="stat-label">Matériels</div>
         <div class="stat-value">{{ stats()?.materials }}</div>
+      </article>
+
+      <article class="card stat-card clickable" (click)="goStockAlerts()">
+        <div class="stat-label">Alertes stock</div>
+        <div class="stat-value">{{ lowStockTotal() }}</div>
       </article>
     </section>
   }

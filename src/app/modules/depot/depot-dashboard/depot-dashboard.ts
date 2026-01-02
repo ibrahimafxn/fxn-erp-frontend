@@ -79,6 +79,12 @@ export class DepotDashboard {
 
   readonly selectedResourceType = signal<ResourceType>('CONSUMABLE');
 
+  readonly lowStockTotal = computed(() => {
+    const s = this.stats();
+    if (!s) return 0;
+    return (s.lowStockConsumables ?? 0) + (s.lowStockMaterials ?? 0) + (s.vehicleAlerts ?? 0);
+  });
+
   readonly depotId = computed(() => {
     const raw = this.auth.getCurrentUser()?.idDepot ?? null;
     if (!raw) return null;
@@ -232,6 +238,10 @@ export class DepotDashboard {
 
   goHistory(): void {
     this.router.navigate(['/depot/history']).then();
+  }
+
+  goStockAlerts(): void {
+    this.router.navigate(['/depot/alerts/stock']).then();
   }
 
   resourceLabel(item: Material | Consumable): string {

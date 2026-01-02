@@ -57,6 +57,14 @@
       </div>
 
       <div class="field">
+        <label>Seuil min</label>
+        <input type="number" formControlName="minQuantity" min="0" />
+        @if (isInvalid('minQuantity')) {
+          <small class="hint error">Seuil invalide</small>
+        }
+      </div>
+
+      <div class="field">
         <label>Dépôt</label>
 
         @if (depotsLoading()) {

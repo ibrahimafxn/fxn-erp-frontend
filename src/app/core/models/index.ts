@@ -27,3 +27,4 @@ export * from './vehicle-list-result.model';
 export * from './roles.model';
 export * from './tool.model';
 export * from './resource-movement.model';
+export * from './hr.model';

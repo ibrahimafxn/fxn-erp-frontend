@@ -127,6 +127,40 @@ export class MaterialService {
   }
 
   // -----------------------------
+  // ALERTS : stock minimum
+  // -----------------------------
+  alerts(filter: MaterialFilter = {}): Observable<MaterialListResult> {
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    if (typeof filter.page === 'number') params = params.set('page', String(filter.page));
+    if (typeof filter.limit === 'number') params = params.set('limit', String(filter.limit));
+
+    return this.http.get<ApiResponse<MaterialListResult>>(`${this.baseUrl}/alerts`, { params }).pipe(
+      map((resp) => resp.data),
+      catchError((err: HttpErrorResponse) => this.handleError(err))
+    );
+  }
+
+  alertsExportCsv(filter: MaterialFilter = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/alerts/export`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  alertsExportPdf(filter: MaterialFilter = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/alerts/export/pdf`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  // -----------------------------
   // HISTORY
   // -----------------------------
   history(materialId: string, page = 1, limit = 25): Observable<AttributionHistoryResult> {

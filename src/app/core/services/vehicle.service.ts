@@ -251,6 +251,40 @@ export class VehicleService {
     );
   }
 
+  alerts(filter: VehicleFilter = {}): Observable<VehicleListResult> {
+    const safePage = filter.page && filter.page > 0 ? filter.page : 1;
+    const safeLimit = filter.limit && filter.limit > 0 ? filter.limit : 25;
+
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    params = params.set('page', String(safePage));
+    params = params.set('limit', String(safeLimit));
+
+    return this.http.get<VehiclesApiShape>(`${this.baseUrl}/alerts`, { params }).pipe(
+      map((resp) => this.normalizeListResponse(resp, safePage, safeLimit)),
+      catchError((err) => this.handleError(err as HttpErrorResponse))
+    );
+  }
+
+  alertsExportCsv(filter: VehicleFilter = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/alerts/export`, { params, responseType: 'blob' }).pipe(
+      catchError((err) => this.handleError(err as HttpErrorResponse))
+    );
+  }
+
+  alertsExportPdf(filter: VehicleFilter = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/alerts/export/pdf`, { params, responseType: 'blob' }).pipe(
+      catchError((err) => this.handleError(err as HttpErrorResponse))
+    );
+  }
+
   /** PUT /api/vehicles/:id/assign  { techId, author?, note? } */
   assignVehicle(vehicleId: string, payload: AssignVehiclePayload): Observable<Vehicle> {
     // PUT /api/vehicles/:id/assign  { techId, author?, note? }

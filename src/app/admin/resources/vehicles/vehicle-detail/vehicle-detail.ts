@@ -147,6 +147,11 @@ export class VehicleDetail extends DetailBack {
       return formatDepotName(obj.name) || '—';
     }
 
+    if (typeof d === 'string') {
+      const match = this.depots().find(item => item._id === d);
+      return match ? (formatDepotName(match.name ?? '') || '—') : '—';
+    }
+
     return '—';
   }
 

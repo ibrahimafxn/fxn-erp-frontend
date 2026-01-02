@@ -112,18 +112,37 @@
   border-radius: 0.5rem;
   background: transparent;
   cursor: pointer;
+  color: rgba(226, 238, 246, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .dropdown button:hover {
   background: rgba(33, 182, 182, 0.12);
+  color: rgba(226, 238, 246, 0.9);
 }
 
 .dropdown .danger {
-  color: #ff5a5a;
+  color: rgba(255, 140, 140, 0.75);
 }
 
 .divider {
   height: 1px;
   margin: 0.4rem 0;
   background: rgba(255, 255, 255, 0.08);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 184, 28, 0.2);
+  border: 1px solid rgba(255, 184, 28, 0.4);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--fxn-text);
 }

@@ -59,6 +59,18 @@ export const ADMIN_ROUTES: Routes = [
     path: 'history',
     loadComponent: () => import('./history/history-list/history-list').then(m => m.HistoryList)
   },
+  {
+    path: 'reservations',
+    loadComponent: () => import('./reservations/reservations-list/reservations-list').then(m => m.ReservationsList)
+  },
+  {
+    path: 'receipts',
+    loadComponent: () => import('./receipts/receipt-page/receipt-page').then(m => m.ReceiptPage)
+  },
+  {
+    path: 'alerts/stock',
+    loadComponent: () => import('./alerts/stock-alerts/stock-alerts').then(m => m.StockAlerts)
+  },
 
   // -----------------------------
   // MATERIALS
@@ -175,6 +187,10 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'security/user-access',
     loadComponent: () => import('./security/access-users/access-users').then(m => m.AccessUsers),
+  },
+  {
+    path: 'hr',
+    loadComponent: () => import('../modules/hr/hr-list/hr-list').then(m => m.HrList)
   }
 
   // Optionnel (on fera après)

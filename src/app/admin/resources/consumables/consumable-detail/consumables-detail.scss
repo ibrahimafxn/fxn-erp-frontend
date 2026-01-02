@@ -46,6 +46,56 @@
   gap: .75rem;
 }
 
+.reserve-card {
+  display: grid;
+  gap: .9rem;
+
+  .subtitle {
+    margin: 0;
+    color: var(--fxn-text-muted);
+  }
+}
+
+.reserve-form {
+  display: grid;
+  gap: .9rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: .9rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.reserve-form label {
+  display: grid;
+  gap: .35rem;
+  font-size: .9rem;
+  color: var(--fxn-text);
+}
+
+.reserve-form select,
+.reserve-form input,
+.reserve-form textarea {
+  border-radius: var(--fxn-radius-md);
+  border: 1px solid var(--fxn-border-strong);
+  background: rgba(8, 14, 22, 0.6);
+  color: inherit;
+  padding: .55rem .7rem;
+}
+
+.reserve-form textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
 .info-title {
   font-size: 1.35rem;
   font-weight: 700;
@@ -148,6 +198,7 @@ td.note {
   background: rgba(0, 0, 0, .06);
   border: 1px solid rgba(255, 255, 255, .06);
   &.error { background: rgba(255, 0, 60, .12); }
+  &.success { background: rgba(0, 160, 90, .12); }
 }
 
 @media (max-width: 900px) {

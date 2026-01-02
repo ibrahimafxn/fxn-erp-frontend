@@ -1,5 +1,5 @@
 export type MovementEndpointType = 'DEPOT' | 'USER' | 'SUPPLIER' | 'EXTERNAL' | 'NONE';
-export type MovementAction = 'IN' | 'OUT' | 'TRANSFER' | 'ASSIGN' | 'RELEASE' | 'ADJUST';
+export type MovementAction = 'IN' | 'OUT' | 'TRANSFER' | 'ASSIGN' | 'RELEASE' | 'ADJUST' | 'CREATE' | 'UPDATE' | 'DELETE';
 export type MovementStatus = 'COMMITTED' | 'CANCELED';
 
 export interface MovementEndpoint {

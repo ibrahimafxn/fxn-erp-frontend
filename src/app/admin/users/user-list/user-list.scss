@@ -52,10 +52,18 @@
   display: grid;
   gap: .85rem;
 
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
   .search {
     display: grid;
-    grid-template-columns: 1.4fr .9fr auto auto;
+    grid-template-columns: 1.4fr .9fr .9fr auto auto;
     gap: .6rem;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 
     @media (max-width: 900px) {
       grid-template-columns: 1fr;
@@ -64,6 +72,8 @@
 
   input,
   select {
+    width: 100%;
+    min-width: 0;
     padding: .55rem .65rem;
     border-radius: .7rem;
     border: 1px solid rgba(255, 255, 255, .15);
@@ -83,6 +93,8 @@
     gap: .5rem;
     justify-content: space-between;
     flex-wrap: wrap;
+
+    min-width: 0;
   }
 
   .pill {
@@ -132,9 +144,14 @@
 ------------------------------------------------- */
 .table {
   padding: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
 
   table {
     width: 100%;
+    min-width: 720px;
     border-collapse: collapse;
   }
 
@@ -220,5 +237,3 @@ button[disabled] {
   gap: .5rem; // ✅ espace entre Modifier et Supprimer
   align-items: center;
 }
-
-

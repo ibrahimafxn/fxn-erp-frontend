@@ -4,24 +4,31 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { MovementService } from '../../../core/services/movement.service';
+import { MaterialService } from '../../../core/services/material.service';
+import { ConsumableService } from '../../../core/services/consumable.service';
+import { VehicleService } from '../../../core/services/vehicle.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
-import { Depot, Movement, MovementListResult, User } from '../../../core/models';
+import { Consumable, Depot, Material, Movement, MovementListResult, User, Vehicle } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { downloadBlob } from '../../../core/utils/download';
+import { ConfirmCancelModal } from '../../../shared/components/dialog/confirm-cancel-modal/confirm-cancel-modal';
 
 @Component({
   selector: 'app-history-list',
   standalone: true,
   providers: [DatePipe],
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmCancelModal],
   templateUrl: './history-list.html',
   styleUrl: './history-list.scss',
 })
 export class HistoryList {
   private movementService = inject(MovementService);
+  private materialService = inject(MaterialService);
+  private consumableService = inject(ConsumableService);
+  private vehicleService = inject(VehicleService);
   private depotService = inject(DepotService);
   private userService = inject(UserService);
   private auth = inject(AuthService);
@@ -37,8 +44,16 @@ export class HistoryList {
 
   readonly depots = signal<Depot[]>([]);
   readonly users = signal<User[]>([]);
+  readonly materials = signal<Material[]>([]);
+  readonly consumables = signal<Consumable[]>([]);
+  readonly vehicles = signal<Vehicle[]>([]);
   readonly depotsLoading = signal(false);
   readonly usersLoading = signal(false);
+  readonly resourcesLoading = signal(false);
+  readonly cancelLoading = signal<Record<string, boolean>>({});
+  readonly cancelError = signal<Record<string, string>>({});
+  readonly cancelModalOpen = signal(false);
+  readonly cancelTarget = signal<Movement | null>(null);
 
   readonly filterForm = this.fb.nonNullable.group({
     resourceType: this.fb.nonNullable.control(''),
@@ -73,6 +88,7 @@ export class HistoryList {
   constructor() {
     this.loadDepots();
     this.loadUsers();
+    this.loadResources(this.isDepotManager() ? this.managerDepotId() : null);
     this.refresh(true);
   }
 
@@ -174,7 +190,8 @@ export class HistoryList {
     this.refresh(true);
   }
 
-  endpointLabel(type: string, id: string | null | undefined): string {
+  endpointLabel(type: string, id: string | null | undefined, label?: string): string {
+    if (label) return label;
     if (!id) return '—';
     if (type === 'DEPOT') {
       const depot = this.depots().find((d) => d._id === id);
@@ -195,7 +212,25 @@ export class HistoryList {
   }
 
   resourceLabel(m: Movement): string {
-    return m.resourceType;
+    const anyMovement = m as Movement & { resourceLabel?: string };
+    if (anyMovement.resourceLabel) return anyMovement.resourceLabel;
+    const id = m.resourceId;
+    if (m.resourceType === 'MATERIAL') {
+      const mat = this.materials().find((i) => i._id === id);
+      return mat?.name || id;
+    }
+    if (m.resourceType === 'CONSUMABLE') {
+      const con = this.consumables().find((i) => i._id === id);
+      return con?.name || id;
+    }
+    if (m.resourceType === 'VEHICLE') {
+      const v = this.vehicles().find((i) => i._id === id);
+      if (v) {
+        const label = [v.plateNumber, v.brand, v.model].filter(Boolean).join(' ');
+        return label || id;
+      }
+    }
+    return id || m.resourceType;
   }
 
   actionLabel(action: string): string {
@@ -206,6 +241,9 @@ export class HistoryList {
       case 'ASSIGN': return 'Attribution';
       case 'RELEASE': return 'Reprise';
       case 'ADJUST': return 'Ajustement';
+      case 'CREATE': return 'Création';
+      case 'UPDATE': return 'Modification';
+      case 'DELETE': return 'Suppression';
       default: return action;
     }
   }
@@ -214,8 +252,57 @@ export class HistoryList {
     return status === 'CANCELED' ? 'Annulé' : 'Validé';
   }
 
+  canCancel(m: Movement): boolean {
+    if (m.status === 'CANCELED') return false;
+    const action = String(m.action || '');
+    return ['IN', 'OUT', 'TRANSFER', 'ASSIGN', 'RELEASE', 'ADJUST'].includes(action);
+  }
+
+  openCancelModal(m: Movement): void {
+    if (!this.canCancel(m)) return;
+    this.cancelTarget.set(m);
+    this.cancelModalOpen.set(true);
+  }
+
+  closeCancelModal(): void {
+    this.cancelModalOpen.set(false);
+    this.cancelTarget.set(null);
+  }
+
+  confirmCancel(reason: string): void {
+    const m = this.cancelTarget();
+    if (!m) return;
+    this.setCancelLoading(m._id, true);
+    this.setCancelError(m._id, '');
+
+    this.movementService.cancel(m._id, reason || '').subscribe({
+      next: () => {
+        this.setCancelLoading(m._id, false);
+        this.closeCancelModal();
+        this.refresh(true);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.setCancelLoading(m._id, false);
+        this.setCancelError(m._id, this.apiError(err, 'Erreur annulation'));
+        this.closeCancelModal();
+      }
+    });
+  }
+
   createdAtText(m: Movement): string {
     return this.datePipe.transform(m.createdAt as any, 'short') ?? '—';
+  }
+
+  authorLabel(m: Movement): string {
+    const authorId = m.author;
+    const anyMovement = m as Movement & { authorName?: string; authorEmail?: string };
+    if (anyMovement.authorName) return anyMovement.authorName;
+    if (anyMovement.authorEmail) return anyMovement.authorEmail;
+    if (!authorId) return '—';
+    const user = this.users().find((u) => u._id === authorId);
+    if (!user) return authorId.length > 8 ? `${authorId.slice(0, 4)}…${authorId.slice(-4)}` : authorId;
+    const name = formatPersonName(user.firstName ?? '', user.lastName ?? '');
+    return name || user.email || user._id;
   }
 
   errorMessage(): string {
@@ -226,6 +313,10 @@ export class HistoryList {
         ? String((err.error as { message?: unknown }).message ?? '')
         : '';
     return apiMsg || err.message || 'Erreur inconnue';
+  }
+
+  rowError(m: Movement): string {
+    return this.cancelError()[m._id] || '';
   }
 
   private loadDepots(): void {
@@ -250,6 +341,33 @@ export class HistoryList {
     });
   }
 
+  private loadResources(depotId: string | null): void {
+    this.resourcesLoading.set(true);
+    Promise.all([
+      new Promise<void>((resolve) => {
+        this.materialService.refresh(true, { page: 1, limit: 500, depot: depotId || undefined }).subscribe({
+          next: (res) => this.materials.set(res.items ?? []),
+          error: () => {},
+          complete: () => resolve()
+        });
+      }),
+      new Promise<void>((resolve) => {
+        this.consumableService.refresh(true, { page: 1, limit: 500, depot: depotId || undefined }).subscribe({
+          next: (res) => this.consumables.set(res.items ?? []),
+          error: () => {},
+          complete: () => resolve()
+        });
+      }),
+      new Promise<void>((resolve) => {
+        this.vehicleService.refresh(true, { page: 1, limit: 500, depot: depotId || undefined }).subscribe({
+          next: (res) => this.vehicles.set(res.items ?? []),
+          error: () => {},
+          complete: () => resolve()
+        });
+      })
+    ]).finally(() => this.resourcesLoading.set(false));
+  }
+
   userLabel(u: User): string {
     const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
     return name || u.email || u._id;
@@ -257,5 +375,21 @@ export class HistoryList {
 
   depotOptionLabel(d: Depot): string {
     return formatDepotName(d.name ?? '') || '—';
+  }
+
+  private setCancelLoading(id: string, value: boolean): void {
+    this.cancelLoading.set({ ...this.cancelLoading(), [id]: value });
+  }
+
+  private setCancelError(id: string, message: string): void {
+    this.cancelError.set({ ...this.cancelError(), [id]: message });
+  }
+
+  private apiError(err: HttpErrorResponse, fallback: string): string {
+    const apiMsg =
+      typeof err.error === 'object' && err.error !== null && 'message' in err.error
+        ? String((err.error as { message?: unknown }).message ?? '')
+        : '';
+    return apiMsg || err.message || fallback;
   }
 }

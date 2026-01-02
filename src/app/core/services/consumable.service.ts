@@ -38,6 +38,7 @@ export interface ReserveConsumablePayload {
   toUser?: string | null;
   fromDepot?: string | null;
   author?: string | null;
+  note?: string | null;
 }
 
 /**
@@ -212,6 +213,12 @@ export class ConsumableService {
       .pipe(catchError((err: HttpErrorResponse) => this.handleHttpError(err)));
   }
 
+  releaseReservation(payload: ReserveConsumablePayload): Observable<ReserveConsumableResult> {
+    return this.http
+      .post<ReserveConsumableResult>(`${this.baseUrl}/reserve/release`, payload)
+      .pipe(catchError((err: HttpErrorResponse) => this.handleHttpError(err)));
+  }
+
   // -----------------------------
   // HISTORY
   // -----------------------------
@@ -243,6 +250,40 @@ export class ConsumableService {
     if (filter?.q) params = params.set('q', filter.q);
     if (filter?.depot) params = params.set('depot', filter.depot);
     return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  // -----------------------------
+  // ALERTS : stock minimum
+  // -----------------------------
+  alerts(filter: ConsumableFilter = {}): Observable<ConsumableListResult> {
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    if (typeof filter.page === 'number') params = params.set('page', String(filter.page));
+    if (typeof filter.limit === 'number') params = params.set('limit', String(filter.limit));
+
+    return this.http.get<ApiResponse<ConsumableListResult>>(`${this.baseUrl}/alerts`, { params }).pipe(
+      map((resp) => resp.data),
+      catchError((err: HttpErrorResponse) => this.handleHttpError(err))
+    );
+  }
+
+  alertsExportCsv(filter: ConsumableFilter = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/alerts/export`, { params, responseType: 'blob' }).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  alertsExportPdf(filter: ConsumableFilter = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter.q) params = params.set('q', filter.q);
+    if (filter.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/alerts/export/pdf`, { params, responseType: 'blob' }).pipe(
       catchError(err => this.handleError(err))
     );
   }

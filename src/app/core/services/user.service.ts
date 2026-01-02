@@ -182,6 +182,30 @@ export class UserService {
     return this.http.put<{ success: boolean; data: AccessResult }>(`${this.baseUrl}/${userId}/disable-access`, {});
   }
 
+  exportCsv(filter?: { q?: string; role?: string; depot?: string }): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.q) params = params.set('q', filter.q);
+    if (filter?.role) params = params.set('role', filter.role);
+    if (filter?.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/export/csv`, { params, responseType: 'blob' as const });
+  }
+
+  exportPdf(filter?: { q?: string; role?: string; depot?: string }): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.q) params = params.set('q', filter.q);
+    if (filter?.role) params = params.set('role', filter.role);
+    if (filter?.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' as const });
+  }
+
+  exportXlsx(filter?: { q?: string; role?: string; depot?: string }): Observable<Blob> {
+    let params = new HttpParams();
+    if (filter?.q) params = params.set('q', filter.q);
+    if (filter?.role) params = params.set('role', filter.role);
+    if (filter?.depot) params = params.set('depot', filter.depot);
+    return this.http.get(`${this.baseUrl}/export/xlsx`, { params, responseType: 'blob' as const });
+  }
+
   // -----------------------------
   // Utilitaires
   // -----------------------------
