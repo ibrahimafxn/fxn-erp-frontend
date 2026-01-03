@@ -12,6 +12,11 @@ export type InterventionSummaryItem = {
   racF8: number;
   racProS: number;
   sav: number;
+  clem: number;
+  cablePav1: number;
+  cablePav2: number;
+  cablePav3: number;
+  cablePav4: number;
   racAutre: number;
   other: number;
 };
@@ -24,6 +29,11 @@ export type InterventionTotals = {
   racF8: number;
   racProS: number;
   sav: number;
+  clem: number;
+  cablePav1: number;
+  cablePav2: number;
+  cablePav3: number;
+  cablePav4: number;
   racAutre: number;
   other: number;
 };

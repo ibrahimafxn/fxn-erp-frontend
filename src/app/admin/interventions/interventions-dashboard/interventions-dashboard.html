@@ -100,6 +100,11 @@
       <div class="pill">Rac F8 : {{ totals()?.racF8 ?? 0 }}</div>
       <div class="pill">Rac Pro_s : {{ totals()?.racProS ?? 0 }}</div>
       <div class="pill">SAV : {{ totals()?.sav ?? 0 }}</div>
+      <div class="pill">CLEM : {{ totals()?.clem ?? 0 }}</div>
+      <div class="pill">Câble pav 1 : {{ totals()?.cablePav1 ?? 0 }}</div>
+      <div class="pill">Câble pav 2 : {{ totals()?.cablePav2 ?? 0 }}</div>
+      <div class="pill">Câble pav 3 : {{ totals()?.cablePav3 ?? 0 }}</div>
+      <div class="pill">Câble pav 4 : {{ totals()?.cablePav4 ?? 0 }}</div>
     </div>
 
     <div class="table card">
@@ -115,6 +120,11 @@
           <th>Rac F8</th>
           <th>Rac Pro_s</th>
           <th>SAV</th>
+          <th>CLEM</th>
+          <th>Câble pav 1</th>
+          <th>Câble pav 2</th>
+          <th>Câble pav 3</th>
+          <th>Câble pav 4</th>
           <th>Autres</th>
         </tr>
         </thead>
@@ -130,6 +140,11 @@
               <td>{{ it.racF8 }}</td>
               <td>{{ it.racProS }}</td>
               <td>{{ it.sav }}</td>
+              <td>{{ it.clem }}</td>
+              <td>{{ it.cablePav1 }}</td>
+              <td>{{ it.cablePav2 }}</td>
+              <td>{{ it.cablePav3 }}</td>
+              <td>{{ it.cablePav4 }}</td>
               <td>{{ it.other + it.racAutre }}</td>
             </tr>
           }
