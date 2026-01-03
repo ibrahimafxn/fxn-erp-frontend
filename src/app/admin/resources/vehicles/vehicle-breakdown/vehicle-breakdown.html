@@ -1,0 +1,89 @@
+<section class="vehicle-breakdown">
+  <header class="page-header card">
+    <div>
+      <h1>Déclarer une panne</h1>
+      <p class="subtitle">{{ vehicleLabel() }}</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()">Retour</button>
+      <button class="btn-outline" type="button" (click)="submit()" [disabled]="!canSubmit()">
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card">
+      <strong>Erreur :</strong> {{ error() }}
+    </div>
+  }
+
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <div class="field">
+        <label>Type de problème *</label>
+        <input type="text" formControlName="problemType" placeholder="Ex: Freins, Pneu crevé, Batterie…" />
+        @if (isInvalid('problemType')) {
+          <small class="hint error">Type requis (min 2 caractères)</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Besoin de dépanneuse</label>
+        <select formControlName="needsTow">
+          <option [ngValue]="false">Non</option>
+          <option [ngValue]="true">Oui</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Réparation *</label>
+        <select formControlName="repairMode">
+          <option value="ON_SITE">Sur place</option>
+          <option value="GARAGE">Garage</option>
+        </select>
+      </div>
+
+      @if (showGarageField()) {
+        <div class="field">
+          <label>Garage de destination *</label>
+          <input type="text" formControlName="garageName" placeholder="Nom du garage" />
+          @if (garageRequired()) {
+            <small class="hint error">Le garage est requis.</small>
+          }
+        </div>
+
+        <div class="field full">
+          <label>Adresse du garage *</label>
+          <textarea rows="2" formControlName="garageAddress" placeholder="Adresse complète du garage"></textarea>
+          @if (garageAddressRequired()) {
+            <small class="hint error">Adresse du garage requise.</small>
+          }
+        </div>
+      }
+
+      <div class="field full">
+        <label>Adresse du lieu de la panne *</label>
+        <textarea rows="3" formControlName="address" placeholder="Adresse complète"></textarea>
+        @if (isInvalid('address')) {
+          <small class="hint error">Adresse requise.</small>
+        }
+      </div>
+
+      <div class="field full">
+        <label>Note</label>
+        <textarea rows="3" formControlName="note" placeholder="Informations complémentaires"></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-outline" type="button" (click)="cancel()">Annuler</button>
+      <button class="btn-primary" type="submit" [disabled]="!canSubmit()">
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </form>
+</section>

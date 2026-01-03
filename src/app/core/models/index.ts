@@ -23,6 +23,7 @@ export * from './user-lite.model';
 
 export * from './vehicle.model';
 export * from './vehicle-list-result.model';
+export * from './vehicle-breakdown.model';
 
 export * from './roles.model';
 export * from './tool.model';

@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { HrService } from '../../../core/services/hr.service';
+import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {
   Depot,
   DocAlertsSummary,
@@ -21,7 +22,7 @@ import { formatDepotName, formatPersonName } from '../../../core/utils/text-form
 @Component({
   selector: 'app-hr-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
   providers: [DatePipe],
   templateUrl: './hr-list.html',
   styleUrl: './hr-list.scss',
@@ -54,6 +55,11 @@ export class HrList {
   readonly overlayFilter = signal<'EXPIRED' | 'EXPIRING'>('EXPIRED');
   readonly overlayDocs = signal<EmployeeDoc[]>([]);
   readonly overlayLoading = signal(false);
+  readonly deleteDocModalOpen = signal(false);
+  readonly deletingDocId = signal<string | null>(null);
+  readonly pendingDocId = signal<string | null>(null);
+  readonly pendingDocLabel = signal<string>('document');
+  readonly pendingDocName = signal<string>('');
   readonly leaves = signal<LeaveRequest[]>([]);
   readonly leaveStatus = signal<string>('PENDING');
   readonly depots = signal<Depot[]>([]);
@@ -379,8 +385,10 @@ export class HrList {
   }
 
   removeDoc(doc: EmployeeDoc): void {
+    this.deletingDocId.set(doc._id);
     this.hr.deleteDoc(doc._id).subscribe({
       next: () => {
+        this.deletingDocId.set(null);
         this.docs.set(this.docs().filter((d) => d._id !== doc._id));
         const current = this.selected();
         if (current?.user?._id) {
@@ -391,9 +399,39 @@ export class HrList {
         }
       },
       error: (err: any) => {
+        this.deletingDocId.set(null);
         this.error.set(err?.message || 'Erreur suppression document');
       }
     });
+  }
+
+  openDeleteDocModal(doc: EmployeeDoc): void {
+    this.pendingDocId.set(doc._id);
+    const label = doc.detail || doc.type || 'Document';
+    this.pendingDocName.set(label);
+    this.pendingDocLabel.set('document');
+    this.deleteDocModalOpen.set(true);
+  }
+
+  closeDeleteDocModal(): void {
+    if (this.confirmingDeleteDoc()) return;
+    this.deleteDocModalOpen.set(false);
+    this.pendingDocId.set(null);
+    this.pendingDocName.set('');
+  }
+
+  confirmDeleteDoc(): void {
+    const id = this.pendingDocId();
+    if (!id) return;
+    const doc = this.docs().find((d) => d._id === id);
+    if (!doc) return;
+    this.deleteDocModalOpen.set(false);
+    this.removeDoc(doc);
+  }
+
+  confirmingDeleteDoc(): boolean {
+    const id = this.pendingDocId();
+    return !!id && this.deletingDocId() === id;
   }
 
   setDocFilter(filter: 'ALL' | 'EXPIRED' | 'EXPIRING'): void {

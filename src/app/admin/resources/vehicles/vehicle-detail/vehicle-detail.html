@@ -14,6 +14,10 @@
         <div class="card-actions">
           <button class="btn-outline" type="button" (click)="back()">Retour</button>
           <button class="btn-outline" type="button" (click)="load()">Actualiser</button>
+          <button class="btn-outline" type="button" (click)="openBreakdowns()">Pannes</button>
+          @if (canDeclareBreakdown()) {
+            <button class="btn-primary" type="button" (click)="declareBreakdown()">Déclarer panne</button>
+          }
         </div>
 
         <div class="divider"></div>
@@ -174,6 +178,59 @@
                 >
                   @if (actionSaving()) { Reprise… } @else { Reprendre }
                 </button>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <!-- PANNE / REPARATION -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Panne / Réparation</h2>
+          <span class="hint">Dernière panne déclarée</span>
+        </div>
+
+        @if (breakdownLoading()) {
+          <div class="state loading">Chargement…</div>
+        } @else if (breakdownError()) {
+          <div class="state error">{{ breakdownError() }}</div>
+        } @else if (!latestBreakdown()) {
+          <div class="state empty">Aucune panne enregistrée.</div>
+        } @else {
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Type</label>
+              <div>{{ latestBreakdown()!.problemType || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Statut</label>
+              <div>{{ breakdownStatusLabel() }}</div>
+            </div>
+            <div class="info-item">
+              <label>Retour</label>
+              <div>{{ breakdownReturnDate() }}</div>
+            </div>
+            <div class="info-item">
+              <label>Coût</label>
+              <div>{{ breakdownCost() }}</div>
+            </div>
+            <div class="info-item">
+              <label>Garage</label>
+              <div>{{ latestBreakdown()!.resolvedGarage || latestBreakdown()!.garageName || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Adresse garage</label>
+              <div>{{ latestBreakdown()!.garageAddress || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Adresse panne</label>
+              <div>{{ latestBreakdown()!.address || '—' }}</div>
+            </div>
+            @if (latestBreakdown()!.resolvedNote) {
+              <div class="info-item">
+                <label>Note</label>
+                <div>{{ latestBreakdown()!.resolvedNote }}</div>
               </div>
             }
           </div>

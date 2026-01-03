@@ -208,12 +208,31 @@
                         <a [href]="d.fileUrl" target="_blank" download>Télécharger</a>
                       }
                     </td>
-                    <td><button class="btn-outline btn-xs" type="button" (click)="removeDoc(d)">Supprimer</button></td>
+                    <td>
+                      <button
+                        class="btn-outline btn-xs"
+                        type="button"
+                        [disabled]="deletingDocId() === d._id"
+                        (click)="openDeleteDocModal(d)"
+                      >
+                        @if (deletingDocId() === d._id) { Suppression… } @else { Supprimer }
+                      </button>
+                    </td>
                   </tr>
                 }
               </tbody>
             </table>
           </div>
+
+          <app-confirm-delete-modal
+            [open]="deleteDocModalOpen()"
+            [entityLabel]="pendingDocLabel()"
+            [entityName]="pendingDocName()"
+            [entityId]="pendingDocId()"
+            [confirming]="confirmingDeleteDoc()"
+            (cancel)="closeDeleteDocModal()"
+            (confirm)="confirmDeleteDoc()">
+          </app-confirm-delete-modal>
 
           <h3>Historique RH</h3>
           <div class="table-wrap">

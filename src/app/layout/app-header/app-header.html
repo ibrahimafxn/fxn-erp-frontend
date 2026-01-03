@@ -42,8 +42,19 @@
             @if (canViewMovements()) {
               <button (click)="goMovements()">Journal des mouvements</button>
             }
+            @if (canViewInterventions()) {
+              <button (click)="goInterventions()">Interventions ERT</button>
+            }
             @if (canViewMovements()) {
-              <button (click)="goReservations()">Réservations consommables</button>
+              <div class="menu-section">
+                <div class="section-label">Réservations</div>
+                <div class="section-items">
+                  <button class="submenu" (click)="goReservations()">Consommables</button>
+                  @if (canViewMaterialReservations()) {
+                    <button class="submenu" (click)="goMaterialReservations()">Matériels</button>
+                  }
+                </div>
+              </div>
             }
             @if (canViewMovements()) {
               <button (click)="goReceipts()">Réceptions stock</button>

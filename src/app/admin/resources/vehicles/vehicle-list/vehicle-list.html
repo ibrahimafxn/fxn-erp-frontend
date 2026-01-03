@@ -64,7 +64,7 @@
           <th>État</th>
           <th>Assignation</th>
           <th>Création</th>
-          @if (!isDepotManager()) {
+          @if (canDeclareBreakdown()) {
             <th class="actions">Actions</th>
           }
         </tr>
@@ -86,19 +86,23 @@
                 @if (createdAtValue(v)) { {{ createdAtValue(v) | date:'short' }} } @else { — }
               </td>
 
-              @if (!isDepotManager()) {
+              @if (canDeclareBreakdown()) {
                 <td class="actions" (click)="$event.stopPropagation()">
                   <div class="actions-row">
-                    <button class="btn-outline" type="button" (click)="edit(v)">Modifier</button>
+                    <button class="btn-outline" type="button" (click)="declareBreakdown(v)">Panne</button>
 
-                    <button
-                      class="btn-danger"
-                      type="button"
-                      [disabled]="deletingId() === v._id"
-                      (click)="openDeleteModal(v)"
-                    >
-                      @if (deletingId() === v._id) { Suppression… } @else { Supprimer }
-                    </button>
+                    @if (!isDepotManager()) {
+                      <button class="btn-outline" type="button" (click)="edit(v)">Modifier</button>
+
+                      <button
+                        class="btn-danger"
+                        type="button"
+                        [disabled]="deletingId() === v._id"
+                        (click)="openDeleteModal(v)"
+                      >
+                        @if (deletingId() === v._id) { Suppression… } @else { Supprimer }
+                      </button>
+                    }
                   </div>
                 </td>
               }

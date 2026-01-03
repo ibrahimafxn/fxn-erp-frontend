@@ -167,6 +167,7 @@ export class ConsumableList extends DetailBack {
   openDeleteModal(c: Consumable): void {
     if (this.isDepotManager()) return;
     this.pendingDeleteLabel.set(c._id);
+    this.pendingDeleteId.set(c._id);
     this.pendingDeleteName.set(c.name ?? '');
     this.deleteModalOpen.set(true);
   }

@@ -74,9 +74,12 @@ export class AppHeader {
 
   readonly canViewHr = computed(() => this.canManageAccess());
   readonly canViewMovements = computed(() => this.canManageAccess() || this.isDepotManager());
+  readonly canViewInterventions = computed(() => this.canManageAccess());
+  readonly canViewMaterialReservations = computed(() => this.canManageAccess());
   readonly dashboardLink = computed(() => (this.isDepotManager() ? '/depot' : '/admin/dashboard'));
   readonly movementsLink = computed(() => (this.isDepotManager() ? '/depot/history' : '/admin/history'));
   readonly reservationsLink = computed(() => (this.isDepotManager() ? '/depot/reservations' : '/admin/reservations'));
+  readonly materialReservationsLink = computed(() => '/admin/reservations/materials');
   readonly receiptsLink = computed(() => (this.isDepotManager() ? '/depot/receipts' : '/admin/receipts'));
   readonly stockAlertsLink = computed(() => (this.isDepotManager() ? '/depot/alerts/stock' : '/admin/alerts/stock'));
 
@@ -108,8 +111,16 @@ export class AppHeader {
     this.router.navigate([this.movementsLink()]).then();
   }
 
+  goInterventions(): void {
+    this.router.navigate(['/admin/interventions']).then();
+  }
+
   goReservations(): void {
     this.router.navigate([this.reservationsLink()]).then();
+  }
+
+  goMaterialReservations(): void {
+    this.router.navigate([this.materialReservationsLink()]).then();
   }
 
   goReceipts(): void {
@@ -142,9 +153,11 @@ export class AppHeader {
     if (url.includes('/users')) return 'Utilisateurs';
     if (url.includes('/hr')) return 'Ressources humaines';
     if (url.includes('/security/user-access')) return 'Accès connexion';
+    if (url.includes('/reservations/materials')) return 'Réservations matériels';
     if (url.includes('/reservations')) return 'Réservations';
     if (url.includes('/receipts')) return 'Réceptions';
     if (url.includes('/alerts/stock')) return 'Alertes';
+    if (url.includes('/interventions')) return 'Interventions';
     if (url.includes('/consumables')) return 'Consommables';
     if (url.includes('/materials')) return 'Matériels';
     return 'Dashboard';

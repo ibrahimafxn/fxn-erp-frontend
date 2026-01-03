@@ -64,12 +64,22 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./reservations/reservations-list/reservations-list').then(m => m.ReservationsList)
   },
   {
+    path: 'reservations/materials',
+    loadComponent: () =>
+      import('./reservations/material-reservations/material-reservations-list').then(m => m.MaterialReservationsList)
+  },
+  {
     path: 'receipts',
     loadComponent: () => import('./receipts/receipt-page/receipt-page').then(m => m.ReceiptPage)
   },
   {
     path: 'alerts/stock',
     loadComponent: () => import('./alerts/stock-alerts/stock-alerts').then(m => m.StockAlerts)
+  },
+  {
+    path: 'interventions',
+    loadComponent: () =>
+      import('./interventions/interventions-dashboard/interventions-dashboard').then(m => m.InterventionsDashboard)
   },
 
   // -----------------------------
@@ -157,6 +167,16 @@ export const ADMIN_ROUTES: Routes = [
     path: 'resources/vehicles/:id/detail',
     loadComponent: () =>
       import('./resources/vehicles/vehicle-detail/vehicle-detail').then(m => m.VehicleDetail)
+  },
+  {
+    path: 'resources/vehicles/:id/breakdown',
+    loadComponent: () =>
+      import('./resources/vehicles/vehicle-breakdown/vehicle-breakdown').then(m => m.VehicleBreakdown)
+  },
+  {
+    path: 'resources/vehicles/:id/breakdowns',
+    loadComponent: () =>
+      import('./resources/vehicles/vehicle-breakdowns/vehicle-breakdowns').then(m => m.VehicleBreakdowns)
   },
 
   // -----------------------------

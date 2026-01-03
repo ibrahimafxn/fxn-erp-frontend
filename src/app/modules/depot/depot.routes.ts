@@ -76,6 +76,24 @@ export const DEPOT_ROUTES: Routes = [
     ]
   },
   {
+    path: 'resources/vehicles/:id/breakdown',
+    loadComponent: () =>
+      import('../../admin/resources/vehicles/vehicle-breakdown/vehicle-breakdown').then(m => m.VehicleBreakdown),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
+    path: 'resources/vehicles/:id/breakdowns',
+    loadComponent: () =>
+      import('../../admin/resources/vehicles/vehicle-breakdowns/vehicle-breakdowns').then(m => m.VehicleBreakdowns),
+    canActivate: [
+      AuthGuard,
+      RoleGuard([Role.GESTION_DEPOT])
+    ]
+  },
+  {
     path: 'history',
     loadComponent: () =>
       import('../../admin/history/history-list/history-list').then(m => m.HistoryList),

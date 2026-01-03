@@ -4,8 +4,7 @@ import {HttpClient, HttpErrorResponse, HttpParams} from '@angular/common/http';
 import {Observable, throwError} from 'rxjs';
 import {catchError, map, shareReplay, tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
-import {Vehicle} from '../models';
-import {VehicleListResult} from '../models';
+import {Vehicle, VehicleListResult, VehicleBreakdownListResult} from '../models';
 import {VehicleHistoryResult} from '../models/vehicle-history.model';
 type TxApiResponse = ApiResponse<unknown> | unknown;
 type ApiResponse<T> = { success: boolean; data: T; message?: string; errors?: unknown };
@@ -41,6 +40,16 @@ export interface ReleaseVehiclePayload {
   author?: string;
   note?: string;
 }
+
+export type VehicleBreakdownPayload = {
+  problemType: string;
+  needsTow: boolean;
+  repairMode: 'GARAGE' | 'ON_SITE';
+  garageName?: string | null;
+  garageAddress?: string | null;
+  address: string;
+  note?: string | null;
+};
 
 @Injectable({providedIn: 'root'})
 export class VehicleService {
@@ -233,6 +242,20 @@ export class VehicleService {
     );
   }
 
+  breakdowns(vehicleId: string, page = 1, limit = 25): Observable<VehicleBreakdownListResult> {
+    const safePage = page > 0 ? page : 1;
+    const safeLimit = limit > 0 ? limit : 25;
+
+    const params = new HttpParams()
+      .set('page', String(safePage))
+      .set('limit', String(safeLimit));
+
+    return this.http.get<ApiResponse<VehicleBreakdownListResult>>(`${this.baseUrl}/${vehicleId}/breakdowns`, { params }).pipe(
+      map((resp) => resp.data),
+      catchError((err) => this.handleError(err))
+    );
+  }
+
   exportCsv(filter?: VehicleFilter): Observable<Blob> {
     let params = new HttpParams();
     if (filter?.q) params = params.set('q', filter.q);
@@ -260,8 +283,15 @@ export class VehicleService {
     if (filter.depot) params = params.set('depot', filter.depot);
     params = params.set('page', String(safePage));
     params = params.set('limit', String(safeLimit));
+    params = params.set('_ts', String(Date.now()));
 
-    return this.http.get<VehiclesApiShape>(`${this.baseUrl}/alerts`, { params }).pipe(
+    return this.http.get<VehiclesApiShape>(`${this.baseUrl}/alerts`, {
+      params,
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache'
+      }
+    }).pipe(
       map((resp) => this.normalizeListResponse(resp, safePage, safeLimit)),
       catchError((err) => this.handleError(err as HttpErrorResponse))
     );
@@ -329,4 +359,22 @@ export class VehicleService {
       }),
       catchError((err) => this.handleError(err as HttpErrorResponse))
     );
-  }}
+  }
+
+  /** POST /api/vehicles/:id/breakdowns */
+  declareBreakdown(vehicleId: string, payload: VehicleBreakdownPayload): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/${vehicleId}/breakdowns`, payload).pipe(
+      catchError((err) => this.handleError(err as HttpErrorResponse))
+    );
+  }
+
+  resolveBreakdown(
+    vehicleId: string,
+    breakdownId: string,
+    payload: { resolvedAt?: string; resolvedGarage?: string | null; resolvedCost?: number | null; resolvedNote?: string | null }
+  ): Observable<unknown> {
+    return this.http.put(`${this.baseUrl}/${vehicleId}/breakdowns/${breakdownId}/resolve`, payload).pipe(
+      catchError((err) => this.handleError(err as HttpErrorResponse))
+    );
+  }
+}

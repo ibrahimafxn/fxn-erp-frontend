@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, ValidatorFn } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ConsumableService } from "../../../../core/services/consumable.service";
 import {DepotService} from '../../../../core/services/depot.service';
@@ -57,8 +57,9 @@ export class ConsumablesForm extends DetailBack {
     name: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
     unit: this.fb.nonNullable.control('pcs', [Validators.required]),
     quantity: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
+    minQuantity: this.fb.nonNullable.control(0, [Validators.min(0)]),
     idDepot: this.fb.control<string | null>(null),
-  });
+  }, { validators: [this.minQuantityValidator()] });
 
   // ✅ Signal “réactif” sur l’état du formulaire
   private readonly formStatus = toSignal(this.form.statusChanges, {
@@ -125,6 +126,7 @@ export class ConsumablesForm extends DetailBack {
           name: found.name ?? '',
           unit: found.unit ?? 'pcs',
           quantity: typeof found.quantity === 'number' ? found.quantity : 0,
+          minQuantity: typeof found.minQuantity === 'number' ? found.minQuantity : 0,
           idDepot: depotId
         });
 
@@ -191,8 +193,25 @@ export class ConsumablesForm extends DetailBack {
   }
 
   // Helpers template
-  isInvalid(name: 'name' | 'unit' | 'quantity' | 'idDepot'): boolean {
+  isInvalid(name: 'name' | 'unit' | 'quantity' | 'minQuantity' | 'idDepot'): boolean {
     const c = this.form.get(name);
     return !!c && c.invalid && (c.dirty || c.touched);
+  }
+
+  minQuantityTooHigh(): boolean {
+    const control = this.form.get('minQuantity');
+    return this.form.hasError('minQuantityTooHigh') && !!control && (control.dirty || control.touched);
+  }
+
+  private minQuantityValidator(): ValidatorFn {
+    return (group) => {
+      const quantity = Number(group.get('quantity')?.value ?? 0);
+      const minRaw = group.get('minQuantity')?.value;
+      const minQuantity = Number(minRaw ?? 0);
+      if (!Number.isFinite(quantity) || !Number.isFinite(minQuantity)) return null;
+      if ((minRaw ?? '') === '') return null;
+      if (minQuantity > quantity) return { minQuantityTooHigh: true };
+      return null;
+    };
   }
 }

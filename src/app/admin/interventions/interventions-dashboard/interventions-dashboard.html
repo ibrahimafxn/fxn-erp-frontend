@@ -1,0 +1,140 @@
+<section class="interventions">
+  <header class="page-header">
+    <div>
+      <h1>Interventions ERT</h1>
+      <p class="subtitle">Import CSV et synthèse par technicien.</p>
+    </div>
+
+    <div class="header-actions">
+      <label class="file-input">
+        <input type="file" accept=".csv" (change)="onFileChange($event)" />
+        <span>Choisir un CSV</span>
+      </label>
+      <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading()">
+        @if (importLoading()) { Import… } @else { Importer }
+      </button>
+    </div>
+  </header>
+
+  @if (importError()) {
+    <div class="state error card"><strong>Import :</strong> {{ importError() }}</div>
+  } @else if (importResult()) {
+    <div class="state ok card">{{ importResult() }}</div>
+  }
+
+  <section class="toolbar card">
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="refresh()">
+      <label>
+        Du
+        <input type="date" formControlName="fromDate" />
+      </label>
+      <label>
+        Au
+        <input type="date" formControlName="toDate" />
+      </label>
+      <label>
+        Technicien
+        <select formControlName="technician">
+          <option value="">Tous</option>
+          @for (t of filters().technicians; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Région
+        <select formControlName="region">
+          <option value="">Toutes</option>
+          @for (r of filters().regions; track r) {
+            <option [value]="r">{{ r }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Client
+        <select formControlName="client">
+          <option value="">Tous</option>
+          @for (c of filters().clients; track c) {
+            <option [value]="c">{{ c }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Statut
+        <select formControlName="status">
+          <option value="">Tous</option>
+          @for (s of filters().statuses; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Type
+        <select formControlName="type">
+          <option value="">Tous</option>
+          @for (t of filters().types; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn-outline" type="submit" [disabled]="loading()">Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()">Effacer</button>
+      </div>
+    </form>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (!hasData()) {
+    <div class="state empty card">Aucune donnée pour ces filtres.</div>
+  } @else {
+    <div class="summary card">
+      <div class="pill">Total : {{ totals()?.total ?? 0 }}</div>
+      <div class="pill">Raccordements : {{ racTotal(totals()) }}</div>
+      <div class="pill">Rac pavillon : {{ totals()?.racPavillon ?? 0 }}</div>
+      <div class="pill">Rac immeuble : {{ totals()?.racImmeuble ?? 0 }}</div>
+      <div class="pill">Reconnexion : {{ totals()?.reconnexion ?? 0 }}</div>
+      <div class="pill">Rac F8 : {{ totals()?.racF8 ?? 0 }}</div>
+      <div class="pill">Rac Pro_s : {{ totals()?.racProS ?? 0 }}</div>
+      <div class="pill">SAV : {{ totals()?.sav ?? 0 }}</div>
+    </div>
+
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Technicien</th>
+          <th>Total</th>
+          <th>Raccordements</th>
+          <th>Rac pavillon</th>
+          <th>Rac immeuble</th>
+          <th>Reconnexion</th>
+          <th>Rac F8</th>
+          <th>Rac Pro_s</th>
+          <th>SAV</th>
+          <th>Autres</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (it of summaryItems(); track it.technician) {
+            <tr>
+              <td>{{ it.technician || '—' }}</td>
+              <td>{{ it.total }}</td>
+              <td>{{ racTotal(it) }}</td>
+              <td>{{ it.racPavillon }}</td>
+              <td>{{ it.racImmeuble }}</td>
+              <td>{{ it.reconnexion }}</td>
+              <td>{{ it.racF8 }}</td>
+              <td>{{ it.racProS }}</td>
+              <td>{{ it.sav }}</td>
+              <td>{{ it.other + it.racAutre }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

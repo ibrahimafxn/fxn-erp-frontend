@@ -50,17 +50,19 @@
 
       <div class="field">
         <label>Quantité *</label>
-        <input type="number" formControlName="quantity" min="0" />
+        <input type="number" formControlName="quantity" min="0" step="1" />
         @if (isInvalid('quantity')) {
           <small class="hint error">Quantité invalide</small>
         }
       </div>
 
       <div class="field">
-        <label>Seuil min</label>
-        <input type="number" formControlName="minQuantity" min="0" />
+        <label>Seuil minimum</label>
+        <input type="number" formControlName="minQuantity" min="0" step="1" placeholder="Ex: 5" />
         @if (isInvalid('minQuantity')) {
           <small class="hint error">Seuil invalide</small>
+        } @else if (minQuantityTooHigh()) {
+          <small class="hint error">Le seuil doit être inférieur ou égal à la quantité.</small>
         }
       </div>
 

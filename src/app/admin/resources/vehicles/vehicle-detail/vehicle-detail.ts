@@ -8,9 +8,9 @@ import { VehicleService, AssignVehiclePayload, ReleaseVehiclePayload } from '../
 import { DepotService } from '../../../../core/services/depot.service';
 import { UserService } from '../../../../core/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { Role } from '../../../../core/models/roles.model';
+import { Role } from '../../../../core/models';
 
-import { Vehicle, Depot, User } from '../../../../core/models';
+import { Vehicle, Depot, User, VehicleBreakdown } from '../../../../core/models';
 import { VehicleHistoryItem, VehicleHistoryResult } from '../../../../core/models/vehicle-history.model';
 import {DetailBack} from '../../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
@@ -20,7 +20,8 @@ type AssignMode = 'idle' | 'assign' | 'release';
 @Component({
   standalone: true,
   selector: 'app-vehicle-detail',
-  imports: [CommonModule, RouterModule, DatePipe],
+  providers: [DatePipe],
+  imports: [CommonModule, RouterModule],
   templateUrl: './vehicle-detail.html',
   styleUrls: ['./vehicle-detail.scss'],
 })
@@ -30,6 +31,7 @@ export class VehicleDetail extends DetailBack {
   private userSvc = inject(UserService);
   private route = inject(ActivatedRoute);
   private auth = inject(AuthService);
+  private datePipe = inject(DatePipe);
 
   readonly id = this.route.snapshot.paramMap.get('id') ?? '';
 
@@ -90,6 +92,13 @@ export class VehicleDetail extends DetailBack {
   readonly canNextHistory = computed(() => this.historyPage() < this.historyPageCount());
 
   // -----------------------------
+  // Latest breakdown
+  // -----------------------------
+  readonly breakdownLoading = signal(false);
+  readonly breakdownError = signal<string | null>(null);
+  readonly latestBreakdown = signal<VehicleBreakdown | null>(null);
+
+  // -----------------------------
   // Derived
   // -----------------------------
   readonly isAssigned = computed(() => {
@@ -99,6 +108,10 @@ export class VehicleDetail extends DetailBack {
 
   readonly statusLabel = computed(() => (this.isAssigned() ? 'Assigné' : 'Disponible'));
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
+  readonly canDeclareBreakdown = computed(() => {
+    const role = this.auth.getUserRole();
+    return role === Role.ADMIN || role === Role.DIRIGEANT || role === Role.GESTION_DEPOT;
+  });
 
   constructor() {
     super();
@@ -205,6 +218,7 @@ export class VehicleDetail extends DetailBack {
 
         // charge historique une fois véhicule OK
         this.loadHistory(true);
+        this.loadLatestBreakdown();
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
@@ -272,6 +286,25 @@ export class VehicleDetail extends DetailBack {
         this.historyLoading.set(false);
         this.historyError.set(this.apiError(err, 'Erreur chargement historique'));
       },
+    });
+  }
+
+  loadLatestBreakdown(): void {
+    const v = this.vehicle();
+    if (!v) return;
+    this.breakdownLoading.set(true);
+    this.breakdownError.set(null);
+
+    this.svc.breakdowns(v._id, 1, 1).subscribe({
+      next: (res) => {
+        const latest = res.items?.[0] ?? null;
+        this.latestBreakdown.set(latest);
+        this.breakdownLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.breakdownLoading.set(false);
+        this.breakdownError.set(this.apiError(err, 'Erreur chargement panne'));
+      }
     });
   }
 
@@ -476,6 +509,24 @@ export class VehicleDetail extends DetailBack {
     return typeof n === 'string' && n.trim() ? n.trim() : '';
   }
 
+  breakdownStatusLabel(): string {
+    const b = this.latestBreakdown();
+    if (!b) return '—';
+    return b.status === 'RESOLVED' ? 'Réparé' : 'Ouvert';
+  }
+
+  breakdownReturnDate(): string {
+    const b = this.latestBreakdown();
+    if (!b?.resolvedAt) return '—';
+    return this.datePipe.transform(b.resolvedAt as any, 'short') ?? '—';
+  }
+
+  breakdownCost(): string {
+    const b = this.latestBreakdown();
+    if (b?.resolvedCost == null) return '—';
+    return `${b.resolvedCost}`;
+  }
+
   // -----------------------------
   // Errors helper (0 any)
   // -----------------------------
@@ -491,5 +542,17 @@ export class VehicleDetail extends DetailBack {
     if (this.isDepotManager()) return;
     if (!this.id) return;
     this.router.navigate(['/admin/resources/vehicles', this.id, 'edit']).then();
+  }
+
+  openBreakdowns(): void {
+    if (!this.id) return;
+    const base = this.isDepotManager() ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    this.router.navigate([base, this.id, 'breakdowns']).then();
+  }
+
+  declareBreakdown(): void {
+    if (!this.id || !this.canDeclareBreakdown()) return;
+    const base = this.isDepotManager() ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    this.router.navigate([base, this.id, 'breakdown']).then();
   }
 }

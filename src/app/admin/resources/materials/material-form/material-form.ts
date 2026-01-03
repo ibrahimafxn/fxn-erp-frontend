@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators, ValidatorFn } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -67,7 +67,7 @@ export class MaterialForm extends DetailBack {
 
     // dépôt optionnel
     idDepot: this.fb.control<string | null>(null),
-  });
+  }, { validators: [this.minQuantityValidator()] });
 
   private readonly formStatus = toSignal(this.form.statusChanges, {
     initialValue: this.form.status,
@@ -193,6 +193,11 @@ export class MaterialForm extends DetailBack {
     return !!c && c.invalid && (c.dirty || c.touched);
   }
 
+  minQuantityTooHigh(): boolean {
+    const control = this.form.get('minQuantity');
+    return this.form.hasError('minQuantityTooHigh') && !!control && (control.dirty || control.touched);
+  }
+
   protected readonly MaterialCategory = MaterialCategory;
 
   private normalizeCategory(value: Material['category']): MaterialCategory {
@@ -202,5 +207,17 @@ export class MaterialForm extends DetailBack {
     if (raw === 'EPI') return MaterialCategory.EPI;
     if (raw === 'OUTIL' || raw === 'OUTILS' || raw === 'TOOL') return MaterialCategory.OUTIL;
     return MaterialCategory.OUTIL;
+  }
+
+  private minQuantityValidator(): ValidatorFn {
+    return (group) => {
+      const quantity = Number(group.get('quantity')?.value ?? 0);
+      const minRaw = group.get('minQuantity')?.value;
+      const minQuantity = Number(minRaw ?? 0);
+      if (!Number.isFinite(quantity) || !Number.isFinite(minQuantity)) return null;
+      if ((minRaw ?? '') === '') return null;
+      if (minQuantity > quantity) return { minQuantityTooHigh: true };
+      return null;
+    };
   }
 }

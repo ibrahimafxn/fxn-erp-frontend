@@ -13,6 +13,7 @@
     </div>
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <select formControlName="resourceType">
+        <option value="ALL">Tous types</option>
         <option value="CONSUMABLE">Consommables</option>
         <option value="MATERIAL">Matériels</option>
         <option value="VEHICLE">Véhicules</option>
@@ -53,6 +54,11 @@
     <div class="state loading card">Chargement…</div>
   } @else if (error()) {
     <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (filterForm.controls.resourceType.value === 'ALL'
+    && items().length === 0
+    && materialItems().length === 0
+    && vehicleItems().length === 0) {
+    <div class="state empty card">Aucune alerte.</div>
   } @else if (filterForm.controls.resourceType.value === 'CONSUMABLE' && items().length === 0) {
     <div class="state empty card">Aucune alerte de stock minimum.</div>
   } @else if (filterForm.controls.resourceType.value === 'MATERIAL' && materialItems().length === 0) {
@@ -60,62 +66,178 @@
   } @else if (filterForm.controls.resourceType.value === 'VEHICLE' && vehicleItems().length === 0) {
     <div class="state empty card">Aucune alerte véhicule.</div>
   } @else {
-    <div class="table card">
-      <table>
-        <thead>
-        <tr>
-          <th>Ressource</th>
-          <th>Dépôt</th>
-          <th>Disponible</th>
-          <th>Stock</th>
-          <th>Seuil</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody>
-          @if (filterForm.controls.resourceType.value === 'CONSUMABLE') {
-            @for (c of items(); track c._id) {
-              <tr>
-                <td>{{ consumableName(c) }}</td>
-                <td>{{ depotLabel(c) }}</td>
-                <td>{{ availableQty(c) }} {{ c.unit || '' }}</td>
-                <td>{{ c.quantity ?? 0 }}</td>
-                <td>{{ c.minQuantity ?? 0 }}</td>
-                <td class="actions">
-                  <button class="btn-outline" type="button" (click)="goDetail(c)">Voir</button>
-                </td>
-              </tr>
+    @if (filterForm.controls.resourceType.value === 'ALL') {
+      @if (items().length > 0) {
+        <div class="table card">
+          <table class="table-consumables">
+            <thead>
+            <tr>
+              <th>Consommable</th>
+              <th>Dépôt</th>
+              <th>Disponible</th>
+              <th>Stock</th>
+              <th>Seuil</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (c of items(); track c._id) {
+                <tr>
+                  <td>{{ consumableName(c) }}</td>
+                  <td>{{ depotLabel(c) }}</td>
+                  <td>{{ availableQty(c) }} {{ c.unit || '' }}</td>
+                  <td>{{ c.quantity ?? 0 }}</td>
+                  <td>{{ c.minQuantity ?? 0 }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goDetail(c)">Voir</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (materialItems().length > 0) {
+        <div class="table card">
+          <table class="table-materials">
+            <thead>
+            <tr>
+              <th>Matériel</th>
+              <th>Dépôt</th>
+              <th>Disponible</th>
+              <th>Stock</th>
+              <th>Seuil</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (m of materialItems(); track m._id) {
+                <tr>
+                  <td>{{ materialName(m) }}</td>
+                  <td>{{ depotLabelMaterial(m) }}</td>
+                  <td>{{ availableQtyMaterial(m) }}</td>
+                  <td>{{ m.quantity ?? 0 }}</td>
+                  <td>{{ m.minQuantity ?? 0 }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)">Voir</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (vehicleItems().length > 0) {
+        <div class="table card">
+          <table class="table-vehicles">
+            <thead>
+            <tr>
+              <th>Véhicule</th>
+              <th>Dépôt</th>
+              <th>Problème</th>
+              <th>Dépanneuse</th>
+              <th>Réparation</th>
+              <th>Garage</th>
+              <th>Adresse garage</th>
+              <th>Adresse panne</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (v of vehicleItems(); track v._id) {
+                <tr>
+                  <td>{{ vehicleLabel(v) }}</td>
+                  <td>{{ depotLabelVehicle(v) }}</td>
+                  <td>{{ vehicleProblem(v) }}</td>
+                  <td>{{ vehicleTow(v) }}</td>
+                  <td>{{ vehicleRepair(v) }}</td>
+                  <td>{{ vehicleGarage(v) }}</td>
+                  <td class="note">{{ vehicleGarageAddress(v) }}</td>
+                  <td class="note">{{ vehicleBreakdownAddress(v) }}</td>
+                  <td>{{ vehicleBreakdownDate(v) }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)">Voir</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    } @else {
+      <div class="table card">
+        <table
+          class="
+            @if (filterForm.controls.resourceType.value === 'MATERIAL') { table-materials }
+            @else if (filterForm.controls.resourceType.value === 'VEHICLE') { table-vehicles }
+            @else { table-consumables }
+          ">
+          <thead>
+          <tr>
+            @if (filterForm.controls.resourceType.value === 'MATERIAL') {
+              <th>Matériel</th>
+            } @else {
+              <th>Consommable</th>
             }
-          } @else if (filterForm.controls.resourceType.value === 'MATERIAL') {
-            @for (m of materialItems(); track m._id) {
-              <tr>
-                <td>{{ materialName(m) }}</td>
-                <td>{{ depotLabelMaterial(m) }}</td>
-                <td>{{ availableQtyMaterial(m) }}</td>
-                <td>{{ m.quantity ?? 0 }}</td>
-                <td>{{ m.minQuantity ?? 0 }}</td>
-                <td class="actions">
-                  <button class="btn-outline" type="button" (click)="goMaterialDetail(m)">Voir</button>
-                </td>
-              </tr>
+            <th>Dépôt</th>
+            <th>Disponible</th>
+            <th>Stock</th>
+            <th>Seuil</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+            @if (filterForm.controls.resourceType.value === 'CONSUMABLE') {
+              @for (c of items(); track c._id) {
+                <tr>
+                  <td>{{ consumableName(c) }}</td>
+                  <td>{{ depotLabel(c) }}</td>
+                  <td>{{ availableQty(c) }} {{ c.unit || '' }}</td>
+                  <td>{{ c.quantity ?? 0 }}</td>
+                  <td>{{ c.minQuantity ?? 0 }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goDetail(c)">Voir</button>
+                  </td>
+                </tr>
+              }
+            } @else if (filterForm.controls.resourceType.value === 'MATERIAL') {
+              @for (m of materialItems(); track m._id) {
+                <tr>
+                  <td>{{ materialName(m) }}</td>
+                  <td>{{ depotLabelMaterial(m) }}</td>
+                  <td>{{ availableQtyMaterial(m) }}</td>
+                  <td>{{ m.quantity ?? 0 }}</td>
+                  <td>{{ m.minQuantity ?? 0 }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)">Voir</button>
+                  </td>
+                </tr>
+              }
+            } @else {
+              @for (v of vehicleItems(); track v._id) {
+                <tr>
+                  <td>{{ vehicleLabel(v) }}</td>
+                  <td>{{ depotLabelVehicle(v) }}</td>
+                  <td>{{ vehicleProblem(v) }}</td>
+                  <td>{{ vehicleTow(v) }}</td>
+                  <td>{{ vehicleRepair(v) }}</td>
+                  <td>{{ vehicleGarage(v) }}</td>
+                  <td class="note">{{ vehicleGarageAddress(v) }}</td>
+                  <td class="note">{{ vehicleBreakdownAddress(v) }}</td>
+                  <td>{{ vehicleBreakdownDate(v) }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)">Voir</button>
+                  </td>
+                </tr>
+              }
             }
-          } @else {
-            @for (v of vehicleItems(); track v._id) {
-              <tr>
-                <td>{{ vehicleLabel(v) }}</td>
-                <td>{{ depotLabelVehicle(v) }}</td>
-                <td>—</td>
-                <td>—</td>
-                <td>{{ v.state || '—' }}</td>
-                <td class="actions">
-                  <button class="btn-outline" type="button" (click)="goVehicleDetail(v)">Voir</button>
-                </td>
-              </tr>
-            }
-          }
-        </tbody>
-      </table>
-    </div>
+          </tbody>
+        </table>
+      </div>
+    }
 
     <footer class="pager">
       <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">

@@ -123,6 +123,29 @@
   color: rgba(226, 238, 246, 0.9);
 }
 
+.menu-section {
+  padding: 0.2rem 0.4rem 0.3rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.section-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+  padding: 0 0.2rem;
+}
+
+.section-items {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.dropdown .submenu {
+  padding-left: 1.2rem;
+}
+
 .dropdown .danger {
   color: rgba(255, 140, 140, 0.75);
 }

@@ -70,6 +70,10 @@ export class VehicleList extends DetailBack {
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
+  readonly canDeclareBreakdown = computed(() => {
+    const role = this.auth.getUserRole();
+    return role === Role.ADMIN || role === Role.DIRIGEANT || role === Role.GESTION_DEPOT;
+  });
 
   // ✅ confirming = on supprime exactement l’item en attente
   readonly confirmingDelete = computed(() => {
@@ -168,6 +172,12 @@ export class VehicleList extends DetailBack {
   edit(v: Vehicle): void {
     if (this.isDepotManager()) return;
     this.router.navigate(['/admin/resources/vehicles', v._id, 'edit']).then();
+  }
+
+  declareBreakdown(v: Vehicle): void {
+    if (!this.canDeclareBreakdown()) return;
+    const base = this.isDepotManager() ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    this.router.navigate([base, v._id, 'breakdown']).then();
   }
 
   // -----------------------------

@@ -89,6 +89,7 @@ export class MaterialList extends DetailBack {
   openDeleteModal(m: Material): void {
     if (this.isDepotManager()) return;
     this.pendingDeleteLabel.set(m._id);
+    this.pendingDeleteId.set(m._id);
     this.pendingDeleteName.set(m.name ?? '');
     this.deleteModalOpen.set(true);
   }

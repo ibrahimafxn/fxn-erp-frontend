@@ -170,8 +170,15 @@ export class MaterialService {
     if (filter.depot) params = params.set('depot', filter.depot);
     if (typeof filter.page === 'number') params = params.set('page', String(filter.page));
     if (typeof filter.limit === 'number') params = params.set('limit', String(filter.limit));
+    params = params.set('_ts', String(Date.now()));
 
-    return this.http.get<ApiResponse<MaterialListResult>>(`${this.baseUrl}/alerts`, { params }).pipe(
+    return this.http.get<ApiResponse<MaterialListResult>>(`${this.baseUrl}/alerts`, {
+      params,
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache'
+      }
+    }).pipe(
       map((resp) => resp.data),
       catchError((err: HttpErrorResponse) => this.handleError(err))
     );

@@ -3,6 +3,7 @@ import { Component, Signal, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 
 import { ConsumableService } from '../../../core/services/consumable.service';
 import { MaterialService } from '../../../core/services/material.service';
@@ -43,7 +44,7 @@ export class StockAlerts {
   readonly depotsLoading = signal(false);
 
   readonly filterForm = this.fb.nonNullable.group({
-    resourceType: this.fb.nonNullable.control<'CONSUMABLE' | 'MATERIAL' | 'VEHICLE'>('CONSUMABLE'),
+    resourceType: this.fb.nonNullable.control<'ALL' | 'CONSUMABLE' | 'MATERIAL' | 'VEHICLE'>('ALL'),
     q: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control('')
   });
@@ -64,6 +65,11 @@ export class StockAlerts {
     const type = this.filterForm.controls.resourceType.value;
     if (type === 'MATERIAL') return this.materialResult()?.total ?? 0;
     if (type === 'VEHICLE') return this.vehicleResult()?.total ?? 0;
+    if (type === 'ALL') {
+      return (this.result()?.total ?? 0)
+        + (this.materialResult()?.total ?? 0)
+        + (this.vehicleResult()?.total ?? 0);
+    }
     return this.result()?.total ?? 0;
   });
   readonly pageCount = computed(() => {
@@ -72,13 +78,27 @@ export class StockAlerts {
     return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
   });
   readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly currentCount = computed(() => {
+    const type = this.filterForm.controls.resourceType.value;
+    if (type === 'ALL') {
+      return Math.max(this.items().length, this.materialItems().length, this.vehicleItems().length);
+    }
+    if (type === 'MATERIAL') return this.materialItems().length;
+    if (type === 'VEHICLE') return this.vehicleItems().length;
+    return this.items().length;
+  });
+  readonly canNext = computed(() => this.page() < this.pageCount() && this.currentCount() >= this.limit());
 
   constructor() {
     this.loadDepots();
     this.refresh(true);
 
     this.filterForm.controls.resourceType.valueChanges.subscribe(() => {
+      this.page.set(1);
+      this.refresh(true);
+    });
+
+    this.filterForm.controls.depot.valueChanges.subscribe(() => {
       this.page.set(1);
       this.refresh(true);
     });
@@ -91,6 +111,40 @@ export class StockAlerts {
     this.loading.set(true);
     this.error.set(null);
 
+    if (f.resourceType === 'ALL') {
+      forkJoin({
+        consumables: this.consumableService.alerts({
+          q: f.q.trim() || undefined,
+          depot: depotId || undefined,
+          page: this.page(),
+          limit: this.limit()
+        }),
+        materials: this.materialService.alerts({
+          q: f.q.trim() || undefined,
+          depot: depotId || undefined,
+          page: this.page(),
+          limit: this.limit()
+        }),
+        vehicles: this.vehicleService.alerts({
+          q: f.q.trim() || undefined,
+          depot: depotId || undefined,
+          page: this.page(),
+          limit: this.limit()
+        })
+      }).subscribe({
+        next: (res) => {
+          this.result.set(res.consumables);
+          this.materialResult.set(res.materials);
+          this.vehicleResult.set(res.vehicles);
+          this.loading.set(false);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.loading.set(false);
+          this.error.set(this.apiError(err, 'Erreur chargement alertes'));
+        }
+      });
+      return;
+    }
     if (f.resourceType === 'MATERIAL') {
       this.materialService.alerts({
         q: f.q.trim() || undefined,
@@ -151,7 +205,7 @@ export class StockAlerts {
   }
 
   clearSearch(): void {
-    this.filterForm.setValue({ resourceType: 'CONSUMABLE', q: '', depot: '' });
+    this.filterForm.setValue({ resourceType: 'ALL', q: '', depot: '' });
     this.page.set(1);
     this.refresh(true);
   }
@@ -203,6 +257,40 @@ export class StockAlerts {
     return label || v.plateNumber || '—';
   }
 
+  vehicleProblem(v: Vehicle): string {
+    const problem = v.breakdown?.problemType;
+    return problem || v.state || '—';
+  }
+
+  vehicleTow(v: Vehicle): string {
+    if (!v.breakdown) return '—';
+    return v.breakdown.needsTow ? 'Oui' : 'Non';
+  }
+
+  vehicleRepair(v: Vehicle): string {
+    if (!v.breakdown) return '—';
+    return v.breakdown.repairMode === 'GARAGE' ? 'Garage' : 'Sur place';
+  }
+
+  vehicleGarage(v: Vehicle): string {
+    return v.breakdown?.garageName || '—';
+  }
+
+  vehicleGarageAddress(v: Vehicle): string {
+    return v.breakdown?.garageAddress || '—';
+  }
+
+  vehicleBreakdownAddress(v: Vehicle): string {
+    return v.breakdown?.address || '—';
+  }
+
+  vehicleBreakdownDate(v: Vehicle): string {
+    const raw = v.breakdown?.createdAt;
+    if (!raw) return '—';
+    const d = raw instanceof Date ? raw : new Date(raw);
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
+  }
+
   depotLabel(c: Consumable): string {
     return this.depotLabelFromRaw(c.idDepot);
   }
@@ -217,16 +305,16 @@ export class StockAlerts {
 
   private depotLabelFromRaw(raw: unknown): string {
     if (!raw) return '—';
-    if (typeof raw === 'object' && raw !== null && '_id' in raw) {
+    if (typeof raw === 'object' && '_id' in raw) {
       const depot = raw as { _id?: string; name?: string; city?: string };
       const name = formatDepotName(depot.name ?? '') || depot._id || '—';
-      return depot.city ? `${name} · ${depot.city}` : name;
+      return name;
     }
     if (typeof raw === 'string') {
       const depot = this.depots().find((d) => d._id === raw);
       if (depot) {
         const name = formatDepotName(depot.name ?? '') || depot._id;
-        return depot.city ? `${name} · ${depot.city}` : name;
+        return name;
       }
     }
     return String(raw);
@@ -258,6 +346,21 @@ export class StockAlerts {
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     const q = f.q.trim() || undefined;
 
+    if (f.resourceType === 'ALL') {
+      this.consumableService.alertsExportCsv({ q, depot: depotId || undefined }).subscribe({
+        next: (blob) => downloadBlob(blob, `consumable-alerts-${new Date().toISOString().slice(0, 10)}.csv`),
+        error: () => {}
+      });
+      this.materialService.alertsExportCsv({ q, depot: depotId || undefined }).subscribe({
+        next: (blob) => downloadBlob(blob, `material-alerts-${new Date().toISOString().slice(0, 10)}.csv`),
+        error: () => {}
+      });
+      this.vehicleService.alertsExportCsv({ q, depot: depotId || undefined }).subscribe({
+        next: (blob) => downloadBlob(blob, `vehicle-alerts-${new Date().toISOString().slice(0, 10)}.csv`),
+        error: () => {}
+      });
+      return;
+    }
     if (f.resourceType === 'MATERIAL') {
       this.materialService.alertsExportCsv({ q, depot: depotId || undefined }).subscribe({
         next: (blob) => downloadBlob(blob, `material-alerts-${new Date().toISOString().slice(0, 10)}.csv`),
@@ -284,6 +387,21 @@ export class StockAlerts {
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     const q = f.q.trim() || undefined;
 
+    if (f.resourceType === 'ALL') {
+      this.consumableService.alertsExportPdf({ q, depot: depotId || undefined }).subscribe({
+        next: (blob) => downloadBlob(blob, `consumable-alerts-${new Date().toISOString().slice(0, 10)}.pdf`),
+        error: () => {}
+      });
+      this.materialService.alertsExportPdf({ q, depot: depotId || undefined }).subscribe({
+        next: (blob) => downloadBlob(blob, `material-alerts-${new Date().toISOString().slice(0, 10)}.pdf`),
+        error: () => {}
+      });
+      this.vehicleService.alertsExportPdf({ q, depot: depotId || undefined }).subscribe({
+        next: (blob) => downloadBlob(blob, `vehicle-alerts-${new Date().toISOString().slice(0, 10)}.pdf`),
+        error: () => {}
+      });
+      return;
+    }
     if (f.resourceType === 'MATERIAL') {
       this.materialService.alertsExportPdf({ q, depot: depotId || undefined }).subscribe({
         next: (blob) => downloadBlob(blob, `material-alerts-${new Date().toISOString().slice(0, 10)}.pdf`),
@@ -328,4 +446,5 @@ export class StockAlerts {
         : '';
     return apiMsg || err.message || fallback;
   }
+
 }

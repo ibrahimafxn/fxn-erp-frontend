@@ -16,4 +16,14 @@ export interface Vehicle {
   createdAt?: string | Date;
   updatedAt?: string | Date;
   metadata?: Record<string, any>;
+  breakdown?: {
+    _id: string;
+    problemType: string;
+    needsTow: boolean;
+    repairMode: 'GARAGE' | 'ON_SITE';
+    garageName?: string;
+    garageAddress?: string;
+    address: string;
+    createdAt?: string | Date;
+  } | null;
 }
