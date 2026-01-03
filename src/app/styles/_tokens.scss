@@ -48,8 +48,8 @@
   --fxn-space-2xl: 3rem;
 
   /* Font */
-  --fxn-font-body: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --fxn-font-display: 'Space Grotesk', var(--fxn-font-body);
+  --fxn-font-body: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --fxn-font-display: var(--fxn-font-body);
   --fxn-font: var(--fxn-font-body);
 
   /* Focus ring */
