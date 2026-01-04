@@ -122,6 +122,10 @@ export class DepotDetail extends DetailBack{
   readonly transferSuccess = signal<string | null>(null);
   readonly depots = signal<Depot[]>([]);
   readonly depotsLoading = signal(false);
+  readonly targetDepots = computed(() => {
+    const currentId = this.depot()?._id;
+    return this.depots().filter((d) => d._id && d._id !== currentId);
+  });
 
   readonly canTransfer = computed(() => {
     const role = this.auth.getUserRole();

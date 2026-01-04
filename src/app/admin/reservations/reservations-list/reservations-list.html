@@ -16,7 +16,12 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <label>
         Consommable
-        <input type="text" formControlName="resourceName" placeholder="Nom du consommable" />
+        <select formControlName="resourceId" [disabled]="consumablesLoading()">
+          <option value="">{{ consumablesLoading() ? 'Chargement…' : 'Tous consommables' }}</option>
+          @for (c of consumables(); track c._id) {
+            <option [value]="c._id">{{ consumableOptionLabel(c) }}</option>
+          }
+        </select>
       </label>
 
       <label>

@@ -55,7 +55,7 @@ export class MaterialReservationsList {
   readonly materialsLoading = signal(false);
 
   readonly filterForm = this.fb.nonNullable.group({
-    resourceName: this.fb.nonNullable.control(''),
+    resourceId: this.fb.nonNullable.control(''),
     toUser: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control(''),
     fromDate: this.fb.nonNullable.control(''),
@@ -103,7 +103,7 @@ export class MaterialReservationsList {
     this.loadMaterials(depotId || null);
     this.movementService.refresh(force, {
       resourceType: 'MATERIAL',
-      resourceName: f.resourceName.trim() || undefined,
+      resourceId: f.resourceId || undefined,
       action: 'ASSIGN',
       toType: 'USER',
       toId: f.toUser || undefined,
@@ -126,7 +126,7 @@ export class MaterialReservationsList {
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     this.movementService.exportCsv({
       resourceType: 'MATERIAL',
-      resourceName: f.resourceName.trim() || undefined,
+      resourceId: f.resourceId || undefined,
       action: 'ASSIGN',
       toType: 'USER',
       toId: f.toUser || undefined,
@@ -145,7 +145,7 @@ export class MaterialReservationsList {
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     this.movementService.exportPdf({
       resourceType: 'MATERIAL',
-      resourceName: f.resourceName.trim() || undefined,
+      resourceId: f.resourceId || undefined,
       action: 'ASSIGN',
       toType: 'USER',
       toId: f.toUser || undefined,
@@ -165,7 +165,7 @@ export class MaterialReservationsList {
 
   clearSearch(): void {
     this.filterForm.setValue({
-      resourceName: '',
+      resourceId: '',
       toUser: '',
       depot: '',
       fromDate: '',
@@ -203,6 +203,10 @@ export class MaterialReservationsList {
     const found = this.materials().find((c) => c._id === id);
     if (found?.name) return found.name;
     return id.length > 8 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id;
+  }
+
+  materialOptionLabel(m: Material): string {
+    return m.name || '—';
   }
 
   technicianLabelById(id?: string | null): string {

@@ -1,7 +1,7 @@
 /* -------------------------------------------------
    Page
 ------------------------------------------------- */
-.consumables-list {
+.depot-list {
   padding: 1.25rem;
   display: grid;
   gap: 1rem;
@@ -24,13 +24,13 @@
 
   .subtitle {
     margin: .25rem 0 0;
-    opacity: .75;
+    color: var(--fxn-text-muted);
     font-size: .9rem;
   }
 
   .header-actions {
     display: flex;
-    gap: .5rem;
+    gap: .65rem;
     flex-wrap: wrap;
   }
 }
@@ -39,10 +39,11 @@
    Card
 ------------------------------------------------- */
 .card {
-  background: rgba(0, 0, 0, .05);
-  border: 1px solid rgba(255, 255, 255, .08);
+  background: var(--fxn-surface-glass);
+  border: 1px solid var(--fxn-border);
   border-radius: 1rem;
   padding: 1rem;
+  box-shadow: var(--fxn-shadow-sm);
 }
 
 /* -------------------------------------------------
@@ -54,8 +55,9 @@
 
   .search {
     display: grid;
-    grid-template-columns: 1.4fr .9fr auto auto;
+    grid-template-columns: 1fr auto auto;
     gap: .6rem;
+    align-items: center;
 
     @media (max-width: 900px) {
       grid-template-columns: 1fr;
@@ -66,15 +68,16 @@
   select {
     padding: .55rem .65rem;
     border-radius: .7rem;
-    border: 1px solid rgba(255, 255, 255, .15);
-    background: rgba(255, 255, 255, .06);
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface);
     color: inherit;
     outline: none;
   }
 
   input:focus,
   select:focus {
-    border-color: rgba(0, 120, 255, .6);
+    border-color: var(--fxn-primary);
+    box-shadow: var(--fxn-ring);
   }
 
   .meta {
@@ -90,8 +93,8 @@
     border-radius: 999px;
     font-size: .8rem;
     font-weight: 700;
-    background: rgba(255, 255, 255, .06);
-    border: 1px solid rgba(255, 255, 255, .12);
+    background: var(--fxn-surface-soft);
+    border: 1px solid var(--fxn-border-strong);
   }
 
   .limit {
@@ -101,7 +104,7 @@
 
     span {
       font-size: .85rem;
-      opacity: .75;
+      color: var(--fxn-text-muted);
     }
 
     select {
@@ -117,13 +120,13 @@
 .state {
   padding: 1rem;
   border-radius: .9rem;
-  background: rgba(0, 0, 0, .06);
-  border: 1px solid rgba(255, 255, 255, .06);
+  background: var(--fxn-surface-glass);
+  border: 1px solid var(--fxn-border);
 
   &.loading { opacity: .85; }
   &.empty { opacity: .8; }
   &.error {
-    background: rgba(255, 0, 0, .08);
+    background: var(--fxn-danger-soft);
   }
 }
 
@@ -132,10 +135,12 @@
 ------------------------------------------------- */
 .table {
   padding: 0;
+  overflow: hidden;
 
   table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
   }
 
   thead th {
@@ -143,20 +148,43 @@
     font-size: .8rem;
     opacity: .75;
     padding: .85rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    border-bottom: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-soft);
     white-space: nowrap;
   }
 
   tbody td {
     padding: .85rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    border-bottom: 1px solid var(--fxn-border);
     vertical-align: middle;
   }
 
-  .actions {
+  th.actions {
     text-align: right;
-    width: 1%;
+  }
+
+  td.actions {
+    text-align: right;
+    width: 280px;
     white-space: nowrap;
+  }
+
+  .actions-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .actions-group .btn-outline,
+  .actions-group .btn-danger {
+    min-width: 110px;
+    height: 38px;
+    padding: 0 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .row {
@@ -164,7 +192,7 @@
   }
 
   .row:hover {
-    background: rgba(255, 255, 255, .03);
+    background: var(--fxn-primary-soft);
   }
 
   .main {
@@ -182,13 +210,4 @@
   justify-content: space-between;
   gap: .5rem;
   flex-wrap: wrap;
-}
-
-/* -------------------------------------------------
-   Buttons
-------------------------------------------------- */
-.actions {
-  display: flex;
-  gap: .5rem; // ✅ espace entre Modifier & Supprimer
-  white-space: nowrap;
 }

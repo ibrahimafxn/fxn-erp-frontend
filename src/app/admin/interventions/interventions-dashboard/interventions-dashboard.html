@@ -1,7 +1,7 @@
 <section class="interventions">
   <header class="page-header">
     <div>
-      <h1>Interventions ERT</h1>
+      <h1>Calcul d'attachement</h1>
       <p class="subtitle">Import CSV et synthèse par technicien.</p>
     </div>
 
@@ -30,6 +30,45 @@
     <div class="state ok card">{{ resetResult() }}</div>
   }
 
+  @if (canEditRates()) {
+    <section class="rates card">
+      <div class="rates-head">
+        <div>
+          <h2><span class="material-icons">tune</span>Tarifs prestations</h2>
+          <p>Définis la part FXN et la part technicien pour chaque prestation.</p>
+        </div>
+
+        <div class="rates-actions">
+          <button class="btn-outline" type="button" (click)="resetRates()">Réinitialiser</button>
+          <button class="btn-primary" type="button" (click)="saveRates()">Enregistrer</button>
+        </div>
+      </div>
+
+      <form class="rates-grid" [formGroup]="rateForm">
+        @for (r of rateFields; track r.key) {
+          <div class="rate-row" [formGroupName]="r.key">
+            <div class="rate-label">
+              <span class="rate-title">{{ r.label }}</span>
+              <span class="rate-code">{{ r.code }}</span>
+            </div>
+
+            <div class="rate-inputs">
+              <label>
+                FXN
+                <input type="number" min="0" step="1" formControlName="fxn" />
+              </label>
+              <label>
+                Technicien
+                <input type="number" min="0" step="1" formControlName="tech" />
+              </label>
+            </div>
+          </div>
+        }
+      </form>
+      <p class="rates-hint">Les tarifs sont enregistrés localement en attendant l’API backend.</p>
+    </section>
+  }
+
   <app-confirm-delete-modal
     [open]="resetModalOpen()"
     entityLabel="données interventions"
@@ -41,8 +80,23 @@
     (confirm)="confirmResetData()">
   </app-confirm-delete-modal>
 
+  <div class="revenue card">
+    <div class="revenue-head">
+      <h2><span class="material-icons">attach_money</span>Chiffre d’affaires</h2>
+      <p>Calculé à partir des tarifs et des interventions filtrées.</p>
+    </div>
+    <div class="revenue-item">
+      <span class="label">Chiffre d’affaires FXN</span>
+      <span class="value">{{ totalRevenue().fxn | number:'1.0-0' }} €</span>
+    </div>
+    <div class="revenue-item">
+      <span class="label">Chiffre d’affaires Techniciens</span>
+      <span class="value">{{ totalRevenue().tech | number:'1.0-0' }} €</span>
+    </div>
+  </div>
+
   <section class="toolbar card">
-    <form class="filters" [formGroup]="filterForm" (ngSubmit)="refresh()">
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
       <label>
         Du
         <input type="date" formControlName="fromDate" />
@@ -101,6 +155,7 @@
         <button class="btn-outline" type="button" (click)="clearFilters()">Effacer</button>
       </div>
     </form>
+
   </section>
 
   @if (loading()) {
@@ -111,6 +166,10 @@
     <div class="state empty card">Aucune donnée pour ces filtres.</div>
   } @else {
     <div class="summary card">
+      <div class="summary-head">
+        <h2><span class="material-icons">insights</span>Synthèse rapide</h2>
+        <p>Volumes globaux sur la période sélectionnée.</p>
+      </div>
       <div class="pill">Total : {{ totals()?.total ?? 0 }}</div>
       <div class="pill">Raccordements : {{ racTotal(totals()) }}</div>
       <div class="pill">Rac pavillon : {{ totals()?.racPavillon ?? 0 }}</div>
@@ -120,13 +179,13 @@
       <div class="pill">Rac Pro_s : {{ totals()?.racProS ?? 0 }}</div>
       <div class="pill">SAV : {{ totals()?.sav ?? 0 }}</div>
       <div class="pill">CLEM : {{ totals()?.clem ?? 0 }}</div>
-      <div class="pill">Câble pav 1 : {{ totals()?.cablePav1 ?? 0 }}</div>
-      <div class="pill">Câble pav 2 : {{ totals()?.cablePav2 ?? 0 }}</div>
-      <div class="pill">Câble pav 3 : {{ totals()?.cablePav3 ?? 0 }}</div>
-      <div class="pill">Câble pav 4 : {{ totals()?.cablePav4 ?? 0 }}</div>
     </div>
 
     <div class="table card">
+      <div class="table-head">
+        <h2><span class="material-icons">table_chart</span>Détail par technicien</h2>
+        <p>Indicateurs et chiffre d’affaires par intervenant.</p>
+      </div>
       <table>
         <thead>
         <tr>
@@ -140,11 +199,9 @@
           <th>Rac Pro_s</th>
           <th>SAV</th>
           <th>CLEM</th>
-          <th>Câble pav 1</th>
-          <th>Câble pav 2</th>
-          <th>Câble pav 3</th>
-          <th>Câble pav 4</th>
           <th>Autres</th>
+          <th>CA FXN</th>
+          <th>CA Tech</th>
         </tr>
         </thead>
         <tbody>
@@ -160,15 +217,35 @@
               <td>{{ it.racProS }}</td>
               <td>{{ it.sav }}</td>
               <td>{{ it.clem }}</td>
-              <td>{{ it.cablePav1 }}</td>
-              <td>{{ it.cablePav2 }}</td>
-              <td>{{ it.cablePav3 }}</td>
-              <td>{{ it.cablePav4 }}</td>
               <td>{{ it.other + it.racAutre }}</td>
+              <td>{{ fxnRevenue(it) | number:'1.0-0' }}</td>
+              <td>{{ techRevenue(it) | number:'1.0-0' }}</td>
             </tr>
           }
         </tbody>
       </table>
     </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+        ← Précédent
+      </button>
+      <div class="pager-meta">
+        <span class="pill">Total : {{ totalItems() }}</span>
+        <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+        <label class="limit">
+          <span>Par page</span>
+          <select [value]="limit()" (change)="onLimitChange($event)">
+            <option [value]="5">5</option>
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()">
+        Suivant →
+      </button>
+    </footer>
   }
 </section>

@@ -16,7 +16,12 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <label>
         Matériel
-        <input type="text" formControlName="resourceName" placeholder="Nom du matériel" />
+        <select formControlName="resourceId" [disabled]="materialsLoading()">
+          <option value="">{{ materialsLoading() ? 'Chargement…' : 'Tous matériels' }}</option>
+          @for (m of materials(); track m._id) {
+            <option [value]="m._id">{{ materialOptionLabel(m) }}</option>
+          }
+        </select>
       </label>
 
       <label>

@@ -52,6 +52,7 @@ export class AccessUsers {
   readonly limit = signal(25);
 
   readonly items = computed<User[]>(() => this.result()?.items ?? []);
+  readonly noAccessCount = computed(() => this.items().filter(u => !u.authEnabled).length);
   readonly total = computed(() => this.result()?.total ?? 0);
   readonly pageCount = computed(() => {
     const t = this.total();

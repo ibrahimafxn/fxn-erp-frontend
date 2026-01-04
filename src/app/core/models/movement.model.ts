@@ -11,6 +11,8 @@ export interface Movement {
   _id: string;
   resourceType: 'MATERIAL' | 'CONSUMABLE' | 'VEHICLE';
   resourceId: string;
+  resourceLabel?: string;
+  resourceUnit?: string;
   action: MovementAction;
   from: MovementEndpoint;
   to: MovementEndpoint;

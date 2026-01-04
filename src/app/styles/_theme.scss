@@ -9,8 +9,8 @@ html, body {
 body {
   margin: 0;
   font-family: var(--fxn-font);
-  background: radial-gradient(1200px 700px at 15% -10%, rgba(33, 182, 182, 0.2), transparent 60%),
-              radial-gradient(900px 600px at 110% 0%, rgba(246, 166, 9, 0.18), transparent 55%),
+  background: radial-gradient(1200px 700px at 15% -10%, var(--fxn-bg-glow-1), transparent 60%),
+              radial-gradient(900px 600px at 110% 0%, var(--fxn-bg-glow-2), transparent 55%),
               linear-gradient(160deg, var(--fxn-bg), var(--fxn-bg-2));
   color: var(--fxn-text);
   line-height: 1.5;
@@ -21,7 +21,7 @@ body {
 }
 
 ::selection {
-  background: rgba(33, 182, 182, 0.3);
+  background: var(--fxn-primary-soft);
 }
 
 main.app-content {

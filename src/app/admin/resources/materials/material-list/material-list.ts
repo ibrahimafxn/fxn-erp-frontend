@@ -263,6 +263,12 @@ export class MaterialList extends DetailBack {
       return formatDepotName(obj.name) || '—';
     }
 
+    if (typeof d === 'string') {
+      const depot = this.depots().find((item) => item._id === d);
+      if (depot?.name) return formatDepotName(depot.name) || depot.name;
+      return this.shortId(d);
+    }
+
     return '—';
   }
 
@@ -272,6 +278,10 @@ export class MaterialList extends DetailBack {
 
   depotOptionLabel(d: Depot): string {
     return formatDepotName(d.name ?? '') || '—';
+  }
+
+  private shortId(id: string): string {
+    return id.length > 8 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id;
   }
 
   // -----------------------------

@@ -6,6 +6,10 @@
     </div>
 
     <div class="header-actions">
+      <div class="mini-kpi">
+        <span class="label">Sans accès</span>
+        <span class="value">{{ noAccessCount() }}</span>
+      </div>
       <button class="btn-outline" type="button" (click)="refresh(true)">Recharger</button>
     </div>
   </header>
@@ -34,8 +38,10 @@
         <span>Seulement sans accès</span>
       </label>
 
-      <button class="btn-outline" type="submit">Rechercher</button>
-      <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
+      <div class="search-actions">
+        <button class="btn-outline" type="submit">Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
+      </div>
     </form>
 
     <div class="meta">
@@ -77,21 +83,30 @@
 
         <tbody>
           @for (u of visibleItems(); track trackById($index, u)) {
-            <tr class="row">
+            <tr class="row" [class.no-access]="!u.authEnabled" [class.must-change]="u.mustChangePassword">
               <td class="main">
                 <div class="name">{{ userLabel(u) }}</div>
                 <div class="sub">{{ u.email || '—' }}</div>
               </td>
 
-              <td><span class="badge">{{ u.role || '—' }}</span></td>
+              <td>
+                <span
+                  class="badge role-badge"
+                  [class.role-admin]="u.role === 'ADMIN'"
+                  [class.role-dir]="u.role === 'DIRIGEANT'"
+                  [class.role-depot]="u.role === 'GESTION_DEPOT'"
+                  [class.role-tech]="u.role === 'TECHNICIEN'">
+                  {{ u.role || '—' }}
+                </span>
+              </td>
               <td>{{ depotLabel(u) }}</td>
               <td>{{ vehicleLabel(u) }}</td>
 
               <td>
                 @switch (accessBadge(u)) {
-                  @case ('DISABLED') { <span class="pill danger">Désactivé</span> }
-                  @case ('MUST_CHANGE') { <span class="pill warn">Actif · MDP à changer</span> }
-                  @default { <span class="pill ok">Actif</span> }
+                  @case ('DISABLED') { <span class="pill danger status-pill">Désactivé</span> }
+                  @case ('MUST_CHANGE') { <span class="pill warn status-pill">Actif · MDP à changer</span> }
+                  @default { <span class="pill ok status-pill">Actif</span> }
                 }
               </td>
 

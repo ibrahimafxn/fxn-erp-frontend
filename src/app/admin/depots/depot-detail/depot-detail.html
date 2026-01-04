@@ -351,13 +351,13 @@
               <label>Dépôt cible</label>
               @if (depotsLoading()) {
                 <div class="hint">Chargement dépôts…</div>
+              } @else if (targetDepots().length === 0) {
+                <div class="hint">Aucun autre dépôt disponible.</div>
               } @else {
                 <select formControlName="toDepot">
                   <option value="">— Sélectionner —</option>
-                  @for (d of depots(); track d._id) {
-                    @if (d._id !== depot()?._id) {
-                      <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
-                    }
+                  @for (d of targetDepots(); track d._id) {
+                    <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
                   }
                 </select>
               }

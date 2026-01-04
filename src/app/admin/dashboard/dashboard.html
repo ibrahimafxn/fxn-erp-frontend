@@ -48,6 +48,39 @@
     </div>
   </div>
 
+  @if (stats(); as s) {
+    <section class="alert-strip">
+      <div class="alert-pill" [class.hot]="(s.totalLowStockMaterials ?? 0) > 0">
+        Stock bas matériels : <strong>{{ s.totalLowStockMaterials ?? 0 }}</strong>
+      </div>
+      <div class="alert-pill" [class.hot]="(s.totalLowStockConsumables ?? 0) > 0">
+        Stock bas consommables : <strong>{{ s.totalLowStockConsumables ?? 0 }}</strong>
+      </div>
+      <div class="alert-pill" [class.hot]="(s.totalVehicleAlerts ?? 0) > 0">
+        Alertes véhicules : <strong>{{ s.totalVehicleAlerts ?? 0 }}</strong>
+      </div>
+    </section>
+  }
+
+  <section class="action-grid">
+    <article class="action-card" (click)="goToNewUser()">
+      <div class="action-title">Nouveau collaborateur</div>
+      <div class="action-subtitle">Créer un utilisateur et activer l'accès</div>
+    </article>
+    <article class="action-card" (click)="goToNewDepot()">
+      <div class="action-title">Nouveau dépôt</div>
+      <div class="action-subtitle">Ajouter un point logistique</div>
+    </article>
+    <article class="action-card" (click)="goToInterventions()">
+      <div class="action-title">Importer interventions</div>
+      <div class="action-subtitle">Charger un CSV ERT</div>
+    </article>
+    <article class="action-card" (click)="goToStockAlerts()">
+      <div class="action-title">Voir les alertes</div>
+      <div class="action-subtitle">Stocks critiques et pannes</div>
+    </article>
+  </section>
+
   <!-- KPIs principaux -->
   <section class="kpi-grid" *ngIf="stats() as s">
     <article class="kpi-card clickable" (click)="goToUsers()">
@@ -141,5 +174,8 @@
         </tbody>
       </table>
     </div>
+  </section>
+  <section class="empty-state" *ngIf="!recentHistory().length && !loading()">
+    <p>Aucun mouvement récent. Lance un premier mouvement pour alimenter le journal.</p>
   </section>
 </section>

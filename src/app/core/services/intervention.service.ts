@@ -11,8 +11,13 @@ export type InterventionSummaryItem = {
   reconnexion: number;
   racF8: number;
   racProS: number;
+  racProC?: number;
   sav: number;
   clem: number;
+  deprise?: number;
+  demo?: number;
+  refrac?: number;
+  refcDgr?: number;
   cablePav1: number;
   cablePav2: number;
   cablePav3: number;
@@ -28,8 +33,13 @@ export type InterventionTotals = {
   reconnexion: number;
   racF8: number;
   racProS: number;
+  racProC?: number;
   sav: number;
   clem: number;
+  deprise?: number;
+  demo?: number;
+  refrac?: number;
+  refcDgr?: number;
   cablePav1: number;
   cablePav2: number;
   cablePav3: number;
@@ -41,6 +51,12 @@ export type InterventionTotals = {
 export type InterventionSummary = {
   items: InterventionSummaryItem[];
   totals: InterventionTotals;
+};
+
+export type InterventionSummaryResponse = InterventionSummary & {
+  total?: number;
+  page?: number;
+  limit?: number;
 };
 
 export type InterventionFilters = {
@@ -59,6 +75,8 @@ export type InterventionSummaryQuery = {
   client?: string;
   status?: string;
   type?: string;
+  page?: number;
+  limit?: number;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -73,7 +91,7 @@ export class InterventionService {
     return this.http.post<{ success: boolean; data?: unknown; message?: string }>(`${this.baseUrl}/import`, formData);
   }
 
-  summary(query: InterventionSummaryQuery = {}): Observable<{ success: boolean; data: InterventionSummary }> {
+  summary(query: InterventionSummaryQuery = {}): Observable<{ success: boolean; data: InterventionSummaryResponse }> {
     let params = new HttpParams();
     if (query.fromDate) params = params.set('fromDate', query.fromDate);
     if (query.toDate) params = params.set('toDate', query.toDate);
@@ -82,8 +100,10 @@ export class InterventionService {
     if (query.client) params = params.set('client', query.client);
     if (query.status) params = params.set('status', query.status);
     if (query.type) params = params.set('type', query.type);
+    if (query.page) params = params.set('page', String(query.page));
+    if (query.limit) params = params.set('limit', String(query.limit));
 
-    return this.http.get<{ success: boolean; data: InterventionSummary }>(`${this.baseUrl}/summary`, { params });
+    return this.http.get<{ success: boolean; data: InterventionSummaryResponse }>(`${this.baseUrl}/summary`, { params });
   }
 
   filters(): Observable<{ success: boolean; data: InterventionFilters }> {

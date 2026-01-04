@@ -7,7 +7,7 @@
   </header>
 
   <article class="card">
-    <h2>Nouvelle réception</h2>
+    <h2 class="section-title"><span class="material-icons">inventory_2</span>Nouvelle réception</h2>
     <form class="receipt-form" [formGroup]="form" (ngSubmit)="submit()">
       <div class="form-grid">
         @if (!isDepotManager()) {
@@ -38,7 +38,7 @@
 
       <div class="lines">
         <div class="lines-header">
-          <h3>Lignes réception</h3>
+          <h3 class="section-title"><span class="material-icons">playlist_add</span>Lignes réception</h3>
           <button class="btn-outline" type="button" (click)="addLine()">Ajouter une ligne</button>
         </div>
 
@@ -91,7 +91,7 @@
 
   <article class="card">
     <header class="card-title-row">
-      <h2>Historique des réceptions</h2>
+      <h2 class="section-title"><span class="material-icons">history</span>Historique des réceptions</h2>
       <div class="header-actions">
         <button class="btn-outline" type="button" (click)="refreshHistory(true)">Recharger</button>
         <button class="btn-outline" type="button" (click)="exportCsv()">Exporter CSV</button>

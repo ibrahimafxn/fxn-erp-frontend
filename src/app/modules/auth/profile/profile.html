@@ -3,9 +3,19 @@
     <div class="hero-left">
       <div class="avatar">{{ initials() }}</div>
       <div class="hero-text">
-        <span class="hero-label">Profil utilisateur</span>
+        <span class="hero-label"><span class="material-icons">person</span>Profil utilisateur</span>
         <h1>{{ displayName() }}</h1>
         <div class="role-pill">{{ roleLabel() }}</div>
+        <div class="hero-meta">
+          <div class="meta-item">
+            <span class="material-icons">mail</span>
+            <span>{{ user()?.email || '—' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="material-icons">call</span>
+            <span>{{ user()?.phone || '—' }}</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -20,42 +30,74 @@
   } @else {
     <section class="profile-grid">
       <article class="card">
-        <div class="card-title">Informations principales</div>
+        <div class="card-title"><span class="material-icons">badge</span>Informations principales</div>
         <div class="info-grid">
           <div class="info-item">
-            <span class="label">Email</span>
+            <span class="label"><span class="material-icons">mail</span>Email</span>
             <span class="value">{{ user()?.email || '—' }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Téléphone</span>
+            <span class="label"><span class="material-icons">call</span>Téléphone</span>
             <span class="value">{{ user()?.phone || '—' }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Rôle</span>
+            <span class="label"><span class="material-icons">shield</span>Rôle</span>
             <span class="value">{{ roleLabel() }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Dépôt</span>
+            <span class="label"><span class="material-icons">warehouse</span>Dépôt</span>
             <span class="value">{{ user()?.idDepot || '—' }}</span>
           </div>
         </div>
       </article>
 
       <article class="card">
-        <div class="card-title">Affectations</div>
+        <div class="card-title"><span class="material-icons">assignment</span>Affectations</div>
         <div class="info-grid">
           <div class="info-item">
-            <span class="label">Véhicule assigné</span>
+            <span class="label"><span class="material-icons">directions_car</span>Véhicule assigné</span>
             <span class="value">{{ user()?.assignedVehicle || '—' }}</span>
           </div>
           <div class="info-item">
-            <span class="label">Statut</span>
+            <span class="label"><span class="material-icons">verified</span>Statut</span>
             <span class="value">Actif</span>
           </div>
         </div>
         <p class="hint">
           Besoin de modifier tes informations ? Contacte un administrateur.
         </p>
+      </article>
+
+      <article class="card">
+        <div class="card-title"><span class="material-icons">lock</span>Accès & permissions</div>
+        <div class="access-list">
+          @for (item of accessItems(); track item.label) {
+            <div class="access-item">
+              <span class="material-icons">{{ item.icon }}</span>
+              <div>
+                <div class="access-title">{{ item.label }}</div>
+                <div class="access-desc">{{ item.desc }}</div>
+              </div>
+            </div>
+          }
+          @if (accessItems().length === 0) {
+            <div class="access-empty">Aucun accès spécifique.</div>
+          }
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-title"><span class="material-icons">support_agent</span>Assistance</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label"><span class="material-icons">info</span>Support</span>
+            <span class="value">Contacte ton administrateur pour toute mise à jour.</span>
+          </div>
+          <div class="info-item">
+            <span class="label"><span class="material-icons">shield</span>Sécurité</span>
+            <span class="value">Session active sur ce navigateur.</span>
+          </div>
+        </div>
       </article>
     </section>
   }

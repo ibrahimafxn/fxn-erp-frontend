@@ -307,6 +307,7 @@ export class ReceiptPage {
   }
 
   movementResourceLabel(m: Movement): string {
+    if (m.resourceLabel) return m.resourceLabel;
     const id = m.resourceId;
     if (m.resourceType === 'CONSUMABLE') {
       const con = this.consumables().find((c) => c._id === id);

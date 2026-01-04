@@ -55,7 +55,7 @@ export class ReservationsList {
   readonly consumablesLoading = signal(false);
 
   readonly filterForm = this.fb.nonNullable.group({
-    resourceName: this.fb.nonNullable.control(''),
+    resourceId: this.fb.nonNullable.control(''),
     toUser: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control(''),
     fromDate: this.fb.nonNullable.control(''),
@@ -103,7 +103,7 @@ export class ReservationsList {
     this.loadConsumables(depotId || null);
     this.movementService.refresh(force, {
       resourceType: 'CONSUMABLE',
-      resourceName: f.resourceName.trim() || undefined,
+      resourceId: f.resourceId || undefined,
       action: 'ASSIGN',
       toType: 'USER',
       toId: f.toUser || undefined,
@@ -126,7 +126,7 @@ export class ReservationsList {
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     this.movementService.exportCsv({
       resourceType: 'CONSUMABLE',
-      resourceName: f.resourceName.trim() || undefined,
+      resourceId: f.resourceId || undefined,
       action: 'ASSIGN',
       toType: 'USER',
       toId: f.toUser || undefined,
@@ -145,7 +145,7 @@ export class ReservationsList {
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     this.movementService.exportPdf({
       resourceType: 'CONSUMABLE',
-      resourceName: f.resourceName.trim() || undefined,
+      resourceId: f.resourceId || undefined,
       action: 'ASSIGN',
       toType: 'USER',
       toId: f.toUser || undefined,
@@ -165,7 +165,7 @@ export class ReservationsList {
 
   clearSearch(): void {
     this.filterForm.setValue({
-      resourceName: '',
+      resourceId: '',
       toUser: '',
       depot: '',
       fromDate: '',
@@ -203,6 +203,12 @@ export class ReservationsList {
     const found = this.consumables().find((c) => c._id === id);
     if (found?.name) return found.name;
     return id.length > 8 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id;
+  }
+
+  consumableOptionLabel(c: Consumable): string {
+    const name = c.name || '—';
+    const unit = c.unit ? ` · ${c.unit}` : '';
+    return `${name}${unit}`;
   }
 
   technicianLabelById(id?: string | null): string {

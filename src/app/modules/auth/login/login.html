@@ -1,27 +1,49 @@
-<div class="login-container">
-  <h1>Connexion</h1>
+<div class="login-page">
+  <div class="login-card">
+    <section class="login-brand">
+      <div class="brand-mark">FXN</div>
+      <h1>Connexion</h1>
+      <p>Accédez à votre ERP et pilotez vos opérations en temps réel.</p>
+      <ul class="brand-list">
+        <li>Stocks et flux centralisés</li>
+        <li>Suivi terrain instantané</li>
+        <li>Rapports clairs et fiables</li>
+      </ul>
+    </section>
 
-  @if (error()){
-    <div class="error">{{ error() }}</div>
-  }
+    <section class="login-form">
+      <h2>Accès sécurisé</h2>
+      <p class="form-subtitle">Utilisez votre adresse professionnelle pour continuer.</p>
 
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <div class="form-group">
-      <label>Email</label>
-      <input formControlName="email" type="email" placeholder="admin@fxn.local" />
-    </div>
-
-    <div class="form-group">
-      <label>Mot de passe</label>
-      <input formControlName="password" type="password" placeholder="Entrez votre mot de passe" />
-    </div>
-
-    <button type="submit" [disabled]="loading()">
-      @if (loading()){
-        <span>Connexion...</span>
-      }@else{
-        <span>Se connecter</span>
+      @if (error()){
+        <div class="error">{{ error() }}</div>
       }
-    </button>
-  </form>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input id="login-email" formControlName="email" type="email" autocomplete="email" placeholder="admin@fxn.local" />
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">Mot de passe</label>
+          <input
+            id="login-password"
+            formControlName="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Entrez votre mot de passe"
+          />
+        </div>
+
+        <button type="submit" [disabled]="loading()">
+          @if (loading()){
+            <span>Connexion...</span>
+          }@else{
+            <span>Se connecter</span>
+          }
+        </button>
+      </form>
+    </section>
+  </div>
 </div>

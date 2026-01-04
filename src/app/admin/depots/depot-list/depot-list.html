@@ -61,7 +61,6 @@
             <tr class="row" (click)="openDetail(d)">
               <td class="main">
                 <div class="name">{{ depotName(d) }}</div>
-                <div class="sub">{{ d.address || '—' }}</div>
               </td>
 
               <td>{{ d.city || '—' }}</td>
@@ -73,18 +72,20 @@
               </td>
 
               <td class="actions" (click)="$event.stopPropagation()">
-                <button class="btn-outline" type="button" (click)="edit(d)">
-                  Modifier
-                </button>
+                <div class="actions-group">
+                  <button class="btn-outline" type="button" (click)="edit(d)">
+                    Modifier
+                  </button>
 
-                <button
-                  class="btn-danger"
-                  type="button"
-                  [disabled]="deletingId() === d._id"
-                  (click)="openDeleteModal(d)"
-                >
-                  @if (deletingId() === d._id) { Suppression… } @else { Supprimer }
-                </button>
+                  <button
+                    class="btn-danger"
+                    type="button"
+                    [disabled]="deletingId() === d._id"
+                    (click)="openDeleteModal(d)"
+                  >
+                    @if (deletingId() === d._id) { Suppression… } @else { Supprimer }
+                  </button>
+                </div>
               </td>
             </tr>
           }

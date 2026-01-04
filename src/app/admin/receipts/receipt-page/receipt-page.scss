@@ -46,6 +46,7 @@
   display: grid;
   gap: .35rem;
   font-size: .9rem;
+  color: var(--fxn-text-muted);
 }
 
 .receipt-form input,
@@ -53,9 +54,18 @@
 .receipt-form textarea {
   border-radius: var(--fxn-radius-md);
   border: 1px solid var(--fxn-border-strong);
-  background: rgba(8, 14, 22, 0.6);
+  background: var(--fxn-surface);
   color: inherit;
   padding: .55rem .7rem;
+  width: 100%;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.receipt-form input:focus,
+.receipt-form select:focus,
+.receipt-form textarea:focus {
+  border-color: var(--fxn-primary);
+  box-shadow: var(--fxn-ring);
 }
 
 .lines {
@@ -72,11 +82,19 @@
 }
 
 .line-card {
-  border: 1px dashed var(--fxn-border);
+  border: 1px solid var(--fxn-border);
   border-radius: var(--fxn-radius-md);
   padding: .9rem;
   display: grid;
   gap: .8rem;
+  background: rgba(8, 14, 22, 0.45);
+  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.line-card:hover {
+  border-color: var(--fxn-border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--fxn-shadow-sm);
 }
 
 .line-grid {
@@ -103,6 +121,17 @@
   flex-wrap: wrap;
 }
 
+.section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.section-title .material-icons {
+  font-size: 1.1rem;
+  opacity: .7;
+}
+
 .history-filters {
   display: grid;
   gap: .8rem;
@@ -112,15 +141,24 @@
     display: grid;
     gap: .35rem;
     font-size: .9rem;
+    color: var(--fxn-text-muted);
   }
 
   input,
   select {
     border-radius: var(--fxn-radius-md);
     border: 1px solid var(--fxn-border-strong);
-    background: rgba(8, 14, 22, 0.6);
+    background: var(--fxn-surface);
     color: inherit;
     padding: .55rem .7rem;
+    width: 100%;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+
+  input:focus,
+  select:focus {
+    border-color: var(--fxn-primary);
+    box-shadow: var(--fxn-ring);
   }
 
   .actions {
@@ -140,8 +178,8 @@
   .pill {
     padding: .2rem .6rem;
     border-radius: 999px;
-    border: 1px solid var(--fxn-border);
-    background: rgba(255, 255, 255, .06);
+    border: 1px solid var(--fxn-border-strong);
+    background: var(--fxn-surface-soft);
   }
 
   .limit {
@@ -159,6 +197,7 @@
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 720px;
 }
 
 th,
@@ -173,6 +212,18 @@ th {
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--fxn-text-muted);
+  background: var(--fxn-surface-soft);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+tbody tr {
+  transition: background .2s ease;
+}
+
+tbody tr:hover {
+  background: var(--fxn-primary-soft);
 }
 
 .note {

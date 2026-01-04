@@ -16,7 +16,7 @@
 
 .grid {
   display:grid;
-  grid-template-columns: 1.2fr .8fr;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
   gap: 1rem;
 
   @media (max-width: 900px) { grid-template-columns: 1fr; }
@@ -33,6 +33,8 @@
   background: rgba(255,255,255,.05);
   display: grid;
   gap: .9rem;
+  min-width: 0;
+  overflow: hidden;
 
   h2 { margin:0; font-size: 1.05rem; }
 }
@@ -52,6 +54,7 @@
 .transfer-form .field {
   display: grid;
   gap: .4rem;
+  min-width: 0;
 }
 
 .transfer-form .field label {
@@ -68,6 +71,15 @@
   background: rgba(8, 14, 22, 0.6);
   color: inherit;
   outline: none;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transfer-form textarea {
+  white-space: normal;
 }
 
 .transfer-form .span-2 {
@@ -152,9 +164,22 @@
   padding:.75rem; border-radius:.9rem;
   border:1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.10);
+  min-width: 0;
 
   .name { font-weight: 900; }
   .sub { opacity: .75; font-size: .85rem; margin-top: .1rem; }
+}
+
+.mini-left,
+.mini-right {
+  min-width: 0;
+}
+
+.mini-left .mini-name,
+.mini-left .mini-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .manager-row {
   display: flex;

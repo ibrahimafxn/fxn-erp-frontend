@@ -33,42 +33,66 @@
 
             <div class="divider"></div>
 
-            @if (canManageAccess()) {
-              <button (click)="goUserAccess()">Accès connexion</button>
-            }
-            @if (canViewHr()) {
-              <button (click)="goHr()">Ressources humaines</button>
-            }
-            @if (canViewMovements()) {
-              <button (click)="goMovements()">Journal des mouvements</button>
-            }
-            @if (canViewInterventions()) {
-              <button (click)="goInterventions()">Interventions ERT</button>
-            }
-            @if (canViewMovements()) {
-              <div class="menu-section">
-                <div class="section-label">Réservations</div>
-                <div class="section-items">
-                  <button class="submenu" (click)="goReservations()">Consommables</button>
-                  @if (canViewMaterialReservations()) {
-                    <button class="submenu" (click)="goMaterialReservations()">Matériels</button>
-                  }
-                </div>
-              </div>
-            }
-            @if (canViewMovements()) {
-              <button (click)="goReceipts()">Réceptions stock</button>
-            }
-            @if (canViewMovements()) {
-              <button (click)="goStockAlerts()">
-                Alertes
-                @if (alertsCount() > 0) {
-                  <span class="badge">{{ alertsCount() }}</span>
+            <div class="menu-group">
+              <div class="section-label">Administration</div>
+              <div class="section-items">
+                @if (canManageAccess()) {
+                  <button (click)="goUserAccess()"><span class="material-icons">key</span>Accès connexion</button>
                 }
-              </button>
-            }
-            <button (click)="goProfile()">Mon profil</button>
-            <button class="danger" (click)="logout()">Déconnexion</button>
+                @if (canViewHr()) {
+                  <button (click)="goHr()"><span class="material-icons">badge</span>Ressources humaines</button>
+                }
+              </div>
+            </div>
+
+            <div class="menu-group">
+              <div class="section-label">Opérations</div>
+              <div class="section-items">
+                @if (canViewMovements()) {
+                  <button (click)="goMovements()"><span class="material-icons">swap_horiz</span>Journal des mouvements</button>
+                }
+                @if (canViewInterventions()) {
+                  <button (click)="goInterventions()"><span class="material-icons">attach_money</span>Calcul d'attachement</button>
+                }
+              </div>
+            </div>
+
+            <div class="menu-group">
+              <div class="section-label">Stock</div>
+              <div class="section-items">
+                @if (canViewMovements()) {
+                  <button (click)="goReceipts()"><span class="material-icons">inventory_2</span>Réceptions stock</button>
+                }
+                @if (canViewMovements()) {
+                  <button (click)="goStockAlerts()">
+                    <span class="material-icons">report</span>
+                    Alertes
+                    @if (alertsCount() > 0) {
+                      <span class="badge">{{ alertsCount() }}</span>
+                    }
+                  </button>
+                }
+                @if (canViewMovements()) {
+                  <div class="menu-section">
+                    <div class="section-label">Réservations</div>
+                    <div class="section-items">
+                      <button class="submenu" (click)="goReservations()"><span class="material-icons">widgets</span>Consommables</button>
+                      @if (canViewMaterialReservations()) {
+                        <button class="submenu" (click)="goMaterialReservations()"><span class="material-icons">handyman</span>Matériels</button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <div class="menu-group">
+              <div class="section-label">Compte</div>
+              <div class="section-items">
+                <button (click)="goProfile()"><span class="material-icons">person</span>Mon profil</button>
+                <button class="danger" (click)="logout()"><span class="material-icons">logout</span>Déconnexion</button>
+              </div>
+            </div>
           </div>
         }
       </div>

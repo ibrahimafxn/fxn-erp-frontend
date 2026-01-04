@@ -45,12 +45,20 @@
   display: grid;
   gap: .25rem;
   cursor: pointer;
-  transition: border-color .2s ease, transform .2s ease;
+  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
 
 .step.active {
   border-color: var(--fxn-primary);
   transform: translateY(-1px);
+  background: linear-gradient(135deg, rgba(8, 14, 22, 0.85), rgba(18, 26, 40, 0.65));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.step:hover {
+  border-color: var(--fxn-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
 }
 
 .step-title {
@@ -90,6 +98,14 @@
   padding: 1.25rem;
   display: grid;
   gap: .75rem;
+  background: linear-gradient(145deg, rgba(10, 16, 26, 0.7), rgba(8, 12, 20, 0.9));
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.upload-card:hover {
+  border-color: var(--fxn-primary);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
 }
 
 .file-label {
@@ -101,10 +117,17 @@
   padding: .6rem .9rem;
   border-radius: var(--fxn-radius-md);
   background: rgba(8, 14, 22, 0.6);
+  transition: border-color .2s ease, transform .2s ease, background .2s ease;
 
   input {
     display: none;
   }
+}
+
+.file-label:hover {
+  border-color: var(--fxn-primary);
+  background: rgba(8, 14, 22, 0.85);
+  transform: translateY(-1px);
 }
 
 .state {
