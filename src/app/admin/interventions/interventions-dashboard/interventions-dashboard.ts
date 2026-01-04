@@ -9,11 +9,12 @@ import {
   InterventionFilters,
   InterventionTotals
 } from '../../../core/services/intervention.service';
+import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
   standalone: true,
   selector: 'app-interventions-dashboard',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './interventions-dashboard.html',
   styleUrls: ['./interventions-dashboard.scss']
 })
@@ -31,6 +32,7 @@ export class InterventionsDashboard {
   readonly resetLoading = signal(false);
   readonly resetResult = signal<string | null>(null);
   readonly resetError = signal<string | null>(null);
+  readonly resetModalOpen = signal(false);
 
   readonly summaryItems = signal<InterventionSummaryItem[]>([]);
   readonly totals = signal<InterventionTotals | null>(null);
@@ -104,11 +106,16 @@ export class InterventionsDashboard {
     });
   }
 
-  resetData(): void {
-    if (!window.confirm('Supprimer toutes les interventions importées ?')) {
-      return;
-    }
+  openResetModal(): void {
+    this.resetModalOpen.set(true);
+  }
 
+  closeResetModal(): void {
+    this.resetModalOpen.set(false);
+  }
+
+  confirmResetData(): void {
+    this.resetModalOpen.set(false);
     this.resetLoading.set(true);
     this.resetError.set(null);
     this.resetResult.set(null);

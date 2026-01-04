@@ -10,7 +10,7 @@
         <input #csvInput type="file" accept=".csv" (change)="onFileChange($event)" />
         <span>Choisir un CSV</span>
       </label>
-      <button class="btn-danger" type="button" (click)="resetData()" [disabled]="resetLoading() || importLoading()">
+      <button class="btn-danger" type="button" (click)="openResetModal()" [disabled]="resetLoading() || importLoading()">
         @if (resetLoading()) { Reset… } @else { Reset data }
       </button>
       <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading()">
@@ -29,6 +29,17 @@
   } @else if (resetResult()) {
     <div class="state ok card">{{ resetResult() }}</div>
   }
+
+  <app-confirm-delete-modal
+    [open]="resetModalOpen()"
+    entityLabel="données interventions"
+    entityName="toutes les interventions importées"
+    dangerHint="Cette action supprimera toutes les interventions."
+    confirmText="Reset"
+    [confirming]="resetLoading()"
+    (cancel)="closeResetModal()"
+    (confirm)="confirmResetData()">
+  </app-confirm-delete-modal>
 
   <section class="toolbar card">
     <form class="filters" [formGroup]="filterForm" (ngSubmit)="refresh()">
