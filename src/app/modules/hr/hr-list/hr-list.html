@@ -1,12 +1,16 @@
 <section class="hr-page">
   <header class="page-header">
     <div>
-      <h1>Ressources humaines</h1>
+      <h1><span class="material-icons">diversity_3</span>Ressources humaines</h1>
       <p class="subtitle">Dossiers employés, documents et congés</p>
     </div>
     <div class="tabs">
-      <button class="tab" [class.active]="tab() === 'employees'" (click)="switchTab('employees')">Employés</button>
-      <button class="tab" [class.active]="tab() === 'leaves'" (click)="switchTab('leaves')">Congés</button>
+      <button class="tab" [class.active]="tab() === 'employees'" (click)="switchTab('employees')">
+        <span class="material-icons">groups</span>Employés
+      </button>
+      <button class="tab" [class.active]="tab() === 'leaves'" (click)="switchTab('leaves')">
+        <span class="material-icons">beach_access</span>Congés
+      </button>
     </div>
   </header>
 
@@ -17,7 +21,7 @@
   @if (tab() === 'employees') {
     <div class="hr-grid">
       <div class="panel">
-        <h2>Employés</h2>
+        <h2 class="section-title"><span class="material-icons">badge</span>Employés</h2>
         @if (docAlerts()) {
           <div class="doc-alerts">
             <button class="pill danger link-pill" type="button" (click)="openDocOverlay('EXPIRED')">
@@ -33,7 +37,7 @@
           @if (overlayOpen()) {
             <div class="doc-alerts-panel card" id="doc-alerts-panel">
               <div class="overlay-header">
-                <h3>{{ overlayTitle() }}</h3>
+                <h3 class="section-title"><span class="material-icons">warning</span>{{ overlayTitle() }}</h3>
                 <button class="btn-outline" type="button" (click)="closeDocOverlay()">Fermer</button>
               </div>
               @if (overlayLoading()) {
@@ -115,7 +119,7 @@
               @for (e of employees(); track e.user._id) {
                 <tr [class.active]="selected()?.user?._id === e.user._id" (click)="selectEmployee(e)">
                   <td>{{ formatUserName(e.user) }}</td>
-                  <td>{{ e.user.role || '—' }}</td>
+                  <td><span class="pill role-pill">{{ e.user.role || '—' }}</span></td>
                   <td>{{ depotLabel(e.user) }}</td>
                   <td>{{ e.user.phone || '—' }}</td>
                   <td>{{ complianceLabel(e) }}</td>
@@ -139,7 +143,7 @@
 
       <div class="panel detail">
         @if (selected(); as s) {
-          <h2>Dossier employé</h2>
+          <h2 class="section-title"><span class="material-icons">assignment_ind</span>Dossier employé</h2>
           <div class="identity">
             <div>
               <div class="name">{{ formatUserName(s.user) }}</div>
@@ -199,7 +203,7 @@
             <button class="btn-primary" (click)="saveProfile()">Enregistrer</button>
           </div>
 
-          <h3>Documents</h3>
+          <h3 class="section-title"><span class="material-icons">description</span>Documents</h3>
           <form class="doc-form" [formGroup]="docForm">
             <select formControlName="type">
               @for (t of docTypes; track t.value) {
@@ -266,7 +270,7 @@
             (confirm)="confirmDeleteDoc()">
           </app-confirm-delete-modal>
 
-          <h3>Historique RH</h3>
+          <h3 class="section-title"><span class="material-icons">history</span>Historique RH</h3>
           <div class="table-wrap">
             <table>
               <thead>
@@ -308,7 +312,7 @@
   } @else {
     <div class="panel">
       <div class="leaves-header">
-        <h2>Demandes de congés</h2>
+        <h2 class="section-title"><span class="material-icons">event_available</span>Demandes de congés</h2>
         <select #statusSelect [value]="leaveStatus()" (change)="leaveStatus.set(statusSelect.value); loadLeaves()">
           <option value="PENDING">En attente</option>
           <option value="APPROVED">Approuvées</option>

@@ -96,6 +96,11 @@
   overflow: hidden;
 }
 
+.rate-row.invalid {
+  border-color: rgba(255, 107, 107, 0.65);
+  box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.15);
+}
+
 .rate-label {
   display: flex;
   align-items: center;
@@ -143,10 +148,54 @@
   }
 }
 
+.rate-row.invalid .rate-inputs input {
+  border-color: rgba(255, 107, 107, 0.55);
+}
+
+.tech-readonly {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .45rem .6rem;
+  border-radius: .65rem;
+  border: 1px dashed var(--fxn-border);
+  background: rgba(8, 14, 22, 0.4);
+  font-size: .85rem;
+}
+
+.tech-readonly .label {
+  color: var(--fxn-text-muted);
+}
+
+.tech-readonly .value {
+  font-weight: 600;
+}
+
+.rate-error {
+  margin: 0;
+  font-size: .78rem;
+  color: rgba(255, 130, 130, 0.95);
+}
+
 .rates-hint {
   margin: 0;
   font-size: .8rem;
   color: var(--fxn-text-muted);
+}
+
+.rates-status {
+  margin: 0;
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+.rates-status.ok {
+  color: rgba(120, 231, 167, 0.95);
+}
+
+.rates-status.error {
+  color: rgba(255, 130, 130, 0.95);
 }
 
 .revenue {

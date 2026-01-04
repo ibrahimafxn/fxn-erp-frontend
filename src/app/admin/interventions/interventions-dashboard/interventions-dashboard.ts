@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import {
@@ -38,6 +38,9 @@ export class InterventionsDashboard {
   readonly resetResult = signal<string | null>(null);
   readonly resetError = signal<string | null>(null);
   readonly resetModalOpen = signal(false);
+  readonly rateSaving = signal(false);
+  readonly rateSuccess = signal<string | null>(null);
+  readonly rateError = signal<string | null>(null);
 
   readonly summaryItems = signal<InterventionSummaryItem[]>([]);
   readonly totals = signal<InterventionTotals | null>(null);
@@ -87,18 +90,54 @@ export class InterventionsDashboard {
   ] as const;
 
   readonly rateForm = this.fb.nonNullable.group({
-    racPavillon: this.fb.nonNullable.group({ fxn: 10, tech: 130 }),
-    clem: this.fb.nonNullable.group({ fxn: 5, tech: 0 }),
-    reconnexion: this.fb.nonNullable.group({ fxn: 15, tech: 30 }),
-    racImmeuble: this.fb.nonNullable.group({ fxn: 20, tech: 60 }),
-    racProS: this.fb.nonNullable.group({ fxn: 45, tech: 150 }),
-    racProC: this.fb.nonNullable.group({ fxn: 55, tech: 190 }),
-    racF8: this.fb.nonNullable.group({ fxn: 100, tech: 100 }),
-    deprise: this.fb.nonNullable.group({ fxn: 0, tech: 50 }),
-    demo: this.fb.nonNullable.group({ fxn: 10, tech: 0 }),
-    sav: this.fb.nonNullable.group({ fxn: 10, tech: 0 }),
-    refrac: this.fb.nonNullable.group({ fxn: 0, tech: 0 }),
-    refcDgr: this.fb.nonNullable.group({ fxn: 0, tech: 50 })
+    racPavillon: this.fb.nonNullable.group({
+      total: [140, [Validators.required, Validators.min(0)]],
+      fxn: [10, [Validators.required, Validators.min(0)]]
+    }),
+    clem: this.fb.nonNullable.group({
+      total: [5, [Validators.required, Validators.min(0)]],
+      fxn: [5, [Validators.required, Validators.min(0)]]
+    }),
+    reconnexion: this.fb.nonNullable.group({
+      total: [45, [Validators.required, Validators.min(0)]],
+      fxn: [15, [Validators.required, Validators.min(0)]]
+    }),
+    racImmeuble: this.fb.nonNullable.group({
+      total: [80, [Validators.required, Validators.min(0)]],
+      fxn: [20, [Validators.required, Validators.min(0)]]
+    }),
+    racProS: this.fb.nonNullable.group({
+      total: [195, [Validators.required, Validators.min(0)]],
+      fxn: [45, [Validators.required, Validators.min(0)]]
+    }),
+    racProC: this.fb.nonNullable.group({
+      total: [245, [Validators.required, Validators.min(0)]],
+      fxn: [55, [Validators.required, Validators.min(0)]]
+    }),
+    racF8: this.fb.nonNullable.group({
+      total: [200, [Validators.required, Validators.min(0)]],
+      fxn: [100, [Validators.required, Validators.min(0)]]
+    }),
+    deprise: this.fb.nonNullable.group({
+      total: [50, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    demo: this.fb.nonNullable.group({
+      total: [10, [Validators.required, Validators.min(0)]],
+      fxn: [10, [Validators.required, Validators.min(0)]]
+    }),
+    sav: this.fb.nonNullable.group({
+      total: [10, [Validators.required, Validators.min(0)]],
+      fxn: [10, [Validators.required, Validators.min(0)]]
+    }),
+    refrac: this.fb.nonNullable.group({
+      total: [0, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    refcDgr: this.fb.nonNullable.group({
+      total: [50, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    })
   });
 
   private readonly rateSync = effect(() => {
@@ -111,6 +150,7 @@ export class InterventionsDashboard {
 
   constructor() {
     this.loadFilters();
+    this.ratesService.refresh().subscribe();
     this.refresh();
   }
 
@@ -243,11 +283,42 @@ export class InterventionsDashboard {
 
   saveRates(): void {
     const raw = this.rateForm.getRawValue() as InterventionRates;
-    this.ratesService.save(raw);
+    if (!this.rateForm.valid) {
+      this.rateForm.markAllAsTouched();
+      return;
+    }
+    if (this.findInvalidRates().length) {
+      return;
+    }
+    this.rateSaving.set(true);
+    this.rateSuccess.set(null);
+    this.rateError.set(null);
+    this.ratesService.save(raw).subscribe({
+      next: () => {
+        this.rateSaving.set(false);
+        this.rateSuccess.set('Tarifs enregistrés.');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.rateSaving.set(false);
+        this.rateError.set(this.apiError(err, 'Erreur enregistrement tarifs'));
+      }
+    });
   }
 
   resetRates(): void {
-    this.ratesService.reset();
+    this.rateSaving.set(true);
+    this.rateSuccess.set(null);
+    this.rateError.set(null);
+    this.ratesService.reset().subscribe({
+      next: () => {
+        this.rateSaving.set(false);
+        this.rateSuccess.set('Tarifs réinitialisés.');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.rateSaving.set(false);
+        this.rateError.set(this.apiError(err, 'Erreur réinitialisation tarifs'));
+      }
+    });
   }
 
   prevPage(): void {
@@ -346,19 +417,47 @@ export class InterventionsDashboard {
     target: 'fxn' | 'tech'
   ): number {
     const get = (value?: number) => value ?? 0;
+    const share = (entry: { total: number; fxn: number }) => {
+      const fxn = entry.fxn || 0;
+      const total = entry.total || 0;
+      const tech = Math.max(0, total - fxn);
+      return target === 'fxn' ? fxn : tech;
+    };
+
     return (
-      get(item.racPavillon) * rates.racPavillon[target] +
-      get(item.clem) * rates.clem[target] +
-      get(item.reconnexion) * rates.reconnexion[target] +
-      get(item.racImmeuble) * rates.racImmeuble[target] +
-      get(item.racProS) * rates.racProS[target] +
-      get(item.racProC) * rates.racProC[target] +
-      get(item.racF8) * rates.racF8[target] +
-      get(item.deprise) * rates.deprise[target] +
-      get(item.demo) * rates.demo[target] +
-      get(item.sav) * rates.sav[target] +
-      get(item.refrac) * rates.refrac[target] +
-      get(item.refcDgr) * rates.refcDgr[target]
+      get(item.racPavillon) * share(rates.racPavillon) +
+      get(item.clem) * share(rates.clem) +
+      get(item.reconnexion) * share(rates.reconnexion) +
+      get(item.racImmeuble) * share(rates.racImmeuble) +
+      get(item.racProS) * share(rates.racProS) +
+      get(item.racProC) * share(rates.racProC) +
+      get(item.racF8) * share(rates.racF8) +
+      get(item.deprise) * share(rates.deprise) +
+      get(item.demo) * share(rates.demo) +
+      get(item.sav) * share(rates.sav) +
+      get(item.refrac) * share(rates.refrac) +
+      get(item.refcDgr) * share(rates.refcDgr)
     );
+  }
+
+  techShareFor(key: string): number {
+    const entry = (this.rateForm.getRawValue() as Record<string, { total: number; fxn: number }>)[key];
+    const total = Number(entry?.total ?? 0);
+    const fxn = Number(entry?.fxn ?? 0);
+    return Math.max(0, total - fxn);
+  }
+
+  isRateInvalid(key: string): boolean {
+    const entry = (this.rateForm.getRawValue() as Record<string, { total: number; fxn: number }>)[key];
+    if (!entry) return false;
+    const total = Number(entry.total);
+    const fxn = Number(entry.fxn);
+    return Number.isFinite(total) && Number.isFinite(fxn) && fxn > total;
+  }
+
+  private findInvalidRates(): string[] {
+    return this.rateFields
+      .map((field) => field.key)
+      .filter((key) => this.isRateInvalid(String(key)));
   }
 }

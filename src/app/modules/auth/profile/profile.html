@@ -46,7 +46,7 @@
           </div>
           <div class="info-item">
             <span class="label"><span class="material-icons">warehouse</span>Dépôt</span>
-            <span class="value">{{ user()?.idDepot || '—' }}</span>
+            <span class="value">{{ depotLoading() ? 'Chargement…' : depotName() }}</span>
           </div>
         </div>
       </article>

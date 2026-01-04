@@ -12,11 +12,14 @@
     h1 {
       margin: 0;
       font-size: 1.35rem;
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
     }
 
     .subtitle {
       margin: .25rem 0 0;
-      opacity: .75;
+      color: var(--fxn-text-muted);
       font-size: .9rem;
     }
   }
@@ -30,19 +33,28 @@
     border-radius: 999px;
     padding: .4rem .9rem;
     border: 1px solid var(--fxn-border-strong);
-    background: rgba(20, 32, 45, 0.6);
+    background: var(--fxn-surface);
     color: var(--fxn-text);
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    transition: border-color .2s ease, background .2s ease, transform .2s ease;
   }
 
   .tab.active {
-    background: rgba(15, 191, 159, 0.2);
-    border-color: rgba(15, 191, 159, 0.5);
+    background: var(--fxn-primary-soft);
+    border-color: var(--fxn-primary);
+    transform: translateY(-1px);
+  }
+
+  .tab:hover {
+    border-color: var(--fxn-primary);
   }
 
   .hr-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.3fr);
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     gap: 1rem;
     align-items: start;
 
@@ -58,10 +70,11 @@
   .panel {
     padding: 1rem;
     border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--fxn-surface-glass);
+    border: 1px solid var(--fxn-border);
     display: grid;
     gap: 1rem;
+    animation: hr-rise 520ms ease both;
   }
 
   .detail h3 {
@@ -95,10 +108,17 @@
     input,
     select {
       border-radius: 0.75rem;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--fxn-border);
       padding: 0.6rem 0.75rem;
-      background: rgba(0, 0, 0, 0.18);
+      background: var(--fxn-surface);
       color: inherit;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--fxn-primary);
+      box-shadow: var(--fxn-ring);
     }
 
     .btn-outline {
@@ -131,15 +151,24 @@
 
     th {
       opacity: .8;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--fxn-border);
+      background: var(--fxn-surface-soft);
+      position: sticky;
+      top: 0;
+      z-index: 1;
     }
 
     tbody tr {
       cursor: pointer;
+      transition: background .2s ease;
     }
 
     tbody tr.active {
-      background: rgba(33, 182, 182, 0.12);
+      background: var(--fxn-primary-soft);
+    }
+
+    tbody tr:hover {
+      background: var(--fxn-primary-soft);
     }
 
     tbody tr.doc-valid td {
@@ -178,9 +207,9 @@
   .badge {
     padding: .25rem .6rem;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--fxn-border-strong);
     font-size: .75rem;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--fxn-surface-soft);
   }
 
   .badge.ok {
@@ -199,24 +228,36 @@
     display: inline-flex;
     padding: 0.2rem 0.6rem;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--fxn-border-strong);
+    background: var(--fxn-surface-soft);
     font-size: 0.85rem;
+    align-items: center;
+    gap: .35rem;
+    transition: border-color .2s ease, background .2s ease, transform .2s ease;
+  }
+
+  .role-pill {
+    background: rgba(47, 107, 255, 0.12);
+    border-color: rgba(47, 107, 255, 0.3);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size: .75rem;
   }
 
   .pill.ok {
-    background: rgba(0, 255, 120, 0.1);
-    border-color: rgba(0, 255, 120, 0.2);
+    background: rgba(0, 255, 120, 0.12);
+    border-color: rgba(0, 255, 120, 0.28);
   }
 
   .pill.warn {
-    background: rgba(255, 184, 28, 0.12);
-    border-color: rgba(255, 184, 28, 0.3);
+    background: rgba(255, 184, 28, 0.14);
+    border-color: rgba(255, 184, 28, 0.35);
   }
 
   .pill.danger {
-    background: rgba(255, 0, 60, 0.12);
-    border-color: rgba(255, 0, 60, 0.22);
+    background: rgba(255, 0, 60, 0.16);
+    border-color: rgba(255, 0, 60, 0.3);
   }
 
   .link-pill {
@@ -224,7 +265,8 @@
   }
 
   .link-pill:hover {
-    background: rgba(33, 182, 182, 0.16);
+    background: var(--fxn-primary-soft);
+    transform: translateY(-1px);
   }
 
   .doc-alerts-panel {
@@ -293,10 +335,18 @@
     select,
     textarea {
       border-radius: .75rem;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--fxn-border);
       padding: .6rem .75rem;
-      background: rgba(0, 0, 0, 0.18);
+      background: var(--fxn-surface);
       color: inherit;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--fxn-primary);
+      box-shadow: var(--fxn-ring);
     }
   }
 
@@ -317,10 +367,17 @@
     input,
     select {
       border-radius: .75rem;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--fxn-border);
       padding: .6rem .75rem;
-      background: rgba(0, 0, 0, 0.18);
+      background: var(--fxn-surface);
       color: inherit;
+      transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--fxn-primary);
+      box-shadow: var(--fxn-ring);
     }
   }
 
@@ -332,9 +389,9 @@
 
     select {
       border-radius: .75rem;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid var(--fxn-border);
       padding: .5rem .7rem;
-      background: rgba(0, 0, 0, 0.18);
+      background: var(--fxn-surface);
       color: inherit;
     }
   }
@@ -347,13 +404,35 @@
   .state {
     padding: .9rem 1rem;
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-glass);
   }
 
   .state.error {
     background: rgba(255, 92, 124, 0.15);
     border: 1px solid rgba(255, 92, 124, 0.3);
+  }
+}
+
+.section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.section-title .material-icons {
+  font-size: 1.1rem;
+  opacity: .7;
+}
+
+@keyframes hr-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

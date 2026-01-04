@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { DepotService } from '../../../core/services/depot.service';
 import { Role } from '../../../core/models/roles.model';
-import { formatPersonName } from '../../../core/utils/text-format';
+import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 
 @Component({
   selector: 'app-profile',
@@ -15,8 +16,12 @@ import { formatPersonName } from '../../../core/utils/text-format';
 export class Profile {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private depotService = inject(DepotService);
 
   readonly user = this.auth.user$;
+  readonly depotName = signal('—');
+  readonly depotLoading = signal(false);
+  private lastDepotId: string | null = null;
 
   readonly displayName = computed(() => {
     const u = this.user();
@@ -64,6 +69,29 @@ export class Profile {
       ];
     }
     return [];
+  });
+
+  private readonly depotSync = effect(() => {
+    const idDepot = this.user()?.idDepot ?? null;
+    if (!idDepot || typeof idDepot !== 'string') {
+      this.lastDepotId = null;
+      this.depotName.set('—');
+      return;
+    }
+    if (idDepot === this.lastDepotId) return;
+    this.lastDepotId = idDepot;
+    this.depotLoading.set(true);
+    this.depotService.getDepot(idDepot).subscribe({
+      next: (depot) => {
+        const name = formatDepotName(depot?.name || '') || depot?.name || idDepot;
+        this.depotName.set(name);
+        this.depotLoading.set(false);
+      },
+      error: () => {
+        this.depotName.set(idDepot);
+        this.depotLoading.set(false);
+      }
+    });
   });
 
   goHome(): void {
