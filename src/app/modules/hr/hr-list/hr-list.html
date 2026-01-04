@@ -20,16 +20,60 @@
         <h2>Employés</h2>
         @if (docAlerts()) {
           <div class="doc-alerts">
-            <button class="pill danger link-pill" type="button" (click)="setDocFilter('EXPIRED')">
+            <button class="pill danger link-pill" type="button" (click)="openDocOverlay('EXPIRED')">
               Expirés : {{ docAlerts()?.expired }}
             </button>
-            <button class="pill warn link-pill" type="button" (click)="setDocFilter('EXPIRING')">
+            <button class="pill warn link-pill" type="button" (click)="openDocOverlay('EXPIRING')">
               Expirent bientôt : {{ docAlerts()?.expiring }}
             </button>
             <button class="pill link-pill" type="button" (click)="setDocFilter('ALL')">
               Tous
             </button>
           </div>
+          @if (overlayOpen()) {
+            <div class="doc-alerts-panel card" id="doc-alerts-panel">
+              <div class="overlay-header">
+                <h3>{{ overlayTitle() }}</h3>
+                <button class="btn-outline" type="button" (click)="closeDocOverlay()">Fermer</button>
+              </div>
+              @if (overlayLoading()) {
+                <div class="state">Chargement…</div>
+              } @else if (overlayItems().length === 0) {
+                <div class="state">Aucun document.</div>
+              } @else {
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Employé</th>
+                        <th>Type</th>
+                        <th>Expiration</th>
+                        <th>Document</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (d of overlayItems(); track d._id) {
+                        <tr [class.doc-valid]="isDocValid(d)" [class.doc-expired]="isDocExpired(d)">
+                          <td>{{ formatUserName(d.user) }}</td>
+                          <td>{{ docTypeLabel(d.type) }}</td>
+                          <td>{{ formatDate(d.expiryDate) }}</td>
+                          <td>
+                            @if (isImageDoc(d)) {
+                              <a [href]="d.fileUrl" target="_blank">
+                                <img class="doc-preview" [src]="d.fileUrl" alt="Document" />
+                              </a>
+                            } @else {
+                              <a [href]="d.fileUrl" target="_blank" download>Télécharger</a>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
         }
         <div class="filters">
           <input
@@ -318,50 +362,3 @@
     </div>
   }
 </section>
-
-@if (overlayOpen()) {
-  <div class="overlay-backdrop" (click)="closeDocOverlay()">
-    <div class="overlay-panel" (click)="$event.stopPropagation()">
-      <div class="overlay-header">
-        <h3>{{ overlayTitle() }}</h3>
-        <button class="btn-outline" type="button" (click)="closeDocOverlay()">Fermer</button>
-      </div>
-      @if (overlayLoading()) {
-        <div class="state">Chargement…</div>
-      } @else if (overlayItems().length === 0) {
-        <div class="state">Aucun document.</div>
-      } @else {
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Employé</th>
-                <th>Type</th>
-                <th>Expiration</th>
-                <th>Document</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (d of overlayItems(); track d._id) {
-                <tr [class.doc-valid]="isDocValid(d)" [class.doc-expired]="isDocExpired(d)">
-                  <td>{{ formatUserName(d.user) }}</td>
-                  <td>{{ docTypeLabel(d.type) }}</td>
-                  <td>{{ formatDate(d.expiryDate) }}</td>
-                  <td>
-                    @if (isImageDoc(d)) {
-                      <a [href]="d.fileUrl" target="_blank">
-                        <img class="doc-preview" [src]="d.fileUrl" alt="Document" />
-                      </a>
-                    } @else {
-                      <a [href]="d.fileUrl" target="_blank" download>Télécharger</a>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    </div>
-  </div>
-}

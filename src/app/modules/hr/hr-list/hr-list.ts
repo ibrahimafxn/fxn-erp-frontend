@@ -452,6 +452,14 @@ export class HrList {
       next: (docs) => {
         this.overlayDocs.set(docs || []);
         this.overlayLoading.set(false);
+        setTimeout(() => {
+          const el = document.getElementById('doc-alerts-panel');
+          if (el) {
+            const offset = 80;
+            const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({ top, behavior: 'smooth' });
+          }
+        }, 0);
       },
       error: (err: any) => {
         this.error.set(err?.message || 'Erreur chargement documents');
