@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { HrService } from '../../../core/services/hr.service';
+import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {
   Depot,
@@ -600,6 +601,10 @@ export class HrList {
   docTypeLabel(type: string): string {
     const reqs = this.requirements();
     return reqs?.typeLabels?.[type] || type;
+  }
+
+  docPdfUrl(doc: EmployeeDoc): string {
+    return `${environment.apiBaseUrl}/hr/docs/${doc._id}/pdf`;
   }
 
   isRequiredDocSatisfied(type: string): boolean {

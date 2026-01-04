@@ -58,13 +58,7 @@
                           <td>{{ docTypeLabel(d.type) }}</td>
                           <td>{{ formatDate(d.expiryDate) }}</td>
                           <td>
-                            @if (isImageDoc(d)) {
-                              <a [href]="d.fileUrl" target="_blank">
-                                <img class="doc-preview" [src]="d.fileUrl" alt="Document" />
-                              </a>
-                            } @else {
-                              <a [href]="d.fileUrl" target="_blank" download>Télécharger</a>
-                            }
+                            <a [href]="docPdfUrl(d)" download>Télécharger PDF</a>
                           </td>
                         </tr>
                       }
@@ -244,13 +238,7 @@
                     <td>{{ d.detail || '—' }}</td>
                     <td>{{ formatDate(d.expiryDate) }}</td>
                     <td>
-                      @if (isImageDoc(d)) {
-                        <a [href]="d.fileUrl" target="_blank">
-                          <img class="doc-preview" [src]="d.fileUrl" alt="Document" />
-                        </a>
-                      } @else {
-                        <a [href]="d.fileUrl" target="_blank" download>Télécharger</a>
-                      }
+                      <a [href]="docPdfUrl(d)" download>Télécharger PDF</a>
                     </td>
                     <td>
                       <button
