@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -20,6 +20,8 @@ import {
 export class InterventionsDashboard {
   private svc = inject(InterventionService);
   private fb = inject(FormBuilder);
+
+  @ViewChild('csvInput') private csvInput?: ElementRef<HTMLInputElement>;
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -64,6 +66,8 @@ export class InterventionsDashboard {
       return;
     }
     this.selectedFile = el.files[0];
+    this.importError.set(null);
+    this.importResult.set(null);
   }
 
   importCsv(): void {
@@ -81,16 +85,18 @@ export class InterventionsDashboard {
         this.importLoading.set(false);
         if (res.success) {
           this.importResult.set('Import terminé.');
-          this.selectedFile = null;
+          this.resetFileInput();
           this.loadFilters();
           this.refresh();
           return;
         }
         this.importError.set(res.message || 'Erreur import CSV');
+        this.resetFileInput();
       },
       error: (err: HttpErrorResponse) => {
         this.importLoading.set(false);
         this.importError.set(this.apiError(err, 'Erreur import CSV'));
+        this.resetFileInput();
       }
     });
   }
@@ -158,5 +164,13 @@ export class InterventionsDashboard {
         ? String((err.error as { message?: unknown }).message ?? '')
         : '';
     return apiMsg || err.message || fallback;
+  }
+
+  private resetFileInput(): void {
+    this.selectedFile = null;
+    const input = this.csvInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
   }
 }

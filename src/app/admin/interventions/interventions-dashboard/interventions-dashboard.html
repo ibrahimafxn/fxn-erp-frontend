@@ -7,7 +7,7 @@
 
     <div class="header-actions">
       <label class="file-input">
-        <input type="file" accept=".csv" (change)="onFileChange($event)" />
+        <input #csvInput type="file" accept=".csv" (change)="onFileChange($event)" />
         <span>Choisir un CSV</span>
       </label>
       <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading()">
