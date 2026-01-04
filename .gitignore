@@ -3,7 +3,7 @@
 # Compiled output
 /dist
 /.vscode
-/public
+# /public
 /tmp
 /out-tsc
 /bazel-out
