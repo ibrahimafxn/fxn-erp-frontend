@@ -28,6 +28,9 @@ export class InterventionsDashboard {
   readonly importLoading = signal(false);
   readonly importResult = signal<string | null>(null);
   readonly importError = signal<string | null>(null);
+  readonly resetLoading = signal(false);
+  readonly resetResult = signal<string | null>(null);
+  readonly resetError = signal<string | null>(null);
 
   readonly summaryItems = signal<InterventionSummaryItem[]>([]);
   readonly totals = signal<InterventionTotals | null>(null);
@@ -52,7 +55,7 @@ export class InterventionsDashboard {
 
   readonly hasData = computed(() => this.summaryItems().length > 0);
 
-  private selectedFile: File | null = null;
+  selectedFile: File | null = null;
 
   constructor() {
     this.loadFilters();
@@ -97,6 +100,36 @@ export class InterventionsDashboard {
         this.importLoading.set(false);
         this.importError.set(this.apiError(err, 'Erreur import CSV'));
         this.resetFileInput();
+      }
+    });
+  }
+
+  resetData(): void {
+    if (!window.confirm('Supprimer toutes les interventions importées ?')) {
+      return;
+    }
+
+    this.resetLoading.set(true);
+    this.resetError.set(null);
+    this.resetResult.set(null);
+
+    this.svc.resetAll().subscribe({
+      next: (res) => {
+        this.resetLoading.set(false);
+        if (res.success) {
+          const deleted = res.data?.deleted ?? 0;
+          this.resetResult.set(`Données supprimées (${deleted}).`);
+          this.summaryItems.set([]);
+          this.totals.set(null);
+          this.loadFilters();
+          this.refresh();
+          return;
+        }
+        this.resetError.set('Erreur suppression');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.resetLoading.set(false);
+        this.resetError.set(this.apiError(err, 'Erreur suppression'));
       }
     });
   }
@@ -166,7 +199,7 @@ export class InterventionsDashboard {
     return apiMsg || err.message || fallback;
   }
 
-  private resetFileInput(): void {
+  resetFileInput(): void {
     this.selectedFile = null;
     const input = this.csvInput?.nativeElement;
     if (input) {

@@ -10,6 +10,9 @@
         <input #csvInput type="file" accept=".csv" (change)="onFileChange($event)" />
         <span>Choisir un CSV</span>
       </label>
+      <button class="btn-danger" type="button" (click)="resetData()" [disabled]="resetLoading() || importLoading()">
+        @if (resetLoading()) { Reset… } @else { Reset data }
+      </button>
       <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading()">
         @if (importLoading()) { Import… } @else { Importer }
       </button>
@@ -20,6 +23,11 @@
     <div class="state error card"><strong>Import :</strong> {{ importError() }}</div>
   } @else if (importResult()) {
     <div class="state ok card">{{ importResult() }}</div>
+  }
+  @if (resetError()) {
+    <div class="state error card"><strong>Reset :</strong> {{ resetError() }}</div>
+  } @else if (resetResult()) {
+    <div class="state ok card">{{ resetResult() }}</div>
   }
 
   <section class="toolbar card">

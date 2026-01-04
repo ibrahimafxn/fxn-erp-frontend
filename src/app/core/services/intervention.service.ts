@@ -89,4 +89,8 @@ export class InterventionService {
   filters(): Observable<{ success: boolean; data: InterventionFilters }> {
     return this.http.get<{ success: boolean; data: InterventionFilters }>(`${this.baseUrl}/filters`);
   }
+
+  resetAll(): Observable<{ success: boolean; data: { deleted: number } }> {
+    return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/reset`);
+  }
 }
