@@ -20,10 +20,10 @@
         <h2>Employés</h2>
         @if (docAlerts()) {
           <div class="doc-alerts">
-            <button class="pill danger link-pill" type="button" (click)="openDocOverlay('EXPIRED')">
+            <button class="pill danger link-pill" type="button" (click)="setDocFilter('EXPIRED')">
               Expirés : {{ docAlerts()?.expired }}
             </button>
-            <button class="pill warn link-pill" type="button" (click)="openDocOverlay('EXPIRING')">
+            <button class="pill warn link-pill" type="button" (click)="setDocFilter('EXPIRING')">
               Expirent bientôt : {{ docAlerts()?.expiring }}
             </button>
             <button class="pill link-pill" type="button" (click)="setDocFilter('ALL')">
