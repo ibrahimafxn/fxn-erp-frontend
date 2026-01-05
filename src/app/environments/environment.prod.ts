@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://api.fxn-mali.com/api', // URL de ton backend prod
+  apiBaseUrl: 'https://exchange-backend-r5rb.onrender.com/api',
   featureFlags: {
     enableDebug: false
   }
