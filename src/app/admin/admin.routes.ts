@@ -73,6 +73,18 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./receipts/receipt-page/receipt-page').then(m => m.ReceiptPage)
   },
   {
+    path: 'orders',
+    loadComponent: () => import('./orders/orders-page/orders-page').then(m => m.OrdersPage)
+  },
+  {
+    path: 'orders/new',
+    loadComponent: () => import('./orders/order-form/order-form').then(m => m.OrderForm)
+  },
+  {
+    path: 'orders/:id/detail',
+    loadComponent: () => import('./orders/order-detail/order-detail').then(m => m.OrderDetail)
+  },
+  {
     path: 'alerts/stock',
     loadComponent: () => import('./alerts/stock-alerts/stock-alerts').then(m => m.StockAlerts)
   },

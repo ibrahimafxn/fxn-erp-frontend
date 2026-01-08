@@ -81,6 +81,7 @@ export class AppHeader {
   readonly reservationsLink = computed(() => (this.isDepotManager() ? '/depot/reservations' : '/admin/reservations'));
   readonly materialReservationsLink = computed(() => '/admin/reservations/materials');
   readonly receiptsLink = computed(() => (this.isDepotManager() ? '/depot/receipts' : '/admin/receipts'));
+  readonly ordersLink = computed(() => '/admin/orders');
   readonly stockAlertsLink = computed(() => (this.isDepotManager() ? '/depot/alerts/stock' : '/admin/alerts/stock'));
 
   /* ---------------------------
@@ -127,6 +128,10 @@ export class AppHeader {
     this.router.navigate([this.receiptsLink()]).then();
   }
 
+  goOrders(): void {
+    this.router.navigate([this.ordersLink()]).then();
+  }
+
   goStockAlerts(): void {
     this.router.navigate([this.stockAlertsLink()]).then();
   }
@@ -156,6 +161,8 @@ export class AppHeader {
     if (url.includes('/reservations/materials')) return 'Réservations matériels';
     if (url.includes('/reservations')) return 'Réservations';
     if (url.includes('/receipts')) return 'Réceptions';
+    if (url.includes('/orders/new')) return 'Nouvelle commande';
+    if (url.includes('/orders')) return 'Commandes';
     if (url.includes('/alerts/stock')) return 'Alertes';
     if (url.includes('/interventions')) return 'Interventions';
     if (url.includes('/consumables')) return 'Consommables';

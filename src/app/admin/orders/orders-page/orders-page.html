@@ -1,0 +1,87 @@
+<section class="orders-page">
+  <header class="page-header">
+    <div>
+      <h1>Commandes</h1>
+      <p class="subtitle">Suivi minimal des commandes en attente d'integration.</p>
+    </div>
+    <button class="btn-primary" type="button" (click)="createNew()">Nouvelle commande</button>
+  </header>
+
+  <article class="card">
+    <h2 class="section-title"><span class="material-icons">receipt_long</span>Liste des commandes</h2>
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
+      <label>
+        Recherche
+        <input type="text" formControlName="q" placeholder="Reference ou client" />
+      </label>
+      <label>
+        Statut
+        <input type="text" formControlName="status" placeholder="En cours" />
+      </label>
+      <div class="actions">
+        <button class="btn-outline" type="submit">Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()">Effacer</button>
+      </div>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+
+    @if (loading()) {
+      <div class="state loading">Chargement...</div>
+    } @else if (error()) {
+      <div class="state error">Erreur : {{ error() }}</div>
+    } @else if (items().length === 0) {
+      <div class="state empty">Aucune commande.</div>
+    } @else {
+      <div class="table">
+        <table>
+          <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Client</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Montant</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (order of items(); track order._id) {
+              <tr>
+                <td>{{ order.reference }}</td>
+                <td>{{ order.client }}</td>
+                <td>{{ order.date }}</td>
+                <td>{{ order.status }}</td>
+                <td>{{ order.amount }}</td>
+                <td class="actions-cell">
+                  <button class="btn-outline" type="button" (click)="openDetail(order)">Detail</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pager">
+        <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+          ← Precedent
+        </button>
+        <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()">
+          Suivant →
+        </button>
+      </footer>
+    }
+  </article>
+</section>

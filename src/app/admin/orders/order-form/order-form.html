@@ -1,0 +1,50 @@
+<section class="order-form">
+  <header class="page-header">
+    <div>
+      <h1>Nouvelle commande</h1>
+      <p class="subtitle">Renseigne les informations de base.</p>
+    </div>
+  </header>
+
+  <article class="card">
+    <h2 class="section-title"><span class="material-icons">edit_note</span>Informations commande</h2>
+    <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+      <label>
+        Reference
+        <input type="text" formControlName="reference" placeholder="CMD-2025-001" />
+      </label>
+      <label>
+        Client
+        <input type="text" formControlName="client" placeholder="Client" />
+      </label>
+      <label>
+        Date
+        <input type="date" formControlName="date" />
+      </label>
+      <label>
+        Statut
+        <input type="text" formControlName="status" placeholder="En cours" />
+      </label>
+      <label>
+        Montant
+        <input type="number" min="0" formControlName="amount" />
+      </label>
+      <label class="full">
+        Notes
+        <textarea rows="3" formControlName="notes" placeholder="Notes"></textarea>
+      </label>
+
+      @if (submitError()) {
+        <div class="state error full">{{ submitError() }}</div>
+      } @else if (submitSuccess()) {
+        <div class="state success full">{{ submitSuccess() }}</div>
+      }
+
+      <div class="actions full">
+        <button class="btn-primary" type="submit" [disabled]="saving() || form.invalid">
+          Enregistrer la commande
+        </button>
+      </div>
+    </form>
+  </article>
+</section>

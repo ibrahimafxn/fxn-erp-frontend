@@ -63,6 +63,9 @@
                 @if (canViewMovements()) {
                   <button (click)="goReceipts()"><span class="material-icons">inventory_2</span>Réceptions stock</button>
                 }
+                @if (canManageAccess()) {
+                  <button (click)="goOrders()"><span class="material-icons">receipt_long</span>Commandes</button>
+                }
                 @if (canViewMovements()) {
                   <button (click)="goStockAlerts()">
                     <span class="material-icons">report</span>

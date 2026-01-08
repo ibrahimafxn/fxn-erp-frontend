@@ -1,0 +1,47 @@
+<section class="order-detail">
+  <header class="page-header">
+    <div>
+      <h1>Detail commande</h1>
+      <p class="subtitle">Informations principales de la commande.</p>
+    </div>
+    <button class="btn-outline" type="button" (click)="backToList()">Retour liste</button>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement...</div>
+  } @else if (error()) {
+    <div class="state error card">{{ error() }}</div>
+  } @else if (!order()) {
+    <div class="state empty card">Aucune donnee.</div>
+  } @else {
+    <article class="card">
+      <h2 class="section-title"><span class="material-icons">receipt_long</span>Commande</h2>
+      <div class="grid">
+        <div>
+          <div class="label">Reference</div>
+          <div class="value">{{ order()?.reference }}</div>
+        </div>
+        <div>
+          <div class="label">Client</div>
+          <div class="value">{{ order()?.client }}</div>
+        </div>
+        <div>
+          <div class="label">Date</div>
+          <div class="value">{{ order()?.date }}</div>
+        </div>
+        <div>
+          <div class="label">Statut</div>
+          <div class="value">{{ order()?.status }}</div>
+        </div>
+        <div>
+          <div class="label">Montant</div>
+          <div class="value">{{ order()?.amount }}</div>
+        </div>
+        <div class="full">
+          <div class="label">Notes</div>
+          <div class="value">{{ order()?.notes || '—' }}</div>
+        </div>
+      </div>
+    </article>
+  }
+</section>
