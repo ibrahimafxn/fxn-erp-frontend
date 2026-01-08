@@ -209,6 +209,46 @@
   color: var(--fxn-text);
 }
 
+@media (max-width: 900px) {
+  .app-header {
+    height: 64px;
+    padding: 0 1rem;
+  }
+
+  .brand {
+    font-size: 0.9rem;
+  }
+
+  .page-title {
+    display: none;
+  }
+
+  .right {
+    gap: 0.5rem;
+  }
+
+  .right .btn-outline {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .user-trigger {
+    padding: 0.25rem 0.4rem;
+  }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .right .btn-outline {
+    display: none;
+  }
+}
+
 @keyframes menu-pop {
   from {
     opacity: 0;

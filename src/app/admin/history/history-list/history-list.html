@@ -14,84 +14,120 @@
 
   <section class="toolbar card">
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
-      <select formControlName="resourceType">
-        <option value="">Toutes ressources</option>
-        <option value="MATERIAL">Matériels</option>
-        <option value="CONSUMABLE">Consommables</option>
-        <option value="VEHICLE">Véhicules</option>
-      </select>
+      <label>
+        Ressource
+        <select formControlName="resourceType">
+          <option value="">Toutes ressources</option>
+          <option value="MATERIAL">Matériels</option>
+          <option value="CONSUMABLE">Consommables</option>
+          <option value="VEHICLE">Véhicules</option>
+        </select>
+      </label>
 
-      <select formControlName="action">
-        <option value="">Toutes actions</option>
-        <option value="IN">Entrée</option>
-        <option value="OUT">Sortie</option>
-        <option value="TRANSFER">Transfert</option>
-        <option value="ASSIGN">Attribution</option>
-        <option value="RELEASE">Reprise</option>
-        <option value="ADJUST">Ajustement</option>
-        <option value="CREATE">Création</option>
-        <option value="UPDATE">Modification</option>
-        <option value="DELETE">Suppression</option>
-      </select>
+      <label>
+        Action
+        <select formControlName="action">
+          <option value="">Toutes actions</option>
+          <option value="IN">Entrée</option>
+          <option value="OUT">Sortie</option>
+          <option value="TRANSFER">Transfert</option>
+          <option value="ASSIGN">Attribution</option>
+          <option value="RELEASE">Reprise</option>
+          <option value="ADJUST">Ajustement</option>
+          <option value="CREATE">Création</option>
+          <option value="UPDATE">Modification</option>
+          <option value="DELETE">Suppression</option>
+        </select>
+      </label>
 
-      <select formControlName="status">
-        <option value="">Tous statuts</option>
-        <option value="COMMITTED">Validé</option>
-        <option value="CANCELED">Annulé</option>
-      </select>
+      <label>
+        Statut
+        <select formControlName="status">
+          <option value="">Tous statuts</option>
+          <option value="COMMITTED">Validé</option>
+          <option value="CANCELED">Annulé</option>
+        </select>
+      </label>
 
-      <input type="text" formControlName="resourceId" placeholder="ID ressource" />
+      <label>
+        ID ressource
+        <input type="text" formControlName="resourceId" placeholder="ID ressource" />
+      </label>
 
-      <select formControlName="fromType">
-        <option value="">Origine</option>
-        <option value="DEPOT">Dépôt</option>
-        <option value="USER">Utilisateur</option>
-        <option value="SUPPLIER">Fournisseur</option>
-        <option value="EXTERNAL">Externe</option>
-      </select>
+      <label>
+        Origine
+        <select formControlName="fromType">
+          <option value="">Origine</option>
+          <option value="DEPOT">Dépôt</option>
+          <option value="USER">Utilisateur</option>
+          <option value="SUPPLIER">Fournisseur</option>
+          <option value="EXTERNAL">Externe</option>
+        </select>
+      </label>
 
       @if (filterForm.controls.fromType.value === 'USER') {
-        <select formControlName="fromId" [disabled]="usersLoading()">
-          <option value="">{{ usersLoading() ? 'Chargement…' : 'Tous utilisateurs' }}</option>
-          @for (u of users(); track u._id) {
-            <option [value]="u._id">{{ userLabel(u) }}</option>
-          }
-        </select>
+        <label>
+          Utilisateur origine
+          <select formControlName="fromId" [disabled]="usersLoading()">
+            <option value="">{{ usersLoading() ? 'Chargement…' : 'Tous utilisateurs' }}</option>
+            @for (u of users(); track u._id) {
+              <option [value]="u._id">{{ userLabel(u) }}</option>
+            }
+          </select>
+        </label>
       } @else if (filterForm.controls.fromType.value === 'DEPOT') {
-        <select formControlName="fromId" [disabled]="depotsLoading()">
-          <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
-          @for (d of depots(); track d._id) {
-            <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
-          }
-        </select>
+        <label>
+          Dépôt origine
+          <select formControlName="fromId" [disabled]="depotsLoading()">
+            <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+            }
+          </select>
+        </label>
       } @else {
-        <input type="text" formControlName="fromId" placeholder="ID origine" />
+        <label>
+          ID origine
+          <input type="text" formControlName="fromId" placeholder="ID origine" />
+        </label>
       }
 
-      <select formControlName="toType">
-        <option value="">Destination</option>
-        <option value="DEPOT">Dépôt</option>
-        <option value="USER">Utilisateur</option>
-        <option value="SUPPLIER">Fournisseur</option>
-        <option value="EXTERNAL">Externe</option>
-      </select>
+      <label>
+        Destination
+        <select formControlName="toType">
+          <option value="">Destination</option>
+          <option value="DEPOT">Dépôt</option>
+          <option value="USER">Utilisateur</option>
+          <option value="SUPPLIER">Fournisseur</option>
+          <option value="EXTERNAL">Externe</option>
+        </select>
+      </label>
 
       @if (filterForm.controls.toType.value === 'USER') {
-        <select formControlName="toId" [disabled]="usersLoading()">
-          <option value="">{{ usersLoading() ? 'Chargement…' : 'Tous utilisateurs' }}</option>
-          @for (u of users(); track u._id) {
-            <option [value]="u._id">{{ userLabel(u) }}</option>
-          }
-        </select>
+        <label>
+          Utilisateur destination
+          <select formControlName="toId" [disabled]="usersLoading()">
+            <option value="">{{ usersLoading() ? 'Chargement…' : 'Tous utilisateurs' }}</option>
+            @for (u of users(); track u._id) {
+              <option [value]="u._id">{{ userLabel(u) }}</option>
+            }
+          </select>
+        </label>
       } @else if (filterForm.controls.toType.value === 'DEPOT') {
-        <select formControlName="toId" [disabled]="depotsLoading()">
-          <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
-          @for (d of depots(); track d._id) {
-            <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
-          }
-        </select>
+        <label>
+          Dépôt destination
+          <select formControlName="toId" [disabled]="depotsLoading()">
+            <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+            }
+          </select>
+        </label>
       } @else {
-        <input type="text" formControlName="toId" placeholder="ID destination" />
+        <label>
+          ID destination
+          <input type="text" formControlName="toId" placeholder="ID destination" />
+        </label>
       }
 
       <div class="actions">
@@ -142,9 +178,9 @@
         <tbody>
           @for (m of items(); track m._id) {
             <tr>
-              <td>{{ createdAtText(m) }}</td>
-              <td class="mono">{{ resourceLabel(m) }}</td>
-              <td>
+              <td data-label="Date">{{ createdAtText(m) }}</td>
+              <td class="mono" data-label="Ressource">{{ resourceLabel(m) }}</td>
+              <td data-label="Action">
                 <span
                   class="badge"
                   [class.assign]="m.action === 'ASSIGN'"
@@ -156,28 +192,30 @@
                   {{ actionLabel(m.action) }}
                 </span>
               </td>
-              <td class="mono">{{ endpointLabel(m.from.type, m.from.id, $any(m).fromLabel) }}</td>
-              <td class="mono">{{ endpointLabel(m.to.type, m.to.id, $any(m).toLabel) }}</td>
-              <td>{{ m.quantity }} {{ m.unit }}</td>
-              <td>{{ authorLabel(m) }}</td>
-              <td>
+              <td class="mono" data-label="Origine">{{ endpointLabel(m.from.type, m.from.id, $any(m).fromLabel) }}</td>
+              <td class="mono" data-label="Destination">{{ endpointLabel(m.to.type, m.to.id, $any(m).toLabel) }}</td>
+              <td data-label="Quantité">{{ m.quantity }} {{ m.unit }}</td>
+              <td data-label="Auteur">{{ authorLabel(m) }}</td>
+              <td data-label="Statut">
                 @if (m.status === 'CANCELED') {
                   <span class="pill danger">{{ statusLabel(m.status) }}</span>
                 } @else {
                   <span class="pill ok">{{ statusLabel(m.status) }}</span>
                 }
               </td>
-              <td>
-                <button
-                  class="btn-outline"
-                  type="button"
-                  (click)="openCancelModal(m)"
-                  [disabled]="!canCancel(m) || cancelLoading()[m._id]">
-                  Annuler
-                </button>
-                @if (rowError(m)) {
-                  <div class="state error">{{ rowError(m) }}</div>
-                }
+              <td class="actions-cell" data-label="Action">
+                <div class="row-actions">
+                  <button
+                    class="btn-outline"
+                    type="button"
+                    (click)="openCancelModal(m)"
+                    [disabled]="!canCancel(m) || cancelLoading()[m._id]">
+                    Annuler
+                  </button>
+                  @if (rowError(m)) {
+                    <div class="state error">{{ rowError(m) }}</div>
+                  }
+                </div>
               </td>
             </tr>
           }

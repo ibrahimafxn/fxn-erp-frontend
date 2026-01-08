@@ -21,6 +21,11 @@
   gap: .75rem;
   align-items: center;
 
+  label {
+    display: grid;
+    gap: .4rem;
+  }
+
   input, select {
     width: 100%;
     padding: .7rem .85rem;
@@ -93,6 +98,17 @@ tbody td {
   font-size: .95rem;
 }
 
+.actions-cell {
+  text-align: right;
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .6rem;
+  align-items: center;
+}
+
 .badge {
   display: inline-flex;
   padding: .25rem .6rem;
@@ -139,3 +155,55 @@ tbody td {
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
 .pager { display:flex; justify-content: space-between; gap:.9rem; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .table.card {
+    overflow: visible;
+  }
+
+  table {
+    display: block;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  tr {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border-radius: var(--fxn-radius-md);
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-soft);
+  }
+
+  tbody td {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 8px;
+    padding: 0;
+    border-bottom: none;
+  }
+
+  tbody td::before {
+    content: attr(data-label);
+    color: var(--fxn-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .actions-cell {
+    text-align: left;
+  }
+
+  .row-actions {
+    justify-content: flex-start;
+  }
+}

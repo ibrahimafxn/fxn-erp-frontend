@@ -221,19 +221,19 @@
         <tbody>
           @for (it of summaryItems(); track it.technician) {
             <tr>
-              <td>{{ it.technician || '—' }}</td>
-              <td>{{ it.total }}</td>
-              <td>{{ racTotal(it) }}</td>
-              <td>{{ it.racPavillon }}</td>
-              <td>{{ it.racImmeuble }}</td>
-              <td>{{ it.reconnexion }}</td>
-              <td>{{ it.racF8 }}</td>
-              <td>{{ it.racProS }}</td>
-              <td>{{ it.sav }}</td>
-              <td>{{ it.clem }}</td>
-              <td>{{ it.other + it.racAutre }}</td>
-              <td>{{ fxnRevenue(it) | number:'1.0-0' }}</td>
-              <td>{{ techRevenue(it) | number:'1.0-0' }}</td>
+              <td data-label="Technicien">{{ it.technician || '—' }}</td>
+              <td data-label="Total">{{ it.total }}</td>
+              <td data-label="Raccordements">{{ racTotal(it) }}</td>
+              <td data-label="Rac pavillon">{{ it.racPavillon }}</td>
+              <td data-label="Rac immeuble">{{ it.racImmeuble }}</td>
+              <td data-label="Reconnexion">{{ it.reconnexion }}</td>
+              <td data-label="Rac F8">{{ it.racF8 }}</td>
+              <td data-label="Rac Pro_s">{{ it.racProS }}</td>
+              <td data-label="SAV">{{ it.sav }}</td>
+              <td data-label="CLEM">{{ it.clem }}</td>
+              <td data-label="Autres">{{ it.other + it.racAutre }}</td>
+              <td data-label="CA FXN">{{ fxnRevenue(it) | number:'1.0-0' }}</td>
+              <td data-label="CA Tech">{{ techRevenue(it) | number:'1.0-0' }}</td>
             </tr>
           }
         </tbody>

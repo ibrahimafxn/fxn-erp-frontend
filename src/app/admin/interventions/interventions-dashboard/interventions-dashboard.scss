@@ -379,6 +379,92 @@ tbody tr:hover {
   background: var(--fxn-primary-soft);
 }
 
+@media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-header .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .rates-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rates-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-header .header-actions,
+  .rates-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .5rem;
+  }
+
+  .page-header .header-actions > button,
+  .rates-actions > button,
+  .page-header .header-actions > .file-input {
+    width: 100%;
+  }
+
+  .rates-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .table.card {
+    overflow: visible;
+  }
+
+  table {
+    display: block;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  tbody tr {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border-radius: var(--fxn-radius-md);
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-soft);
+  }
+
+  tbody td {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 8px;
+    padding: 0;
+    border-bottom: none;
+    white-space: normal;
+  }
+
+  tbody td::before {
+    content: attr(data-label);
+    color: var(--fxn-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+}
+
 .pager {
   display: flex;
   align-items: center;
