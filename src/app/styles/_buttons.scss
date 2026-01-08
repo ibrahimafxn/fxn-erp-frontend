@@ -37,6 +37,18 @@ button {
   border-color: var(--fxn-button-outline-border);
 }
 
+.btn-outline.edit {
+  background: var(--fxn-primary-soft);
+  border-color: var(--fxn-primary-border);
+  color: var(--fxn-text);
+}
+
+.btn-outline.danger {
+  background: var(--fxn-danger-soft);
+  border-color: rgba(255, 90, 111, 0.55);
+  color: var(--fxn-text);
+}
+
 .btn-primary:hover,
 .btn-danger:hover,
 .btn-outline:hover {

@@ -1,9 +1,9 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { Order, OrderService } from '../../../core/services/order.service';
+import { Order, OrderLine, OrderService } from '../../../core/services/order.service';
 
 @Component({
   standalone: true,
@@ -15,6 +15,7 @@ import { Order, OrderService } from '../../../core/services/order.service';
 export class OrderDetail {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
   private orders = inject(OrderService);
 
   readonly loading = signal(true);
@@ -32,7 +33,11 @@ export class OrderDetail {
   }
 
   backToList(): void {
-    this.router.navigate(['/admin/orders']).then();
+    this.location.back();
+  }
+
+  linesTotal(lines: OrderLine[] = []): number {
+    return lines.reduce((sum, line) => sum + (line.total ?? (line.quantity * line.unitPrice)), 0);
   }
 
   private load(id: string): void {

@@ -1,10 +1,10 @@
 <section class="order-detail">
   <header class="page-header">
     <div>
-      <h1>Detail commande</h1>
+      <h1>Détail de la commande</h1>
       <p class="subtitle">Informations principales de la commande.</p>
     </div>
-    <button class="btn-outline" type="button" (click)="backToList()">Retour liste</button>
+    <button class="btn-outline" type="button" (click)="backToList()">Retour</button>
   </header>
 
   @if (loading()) {
@@ -18,7 +18,7 @@
       <h2 class="section-title"><span class="material-icons">receipt_long</span>Commande</h2>
       <div class="grid">
         <div>
-          <div class="label">Reference</div>
+          <div class="label">Référence</div>
           <div class="value">{{ order()?.reference }}</div>
         </div>
         <div>
@@ -27,7 +27,7 @@
         </div>
         <div>
           <div class="label">Date</div>
-          <div class="value">{{ order()?.date }}</div>
+          <div class="value">{{ order()?.date | date:'dd/MM/yyyy HH:mm' }}</div>
         </div>
         <div>
           <div class="label">Statut</div>
@@ -42,6 +42,42 @@
           <div class="value">{{ order()?.notes || '—' }}</div>
         </div>
       </div>
+    </article>
+
+    <article class="card">
+      <h2 class="section-title"><span class="material-icons">list_alt</span>Articles</h2>
+      @if ((order()?.lines || []).length === 0) {
+        <div class="state empty">Aucun article.</div>
+      } @else {
+        <div class="table">
+          <table>
+            <thead>
+            <tr>
+              <th>Article</th>
+              <th>Type</th>
+              <th>Quantité</th>
+              <th>Prix unitaire</th>
+              <th>Total</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (line of (order()?.lines || []); track $index) {
+                <tr>
+                  <td>{{ line.name }}</td>
+                  <td>{{ line.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
+                  <td>{{ line.quantity }}</td>
+                  <td>{{ line.unitPrice }}</td>
+                  <td>{{ line.total ?? (line.quantity * line.unitPrice) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="lines-total">
+          <div class="label">Total des lignes</div>
+          <div class="value">{{ linesTotal(order()?.lines || []) }}</div>
+        </div>
+      }
     </article>
   }
 </section>

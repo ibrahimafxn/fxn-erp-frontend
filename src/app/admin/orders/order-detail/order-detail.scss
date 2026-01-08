@@ -1,6 +1,6 @@
 .order-detail {
   display: grid;
-  gap: 24px;
+  gap: 28px;
 }
 
 .page-header {
@@ -11,18 +11,20 @@
 }
 
 .subtitle {
-  color: #667085;
+  color: var(--fxn-text-muted);
+  margin-top: 4px;
 }
 
 .section-title {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 1.05rem;
 }
 
 .grid {
   display: grid;
-  gap: 16px;
+  gap: 18px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
@@ -31,12 +33,51 @@
 }
 
 .label {
-  color: #667085;
+  color: var(--fxn-text-muted);
   font-size: 0.85rem;
 }
 
 .value {
   font-weight: 600;
+}
+
+.table {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--fxn-border);
+}
+
+th {
+  font-size: 0.85rem;
+  color: var(--fxn-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+td {
+  font-size: 0.95rem;
+}
+
+.lines-total {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: var(--fxn-radius-sm);
+  background: var(--fxn-surface-soft);
+  border: 1px solid var(--fxn-border-strong);
 }
 
 @media (max-width: 900px) {

@@ -5,11 +5,12 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { Order, OrderService } from '../../../core/services/order.service';
+import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
   standalone: true,
   selector: 'app-orders-page',
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './orders-page.html',
   styleUrls: ['./orders-page.scss']
 })
@@ -24,6 +25,10 @@ export class OrdersPage {
   readonly total = signal(0);
   readonly page = signal(1);
   readonly limit = signal(25);
+  readonly deleteModalOpen = signal(false);
+  readonly deletingId = signal<string | null>(null);
+  readonly pendingDeleteId = signal<string | null>(null);
+  readonly pendingDeleteName = signal<string>('');
 
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -33,7 +38,7 @@ export class OrdersPage {
 
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control(''),
-    status: this.fb.nonNullable.control('')
+    status: this.fb.nonNullable.control('En cours')
   });
 
   constructor() {
@@ -46,6 +51,44 @@ export class OrdersPage {
 
   openDetail(order: Order): void {
     this.router.navigate(['/admin/orders', order._id, 'detail']).then();
+  }
+
+  openEdit(order: Order): void {
+    this.router.navigate(['/admin/orders', order._id, 'edit']).then();
+  }
+
+  openDeleteModal(order: Order): void {
+    this.pendingDeleteId.set(order._id);
+    this.pendingDeleteName.set(order.reference || order.client || '');
+    this.deleteModalOpen.set(true);
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalOpen.set(false);
+    this.pendingDeleteId.set(null);
+    this.pendingDeleteName.set('');
+  }
+
+  confirmDelete(): void {
+    const id = this.pendingDeleteId();
+    if (!id) return;
+    this.deletingId.set(id);
+    this.orders.remove(id).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        this.closeDeleteModal();
+        this.refresh();
+      },
+      error: (err: HttpErrorResponse) => {
+        const apiMsg =
+          typeof err.error === 'object' && err.error !== null && 'message' in err.error
+            ? String((err.error as { message?: unknown }).message ?? '')
+            : '';
+        this.error.set(apiMsg || err.message || 'Erreur suppression commande');
+        this.deletingId.set(null);
+        this.closeDeleteModal();
+      }
+    });
   }
 
   refresh(): void {
