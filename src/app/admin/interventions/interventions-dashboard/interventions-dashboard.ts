@@ -248,8 +248,12 @@ export class InterventionsDashboard {
       limit: this.limit()
     }).subscribe({
       next: (res) => {
-        this.summaryItems.set(res.data.items || []);
-        this.totals.set(res.data.totals || null);
+        const items = (res.data.items || [])
+          .map((item) => this.normalizeSummaryItem(item))
+          .filter((item): item is InterventionSummaryItem => item !== null);
+        const totals = this.normalizeSummaryItem(res.data.totals || null);
+        this.summaryItems.set(items);
+        this.totals.set(totals);
         this.totalItems.set(res.data.total ?? res.data.items?.length ?? 0);
         if (res.data.page) this.page.set(res.data.page);
         if (res.data.limit) this.limit.set(res.data.limit);
@@ -260,6 +264,21 @@ export class InterventionsDashboard {
         this.error.set(this.apiError(err, 'Erreur chargement indicateurs'));
       }
     });
+  }
+
+  private normalizeSummaryItem<T extends InterventionSummaryItem | InterventionTotals>(item: T | null): T | null {
+    if (!item) return null;
+    const raw = item as Record<string, unknown>;
+    if (item.racProS == null && typeof raw['racpro_s'] === 'number') {
+      (item as { racProS?: number }).racProS = raw['racpro_s'] as number;
+    }
+    if (item.racProC == null && typeof raw['racpro_c'] === 'number') {
+      (item as { racProC?: number }).racProC = raw['racpro_c'] as number;
+    }
+    if (item.refcDgr == null && typeof raw['refc_dgr'] === 'number') {
+      (item as { refcDgr?: number }).refcDgr = raw['refc_dgr'] as number;
+    }
+    return item;
   }
 
   search(): void {
