@@ -221,7 +221,11 @@
         <tbody>
           @for (it of summaryItems(); track it.technician) {
             <tr>
-              <td data-label="Technicien">{{ it.technician || '—' }}</td>
+              <td data-label="Technicien">
+                <button class="link" type="button" (click)="openDetail(it.technician || '')">
+                  {{ it.technician || '—' }}
+                </button>
+              </td>
               <td data-label="Total">{{ it.total }}</td>
               <td data-label="Raccordements">{{ racTotal(it) }}</td>
               <td data-label="Rac pavillon">{{ it.racPavillon }}</td>
@@ -263,3 +267,72 @@
     </footer>
   }
 </section>
+
+@if (detailOpen()) {
+  <div class="overlay-backdrop" (click)="closeDetail()">
+    <div class="overlay-panel" (click)="$event.stopPropagation()">
+      <div class="overlay-header">
+        <div>
+          <h3 class="section-title"><span class="material-icons">assignment</span>Interventions du technicien</h3>
+          <p class="subtitle">{{ detailTechnician() }}</p>
+        </div>
+        <button class="btn-outline" type="button" (click)="closeDetail()">Fermer</button>
+      </div>
+
+      <div class="overlay-meta">
+        <span class="pill">Total : {{ detailTotal() }}</span>
+        <span class="pill">Page : {{ detailPage() }} / {{ detailPageCount() }}</span>
+        <label class="limit">
+          <span>Par page</span>
+          <select [value]="detailLimit()" (change)="detailLimitChange($event)">
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+          </select>
+        </label>
+      </div>
+
+      @if (detailLoading()) {
+        <div class="state loading">Chargement…</div>
+      } @else if (detailError()) {
+        <div class="state error">{{ detailError() }}</div>
+      } @else if (detailItems().length === 0) {
+        <div class="state empty">Aucune intervention trouvée.</div>
+      } @else {
+        <div class="detail-table">
+          <table>
+            <thead>
+            <tr>
+              <th>Date</th>
+              <th>Numéro</th>
+              <th>Client</th>
+              <th>Type</th>
+              <th>Articles</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (row of detailItems(); track row._id) {
+                <tr>
+                  <td data-label="Date">{{ row.dateRdv | date:'dd/MM/yyyy' }}</td>
+                  <td data-label="Numéro" class="mono">{{ row.numInter }}</td>
+                  <td data-label="Client">{{ row.client || '—' }}</td>
+                  <td data-label="Type">{{ row.type || '—' }}</td>
+                  <td data-label="Articles" class="mono">{{ row.articlesRaw || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="pager">
+          <button class="btn-outline" type="button" (click)="detailPrev()" [disabled]="detailPage() <= 1">
+            ← Précédent
+          </button>
+          <button class="btn-outline" type="button" (click)="detailNext()" [disabled]="detailPage() >= detailPageCount()">
+            Suivant →
+          </button>
+        </footer>
+      }
+    </div>
+  </div>
+}

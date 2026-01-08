@@ -7,7 +7,8 @@ import {
   InterventionService,
   InterventionSummaryItem,
   InterventionFilters,
-  InterventionTotals
+  InterventionTotals,
+  InterventionItem
 } from '../../../core/services/intervention.service';
 import { InterventionRatesService, InterventionRates } from '../../../core/services/intervention-rates.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
@@ -47,6 +48,14 @@ export class InterventionsDashboard {
   readonly totalItems = signal(0);
   readonly page = signal(1);
   readonly limit = signal(25);
+  readonly detailOpen = signal(false);
+  readonly detailLoading = signal(false);
+  readonly detailError = signal<string | null>(null);
+  readonly detailItems = signal<InterventionItem[]>([]);
+  readonly detailTotal = signal(0);
+  readonly detailPage = signal(1);
+  readonly detailLimit = signal(20);
+  readonly detailTechnician = signal<string | null>(null);
 
   readonly filters = signal<InterventionFilters>({
     regions: [],
@@ -71,6 +80,12 @@ export class InterventionsDashboard {
   readonly pageCount = computed(() => {
     const t = this.totalItems();
     const l = this.limit();
+    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
+  });
+
+  readonly detailPageCount = computed(() => {
+    const t = this.detailTotal();
+    const l = this.detailLimit();
     return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
   });
 
@@ -152,6 +167,42 @@ export class InterventionsDashboard {
     this.loadFilters();
     this.ratesService.refresh().subscribe();
     this.refresh();
+  }
+
+  openDetail(technician: string): void {
+    if (!technician) return;
+    this.detailTechnician.set(technician);
+    this.detailPage.set(1);
+    this.detailOpen.set(true);
+    this.loadDetail();
+  }
+
+  closeDetail(): void {
+    this.detailOpen.set(false);
+    this.detailItems.set([]);
+    this.detailError.set(null);
+  }
+
+  detailPrev(): void {
+    if (this.detailPage() <= 1) return;
+    this.detailPage.set(this.detailPage() - 1);
+    this.loadDetail();
+  }
+
+  detailNext(): void {
+    if (this.detailPage() >= this.detailPageCount()) return;
+    this.detailPage.set(this.detailPage() + 1);
+    this.loadDetail();
+  }
+
+  detailLimitChange(event: Event): void {
+    const el = event.target instanceof HTMLSelectElement ? event.target : null;
+    if (!el) return;
+    const v = Number(el.value);
+    if (!Number.isFinite(v) || v <= 0) return;
+    this.detailLimit.set(v);
+    this.detailPage.set(1);
+    this.loadDetail();
   }
 
   onFileChange(event: Event): void {
@@ -262,6 +313,38 @@ export class InterventionsDashboard {
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
         this.error.set(this.apiError(err, 'Erreur chargement indicateurs'));
+      }
+    });
+  }
+
+  private loadDetail(): void {
+    const tech = this.detailTechnician();
+    if (!tech) return;
+    const f = this.filterForm.getRawValue();
+    this.detailLoading.set(true);
+    this.detailError.set(null);
+
+    this.svc.list({
+      fromDate: f.fromDate || undefined,
+      toDate: f.toDate || undefined,
+      technician: tech,
+      region: f.region || undefined,
+      client: f.client || undefined,
+      status: f.status || undefined,
+      type: f.type || undefined,
+      page: this.detailPage(),
+      limit: this.detailLimit()
+    }).subscribe({
+      next: (res) => {
+        this.detailItems.set(res.data.items || []);
+        this.detailTotal.set(res.data.total ?? 0);
+        if (res.data.page) this.detailPage.set(res.data.page);
+        if (res.data.limit) this.detailLimit.set(res.data.limit);
+        this.detailLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.detailLoading.set(false);
+        this.detailError.set(this.apiError(err, 'Erreur chargement interventions'));
       }
     });
   }

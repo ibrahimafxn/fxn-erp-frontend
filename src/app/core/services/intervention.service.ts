@@ -59,6 +59,31 @@ export type InterventionSummaryResponse = InterventionSummary & {
   limit?: number;
 };
 
+export type InterventionItem = {
+  _id: string;
+  numInter: string;
+  dateRdv?: string | null;
+  region?: string;
+  plaque?: string;
+  societe?: string;
+  techFirstName?: string;
+  techLastName?: string;
+  techFull?: string;
+  type?: string;
+  client?: string;
+  statut?: string;
+  articlesRaw?: string;
+  categories?: string[];
+  importedAt?: string;
+};
+
+export type InterventionListResponse = {
+  total: number;
+  page: number;
+  limit: number;
+  items: InterventionItem[];
+};
+
 export type InterventionFilters = {
   regions: string[];
   clients: string[];
@@ -104,6 +129,21 @@ export class InterventionService {
     if (query.limit) params = params.set('limit', String(query.limit));
 
     return this.http.get<{ success: boolean; data: InterventionSummaryResponse }>(`${this.baseUrl}/summary`, { params });
+  }
+
+  list(query: InterventionSummaryQuery = {}): Observable<{ success: boolean; data: InterventionListResponse }> {
+    let params = new HttpParams();
+    if (query.fromDate) params = params.set('fromDate', query.fromDate);
+    if (query.toDate) params = params.set('toDate', query.toDate);
+    if (query.technician) params = params.set('technician', query.technician);
+    if (query.region) params = params.set('region', query.region);
+    if (query.client) params = params.set('client', query.client);
+    if (query.status) params = params.set('status', query.status);
+    if (query.type) params = params.set('type', query.type);
+    if (query.page) params = params.set('page', String(query.page));
+    if (query.limit) params = params.set('limit', String(query.limit));
+
+    return this.http.get<{ success: boolean; data: InterventionListResponse }>(`${this.baseUrl}/list`, { params });
   }
 
   filters(): Observable<{ success: boolean; data: InterventionFilters }> {

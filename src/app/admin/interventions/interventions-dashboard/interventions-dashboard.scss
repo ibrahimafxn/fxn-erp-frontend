@@ -379,6 +379,21 @@ tbody tr:hover {
   background: var(--fxn-primary-soft);
 }
 
+button.link {
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+button.link:hover {
+  color: var(--fxn-primary);
+}
+
 @media (max-width: 900px) {
   .page-header {
     flex-direction: column;
@@ -516,6 +531,116 @@ tbody td:not(:first-child) {
 thead th:first-child,
 tbody td:first-child {
   font-weight: 600;
+}
+
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 16, 0.68);
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  z-index: 100;
+}
+
+.overlay-panel {
+  width: min(980px, 96vw);
+  max-height: 90vh;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-glass);
+  box-shadow: var(--fxn-shadow-lg);
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.overlay-panel .subtitle {
+  margin: .25rem 0 0;
+  color: var(--fxn-text-muted);
+  font-size: .9rem;
+}
+
+.overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.overlay-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  align-items: center;
+}
+
+.detail-table {
+  border-radius: .9rem;
+  border: 1px solid var(--fxn-border);
+  overflow: auto;
+}
+
+.detail-table table {
+  min-width: 760px;
+}
+
+@media (max-width: 900px) {
+  .overlay-panel {
+    width: 100%;
+    max-height: 94vh;
+    padding: .9rem;
+  }
+
+  .overlay-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .detail-table table {
+    min-width: 0;
+  }
+
+  .detail-table table,
+  .detail-table tbody {
+    display: block;
+  }
+
+  .detail-table thead {
+    display: none;
+  }
+
+  .detail-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .detail-table tbody tr {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border-radius: var(--fxn-radius-md);
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-soft);
+  }
+
+  .detail-table tbody td {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px;
+    padding: 0;
+    border-bottom: none;
+    white-space: normal;
+  }
+
+  .detail-table tbody td::before {
+    content: attr(data-label);
+    color: var(--fxn-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
 }
 
 .material-icons {
