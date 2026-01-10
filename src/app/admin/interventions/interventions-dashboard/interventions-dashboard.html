@@ -8,12 +8,15 @@
     <div class="header-actions">
       <label class="file-input">
         <input #csvInput type="file" accept=".csv" (change)="onFileChange($event)" />
-        <span>Choisir un CSV</span>
+        <span class="material-icons" aria-hidden="true">upload_file</span>
+        <span>Choisir un export CSV</span>
       </label>
       <button class="btn-danger" type="button" (click)="openResetModal()" [disabled]="resetLoading() || importLoading()">
+        <span class="material-icons" aria-hidden="true">delete_forever</span>
         @if (resetLoading()) { Reset… } @else { Reset data }
       </button>
       <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading()">
+        <span class="material-icons" aria-hidden="true">cloud_upload</span>
         @if (importLoading()) { Import… } @else { Importer }
       </button>
     </div>
@@ -39,8 +42,8 @@
         </div>
 
         <div class="rates-actions">
-          <button class="btn-outline" type="button" (click)="resetRates()" [disabled]="rateSaving()">Réinitialiser</button>
-          <button class="btn-primary" type="button" (click)="saveRates()" [disabled]="rateSaving()">
+          <button class="btn-outline" type="button" (click)="resetRates()" [disabled]="rateSaving()">Annuler les modifications</button>
+          <button class="btn-save" type="button" (click)="saveRates()" [disabled]="rateSaving()">
             @if (rateSaving()) { Sauvegarde… } @else { Enregistrer }
           </button>
         </div>
@@ -106,6 +109,10 @@
     <div class="revenue-item">
       <span class="label">Chiffre d’affaires Techniciens</span>
       <span class="value">{{ totalRevenue().tech | number:'1.0-0' }} €</span>
+    </div>
+    <div class="revenue-item">
+      <span class="label">Total chiffre d’affaires</span>
+      <span class="value">{{ (totalRevenue().fxn + totalRevenue().tech) | number:'1.0-0' }} €</span>
     </div>
   </div>
 
@@ -198,7 +205,7 @@
     <div class="table card">
       <div class="table-head">
         <h2><span class="material-icons">table_chart</span>Détail par technicien</h2>
-        <p>Indicateurs et chiffre d’affaires par intervenant.</p>
+        <p>Indicateurs et chiffre d’affaires par intervenant. Clique sur un technicien pour afficher ses interventions.</p>
       </div>
       <table>
         <thead>
@@ -222,7 +229,13 @@
           @for (it of summaryItems(); track it.technician) {
             <tr>
               <td data-label="Technicien">
-                <button class="link" type="button" (click)="openDetail(it.technician || '')">
+                <button
+                  class="link"
+                  type="button"
+                  title="Voir les interventions de ce technicien"
+                  aria-label="Voir les interventions de ce technicien"
+                  (click)="openDetail(it.technician || '')"
+                >
                   {{ it.technician || '—' }}
                 </button>
               </td>
@@ -285,9 +298,9 @@
         <label class="limit">
           <span>Par page</span>
           <select [value]="detailLimit()" (change)="detailLimitChange($event)">
-            <option [value]="10">10</option>
             <option [value]="20">20</option>
             <option [value]="50">50</option>
+            <option [value]="100">100</option>
           </select>
         </label>
       </div>
@@ -303,6 +316,7 @@
           <table>
             <thead>
             <tr>
+              <th>#</th>
               <th>Date</th>
               <th>Numéro</th>
               <th>Client</th>
@@ -311,8 +325,9 @@
             </tr>
             </thead>
             <tbody>
-              @for (row of detailItems(); track row._id) {
+              @for (row of detailItems(); track row._id; let i = $index) {
                 <tr>
+                  <td data-label="#">{{ (detailPage() - 1) * detailLimit() + i + 1 }}</td>
                   <td data-label="Date">{{ row.dateRdv | date:'dd/MM/yyyy' }}</td>
                   <td data-label="Numéro" class="mono">{{ row.numInter }}</td>
                   <td data-label="Client">{{ row.client || '—' }}</td>
@@ -324,14 +339,20 @@
           </table>
         </div>
 
-        <footer class="pager">
-          <button class="btn-outline" type="button" (click)="detailPrev()" [disabled]="detailPage() <= 1">
-            ← Précédent
-          </button>
-          <button class="btn-outline" type="button" (click)="detailNext()" [disabled]="detailPage() >= detailPageCount()">
-            Suivant →
-          </button>
-        </footer>
+        @if (detailPageCount() > 1) {
+          <footer class="pager">
+            @if (detailPage() > 1) {
+              <button class="btn-outline" type="button" (click)="detailPrev()">
+                ← Précédent
+              </button>
+            }
+            @if (detailPage() < detailPageCount()) {
+              <button class="btn-outline" type="button" (click)="detailNext()">
+                Suivant →
+              </button>
+            }
+          </footer>
+        }
       }
     </div>
   </div>

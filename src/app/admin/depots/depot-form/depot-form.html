@@ -98,7 +98,7 @@
     <div class="actions">
       <button class="btn-outline" type="button" (click)="back()">Annuler</button>
 
-      <button class="btn-primary" type="submit" [disabled]="!canSubmit()">
+      <button class="btn-save" type="submit" [disabled]="!canSubmit()">
         @if (saving()) { Enregistrement… } @else { Enregistrer }
       </button>
     </div>

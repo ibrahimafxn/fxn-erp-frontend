@@ -408,19 +408,11 @@ export class InterventionsDashboard {
   }
 
   resetRates(): void {
-    this.rateSaving.set(true);
     this.rateSuccess.set(null);
     this.rateError.set(null);
-    this.ratesService.reset().subscribe({
-      next: () => {
-        this.rateSaving.set(false);
-        this.rateSuccess.set('Tarifs réinitialisés.');
-      },
-      error: (err: HttpErrorResponse) => {
-        this.rateSaving.set(false);
-        this.rateError.set(this.apiError(err, 'Erreur réinitialisation tarifs'));
-      }
-    });
+    const rates = this.ratesService.rates();
+    this.rateForm.patchValue(rates, { emitEvent: false });
+    this.rateSuccess.set('Tarifs réinitialisés.');
   }
 
   prevPage(): void {

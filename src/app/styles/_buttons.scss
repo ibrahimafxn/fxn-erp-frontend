@@ -8,7 +8,8 @@ button {
 
 .btn-primary,
 .btn-outline,
-.btn-danger {
+.btn-danger,
+.btn-save {
   padding: 0.65rem 1.15rem;
   border-radius: 0.9rem;
   border: 1px solid transparent;
@@ -17,12 +18,21 @@ button {
   font-weight: 700;
   letter-spacing: 0.01em;
   box-shadow: var(--fxn-button-shadow);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .btn-primary {
   background: linear-gradient(120deg, var(--fxn-primary), var(--fxn-primary-strong));
   color: var(--fxn-text);
   border-color: var(--fxn-primary-border);
+}
+
+.btn-save {
+  background: linear-gradient(120deg, rgba(46, 207, 154, 0.78), rgba(46, 207, 154, 0.6));
+  color: var(--fxn-text);
+  border-color: rgba(46, 207, 154, 0.4);
 }
 
 .btn-danger {
@@ -51,7 +61,8 @@ button {
 
 .btn-primary:hover,
 .btn-danger:hover,
-.btn-outline:hover {
+.btn-outline:hover,
+.btn-save:hover {
   transform: translateY(-1px);
   box-shadow: var(--fxn-button-shadow-hover);
   filter: brightness(1.04);

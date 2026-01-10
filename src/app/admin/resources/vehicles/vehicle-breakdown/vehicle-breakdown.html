@@ -7,7 +7,7 @@
 
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="back()">Retour</button>
-      <button class="btn-outline" type="button" (click)="submit()" [disabled]="!canSubmit()">
+      <button class="btn-save" type="button" (click)="submit()" [disabled]="!canSubmit()">
         @if (saving()) { Enregistrement… } @else { Enregistrer }
       </button>
     </div>
@@ -81,7 +81,7 @@
 
     <div class="actions">
       <button class="btn-outline" type="button" (click)="cancel()">Annuler</button>
-      <button class="btn-primary" type="submit" [disabled]="!canSubmit()">
+      <button class="btn-save" type="submit" [disabled]="!canSubmit()">
         @if (saving()) { Enregistrement… } @else { Enregistrer }
       </button>
     </div>
