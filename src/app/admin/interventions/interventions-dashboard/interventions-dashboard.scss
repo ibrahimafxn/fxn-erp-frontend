@@ -60,6 +60,46 @@
   gap: 1rem;
 }
 
+.info-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.35rem;
+  cursor: help;
+}
+
+.info-tooltip .material-icons {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.info-tooltip .tooltip-text {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(9, 14, 24, 0.95);
+  color: var(--fxn-text);
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--fxn-border-strong);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform-origin: bottom center;
+}
+
+.info-tooltip:hover .tooltip-text,
+.info-tooltip:focus-within .tooltip-text,
+.info-tooltip:active .tooltip-text {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px);
+}
+
 .rates-head {
   display: flex;
   justify-content: space-between;
