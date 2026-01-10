@@ -6,16 +6,28 @@
     </div>
 
     <div class="header-actions">
-      <label class="file-input">
-        <input #csvInput type="file" accept=".csv" (change)="onFileChange($event)" />
+      <label class="file-input" [class.disabled]="hasData() || importLoading()">
+        <input
+          #csvInput
+          type="file"
+          accept=".csv"
+          [disabled]="hasData() || importLoading()"
+          (click)="onFileClick()"
+          (change)="onFileChange($event)"
+        />
         <span class="material-icons" aria-hidden="true">upload_file</span>
         <span>Choisir un export CSV</span>
       </label>
-      <button class="btn-danger" type="button" (click)="openResetModal()" [disabled]="resetLoading() || importLoading()">
+      <button
+        class="btn-danger"
+        type="button"
+        (click)="openResetModal()"
+        [disabled]="resetLoading() || importLoading() || selectedFile || !hasData()"
+      >
         <span class="material-icons" aria-hidden="true">delete_forever</span>
         @if (resetLoading()) { Reset… } @else { Reset data }
       </button>
-      <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading()">
+      <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading() || !selectedFile">
         <span class="material-icons" aria-hidden="true">cloud_upload</span>
         @if (importLoading()) { Import… } @else { Importer }
       </button>
@@ -42,8 +54,10 @@
         </div>
 
         <div class="rates-actions">
-          <button class="btn-outline" type="button" (click)="resetRates()" [disabled]="rateSaving()">Annuler les modifications</button>
-          <button class="btn-save" type="button" (click)="saveRates()" [disabled]="rateSaving()">
+          <button class="btn-outline" type="button" (click)="resetRates()" [disabled]="rateSaving() || rateForm.pristine">
+            Annuler les modifications
+          </button>
+          <button class="btn-save" type="button" (click)="saveRates()" [disabled]="rateSaving() || rateForm.pristine">
             @if (rateSaving()) { Sauvegarde… } @else { Enregistrer }
           </button>
         </div>

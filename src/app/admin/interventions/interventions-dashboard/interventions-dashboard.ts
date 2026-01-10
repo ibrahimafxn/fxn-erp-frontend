@@ -216,6 +216,16 @@ export class InterventionsDashboard {
     this.importResult.set(null);
   }
 
+  onFileClick(): void {
+    const input = this.csvInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+    this.selectedFile = null;
+    this.importError.set(null);
+    this.importResult.set(null);
+  }
+
   importCsv(): void {
     if (!this.selectedFile) {
       this.importError.set('Sélectionne un fichier CSV.');
@@ -399,6 +409,7 @@ export class InterventionsDashboard {
       next: () => {
         this.rateSaving.set(false);
         this.rateSuccess.set('Tarifs enregistrés.');
+        this.rateForm.markAsPristine();
       },
       error: (err: HttpErrorResponse) => {
         this.rateSaving.set(false);
@@ -412,6 +423,7 @@ export class InterventionsDashboard {
     this.rateError.set(null);
     const rates = this.ratesService.rates();
     this.rateForm.patchValue(rates, { emitEvent: false });
+    this.rateForm.markAsPristine();
     this.rateSuccess.set('Tarifs réinitialisés.');
   }
 

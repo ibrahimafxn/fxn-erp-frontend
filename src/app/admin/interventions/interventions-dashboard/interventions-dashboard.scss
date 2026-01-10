@@ -40,6 +40,12 @@
   box-shadow: var(--fxn-shadow-sm);
 }
 
+.file-input.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .card {
   border-radius: 1rem;
   border: 1px solid var(--fxn-border);
