@@ -553,6 +553,19 @@ export class InterventionsDashboard {
     return Math.max(0, total - fxn);
   }
 
+  formatArticleCodes(raw?: string | null): string {
+    if (!raw) return '—';
+    const parts = String(raw)
+      .split(/[,;+]/)
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .map((part) => part.replace(/"/g, '').trim())
+      .map((part) => part.replace(/\s+x?\d+$/i, '').trim())
+      .filter(Boolean)
+      .map((part) => part.toUpperCase());
+    return parts.length ? parts.join(', ') : '—';
+  }
+
   isRateInvalid(key: string): boolean {
     const entry = (this.rateForm.getRawValue() as Record<string, { total: number; fxn: number }>)[key];
     if (!entry) return false;

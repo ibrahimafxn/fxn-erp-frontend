@@ -4,6 +4,8 @@ import {Component, computed, inject, OnInit} from '@angular/core';
 import {CommonModule, DatePipe} from '@angular/common';
 import {Router, RouterModule} from '@angular/router';
 import {AdminService} from '../../core/services/admin.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Role } from '../../core/models/roles.model';
 import {HistoryItem} from '../../core/models/historyItem.model';
 
 @Component({
@@ -15,6 +17,7 @@ import {HistoryItem} from '../../core/models/historyItem.model';
 })
 export class Dashboard implements OnInit {
   readonly adminService = inject(AdminService);
+  private auth = inject(AuthService);
   private router = inject(Router);
 
   // On réexpose les signals du service pour les templates
@@ -28,6 +31,8 @@ export class Dashboard implements OnInit {
     const list = this.historySignal() || [];
     return list.slice(0, 10);
   });
+
+  readonly isDirigeant = computed(() => this.auth.getUserRole() === Role.DIRIGEANT);
 
   ngOnInit(): void {
     // Charge les stats du dashboard au chargement de la page

@@ -7,11 +7,12 @@ import { Order, OrderLine, OrderService } from '../../../core/services/order.ser
 import { Depot } from '../../../core/models';
 import { DepotService } from '../../../core/services/depot.service';
 import { formatDepotName } from '../../../core/utils/text-format';
+import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
   standalone: true,
   selector: 'app-order-detail',
-  imports: [CommonModule],
+  imports: [CommonModule, ConfirmDeleteModal],
   templateUrl: './order-detail.html',
   styleUrls: ['./order-detail.scss']
 })
@@ -30,6 +31,7 @@ export class OrderDetail {
   readonly importLoading = signal(false);
   readonly importError = signal<string | null>(null);
   readonly importResult = signal<string | null>(null);
+  readonly importConfirmOpen = signal(false);
   readonly isImportable = computed(() => {
     const status = String(this.order()?.status || '').toUpperCase();
     if (!status) return false;
@@ -72,6 +74,13 @@ export class OrderDetail {
     return depot ? this.depotOptionLabel(depot) : '—';
   }
 
+  importEntityName(): string {
+    const order = this.order();
+    const depotName = this.depotNameById(this.selectedDepotId());
+    const ref = order?.reference || '';
+    return ref ? `${ref} → ${depotName}` : depotName;
+  }
+
   onDepotSelect(event: Event): void {
     const el = event.target instanceof HTMLSelectElement ? event.target : null;
     if (!el) return;
@@ -80,15 +89,30 @@ export class OrderDetail {
     this.importResult.set(null);
   }
 
-  importToDepot(): void {
+  openImportModal(): void {
     const depotId = this.selectedDepotId();
     const order = this.order();
     if (!order || !depotId) return;
     if (order.importedToDepotAt || !this.isImportable()) return;
+    this.importConfirmOpen.set(true);
+  }
 
-    const depotName = this.depotNameById(depotId);
-    const confirmMsg = `Importer les articles de la commande vers le dépôt "${depotName}" ?`;
-    if (!window.confirm(confirmMsg)) return;
+  cancelImportModal(): void {
+    if (this.importLoading()) return;
+    this.importConfirmOpen.set(false);
+  }
+
+  confirmImport(): void {
+    if (this.importLoading()) return;
+    this.importConfirmOpen.set(false);
+    this.importToDepot();
+  }
+
+  private importToDepot(): void {
+    const depotId = this.selectedDepotId();
+    const order = this.order();
+    if (!order || !depotId) return;
+    if (order.importedToDepotAt || !this.isImportable()) return;
 
     this.importLoading.set(true);
     this.importError.set(null);

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService, AuthUser } from '../../core/services/auth.service';
@@ -27,6 +27,9 @@ export class AppHeader {
   // breadcrumb label simple (V2)
   readonly pageTitle = signal('Dashboard');
   readonly alertsCount = this.alertsService.count;
+  readonly showDirigeantWelcome = signal(false);
+  private welcomeShown = false;
+  private welcomeTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.router.events
@@ -37,6 +40,14 @@ export class AppHeader {
         this.alertsService.refresh();
       });
     this.alertsService.refresh();
+    effect(() => {
+      const user = this.user();
+      if (user?.role === 'DIRIGEANT') {
+        this.triggerDirigeantWelcome();
+      } else {
+        this.showDirigeantWelcome.set(false);
+      }
+    });
   }
 
   /* ---------------------------
@@ -138,6 +149,16 @@ export class AppHeader {
 
   logout(): void {
     this.auth.logout(true).subscribe();
+  }
+
+  private triggerDirigeantWelcome(): void {
+    if (this.welcomeShown) return;
+    this.welcomeShown = true;
+    this.showDirigeantWelcome.set(true);
+    if (this.welcomeTimer) clearTimeout(this.welcomeTimer);
+    this.welcomeTimer = setTimeout(() => {
+      this.showDirigeantWelcome.set(false);
+    }, 5000);
   }
 
   /* ---------------------------

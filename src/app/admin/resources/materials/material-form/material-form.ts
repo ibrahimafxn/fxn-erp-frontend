@@ -79,6 +79,15 @@ export class MaterialForm extends DetailBack {
   constructor() {
     super();
     this.loadDepots();
+    this.form.get('quantity')?.valueChanges.subscribe((value) => {
+      const qty = Number(value ?? 0);
+      const minRaw = this.form.get('minQuantity')?.value ?? 0;
+      const minQty = Number(minRaw);
+      if (!Number.isFinite(qty) || !Number.isFinite(minQty)) return;
+      if (minQty > qty) {
+        this.form.get('minQuantity')?.setValue(qty, { emitEvent: false });
+      }
+    });
     if (this.mode() === 'edit') this.loadMaterial();
   }
 

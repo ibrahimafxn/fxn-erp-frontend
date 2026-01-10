@@ -109,6 +109,10 @@ export class ReceiptPage {
     this.refreshHistory(true);
   }
 
+  originLabel(m: Movement): string {
+    return m.authorName || m.authorEmail || '—';
+  }
+
   addLine(): void {
     const line = this.fb.nonNullable.group({
       resourceType: this.fb.nonNullable.control<LineForm['resourceType']>('CONSUMABLE'),

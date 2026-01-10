@@ -4,7 +4,7 @@
       <h1>{{ title() }}</h1>
       <p class="subtitle">Renseigne les informations de base.</p>
     </div>
-    <button class="btn-outline" type="button" (click)="backToList()">Retour</button>
+    <button class="btn-back" type="button" (click)="backToList()">Retour</button>
   </header>
 
   <div class="form-shell">
@@ -36,8 +36,11 @@
         </label>
         <label>
           Statut
-          <input type="text" formControlName="status" placeholder="En cours" />
-          <span class="hint">Ex : En cours, Validée, Livrée.</span>
+          <select formControlName="status">
+            <option value="En cours">En cours</option>
+            <option value="Livrée">Livrée</option>
+          </select>
+          <span class="hint">Choisir un statut.</span>
         </label>
         <label class="full">
           Notes

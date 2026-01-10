@@ -4,7 +4,7 @@
       <h1>Détail de la commande</h1>
       <p class="subtitle">Informations principales de la commande.</p>
     </div>
-    <button class="btn-outline" type="button" (click)="backToList()">Retour</button>
+    <button class="btn-back" type="button" (click)="backToList()">Retour</button>
   </header>
 
   @if (loading()) {
@@ -61,7 +61,7 @@
         <button
           class="btn-primary"
           type="button"
-          (click)="importToDepot()"
+          (click)="openImportModal()"
           [disabled]="importLoading() || !selectedDepotId() || !isImportable() || !!order()?.importedToDepotAt || (order()?.lines || []).length === 0"
         >
           @if (importLoading()) { Import… } @else { Importer au dépôt }
@@ -121,3 +121,15 @@
     </article>
   }
 </section>
+
+<app-confirm-delete-modal
+  [open]="importConfirmOpen()"
+  entityLabel="commande"
+  [entityName]="importEntityName()"
+  dangerHint="Cette action importera les articles de la commande dans le dépôt sélectionné."
+  cancelText="Annuler"
+  confirmText="Importer"
+  [confirming]="importLoading()"
+  (cancel)="cancelImportModal()"
+  (confirm)="confirmImport()"
+></app-confirm-delete-modal>

@@ -38,7 +38,7 @@ export class OrdersPage {
 
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control(''),
-    status: this.fb.nonNullable.control('En cours')
+    status: this.fb.nonNullable.control('')
   });
 
   constructor() {

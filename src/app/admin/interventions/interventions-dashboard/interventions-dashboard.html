@@ -358,7 +358,7 @@
                   <td data-label="Numéro" class="mono">{{ row.numInter }}</td>
                   <td data-label="Client">{{ row.client || '—' }}</td>
                   <td data-label="Type">{{ row.type || '—' }}</td>
-                  <td data-label="Articles" class="mono">{{ row.articlesRaw || '—' }}</td>
+                  <td data-label="Articles" class="mono">{{ formatArticleCodes(row.articlesRaw) }}</td>
                 </tr>
               }
             </tbody>

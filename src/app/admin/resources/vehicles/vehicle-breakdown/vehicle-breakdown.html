@@ -6,7 +6,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="back()">Retour</button>
+      <button class="btn-back" type="button" (click)="back()">Retour</button>
       <button class="btn-save" type="button" (click)="submit()" [disabled]="!canSubmit()">
         @if (saving()) { Enregistrement… } @else { Enregistrer }
       </button>

@@ -9,7 +9,8 @@ button {
 .btn-primary,
 .btn-outline,
 .btn-danger,
-.btn-save {
+.btn-save,
+.btn-back {
   padding: 0.65rem 1.15rem;
   border-radius: 0.9rem;
   border: 1px solid transparent;
@@ -33,6 +34,12 @@ button {
   background: linear-gradient(120deg, rgba(46, 207, 154, 0.78), rgba(46, 207, 154, 0.6));
   color: var(--fxn-text);
   border-color: rgba(46, 207, 154, 0.4);
+}
+
+.btn-back {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--fxn-text);
+  border-color: rgba(148, 163, 184, 0.45);
 }
 
 .btn-danger {
@@ -62,7 +69,8 @@ button {
 .btn-primary:hover,
 .btn-danger:hover,
 .btn-outline:hover,
-.btn-save:hover {
+.btn-save:hover,
+.btn-back:hover {
   transform: translateY(-1px);
   box-shadow: var(--fxn-button-shadow-hover);
   filter: brightness(1.04);

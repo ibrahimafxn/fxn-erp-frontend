@@ -177,7 +177,7 @@
                 <td>{{ m.resourceType }}</td>
                 <td>{{ movementResourceLabel(m) }}</td>
                 <td>{{ m.quantity }} {{ m.unit }}</td>
-                <td>{{ m.from.id ? depotLabelById(m.from.id) : '—' }}</td>
+                <td>{{ originLabel(m) }}</td>
                 <td class="note">{{ m.note || '—' }}</td>
               </tr>
             }

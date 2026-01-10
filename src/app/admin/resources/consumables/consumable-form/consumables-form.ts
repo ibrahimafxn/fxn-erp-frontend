@@ -56,7 +56,7 @@ export class ConsumablesForm extends DetailBack {
   readonly form = this.fb.nonNullable.group({
     name: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
     unit: this.fb.nonNullable.control('pcs', [Validators.required]),
-    quantity: this.fb.nonNullable.control(0, [Validators.required, Validators.min(1)]),
+    quantity: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     minQuantity: this.fb.nonNullable.control(0, [Validators.min(0)]),
     idDepot: this.fb.control<string | null>(null),
   }, { validators: [this.minQuantityValidator()] });

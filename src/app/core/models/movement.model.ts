@@ -16,9 +16,13 @@ export interface Movement {
   action: MovementAction;
   from: MovementEndpoint;
   to: MovementEndpoint;
+  fromLabel?: string;
+  toLabel?: string;
   quantity: number;
   unit: string;
   author?: string | null;
+  authorName?: string;
+  authorEmail?: string;
   reason?: string;
   note?: string;
   status: MovementStatus;

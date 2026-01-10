@@ -16,7 +16,11 @@
       </label>
       <label>
         Statut
-        <input type="text" formControlName="status" placeholder="En cours" />
+        <select formControlName="status">
+          <option value="">Tous</option>
+          <option value="En cours">En cours</option>
+          <option value="Livrée">Livrée</option>
+        </select>
       </label>
       <div class="actions">
         <button class="btn-outline" type="submit">Rechercher</button>

@@ -632,7 +632,15 @@ tbody td:first-child {
 }
 
 .detail-table table {
-  min-width: 760px;
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.detail-table th,
+.detail-table td {
+  white-space: normal;
+  word-break: break-word;
 }
 
 @media (max-width: 900px) {
