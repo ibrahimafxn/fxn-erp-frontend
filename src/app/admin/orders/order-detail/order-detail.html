@@ -45,6 +45,46 @@
     </article>
 
     <article class="card">
+      <h2 class="section-title"><span class="material-icons">local_shipping</span>Importer dans un dépôt</h2>
+      <p class="subtitle">Ajoute les articles de la commande dans le stock du dépôt sélectionné.</p>
+
+      <div class="actions">
+        <label>
+          Dépôt
+          <select [value]="selectedDepotId()" (change)="onDepotSelect($event)">
+            <option value="">Sélectionner</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+            }
+          </select>
+        </label>
+        <button
+          class="btn-primary"
+          type="button"
+          (click)="importToDepot()"
+          [disabled]="importLoading() || !selectedDepotId() || !isImportable() || !!order()?.importedToDepotAt || (order()?.lines || []).length === 0"
+        >
+          @if (importLoading()) { Import… } @else { Importer au dépôt }
+        </button>
+      </div>
+
+      @if (order()?.importedToDepotAt) {
+        <div class="state ok">
+          Déjà importée le {{ order()?.importedToDepotAt | date:'dd/MM/yyyy HH:mm' }}
+          vers {{ depotNameById(order()?.importedToDepotId || '') }}.
+        </div>
+      } @else if (!isImportable()) {
+        <div class="state error">Statut commande non importable.</div>
+      }
+
+      @if (importError()) {
+        <div class="state error">{{ importError() }}</div>
+      } @else if (importResult()) {
+        <div class="state ok">{{ importResult() }}</div>
+      }
+    </article>
+
+    <article class="card">
       <h2 class="section-title"><span class="material-icons">list_alt</span>Articles</h2>
       @if ((order()?.lines || []).length === 0) {
         <div class="state empty">Aucun article.</div>

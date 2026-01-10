@@ -22,6 +22,8 @@ export type Order = {
   amount: number;
   notes?: string;
   lines?: OrderLine[];
+  importedToDepotAt?: string | null;
+  importedToDepotId?: string | null;
 };
 
 export type OrderListResult = {
@@ -83,5 +85,12 @@ export class OrderService {
 
   getById(id: string): Observable<{ success: boolean; data: Order }> {
     return this.http.get<{ success: boolean; data: Order }>(`${this.baseUrl}/${id}`);
+  }
+
+  importToDepot(id: string, depotId: string): Observable<{ success: boolean; data: { count: number } }> {
+    return this.http.post<{ success: boolean; data: { count: number } }>(
+      `${this.baseUrl}/${id}/import-to-depot`,
+      { depotId }
+    );
   }
 }
