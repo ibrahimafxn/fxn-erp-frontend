@@ -92,8 +92,13 @@
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: .5rem;
+  gap: .75rem;
   flex-wrap: wrap;
+}
+
+.info-card .actions {
+  justify-content: flex-start;
+  margin-top: 1rem;
 }
 
 .info-title {

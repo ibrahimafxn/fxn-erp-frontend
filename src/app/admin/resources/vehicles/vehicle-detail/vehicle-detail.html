@@ -12,7 +12,7 @@
       <!-- IDENTITÉ -->
       <article class="card">
         <div class="card-actions">
-          <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+          <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
           <button class="btn-outline" type="button" (click)="load()">Actualiser</button>
           <button class="btn-outline" type="button" (click)="openBreakdowns()">Pannes</button>
           @if (canDeclareBreakdown()) {
@@ -63,7 +63,7 @@
             </div>
           </div>
           @if (!isDepotManager()) {
-            <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasVehicle()"><i class="bi bi-pencil"></i> Modifier</button>
+            <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!hasVehicle()"><i class="bi bi-pencil"></i> Modifier</button>
           }
         </div>
       </article>

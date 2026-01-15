@@ -55,16 +55,22 @@ button {
 }
 
 .btn-outline.edit {
-  background: var(--fxn-primary-soft);
-  border-color: var(--fxn-primary-border);
-  color: var(--fxn-text);
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.55);
+  color: #eaf2ff;
 }
 
-.btn-outline.danger {
-  background: var(--fxn-danger-soft);
+.btn-outline.delete {
+  background: transparent;
   border-color: rgba(255, 90, 111, 0.55);
-  color: var(--fxn-text);
+  color: rgba(255, 170, 170, 0.95);
 }
+
+.btn-outline.delete:hover {
+  background: rgba(255, 90, 111, 0.12);
+  border-color: rgba(255, 90, 111, 0.7);
+}
+
 
 .btn-primary:hover,
 .btn-danger:hover,
@@ -103,6 +109,60 @@ button.btn-tone-info {
   background: linear-gradient(120deg, var(--fxn-accent), rgba(74, 163, 255, 0.65));
   border-color: var(--fxn-accent);
   color: var(--fxn-text);
+}
+
+button.btn-tone-info.btn-tone-flat {
+  background: var(--fxn-accent);
+}
+
+button.btn-tone-new {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+button.btn-tone-outline-primary {
+  background: transparent;
+  border-color: #1d4ed8;
+  color: #dbeafe;
+}
+
+button.btn-tone-outline-primary:hover {
+  background: rgba(29, 78, 216, 0.12);
+  border-color: #1d4ed8;
+}
+
+button.btn-tone-outline-danger {
+  background: transparent;
+  border-color: rgba(255, 90, 111, 0.7);
+  color: rgba(255, 170, 170, 0.95);
+}
+
+button.btn-tone-outline-danger:hover {
+  background: rgba(255, 90, 111, 0.12);
+  border-color: rgba(255, 90, 111, 0.9);
+}
+
+button.btn-tone-outline-success {
+  background: transparent;
+  border-color: rgba(46, 207, 154, 0.7);
+  color: rgba(190, 255, 225, 0.95);
+}
+
+button.btn-tone-outline-success:hover {
+  background: rgba(46, 207, 154, 0.12);
+  border-color: rgba(46, 207, 154, 0.9);
+}
+
+button.btn-tone-outline-neutral {
+  background: transparent;
+  border-color: rgba(148, 163, 184, 0.6);
+  color: rgba(226, 232, 240, 0.9);
+}
+
+button.btn-tone-outline-neutral:hover {
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.85);
 }
 
 button.btn-tone-neutral {

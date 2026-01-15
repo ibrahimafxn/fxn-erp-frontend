@@ -13,14 +13,11 @@
   <!-- RIGHT -->
   @if (user()) {
     <div class="right">
-      <button class="btn-outline dashboard-btn" (click)="goDashboard()">
-        Dashboard
-      </button>
-
       <!-- USER MENU -->
       <div class="user-menu">
         <button class="user-trigger" (click)="toggleMenu()">
           <div class="avatar">{{ initials() }}</div>
+          <span class="user-name">{{ displayName() }}</span>
           <span class="chevron">▾</span>
         </button>
 
@@ -93,7 +90,7 @@
               <div class="section-label">Compte</div>
               <div class="section-items">
                 <button (click)="goProfile()"><span class="material-icons">person</span>Mon profil</button>
-                <button class="danger" (click)="logout()"><span class="material-icons">logout</span>Déconnexion</button>
+                <button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
               </div>
             </div>
           </div>

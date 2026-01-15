@@ -7,7 +7,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> ← Retour</button>
+      <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
     </div>
   </header>
 
@@ -73,9 +73,9 @@
       </div>
 
       <footer class="card-actions">
-        <button class="btn-primary" type="button" (click)="edit(u)"><i class="bi bi-pencil"></i> Modifier</button>
+        <button class="btn-outline edit" type="button" (click)="edit(u)"><i class="bi bi-pencil"></i> Modifier</button>
 
-        <button class="btn-danger" type="button" [disabled]="deleting()" (click)="delete(u)"><i class="fa-solid fa-trash"></i> 
+        <button class="btn-outline delete" type="button" [disabled]="deleting()" (click)="delete(u)"><i class="fa-solid fa-trash"></i> 
           @if (deleting()) { Suppression… } @else { Supprimer }
         </button>
       </footer>

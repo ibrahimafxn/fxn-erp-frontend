@@ -119,6 +119,32 @@ body.theme-default {
 }
 
 body.theme-dirigeant {
+  --fxn-bg: #0a0507;
+  --fxn-bg-2: #12070b;
+  --fxn-surface: #140a10;
+  --fxn-surface-soft: #1b0f16;
+  --fxn-surface-glass: rgba(20, 10, 16, 0.82);
+  --fxn-text: #ffe1e6;
+  --fxn-text-muted: #c28a93;
+  --fxn-text-soft: #e8b5be;
+  --fxn-primary: #c93f3f;
+  --fxn-primary-strong: #8f2a2a;
+  --fxn-primary-soft: rgba(201, 63, 63, 0.18);
+  --fxn-primary-border: rgba(201, 63, 63, 0.55);
+  --fxn-accent: #f07070;
+  --fxn-accent-soft: rgba(240, 112, 112, 0.2);
+  --fxn-border: rgba(200, 90, 90, 0.2);
+  --fxn-border-strong: rgba(200, 90, 90, 0.32);
+  --fxn-button-outline-bg: rgba(14, 8, 10, 0.7);
+  --fxn-button-outline-border: rgba(200, 90, 90, 0.25);
+  --fxn-button-shadow: 0 12px 24px rgba(72, 18, 18, 0.24);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(201, 63, 63, 0.28);
+  --fxn-ring: 0 0 0 3px rgba(201, 63, 63, 0.3);
+  --fxn-bg-glow-1: rgba(201, 63, 63, 0.22);
+  --fxn-bg-glow-2: rgba(40, 12, 12, 0.55);
+}
+
+body.theme-gestion-depot {
   --fxn-bg: #070c12;
   --fxn-bg-2: #0c1720;
   --fxn-surface: #0f1d26;
@@ -127,47 +153,21 @@ body.theme-dirigeant {
   --fxn-text: #e9fff5;
   --fxn-text-muted: #90b9a7;
   --fxn-text-soft: #bfe2d4;
-  --fxn-primary: #20c07a;
-  --fxn-primary-strong: #138a58;
-  --fxn-primary-soft: rgba(32, 192, 122, 0.18);
-  --fxn-primary-border: rgba(32, 192, 122, 0.55);
-  --fxn-accent: #3ddc97;
-  --fxn-accent-soft: rgba(61, 220, 151, 0.2);
-  --fxn-border: rgba(90, 200, 150, 0.18);
-  --fxn-border-strong: rgba(90, 200, 150, 0.3);
+  --fxn-primary: #2ad0c7;
+  --fxn-primary-strong: #119a94;
+  --fxn-primary-soft: rgba(42, 208, 199, 0.18);
+  --fxn-primary-border: rgba(42, 208, 199, 0.55);
+  --fxn-accent: #64e7dd;
+  --fxn-accent-soft: rgba(100, 231, 221, 0.2);
+  --fxn-border: rgba(100, 210, 200, 0.18);
+  --fxn-border-strong: rgba(100, 210, 200, 0.3);
   --fxn-button-outline-bg: rgba(8, 18, 22, 0.7);
-  --fxn-button-outline-border: rgba(90, 200, 150, 0.25);
-  --fxn-button-shadow: 0 12px 24px rgba(12, 76, 52, 0.2);
-  --fxn-button-shadow-hover: 0 18px 34px rgba(32, 192, 122, 0.28);
-  --fxn-ring: 0 0 0 3px rgba(32, 192, 122, 0.3);
-  --fxn-bg-glow-1: rgba(32, 192, 122, 0.22);
-  --fxn-bg-glow-2: rgba(12, 40, 30, 0.55);
-}
-
-body.theme-gestion-depot {
-  --fxn-bg: #10080a;
-  --fxn-bg-2: #1a0c10;
-  --fxn-surface: #1b0f16;
-  --fxn-surface-soft: #24141d;
-  --fxn-surface-glass: rgba(27, 15, 22, 0.82);
-  --fxn-text: #ffecef;
-  --fxn-text-muted: #d4a0a8;
-  --fxn-text-soft: #f0c2c8;
-  --fxn-primary: #e45555;
-  --fxn-primary-strong: #b63c3c;
-  --fxn-primary-soft: rgba(228, 85, 85, 0.18);
-  --fxn-primary-border: rgba(228, 85, 85, 0.55);
-  --fxn-accent: #ff8d8d;
-  --fxn-accent-soft: rgba(255, 141, 141, 0.2);
-  --fxn-border: rgba(230, 110, 110, 0.2);
-  --fxn-border-strong: rgba(230, 110, 110, 0.32);
-  --fxn-button-outline-bg: rgba(20, 10, 12, 0.7);
-  --fxn-button-outline-border: rgba(230, 110, 110, 0.25);
-  --fxn-button-shadow: 0 12px 24px rgba(92, 24, 24, 0.24);
-  --fxn-button-shadow-hover: 0 18px 34px rgba(228, 85, 85, 0.28);
-  --fxn-ring: 0 0 0 3px rgba(228, 85, 85, 0.3);
-  --fxn-bg-glow-1: rgba(228, 85, 85, 0.22);
-  --fxn-bg-glow-2: rgba(64, 20, 20, 0.55);
+  --fxn-button-outline-border: rgba(100, 210, 200, 0.25);
+  --fxn-button-shadow: 0 12px 24px rgba(12, 70, 66, 0.2);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(42, 208, 199, 0.28);
+  --fxn-ring: 0 0 0 3px rgba(42, 208, 199, 0.3);
+  --fxn-bg-glow-1: rgba(42, 208, 199, 0.22);
+  --fxn-bg-glow-2: rgba(12, 40, 38, 0.55);
 }
 
 body.theme-technicien {

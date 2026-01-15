@@ -121,6 +121,12 @@
   flex-wrap: wrap;
 }
 
+.header-actions {
+  display: flex;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+
 .section-title {
   display: inline-flex;
   align-items: center;
@@ -161,10 +167,12 @@
     box-shadow: var(--fxn-ring);
   }
 
-  .actions {
+  .filter-actions {
+    grid-column: 1 / -1;
     display: flex;
-    gap: .5rem;
-    align-items: flex-end;
+    justify-content: flex-end;
+    gap: .6rem;
+    align-items: center;
     flex-wrap: wrap;
   }
 }

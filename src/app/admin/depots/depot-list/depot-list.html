@@ -6,7 +6,6 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
       <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau dépôt</button>
     </div>
   </header>
@@ -15,7 +14,7 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <input type="text" formControlName="q" placeholder="Rechercher (nom, ville, adresse, téléphone)…" />
       <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
-      <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
+      <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
     </form>
 
     <div class="meta">
@@ -76,7 +75,7 @@
                   <button class="btn-outline edit" type="button" (click)="edit(d)"><i class="bi bi-pencil"></i> Modifier</button>
 
                   <button
-                    class="btn-danger"
+                    class="btn-outline delete"
                     type="button"
                     [disabled]="deletingId() === d._id"
                     (click)="openDeleteModal(d)"

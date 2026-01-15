@@ -84,7 +84,21 @@ export class App implements AfterViewInit, OnDestroy {
       .replace(/\u2026/g, '')
       .trim();
 
-    const tones = ['btn-tone-danger', 'btn-tone-success', 'btn-tone-primary', 'btn-tone-info', 'btn-tone-neutral', 'btn-tone-export-pdf', 'btn-tone-export-csv'];
+    const tones = [
+      'btn-tone-danger',
+      'btn-tone-success',
+      'btn-tone-primary',
+      'btn-tone-info',
+      'btn-tone-neutral',
+      'btn-tone-export-pdf',
+      'btn-tone-export-csv',
+      'btn-tone-flat',
+      'btn-tone-new',
+      'btn-tone-outline-primary',
+      'btn-tone-outline-danger',
+      'btn-tone-outline-success',
+      'btn-tone-outline-neutral'
+    ];
     tones.forEach((tone) => button.classList.remove(tone));
 
     if (lower.includes('exporter pdf')) {
@@ -99,7 +113,10 @@ export class App implements AfterViewInit, OnDestroy {
 
     const isMatch = (keywords: string[]) => keywords.some((k) => lower.includes(k));
 
-    if (isMatch(['supprimer', 'désactiver', 'rejeter', 'retirer', 'reset'])) {
+    if (isMatch(['supprimer'])) {
+      return;
+    }
+    if (isMatch(['désactiver', 'rejeter', 'retirer', 'reset'])) {
       button.classList.add('btn-tone-danger');
       return;
     }
@@ -107,11 +124,35 @@ export class App implements AfterViewInit, OnDestroy {
       button.classList.add('btn-tone-success');
       return;
     }
-    if (isMatch(['ajouter', 'nouveau', 'réserver', 'assigner', 'attribuer', 'reprendre', 'déclarer', 'marquer', 'connecter'])) {
+    if (isMatch(['nouveau'])) {
+      button.classList.add('btn-tone-new');
+      return;
+    }
+    if (isMatch(['reprendre'])) {
+      button.classList.add('btn-tone-outline-neutral');
+      return;
+    }
+    if (isMatch(['effacer'])) {
+      button.classList.add('btn-tone-outline-danger');
+      return;
+    }
+    if (isMatch(['réserver'])) {
+      button.classList.add('btn-tone-outline-success');
+      return;
+    }
+    if (isMatch(['ajouter', 'assigner', 'attribuer', 'déclarer', 'marquer', 'connecter'])) {
       button.classList.add('btn-tone-primary');
       return;
     }
-    if (isMatch(['rechercher', 'voir', 'rafraîchir', 'recharger', 'actualiser', 'télécharger', 'afficher', 'masquer', 'réessayer'])) {
+    if (isMatch(['rechercher'])) {
+      button.classList.add('btn-tone-outline-primary');
+      return;
+    }
+    if (isMatch(['rafraîchir'])) {
+      button.classList.add('btn-tone-primary');
+      return;
+    }
+    if (isMatch(['voir', 'recharger', 'actualiser', 'télécharger', 'afficher', 'masquer', 'réessayer'])) {
       button.classList.add('btn-tone-info');
       return;
     }

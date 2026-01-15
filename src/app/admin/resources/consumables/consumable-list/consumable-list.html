@@ -6,7 +6,6 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
       <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
       <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
       @if (!isDepotManager()) {
@@ -29,7 +28,7 @@
       }
 
       <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
-      <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
+      <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
     </form>
 
     <div class="meta">
@@ -66,9 +65,6 @@
           <th>Quantité</th>
           <th>Dépôt</th>
           <th>Création</th>
-          @if (!isDepotManager()) {
-            <th class="actions">Actions</th>
-          }
         </tr>
         </thead>
 
@@ -90,21 +86,6 @@
                   —
                 }
               </td>
-
-              @if (!isDepotManager()) {
-              <td class="actions" (click)="$event.stopPropagation()">
-                    <button class="btn-outline edit" type="button" (click)="edit(c)"><i class="bi bi-pencil"></i> Modifier</button>
-
-                  <button
-                    class="btn-danger"
-                    type="button"
-                    [disabled]="deletingId() === c._id"
-                    (click)="openDeleteModal(c)"
-                  ><i class="fa-solid fa-trash"></i> 
-                    @if (deletingId() === c._id) { Suppression… } @else { Supprimer }
-                  </button>
-                </td>
-              }
             </tr>
           }
         </tbody>

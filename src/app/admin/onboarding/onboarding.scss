@@ -116,7 +116,7 @@
   border: 1px solid var(--fxn-border-strong);
   padding: .6rem .9rem;
   border-radius: var(--fxn-radius-md);
-  background: rgba(8, 14, 22, 0.6);
+  background: rgba(148, 163, 184, 0.2);
   transition: border-color .2s ease, transform .2s ease, background .2s ease;
 
   input {
@@ -126,7 +126,7 @@
 
 .file-label:hover {
   border-color: var(--fxn-primary);
-  background: rgba(8, 14, 22, 0.85);
+  background: rgba(148, 163, 184, 0.32);
   transform: translateY(-1px);
 }
 

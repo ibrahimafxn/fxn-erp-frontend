@@ -14,11 +14,12 @@ import { DetailBack } from '../../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName, formatResourceName } from '../../../../core/utils/text-format';
 import { downloadBlob } from '../../../../core/utils/download';
 import { Role } from '../../../../core/models/roles.model';
+import { ConfirmDeleteModal } from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
   selector: 'app-consumable-detail',
   standalone: true,
-  imports: [CommonModule, DatePipe, ReactiveFormsModule],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './consumables-detail.html',
   styleUrl: './consumables-detail.scss',
 })
@@ -53,6 +54,12 @@ export class ConsumablesDetail extends DetailBack {
   });
   readonly canPrevHistory = computed(() => this.historyPage() > 1);
   readonly canNextHistory = computed(() => this.historyPage() < this.historyPageCount());
+  readonly isDepotManager = computed(() => this.authSvc.getUserRole() === Role.GESTION_DEPOT);
+
+  readonly deleteModalOpen = signal(false);
+  readonly pendingDeleteId = signal<string | null>(null);
+  readonly pendingDeleteName = signal<string>('');
+  readonly deleting = signal(false);
 
   readonly availableQty = computed(() => {
     const c = this.consumable();
@@ -138,6 +145,46 @@ export class ConsumablesDetail extends DetailBack {
   refresh(): void {
     this.load();
     this.loadHistory(true);
+  }
+
+  edit(): void {
+    const c = this.consumable();
+    if (!c?._id || this.isDepotManager()) return;
+    this.router.navigate(['/admin/resources/consumables', c._id, 'edit']).then();
+  }
+
+  openDeleteModal(): void {
+    if (this.isDepotManager()) return;
+    const c = this.consumable();
+    if (!c?._id) return;
+    this.pendingDeleteId.set(c._id);
+    this.pendingDeleteName.set(this.consumableName());
+    this.deleteModalOpen.set(true);
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalOpen.set(false);
+    this.pendingDeleteId.set(null);
+    this.pendingDeleteName.set('');
+  }
+
+  confirmDelete(): void {
+    if (this.isDepotManager()) return;
+    const id = this.pendingDeleteId();
+    if (!id) return;
+    this.deleteModalOpen.set(false);
+    this.deleting.set(true);
+
+    this.svc.remove(id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        const fallback = this.isDepotManager() ? '/depot/resources/consumables' : '/admin/resources/consumables';
+        this.back(fallback);
+      },
+      error: () => {
+        this.deleting.set(false);
+      }
+    });
   }
 
   // Export PDF des mouvements (entrées/sorties) liés à la ressource.

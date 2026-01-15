@@ -6,7 +6,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+      <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
       <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
       <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
       <button class="btn-outline" type="button" (click)="refresh()"><i class="bi bi-arrow-clockwise"></i> Rafraîchir</button>
@@ -53,6 +53,14 @@
             </div>
           </div>
         </div>
+        @if (!isDepotManager()) {
+          <div class="actions">
+            <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!consumable()"><i class="bi bi-pencil"></i> Modifier</button>
+            <button class="btn-outline delete" type="button" (click)="openDeleteModal()" [disabled]="deleting() || !consumable()">
+              <i class="fa-solid fa-trash"></i> Supprimer
+            </button>
+          </div>
+        }
       </article>
 
       @if (canReserve()) {
@@ -105,7 +113,7 @@
             }
 
             <div class="actions">
-              <button class="btn-outline" type="button" (click)="clearReserve()">Effacer</button>
+              <button class="btn-outline" type="button" (click)="clearReserve()"><i class="bi bi-x"></i> Effacer</button>
               <button class="btn-outline" type="button" (click)="submitRelease()" [disabled]="releaseLoading() || reserveForm.invalid">
                 Reprendre
               </button>
@@ -180,4 +188,13 @@
       </article>
     </section>
   }
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    entityLabel="le consommable"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    [confirming]="deleting()"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()"
+  />
 </section>

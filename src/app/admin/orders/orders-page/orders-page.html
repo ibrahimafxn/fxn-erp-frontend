@@ -24,7 +24,7 @@
       </label>
       <div class="actions">
         <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
-        <button class="btn-outline" type="button" (click)="clearFilters()">Effacer</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
       </div>
     </form>
 
@@ -71,7 +71,7 @@
                 <td>{{ order.amount }}</td>
                 <td class="actions-cell">
                   <button class="btn-outline edit" type="button" (click)="$event.stopPropagation(); openEdit(order)"><i class="bi bi-pencil"></i> Modifier</button>
-                  <button class="btn-danger" type="button" (click)="$event.stopPropagation(); openDeleteModal(order)"><i class="fa-solid fa-trash"></i> Supprimer</button>
+                  <button class="btn-outline delete" type="button" (click)="$event.stopPropagation(); openDeleteModal(order)"><i class="fa-solid fa-trash"></i> Supprimer</button>
                 </td>
               </tr>
             }

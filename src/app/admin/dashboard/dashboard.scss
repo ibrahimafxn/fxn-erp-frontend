@@ -117,6 +117,158 @@
     .btn-primary {
       min-width: 220px;
     }
+
+    .btn-onboarding {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(117, 195, 255, 0.35);
+      background: linear-gradient(135deg, rgba(16, 26, 44, 0.92), rgba(12, 18, 30, 0.92));
+      box-shadow: inset 0 0 0 1px rgba(67, 144, 255, 0.15), 0 18px 28px rgba(5, 10, 18, 0.25);
+      width: 220px;
+    }
+
+    .btn-onboarding .material-icons {
+      font-size: 1.35rem;
+      color: rgba(120, 214, 255, 0.9);
+    }
+
+    .btn-onboarding .btn-text {
+      display: grid;
+      text-align: left;
+      gap: 0.1rem;
+    }
+
+    .btn-onboarding .title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #e9f3ff;
+    }
+
+    .btn-onboarding .meta {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(170, 210, 245, 0.7);
+    }
+
+    .btn-onboarding .badge {
+      margin-left: auto;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid rgba(120, 214, 255, 0.55);
+      color: rgba(190, 228, 255, 0.95);
+      background: rgba(35, 85, 140, 0.3);
+    }
+
+    .btn-onboarding:hover:not(:disabled) {
+      border-color: rgba(120, 214, 255, 0.75);
+      background: linear-gradient(135deg, rgba(20, 34, 58, 0.95), rgba(14, 22, 36, 0.95));
+      transform: translateY(-1px);
+    }
+
+    .btn-history {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(120, 208, 156, 0.35);
+      background: linear-gradient(135deg, rgba(14, 26, 26, 0.92), rgba(10, 18, 24, 0.92));
+      box-shadow: inset 0 0 0 1px rgba(100, 200, 165, 0.15), 0 18px 28px rgba(5, 10, 18, 0.25);
+      width: 220px;
+    }
+
+    .btn-history .material-icons {
+      font-size: 1.35rem;
+      color: rgba(140, 240, 197, 0.9);
+    }
+
+    .btn-history .btn-text {
+      display: grid;
+      text-align: left;
+      gap: 0.1rem;
+    }
+
+    .btn-history .title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #e9fff2;
+    }
+
+    .btn-history .meta {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(180, 235, 210, 0.7);
+    }
+
+    .btn-history:hover:not(:disabled) {
+      border-color: rgba(120, 208, 156, 0.65);
+      background: linear-gradient(135deg, rgba(18, 32, 32, 0.95), rgba(12, 22, 30, 0.95));
+      transform: translateY(-1px);
+    }
+  }
+
+  .btn-outline.btn-reload {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(120, 208, 255, 0.35);
+    background: linear-gradient(135deg, rgba(16, 22, 36, 0.92), rgba(10, 18, 30, 0.92));
+    box-shadow: inset 0 0 0 1px rgba(90, 150, 255, 0.15), 0 18px 28px rgba(5, 10, 18, 0.25);
+    width: 220px;
+  }
+
+  .btn-outline.btn-reload .material-icons {
+    font-size: 1.35rem;
+    color: rgba(120, 200, 255, 0.9);
+  }
+
+  .btn-outline.btn-reload .btn-text {
+    display: grid;
+    text-align: left;
+    gap: 0.1rem;
+  }
+
+  .btn-outline.btn-reload .title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #e9f3ff;
+  }
+
+  .btn-outline.btn-reload .meta {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(170, 210, 245, 0.7);
+  }
+
+  .btn-outline.btn-reload .badge {
+    margin-left: auto;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid rgba(120, 200, 255, 0.55);
+    color: rgba(190, 220, 255, 0.95);
+    background: rgba(35, 80, 140, 0.3);
+  }
+
+  .btn-outline.btn-reload:hover:not(:disabled) {
+    border-color: rgba(120, 200, 255, 0.65);
+    background: linear-gradient(135deg, rgba(18, 28, 44, 0.95), rgba(12, 20, 36, 0.95));
+    transform: translateY(-1px);
   }
 
   .btn-primary {
@@ -239,6 +391,29 @@
     }
   }
 
+  .action-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .action-icon {
+    font-size: 1.2rem;
+    color: var(--dash-accent);
+  }
+
+  .action-tag {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(10, 16, 28, 0.5);
+    border: 1px solid var(--dash-border);
+    color: var(--dash-muted);
+  }
+
   .action-title {
     font-weight: 700;
     margin-bottom: 0.35rem;
@@ -304,6 +479,11 @@
     color: var(--dash-ink);
     background: var(--dash-glow);
     border: 1px solid var(--dash-border);
+  }
+
+  .kpi-icon .material-icons {
+    font-size: 1.35rem;
+    opacity: 0.85;
   }
 
   .kpi-icon.kpi-depots { background: var(--dash-glow); border-color: var(--dash-border); }

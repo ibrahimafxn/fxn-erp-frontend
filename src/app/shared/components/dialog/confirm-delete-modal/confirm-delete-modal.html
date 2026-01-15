@@ -37,7 +37,8 @@
           {{ cancelText() }}
         </button>
 
-        <button type="button" class="btn-danger" (click)="onConfirm()" [disabled]="confirming()">
+        <button type="button" class="btn-outline delete" (click)="onConfirm()" [disabled]="confirming()">
+          <i class="fa-solid fa-trash"></i>
           @if (confirming()) { Suppression… } @else { {{ confirmText() }} }
         </button>
       </footer>

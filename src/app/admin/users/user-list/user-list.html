@@ -6,10 +6,8 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
       <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
       <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
-      <button class="btn-outline" type="button" (click)="exportXlsx()"><i class="bi bi-filetype-xlsx"></i> Exporter Excel</button>
       <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau</button>
     </div>
   </header>
@@ -42,7 +40,7 @@
       </select>
 
       <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
-      <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
+      <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
     </form>
 
     <div class="meta">
