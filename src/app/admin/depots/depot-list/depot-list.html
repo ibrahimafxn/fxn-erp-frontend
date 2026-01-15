@@ -1,0 +1,111 @@
+<section class="depot-list">
+  <header class="page-header">
+    <div>
+      <h1>Dépôts</h1>
+      <p class="subtitle">Recherche, création et accès rapide aux détails d’un dépôt.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau dépôt</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
+      <input type="text" formControlName="q" placeholder="Rechercher (nom, ville, adresse, téléphone)…" />
+      <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+      <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card">
+      <strong>Erreur :</strong> {{ errorMessage() }}
+    </div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucun dépôt trouvé.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Dépôt</th>
+          <th>Ville</th>
+          <th>Téléphone</th>
+          <th>Gestionnaire</th>
+          <th>Création</th>
+          <th class="actions">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (d of items(); track trackById($index, d)) {
+            <tr class="row" (click)="openDetail(d)">
+              <td class="main">
+                <div class="name">{{ depotName(d) }}</div>
+              </td>
+
+              <td>{{ d.city || '—' }}</td>
+              <td>{{ d.phone || '—' }}</td>
+              <td><span class="badge">{{ managerLabel(d) }}</span></td>
+
+              <td>
+                @if (createdAtValue(d)) { {{ createdAtValue(d) | date:'short' }} } @else { — }
+              </td>
+
+              <td class="actions" (click)="$event.stopPropagation()">
+                <div class="actions-group">
+                  <button class="btn-outline edit" type="button" (click)="edit(d)"><i class="bi bi-pencil"></i> Modifier</button>
+
+                  <button
+                    class="btn-outline delete"
+                    type="button"
+                    [disabled]="deletingId() === d._id"
+                    (click)="openDeleteModal(d)"
+                  ><i class="fa-solid fa-trash"></i> 
+                    @if (deletingId() === d._id) { Suppression… } @else { Supprimer }
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i> Suivant →
+      </button>
+    </footer>
+  }
+
+  <!-- ✅ MODAL suppression -->
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    entityLabel="le dépôt"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    [confirming]="pendingDeleteId() !== null && deletingId() === pendingDeleteId()"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()">
+  </app-confirm-delete-modal>
+</section>

@@ -1,0 +1,213 @@
+/* -------------------------------------------------
+   Page
+------------------------------------------------- */
+.depot-list {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+/* -------------------------------------------------
+   Header
+------------------------------------------------- */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 750;
+  }
+
+  .subtitle {
+    margin: .25rem 0 0;
+    color: var(--fxn-text-muted);
+    font-size: .9rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: .65rem;
+    flex-wrap: wrap;
+  }
+}
+
+/* -------------------------------------------------
+   Card
+------------------------------------------------- */
+.card {
+  background: var(--fxn-surface-glass);
+  border: 1px solid var(--fxn-border);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: var(--fxn-shadow-sm);
+}
+
+/* -------------------------------------------------
+   Toolbar (search + meta)
+------------------------------------------------- */
+.toolbar {
+  display: grid;
+  gap: .85rem;
+
+  .search {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: .6rem;
+    align-items: center;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  input,
+  select {
+    padding: .55rem .65rem;
+    border-radius: .7rem;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface);
+    color: inherit;
+    outline: none;
+  }
+
+  input:focus,
+  select:focus {
+    border-color: var(--fxn-primary);
+    box-shadow: var(--fxn-ring);
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    padding: .25rem .55rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 700;
+    background: var(--fxn-surface-soft);
+    border: 1px solid var(--fxn-border-strong);
+  }
+
+  .limit {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+
+    span {
+      font-size: .85rem;
+      color: var(--fxn-text-muted);
+    }
+
+    select {
+      padding: .35rem .5rem;
+      border-radius: .65rem;
+    }
+  }
+}
+
+/* -------------------------------------------------
+   States
+------------------------------------------------- */
+.state {
+  padding: 1rem;
+  border-radius: .9rem;
+  background: var(--fxn-surface-glass);
+  border: 1px solid var(--fxn-border);
+
+  &.loading { opacity: .85; }
+  &.empty { opacity: .8; }
+  &.error {
+    background: var(--fxn-danger-soft);
+  }
+}
+
+/* -------------------------------------------------
+   Table
+------------------------------------------------- */
+.table {
+  padding: 0;
+  overflow: hidden;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  thead th {
+    text-align: left;
+    font-size: .8rem;
+    opacity: .75;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-soft);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--fxn-border);
+    vertical-align: middle;
+  }
+
+  th.actions {
+    text-align: right;
+  }
+
+  td.actions {
+    text-align: right;
+    width: 280px;
+    white-space: nowrap;
+  }
+
+  .actions-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .actions-group .btn-outline,
+  .actions-group .btn-danger {
+    min-width: 110px;
+    height: 38px;
+    padding: 0 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .row {
+    cursor: pointer;
+  }
+
+  .row:hover {
+    background: var(--fxn-primary-soft);
+  }
+
+  .main {
+    .name {
+      font-weight: 750;
+    }
+  }
+}
+
+/* -------------------------------------------------
+   Pager
+------------------------------------------------- */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  flex-wrap: wrap;
+}

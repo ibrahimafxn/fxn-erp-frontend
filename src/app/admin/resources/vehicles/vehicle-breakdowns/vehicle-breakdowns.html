@@ -1,0 +1,123 @@
+<section class="vehicle-breakdowns">
+  <header class="page-header">
+    <div>
+      <h1>Pannes véhicule</h1>
+      <p class="subtitle">{{ vehicleLabel() }}</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-back" type="button" (click)="backToDetail()"><i class="bi bi-arrow-left"></i> Retour</button>
+      @if (canDeclareBreakdown()) {
+        <button class="btn-primary" type="button" (click)="declareBreakdown()">Déclarer une panne</button>
+      }
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucune panne déclarée.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Dépanneuse</th>
+          <th>Réparation</th>
+          <th>Garage</th>
+          <th>Adresse garage</th>
+          <th>Adresse</th>
+          <th>Statut</th>
+          <th>Retour</th>
+          <th>Auteur</th>
+          <th>Note</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (b of items(); track b._id) {
+            <tr>
+              <td>{{ createdAtText(b) }}</td>
+              <td>{{ b.problemType }}</td>
+              <td>{{ needsTowLabel(b) }}</td>
+              <td>{{ repairLabel(b) }}</td>
+              <td>{{ b.garageName || '—' }}</td>
+              <td class="note">{{ b.garageAddress || '—' }}</td>
+              <td class="note">{{ b.address }}</td>
+              <td>{{ statusLabel(b) }}</td>
+              <td>{{ resolvedAtText(b) }}</td>
+              <td>{{ authorLabel(b) }}</td>
+              <td class="note">{{ b.note || '—' }}</td>
+              <td class="actions">
+                @if (b.status !== 'RESOLVED' && canResolveBreakdown()) {
+                  <button class="btn-outline btn-xs" type="button" (click)="openResolve(b)">Marquer réparé</button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+    </footer>
+  }
+</section>
+
+@if (resolveOpen()) {
+  <div class="resolve-panel card">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Retour de réparation</div>
+        <div class="panel-subtitle">Complète les infos de clôture.</div>
+      </div>
+      <button class="btn-outline btn-xs" type="button" (click)="closeResolve()" [disabled]="resolvingId()"><i class="bi bi-x-lg"></i> Fermer</button>
+    </div>
+
+    <form class="panel-form" [formGroup]="resolveForm" (ngSubmit)="confirmResolve()">
+      <div class="field">
+        <label>Date de retour *</label>
+        <input type="date" formControlName="resolvedAt" />
+      </div>
+      <div class="field">
+        <label>Garage (optionnel)</label>
+        <input type="text" formControlName="resolvedGarage" placeholder="Nom du garage" />
+      </div>
+      <div class="field">
+        <label>Coût (optionnel)</label>
+        <input type="number" formControlName="resolvedCost" min="0" step="0.01" placeholder="0.00" />
+      </div>
+      <div class="field full">
+        <label>Note (optionnel)</label>
+        <textarea rows="2" formControlName="resolvedNote"></textarea>
+      </div>
+
+      <div class="panel-actions">
+        <button class="btn-outline" type="button" (click)="closeResolve()" [disabled]="resolvingId()"><i class="bi bi-x"></i> Annuler</button>
+        <button class="btn-primary" type="submit" [disabled]="resolvingId()"><i class="fa-solid fa-check"></i> Valider</button>
+      </div>
+    </form>
+  </div>
+}

@@ -1,0 +1,130 @@
+<section class="order-form">
+  <header class="page-header">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p class="subtitle">Renseigne les informations de base.</p>
+    </div>
+    <button class="btn-back" type="button" (click)="backToList()"><i class="bi bi-arrow-left"></i> Retour</button>
+  </header>
+
+  <div class="form-shell">
+    <article class="card form-card">
+      <h2 class="section-title"><span class="material-icons">edit_note</span>Informations de la commande</h2>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="form-grid">
+        <label>
+          Référence
+          <input type="text" formControlName="reference" placeholder="CMD-2025-001" />
+          <span class="hint">Unique et facile à retrouver.</span>
+        </label>
+        <label>
+          Client
+          <input type="text" formControlName="client" placeholder="Client" list="clients-list" />
+          <datalist id="clients-list">
+            @for (c of clients(); track c) {
+              <option [value]="c"></option>
+            }
+          </datalist>
+          <span class="hint">
+            @if (clientsError()) { {{ clientsError() }} }
+            @else { Nom commercial ou contact principal. }
+          </span>
+        </label>
+        <label>
+          Date
+          <input type="date" formControlName="date" />
+          <span class="hint">Date de création de la commande.</span>
+        </label>
+        <label>
+          Statut
+          <select formControlName="status">
+            <option value="En cours">En cours</option>
+            <option value="Livrée">Livrée</option>
+          </select>
+          <span class="hint">Choisir un statut.</span>
+        </label>
+        <label class="full">
+          Notes
+          <textarea rows="3" formControlName="notes" placeholder="Notes"></textarea>
+        </label>
+
+        <div class="lines full">
+          <div class="lines-header">
+            <h3 class="section-title"><span class="material-icons">playlist_add</span>Lignes d'articles</h3>
+            <button class="btn-outline" type="button" (click)="addLine()"><i class="bi bi-plus"></i> Ajouter une ligne</button>
+          </div>
+
+          @if (resourcesError()) {
+            <div class="state error">{{ resourcesError() }}</div>
+          }
+
+          @for (line of lines.controls; track $index) {
+            <div class="line-card" [formGroup]="lineGroup($index)">
+              <div class="line-grid">
+                <label>
+                  Article
+                  <select formControlName="resourceId" (change)="onResourceChange($index)">
+                    <option value="">
+                      {{ resourcesLoading() ? 'Chargement…' : 'Sélectionner un article' }}
+                    </option>
+                    @for (res of resources(); track res._id) {
+                      <option [value]="res._id">{{ resourceLabel(res) }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  Quantité
+                  <input type="number" min="1" formControlName="quantity" />
+                </label>
+                <label>
+                  Prix unitaire
+                  <input type="number" min="0" formControlName="unitPrice" />
+                </label>
+                <div class="line-total">
+                  <div class="label">Total de la ligne</div>
+                  <div class="value">{{ lineTotal($index) }}</div>
+                </div>
+              </div>
+              <div class="line-actions">
+                <button class="btn-outline" type="button" (click)="removeLine($index)" [disabled]="lines.length <= 1">
+                  Retirer
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (submitError()) {
+          <div class="state error full">{{ submitError() }}</div>
+        } @else if (submitSuccess()) {
+          <div class="state success full">{{ submitSuccess() }}</div>
+        }
+
+        <div class="totals full">
+          <div class="label">Total des lignes</div>
+          <div class="value">{{ linesTotal() }}</div>
+        </div>
+
+        <div class="actions full">
+          <button class="btn-save" type="submit" [disabled]="saving() || form.invalid"><i class="fa-solid fa-check"></i> 
+            {{ isEdit() ? 'Enregistrer les modifications' : 'Enregistrer la commande' }}
+          </button>
+        </div>
+      </form>
+    </article>
+
+    <aside class="card side-card">
+      <h2 class="section-title"><span class="material-icons">tips_and_updates</span>Guide rapide</h2>
+      <p class="side-text">Un bon statut permet un suivi clair avec l'équipe.</p>
+      <div class="pill-row">
+        <span class="pill">En cours</span>
+        <span class="pill">Validée</span>
+        <span class="pill">Livrée</span>
+      </div>
+      <div class="divider"></div>
+      <div class="metric">
+        <div class="metric-label">Besoin d'une commande urgente ?</div>
+        <div class="metric-value">Utilise les notes pour préciser le contexte.</div>
+      </div>
+    </aside>
+  </div>
+</section>

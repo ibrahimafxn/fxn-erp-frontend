@@ -1,0 +1,184 @@
+/* ===============================
+   BUTTONS
+================================ */
+
+button {
+  font-family: inherit;
+}
+
+.btn-primary,
+.btn-outline,
+.btn-danger,
+.btn-save,
+.btn-back {
+  padding: 0.65rem 1.15rem;
+  border-radius: 0.9rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background .2s ease, transform .2s ease, box-shadow .2s ease, filter .2s ease;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: var(--fxn-button-shadow);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--fxn-primary), var(--fxn-primary-strong));
+  color: var(--fxn-text);
+  border-color: var(--fxn-primary-border);
+}
+
+.btn-save {
+  background: linear-gradient(120deg, rgba(46, 207, 154, 0.78), rgba(46, 207, 154, 0.6));
+  color: var(--fxn-text);
+  border-color: rgba(46, 207, 154, 0.4);
+}
+
+.btn-back {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--fxn-text);
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, rgba(255, 90, 111, 0.95), rgba(255, 139, 91, 0.95));
+  color: var(--fxn-text);
+  border-color: rgba(255, 90, 111, 0.55);
+}
+
+.btn-outline {
+  background: var(--fxn-button-outline-bg);
+  color: var(--fxn-text);
+  border-color: var(--fxn-button-outline-border);
+}
+
+.btn-outline.edit {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.55);
+  color: #eaf2ff;
+}
+
+.btn-outline.delete {
+  background: transparent;
+  border-color: rgba(255, 90, 111, 0.55);
+  color: rgba(255, 170, 170, 0.95);
+}
+
+.btn-outline.delete:hover {
+  background: rgba(255, 90, 111, 0.12);
+  border-color: rgba(255, 90, 111, 0.7);
+}
+
+
+.btn-primary:hover,
+.btn-danger:hover,
+.btn-outline:hover,
+.btn-save:hover,
+.btn-back:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--fxn-button-shadow-hover);
+  filter: brightness(1.04);
+}
+
+button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+button.btn-tone-success {
+  background: linear-gradient(120deg, rgba(46, 207, 154, 0.95), rgba(46, 207, 154, 0.65));
+  border-color: rgba(46, 207, 154, 0.4);
+  color: var(--fxn-text);
+}
+
+button.btn-tone-danger {
+  background: linear-gradient(135deg, var(--fxn-danger), rgba(255, 139, 91, 0.95));
+  border-color: rgba(255, 90, 111, 0.55);
+  color: var(--fxn-text);
+}
+
+button.btn-tone-primary {
+  background: linear-gradient(120deg, var(--fxn-primary), var(--fxn-primary-strong));
+  border-color: var(--fxn-primary-border);
+  color: var(--fxn-text);
+}
+
+button.btn-tone-info {
+  background: linear-gradient(120deg, var(--fxn-accent), rgba(74, 163, 255, 0.65));
+  border-color: var(--fxn-accent);
+  color: var(--fxn-text);
+}
+
+button.btn-tone-info.btn-tone-flat {
+  background: var(--fxn-accent);
+}
+
+button.btn-tone-new {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #ffffff;
+}
+
+button.btn-tone-outline-primary {
+  background: transparent;
+  border-color: #1d4ed8;
+  color: #dbeafe;
+}
+
+button.btn-tone-outline-primary:hover {
+  background: rgba(29, 78, 216, 0.12);
+  border-color: #1d4ed8;
+}
+
+button.btn-tone-outline-danger {
+  background: transparent;
+  border-color: rgba(255, 90, 111, 0.7);
+  color: rgba(255, 170, 170, 0.95);
+}
+
+button.btn-tone-outline-danger:hover {
+  background: rgba(255, 90, 111, 0.12);
+  border-color: rgba(255, 90, 111, 0.9);
+}
+
+button.btn-tone-outline-success {
+  background: transparent;
+  border-color: rgba(46, 207, 154, 0.7);
+  color: rgba(190, 255, 225, 0.95);
+}
+
+button.btn-tone-outline-success:hover {
+  background: rgba(46, 207, 154, 0.12);
+  border-color: rgba(46, 207, 154, 0.9);
+}
+
+button.btn-tone-outline-neutral {
+  background: transparent;
+  border-color: rgba(148, 163, 184, 0.6);
+  color: rgba(226, 232, 240, 0.9);
+}
+
+button.btn-tone-outline-neutral:hover {
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.85);
+}
+
+button.btn-tone-neutral {
+  background: rgba(148, 163, 184, 0.2);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: var(--fxn-text);
+}
+
+button.btn-tone-export-pdf {
+  background: linear-gradient(120deg, #ffffff, #f87171);
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #1f2937;
+}
+
+button.btn-tone-export-csv {
+  background: linear-gradient(120deg, #ffffff, #22c55e);
+  border-color: rgba(34, 197, 94, 0.55);
+  color: #1f2937;
+}

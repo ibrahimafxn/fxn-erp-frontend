@@ -1,0 +1,420 @@
+<section class="depot-detail">
+  <!-- HEADER -->
+  <header class="page-header card">
+    <div class="header-left">
+      <div class="title-row">
+        <div class="title">
+          @if (hasDepot()) {
+            {{ depotName() }}
+          } @else {
+            Détail dépôt
+          }
+        </div>
+      </div>
+
+      <div class="subtitle">
+        Vue synthèse : informations clés, gestionnaire, techniciens et indicateurs.
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+      <button class="btn-outline" type="button" (click)="load()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
+    </div>
+  </header>
+
+  <!-- STATES -->
+  @if (loading()) {
+    <div class="state loading card">Chargement du dépôt…</div>
+  } @else if (error()) {
+    <div class="state error card">
+      <strong>Erreur :</strong> {{ error() }}
+    </div>
+  } @else if (!hasDepot()) {
+    <div class="state empty card">Aucune donnée dépôt.</div>
+  } @else {
+    <section class="grid">
+
+      <!-- IDENTITÉ -->
+      <article class="card">
+        <div class="identity">
+          <div class="avatar">
+            {{ depotName().slice(0, 2).toUpperCase() }}
+          </div>
+
+          <div class="identity-text">
+            <div class="name">{{ depotName() }}</div>
+            <div class="meta">
+              <span class="chip">{{ depotCity() || '—' }}</span>
+              <span class="chip">{{ depotPhone() || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Adresse: </label>
+            <div>{{ depotAddress() || '—' }}</div>
+          </div>
+
+          <div class="info-item">
+            <label>Gestionnaire: </label>
+            <div class="manager-row">
+              <span class="manager">
+                {{ managerLabel() }}
+                @if (managerEmail()) {
+                  <small>· {{ managerEmail() }}</small>
+                }
+              </span>
+
+              <button class="btn-outline btn-xs" type="button" (click)="openManagerEdit()">
+                Changer
+              </button>
+            </div>
+
+            @if (managerEditOpen()) {
+              <div class="manager-panel">
+                @if (managerCandidatesLoading()) {
+                  <div class="state loading">Chargement…</div>
+                } @else {
+                  <label class="sub-label">Sélection</label>
+
+                  <select
+                    class="select"
+                    [value]="selectedManagerId() || ''"
+                    (change)="onManagerSelect($event)"
+                  >
+                    <option value="">— Aucun —</option>
+
+                    @for (u of managerCandidates(); track u._id) {
+                      <option [value]="u._id">
+                        {{ userName(u) }} · {{ u.email || '—' }}
+                      </option>
+                    }
+                  </select>
+                }
+
+                @if (managerError()) {
+                  <div class="state error">{{ managerError() }}</div>
+                }
+
+                <div class="panel-actions">
+                  <button
+                    class="btn-outline btn-xs"
+                    type="button"
+                    (click)="closeManagerEdit()"
+                    [disabled]="managerSaving()"
+                  ><i class="bi bi-x"></i> Annuler</button>
+
+                  <button
+                    class="btn-danger btn-xs"
+                    type="button"
+                    (click)="removeManager()"
+                    [disabled]="managerSaving()"
+                  >
+                    Retirer
+                  </button>
+
+                  <button
+                    class="btn-save btn-xs"
+                    type="button"
+                    (click)="saveManager()"
+                    [disabled]="managerSaving()"
+                  ><i class="fa-solid fa-check"></i> 
+                    @if (managerSaving()) {
+                      Enregistrement…
+                    } @else {
+                      Enregistrer
+                    }
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="info-item">
+            <label>Créé le</label>
+            <span>
+              @if (depotCreatedAt()) {
+                {{ depotCreatedAt() | frDate:'full' }}
+              } @else {
+                —
+              }
+            </span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="card-actions">
+          <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!hasDepot()"><i class="bi bi-pencil"></i> Modifier</button>
+        </div>
+      </article>
+
+      <!-- KPIs -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Indicateurs</h2>
+          <span class="hint">Bientôt /stats</span>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">Matériels</div>
+            <div class="kpi-value">{{ kpis().materials }}</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi-label">Consommables</div>
+            <div class="kpi-value">{{ kpis().consumables }}</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi-label">Techniciens</div>
+            <div class="kpi-value">{{ kpis().technicians }}</div>
+          </div>
+
+          <div class="kpi">
+            <div class="kpi-label">Véhicules</div>
+            <div class="kpi-value">{{ kpis().vehicles }}</div>
+          </div>
+        </div>
+
+        <span class="note">
+          Endpoint attendu : <span class="mono">/api/depots/:id/stats</span>
+        </span>
+      </article>
+
+      <!-- TECHNICIENS -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Techniciens rattachés</h2>
+        </div>
+
+        <div class="card-actions left">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllTechnicians()"><i class="bi bi-eye"></i> Voir tout</button>
+        </div>
+
+        @if (techLoading()) {
+          <div class="state loading">Chargement des techniciens…</div>
+        } @else if (techError()) {
+          <div class="state error">{{ techError() }}</div>
+        } @else if (technicians().length === 0) {
+          <div class="state empty">Aucun technicien rattaché à ce dépôt.</div>
+        } @else {
+          <div class="mini-list">
+            @for (t of technicians(); track t._id) {
+              <div class="mini-row clickable" (click)="openTechnician(t)">
+                <div class="mini-left">
+                  <div class="mini-name">{{ userName(t) }}</div>
+                  <div class="mini-sub">
+                    <span>{{ t.email || '—' }}</span>
+                    <span class="dot">•</span>
+                    <span>{{ t.phone || '—' }}</span>
+                  </div>
+                </div>
+
+                <div class="mini-right" (click)="$event.stopPropagation()">
+                  <button class="btn-outline btn-xs edit" type="button" (click)="editTechnician(t)"><i class="bi bi-pencil"></i> Modifier</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <!-- MATERIELS -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Matériels rattachés</h2>
+        </div>
+
+        <div class="card-actions left">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllMaterials()"><i class="bi bi-eye"></i> Voir tout</button>
+        </div>
+
+        @if (materialsLoading()) {
+          <div class="state loading">Chargement des matériels…</div>
+        } @else if (materialsError()) {
+          <div class="state error">{{ materialsError() }}</div>
+        } @else if (materials().length === 0) {
+          <div class="state empty">Aucun matériel rattaché à ce dépôt.</div>
+        } @else {
+          <div class="mini-list">
+            @for (m of materials(); track m._id) {
+              <div class="mini-row">
+                <div class="mini-left">
+                  <div class="mini-name">{{ materialName(m) }}</div>
+                  <div class="mini-sub">
+                    <span>{{ m.category || '—' }}</span>
+                    <span class="dot">•</span>
+                    <span>{{ materialQtyLabel(m) }}</span>
+                  </div>
+                </div>
+
+                <div class="mini-right">
+                  <button class="btn-outline btn-xs edit" type="button" (click)="$event.stopPropagation(); editMaterial(m)"><i class="bi bi-pencil"></i> Modifier</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <!-- CONSOMMABLES -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Consommables rattachés</h2>
+        </div>
+
+        <div class="card-actions left">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllConsumables()"><i class="bi bi-eye"></i> Voir tout</button>
+        </div>
+
+        @if (consumablesLoading()) {
+          <div class="state loading">Chargement des consommables…</div>
+        } @else if (consumablesError()) {
+          <div class="state error">{{ consumablesError() }}</div>
+        } @else if (consumables().length === 0) {
+          <div class="state empty">Aucun consommable rattaché à ce dépôt.</div>
+        } @else {
+          <div class="mini-list">
+            @for (c of consumables(); track c._id) {
+              <div class="mini-row">
+                <div class="mini-left">
+                  <div class="mini-name">{{ consumableName(c) }}</div>
+                  <div class="mini-sub">
+                    <span>{{ c.unit || 'pcs' }}</span>
+                    <span class="dot">•</span>
+                    <span>{{ consumableQtyLabel(c) }}</span>
+                  </div>
+                </div>
+
+                <div class="mini-right">
+                  <button class="btn-outline btn-xs edit" type="button" (click)="$event.stopPropagation(); modifierConsumable(c)"><i class="bi bi-pencil"></i> Modifier</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <!-- TRANSFERT STOCK -->
+      @if (canTransfer()) {
+        <article class="card">
+          <div class="card-title-row">
+            <h2>Transfert de stock</h2>
+          </div>
+
+          <p class="card-subtitle">Déplacer du stock vers un autre dépôt.</p>
+
+          @if (transferError()) {
+            <div class="state error">{{ transferError() }}</div>
+          }
+          @if (transferSuccess()) {
+            <div class="state success">{{ transferSuccess() }}</div>
+          }
+
+          <form class="transfer-form" [formGroup]="transferForm" (ngSubmit)="submitTransfer()">
+            <div class="field">
+              <label>Type de ressource</label>
+              <select formControlName="resourceType">
+                <option value="MATERIAL">Matériel</option>
+                <option value="CONSUMABLE">Consommable</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Ressource</label>
+              <select formControlName="resourceId">
+                <option value="">— Sélectionner —</option>
+                @for (item of transferResourceOptions(); track item._id) {
+                  <option [value]="item._id">{{ resourceLabel(item) }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Quantité</label>
+              <input type="number" min="1" formControlName="quantity" />
+            </div>
+
+            <div class="field">
+              <label>Dépôt cible</label>
+              @if (depotsLoading()) {
+                <div class="hint">Chargement dépôts…</div>
+              } @else if (targetDepots().length === 0) {
+                <div class="hint">Aucun autre dépôt disponible.</div>
+              } @else {
+                <select formControlName="toDepot">
+                  <option value="">— Sélectionner —</option>
+                  @for (d of targetDepots(); track d._id) {
+                    <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+                  }
+                </select>
+              }
+            </div>
+
+            <div class="field span-2">
+              <label>Note</label>
+              <textarea rows="3" formControlName="note" placeholder="Motif du transfert…"></textarea>
+            </div>
+
+            <div class="actions">
+              <button class="btn-outline" type="button" (click)="transferForm.reset({ resourceType: 'CONSUMABLE', quantity: 1 })"><i class="bi bi-x"></i> 
+                Effacer
+              </button>
+              <button class="btn-primary" type="submit" [disabled]="transferLoading() || transferForm.invalid">
+                @if (transferLoading()) { Transfert… } @else { Transférer }
+              </button>
+            </div>
+          </form>
+        </article>
+      }
+
+      <!-- VEHICULES -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Véhicules au dépôt</h2>
+        </div>
+
+        <div class="card-actions left">
+          <button class="btn-outline btn-xs" type="button" (click)="openAllVehicles()"><i class="bi bi-eye"></i> Voir tout</button>
+        </div>
+
+        @if (vehiclesLoading()) {
+          <div class="state loading">Chargement des véhicules…</div>
+        } @else if (vehiclesError()) {
+          <div class="state error">{{ vehiclesError() }}</div>
+        } @else if (vehicles().length === 0) {
+          <div class="state empty">Aucun véhicule présent à ce dépôt.</div>
+        } @else {
+          <div class="mini-list">
+            @for (v of vehicles(); track v._id) {
+              <div class="mini-row clickable" (click)="openVehicleDetail(v)">
+                <div class="mini-left">
+                  <div class="mini-name">
+                    {{ vehiclePlate(v) }}
+                    <span class="dot">•</span>
+                    {{ vehicleLabel(v) }}
+                  </div>
+
+                  <div class="mini-sub">
+                    <span>Année : {{ vehicleYear(v) }}</span>
+                    <span class="dot">•</span>
+                    <span>{{ vehicleStateLabel(v) }}</span>
+                  </div>
+                </div>
+
+                <div class="mini-right" (click)="$event.stopPropagation()">
+                  <button class="btn-outline btn-xs edit" type="button" (click)="editVehicle(v)"><i class="bi bi-pencil"></i> Modifier</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+    </section>
+  }
+</section>

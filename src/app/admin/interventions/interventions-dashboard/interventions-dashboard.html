@@ -1,0 +1,445 @@
+<section class="interventions">
+  <header class="page-header card hero">
+    <div>
+      <h1>Calcul d'attachement</h1>
+      <p class="subtitle">Import CSV et synthèse par technicien.</p>
+    </div>
+
+    <div class="header-actions">
+      <label class="file-input" [class.disabled]="hasData() || importLoading()">
+        <input
+          #csvInput
+          type="file"
+          accept=".csv"
+          [disabled]="hasData() || importLoading()"
+          (click)="onFileClick()"
+          (change)="onFileChange($event)"
+        />
+        <span class="material-icons" aria-hidden="true">upload_file</span>
+        <span>Choisir un export CSV</span>
+      </label>
+      @if (selectedFile) {
+        <div class="file-meta">
+          <span class="material-icons" aria-hidden="true">description</span>
+          <span>{{ selectedFile.name }}</span>
+        </div>
+      }
+      <button
+        class="btn-danger"
+        type="button"
+        (click)="openResetModal()"
+        [disabled]="resetLoading() || importLoading() || selectedFile || !hasData()"
+      >
+        <span class="material-icons" aria-hidden="true">delete_forever</span>
+        @if (resetLoading()) { Reset… } @else { Reset data }
+      </button>
+      <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading() || !selectedFile">
+        <span class="material-icons" aria-hidden="true">cloud_upload</span>
+        @if (importLoading()) { Import… } @else { Importer }
+      </button>
+    </div>
+  </header>
+
+  @if (importError()) {
+    <div class="state error card"><strong>Import :</strong> {{ importError() }}</div>
+  } @else if (importResult()) {
+    <div class="state ok card">{{ importResult() }}</div>
+  }
+  @if (resetError()) {
+    <div class="state error card"><strong>Reset :</strong> {{ resetError() }}</div>
+  } @else if (resetResult()) {
+    <div class="state ok card">{{ resetResult() }}</div>
+  }
+
+  @if (canEditRates()) {
+    <section class="rates card">
+      <div class="rates-head">
+        <div>
+          <h2><span class="material-icons">tune</span>Tarifs prestations</h2>
+          <p>Définis la part FIBRUP et la part technicien pour chaque prestation.</p>
+        </div>
+
+        <div class="rates-actions">
+          <button class="btn-outline" type="button" (click)="toggleRates()">
+            @if (showRates()) { Masquer tarifs } @else { Afficher tarifs }
+          </button>
+          <button class="btn-outline" type="button" (click)="resetRates()" [disabled]="rateSaving() || rateForm.pristine"><i class="bi bi-x"></i> Annuler les modifications</button>
+          <button class="btn-save" type="button" (click)="saveRates()" [disabled]="rateSaving() || rateForm.pristine"><i class="fa-solid fa-check"></i> 
+            @if (rateSaving()) { Sauvegarde… } @else { Enregistrer }
+          </button>
+        </div>
+      </div>
+
+      @if (showRates()) {
+        <form class="rates-grid" [formGroup]="rateForm">
+          @for (r of rateFields; track r.key) {
+            <div class="rate-row" [class.invalid]="isRateInvalid(r.key)" [formGroupName]="r.key">
+              <div class="rate-label">
+                <span class="rate-title">{{ r.label }}</span>
+                <span class="rate-code">{{ r.code }}</span>
+              </div>
+
+              <div class="rate-inputs">
+                <label>
+                  Total
+                  <input type="number" min="0" step="1" formControlName="total" />
+                </label>
+                <label>
+                  FIBRUP
+                  <input type="number" min="0" step="1" formControlName="fxn" />
+                </label>
+                <div class="tech-readonly">
+                  <span class="label">Technicien</span>
+                  <span class="value">{{ techShareFor(r.key) }}</span>
+                </div>
+              </div>
+              @if (isRateInvalid(r.key)) {
+                <p class="rate-error">Le montant FIBRUP ne peut pas dépasser le total.</p>
+              }
+            </div>
+          }
+        </form>
+        <p class="rates-hint">Les tarifs sont enregistrés côté serveur.</p>
+        @if (rateError()) {
+          <p class="rates-status error">{{ rateError() }}</p>
+        } @else if (rateSuccess()) {
+          <p class="rates-status ok">{{ rateSuccess() }}</p>
+        }
+      } @else {
+        <div class="rates-collapsed">
+          <span class="material-icons" aria-hidden="true">visibility_off</span>
+          Tarifs masqués.
+        </div>
+      }
+    </section>
+  }
+
+  <app-confirm-delete-modal
+    [open]="resetModalOpen()"
+    entityLabel="données interventions"
+    entityName="toutes les interventions importées"
+    dangerHint="Cette action supprimera toutes les interventions."
+    confirmText="Reset"
+    [confirming]="resetLoading()"
+    (cancel)="closeResetModal()"
+    (confirm)="confirmResetData()">
+  </app-confirm-delete-modal>
+
+  <div class="revenue card accent">
+    <div class="revenue-head">
+      <h2>
+        <span class="material-icons">attach_money</span>
+        Chiffre d’affaires
+        <span
+          class="info-tooltip"
+          tabindex="0"
+          role="button"
+          aria-label="Estimation basée sur les tarifs et les interventions filtrées."
+        >
+          <span class="material-icons" aria-hidden="true">info</span>
+          <span class="tooltip-text">Estimation basée sur les tarifs et les interventions filtrées.</span>
+        </span>
+      </h2>
+      <p>Calculé à partir des tarifs et des interventions filtrées.</p>
+    </div>
+    <div class="revenue-item">
+      <span class="label">Chiffre d’affaires FIBRUP</span>
+      <span class="value">{{ totalRevenue().fxn | number:'1.0-0' }} €</span>
+    </div>
+    <div class="revenue-item">
+      <span class="label">Chiffre d’affaires Techniciens</span>
+      <span class="value">{{ totalRevenue().tech | number:'1.0-0' }} €</span>
+    </div>
+    <div class="revenue-item total">
+      <span class="label">Total chiffre d’affaires</span>
+      <span class="value">{{ (totalRevenue().fxn + totalRevenue().tech) | number:'1.0-0' }} €</span>
+    </div>
+  </div>
+
+  <section class="toolbar card">
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
+      <label>
+        Du
+        <input type="date" formControlName="fromDate" />
+      </label>
+      <label>
+        Au
+        <input type="date" formControlName="toDate" />
+      </label>
+      <label>
+        Technicien
+        <select formControlName="technician">
+          <option value="">Tous</option>
+          @for (t of filters().technicians; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Région
+        <select formControlName="region">
+          <option value="">Toutes</option>
+          @for (r of filters().regions; track r) {
+            <option [value]="r">{{ r }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Client
+        <select formControlName="client">
+          <option value="">Tous</option>
+          @for (c of filters().clients; track c) {
+            <option [value]="c">{{ c }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Statut
+        <select formControlName="status">
+          <option value="">Tous</option>
+          @for (s of filters().statuses; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Type
+        <select formControlName="type">
+          <option value="">Tous</option>
+          @for (t of filters().types; track t) {
+            <option [value]="t">{{ t }}</option>
+          }
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn-outline btn-search" type="submit" [disabled]="loading()"><span class="material-icons" aria-hidden="true">search</span>Rechercher</button>
+        <button class="btn-outline btn-clear" type="button" (click)="clearFilters()"><span class="material-icons" aria-hidden="true">clear</span>Effacer</button>
+      </div>
+    </form>
+
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (!hasData()) {
+    <div class="state empty card">Aucune donnée pour ces filtres.</div>
+  } @else {
+    <div class="summary card">
+      <div class="summary-head">
+        <h2><span class="material-icons">insights</span>Synthèse rapide</h2>
+        <p>Volumes globaux sur la période sélectionnée.</p>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-pill">
+          <span class="label">Total</span>
+          <span class="value">{{ totals()?.total ?? 0 }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">Raccordements</span>
+          <span class="value">{{ racTotal(totals()) }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">Rac pavillon</span>
+          <span class="value">{{ totals()?.racPavillon ?? 0 }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">Rac immeuble</span>
+          <span class="value">{{ totals()?.racImmeuble ?? 0 }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">Reconnexion</span>
+          <span class="value">{{ totals()?.reconnexion ?? 0 }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">Prestation F8</span>
+          <span class="value">{{ totals()?.racF8 ?? 0 }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">Rac PRO S</span>
+          <span class="value">{{ totals()?.racProS ?? 0 }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">Rac PRO C</span>
+          <span class="value">{{ totals()?.racProC ?? 0 }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">SAV</span>
+          <span class="value">{{ totals()?.sav ?? 0 }}</span>
+        </div>
+        <div class="summary-pill">
+          <span class="label">CLEM</span>
+          <span class="value">{{ totals()?.clem ?? 0 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="table card">
+      <div class="table-head">
+        <h2><span class="material-icons">table_chart</span>Détail par technicien</h2>
+        <p>Indicateurs et chiffre d’affaires par intervenant. Clique sur un technicien pour afficher ses interventions.</p>
+      </div>
+      <table>
+        <thead>
+        <tr>
+          <th>Technicien</th>
+          <th>Total</th>
+          <th>Rac pavillon</th>
+          <th>Rac immeuble</th>
+          <th>Reconnexion</th>
+          <th>Rac F8</th>
+          <th>Rac PRO S</th>
+          <th>Rac PRO C</th>
+          <th>SAV</th>
+          <th>CLEM</th>
+          <th>Autres</th>
+          <th>CA FIBRUP</th>
+          <th>CA Tech</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (it of summaryItems(); track it.technician) {
+            <tr
+              class="clickable-row"
+              (click)="openDetail(it.technician || '')"
+              (touchstart)="onRowTouchStart($event, it.technician || '')"
+              (touchend)="onRowTouchEnd($event)"
+            >
+              <td data-label="Technicien">
+                <button
+                  class="link"
+                  type="button"
+                  title="Voir les interventions de ce technicien"
+                  aria-label="Voir les interventions de ce technicien"
+                  (click)="openDetail(it.technician || '')"
+                ><i class="bi bi-eye"></i> 
+                  {{ it.technician || '—' }}
+                </button>
+              </td>
+              <td data-label="Total">{{ it.total }}</td>
+              <td data-label="Rac pavillon">{{ it.racPavillon }}</td>
+              <td data-label="Rac immeuble">{{ it.racImmeuble }}</td>
+              <td data-label="Reconnexion">{{ it.reconnexion }}</td>
+              <td data-label="Rac F8">{{ it.racF8 }}</td>
+              <td data-label="Rac PRO S">{{ it.racProS }}</td>
+              <td data-label="Rac PRO C">{{ it.racProC }}</td>
+              <td data-label="SAV">{{ it.sav }}</td>
+              <td data-label="CLEM">{{ it.clem }}</td>
+              <td data-label="Autres">{{ it.other + it.racAutre }}</td>
+              <td data-label="CA FIBRUP">{{ fxnRevenue(it) | number:'1.0-0' }}</td>
+              <td data-label="CA Tech">{{ techRevenue(it) | number:'1.0-0' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+      <div class="pager-meta">
+        <span class="pill">Total : {{ totalItems() }}</span>
+        <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+        <label class="limit">
+          <span>Par page</span>
+          <select [value]="limit()" (change)="onLimitChange($event)">
+            <option [value]="5">5</option>
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i> Suivant →
+      </button>
+    </footer>
+  }
+</section>
+
+@if (detailOpen()) {
+  <div class="overlay-backdrop" (click)="closeDetail()">
+    <div
+      class="overlay-panel"
+      (click)="$event.stopPropagation()"
+      (touchstart)="onDetailTouchStart($event)"
+      (touchend)="onDetailTouchEnd($event)"
+    >
+      <div class="overlay-header">
+        <div>
+          <h3 class="section-title"><span class="material-icons">assignment</span>Interventions du technicien</h3>
+          <p class="subtitle">{{ detailTechnician() }}</p>
+        </div>
+        <button class="btn-outline" type="button" (click)="closeDetail()"><i class="bi bi-x-lg"></i> Fermer</button>
+      </div>
+
+      <div class="overlay-meta">
+        <span class="pill">Total : {{ detailTotal() }}</span>
+        <span class="pill">Page : {{ detailPage() }} / {{ detailPageCount() }}</span>
+        <label class="limit">
+          <span>Par page</span>
+          <select [value]="detailLimit()" (change)="detailLimitChange($event)">
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+        </label>
+      </div>
+
+      @if (detailLoading()) {
+        <div class="state loading">Chargement…</div>
+      } @else if (detailError()) {
+        <div class="state error">{{ detailError() }}</div>
+      } @else if (detailItems().length === 0) {
+        <div class="state empty">Aucune intervention trouvée.</div>
+      } @else {
+        <div class="detail-groups">
+          @for (group of detailGroups(); track group.key) {
+            <div class="detail-group">
+              <div class="detail-group-head">
+                <h4>{{ group.label }}</h4>
+                <span class="pill">{{ group.items.length }}</span>
+              </div>
+              <div class="detail-table">
+                <table>
+                  <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>Numéro</th>
+                    <th>Client</th>
+                    <th>Type</th>
+                    <th>Articles</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of group.items; track row._id; let i = $index) {
+                      <tr>
+                        <td data-label="#">{{ (detailPage() - 1) * detailLimit() + i + 1 }}</td>
+                        <td data-label="Date">{{ row.dateRdv | date:'dd/MM/yyyy' }}</td>
+                        <td data-label="Numéro" class="mono">{{ row.numInter }}</td>
+                        <td data-label="Client">{{ row.client || '—' }}</td>
+                        <td data-label="Type">{{ row.type || '—' }}</td>
+                        <td data-label="Articles" class="mono">{{ formatArticleCodes(row.articlesRaw) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (detailPageCount() > 1) {
+          <footer class="pager">
+            @if (detailPage() > 1) {
+              <button class="btn-outline" type="button" (click)="detailPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+            }
+            @if (detailPage() < detailPageCount()) {
+              <button class="btn-outline" type="button" (click)="detailNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+            }
+          </footer>
+        }
+      }
+    </div>
+  </div>
+}

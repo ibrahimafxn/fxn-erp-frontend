@@ -1,0 +1,354 @@
+<section class="hr-page">
+  <header class="page-header">
+    <div>
+      <h1><span class="material-icons">diversity_3</span>Ressources humaines</h1>
+      <p class="subtitle">Dossiers employés, documents et congés</p>
+    </div>
+    <div class="tabs">
+      <button class="tab" [class.active]="tab() === 'employees'" (click)="switchTab('employees')">
+        <span class="material-icons">groups</span>Employés
+      </button>
+      <button class="tab" [class.active]="tab() === 'leaves'" (click)="switchTab('leaves')">
+        <span class="material-icons">beach_access</span>Congés
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="state error">{{ error() }}</div>
+  }
+
+  @if (tab() === 'employees') {
+    <div class="hr-grid">
+      <div class="panel">
+        <h2 class="section-title"><span class="material-icons">badge</span>Employés</h2>
+        @if (docAlerts()) {
+          <div class="doc-alerts">
+            <button class="pill danger link-pill" type="button" (click)="openDocOverlay('EXPIRED')">
+              Expirés : {{ docAlerts()?.expired }}
+            </button>
+            <button class="pill warn link-pill" type="button" (click)="openDocOverlay('EXPIRING')">
+              Expirent bientôt : {{ docAlerts()?.expiring }}
+            </button>
+            <button class="pill link-pill" type="button" (click)="setDocFilter('ALL')">
+              Tous
+            </button>
+          </div>
+          @if (overlayOpen()) {
+            <div class="doc-alerts-panel card" id="doc-alerts-panel">
+              <div class="overlay-header">
+                <h3 class="section-title"><span class="material-icons">warning</span>{{ overlayTitle() }}</h3>
+                <button class="btn-outline" type="button" (click)="closeDocOverlay()"><i class="bi bi-x-lg"></i> Fermer</button>
+              </div>
+              @if (overlayLoading()) {
+                <div class="state">Chargement…</div>
+              } @else if (overlayItems().length === 0) {
+                <div class="state">Aucun document.</div>
+              } @else {
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Employé</th>
+                        <th>Type</th>
+                        <th>Expiration</th>
+                        <th>Document</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (d of overlayItems(); track d._id) {
+                        <tr [class.doc-valid]="isDocValid(d)" [class.doc-expired]="isDocExpired(d)">
+                          <td>{{ formatUserName(d.user) }}</td>
+                          <td>{{ docTypeLabel(d.type) }}</td>
+                          <td>{{ formatDate(d.expiryDate) }}</td>
+                          <td>
+                            <a [href]="docPdfUrl(d)" download>Télécharger PDF</a>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+        }
+        <div class="filters">
+          <input
+            #employeeSearch
+            type="search"
+            [value]="employeeQuery()"
+            placeholder="Rechercher nom, email, téléphone"
+            (input)="employeeQuery.set(employeeSearch.value); applyEmployeeFilters()"
+          />
+          <select #roleSelect [value]="employeeRole()" (change)="employeeRole.set(roleSelect.value); applyEmployeeFilters()">
+            @for (r of employeeRoles; track r.value) {
+              <option [value]="r.value">{{ r.label }}</option>
+            }
+          </select>
+          <select #depotSelect [value]="employeeDepot()" (change)="employeeDepot.set(depotSelect.value); applyEmployeeFilters()">
+            <option value="">Tous les dépôts</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ d.name }}</option>
+            }
+          </select>
+          <select #complianceSelect [value]="employeeCompliance()" (change)="employeeCompliance.set(complianceSelect.value); applyEmployeeFilters()">
+            @for (c of complianceFilters; track c.value) {
+              <option [value]="c.value">{{ c.label }}</option>
+            }
+          </select>
+          <select #pageSizeSelect [value]="employeeLimit()" (change)="employeeLimit.set(+pageSizeSelect.value); applyEmployeeFilters()">
+            <option [value]="10">10 / page</option>
+            <option [value]="25">25 / page</option>
+            <option [value]="50">50 / page</option>
+          </select>
+          <button class="btn-outline" (click)="resetEmployeeFilters()">Réinitialiser</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Rôle</th>
+                <th>Dépôt</th>
+                <th>Téléphone</th>
+                <th>Docs</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of employees(); track e.user._id) {
+                <tr [class.active]="selected()?.user?._id === e.user._id" (click)="selectEmployee(e)">
+                  <td>{{ formatUserName(e.user) }}</td>
+                  <td><span class="pill role-pill">{{ e.user.role || '—' }}</span></td>
+                  <td>{{ depotLabel(e.user) }}</td>
+                  <td>{{ e.user.phone || '—' }}</td>
+                  <td>{{ complianceLabel(e) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <button class="btn-outline" (click)="prevEmployeePage()" [disabled]="employeePage() <= 1"><i class="bi bi-chevron-left"></i> Précédent</button>
+          <span>Page {{ employeePage() }} / {{ employeePageCount() }}</span>
+          <button
+            class="btn-outline"
+            (click)="nextEmployeePage()"
+            [disabled]="employeePage() >= employeePageCount()"
+          ><i class="bi bi-chevron-right"></i> Suivant
+          </button>
+        </div>
+      </div>
+
+      <div class="panel detail">
+        @if (selected(); as s) {
+          <h2 class="section-title"><span class="material-icons">assignment_ind</span>Dossier employé</h2>
+          <div class="identity">
+            <div>
+              <div class="name">{{ formatUserName(s.user) }}</div>
+              <div class="meta">{{ s.user.email }} · {{ depotLabel(s.user) }}</div>
+              @if (requiredDocsForUser(s.user).length) {
+                <div class="requirements">
+                  @for (t of requiredDocsForUser(s.user); track t) {
+                    <span class="pill" [class.ok]="isRequiredDocSatisfied(t)" [class.danger]="!isRequiredDocSatisfied(t)">
+                      {{ docTypeLabel(t) }}
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+            <span class="badge" [class.ok]="s.compliance?.ok">{{ complianceLabel(s) }}</span>
+          </div>
+
+          <form class="form-grid" [formGroup]="profileForm">
+            <div class="field">
+              <label>Poste</label>
+              <input type="text" formControlName="jobTitle" />
+            </div>
+            <div class="field">
+              <label>Contrat</label>
+              <select formControlName="contractType">
+                @for (t of contractTypes; track t) {
+                  <option [value]="t">{{ t }}</option>
+                }
+              </select>
+            </div>
+            <div class="field">
+              <label>Date début</label>
+              <input type="date" formControlName="startDate" />
+            </div>
+            <div class="field">
+              <label>Date fin</label>
+              <input type="date" formControlName="endDate" />
+            </div>
+            <div class="field">
+              <label>Adresse</label>
+              <input type="text" formControlName="address" />
+            </div>
+            <div class="field">
+              <label>Contact urgence</label>
+              <input type="text" formControlName="emergencyName" />
+            </div>
+            <div class="field">
+              <label>Téléphone urgence</label>
+              <input type="text" formControlName="emergencyPhone" />
+            </div>
+            <div class="field full">
+              <label>Notes</label>
+              <textarea rows="3" formControlName="notes"></textarea>
+            </div>
+          </form>
+          <div class="actions">
+            <button class="btn-save" (click)="saveProfile()"><i class="fa-solid fa-check"></i> Enregistrer</button>
+          </div>
+
+          <h3 class="section-title"><span class="material-icons">description</span>Documents</h3>
+          <form class="doc-form" [formGroup]="docForm">
+            <select formControlName="type">
+              @for (t of docTypes; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+            <input #docFileInput type="file" accept=".pdf,.jpeg,.jpg,.png" (change)="onDocFileChange($event)" />
+            @if (isHabilitationSelected()) {
+              <select formControlName="detail">
+                @for (o of habilitationOptions; track o.value) {
+                  <option [value]="o.value">{{ o.label }}</option>
+                }
+              </select>
+            } @else {
+              <input type="text" formControlName="detail" placeholder="Détail (optionnel)" />
+            }
+            <input type="date" formControlName="expiryDate" />
+            <button class="btn-outline" type="button" (click)="addDoc(docFileInput)"><i class="bi bi-plus"></i> Ajouter</button>
+          </form>
+
+          <div class="table-wrap" id="hr-documents">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Détail</th>
+                  <th>Expiration</th>
+                  <th>Document</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (d of filteredDocs(); track d._id) {
+                  <tr [class.doc-valid]="isDocValid(d)" [class.doc-expired]="isDocExpired(d)">
+                    <td>{{ d.type }}</td>
+                    <td>{{ d.detail || '—' }}</td>
+                    <td>{{ formatDate(d.expiryDate) }}</td>
+                    <td>
+                      <a [href]="docPdfUrl(d)" download>Télécharger PDF</a>
+                    </td>
+                    <td>
+                      <button
+                        class="btn-outline btn-xs"
+                        type="button"
+                        [disabled]="deletingDocId() === d._id"
+                        (click)="openDeleteDocModal(d)"
+                      ><i class="fa-solid fa-trash"></i> 
+                        @if (deletingDocId() === d._id) { Suppression… } @else { Supprimer }
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <app-confirm-delete-modal
+            [open]="deleteDocModalOpen()"
+            [entityLabel]="pendingDocLabel()"
+            [entityName]="pendingDocName()"
+            [entityId]="pendingDocId()"
+            [confirming]="confirmingDeleteDoc()"
+            (cancel)="closeDeleteDocModal()"
+            (confirm)="confirmDeleteDoc()">
+          </app-confirm-delete-modal>
+
+          <h3 class="section-title"><span class="material-icons">history</span>Historique RH</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Action</th>
+                  <th>Auteur</th>
+                  <th>Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (h of history(); track h._id) {
+                  <tr>
+                    <td>{{ formatDate(h.createdAt || '') }}</td>
+                    <td>{{ historyActionLabel(h.action) }}</td>
+                    <td>{{ formatUserName(h.actor) }}</td>
+                    <td>{{ historyDetail(h) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <button class="btn-outline" (click)="prevHistoryPage()" [disabled]="historyPage() <= 1"><i class="bi bi-chevron-left"></i> Précédent</button>
+            <span>Page {{ historyPage() }} / {{ historyPageCount() }}</span>
+            <button
+              class="btn-outline"
+              (click)="nextHistoryPage()"
+              [disabled]="historyPage() >= historyPageCount()"
+            ><i class="bi bi-chevron-right"></i> Suivant
+            </button>
+          </div>
+        } @else {
+          <div class="state">Sélectionner un employé.</div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="panel">
+      <div class="leaves-header">
+        <h2 class="section-title"><span class="material-icons">event_available</span>Demandes de congés</h2>
+        <select #statusSelect [value]="leaveStatus()" (change)="leaveStatus.set(statusSelect.value); loadLeaves()">
+          <option value="PENDING">En attente</option>
+          <option value="APPROVED">Approuvées</option>
+          <option value="REJECTED">Rejetées</option>
+          <option value="CANCELED">Annulées</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Employé</th>
+              <th>Dépôt</th>
+              <th>Type</th>
+              <th>Période</th>
+              <th>Statut</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of leaves(); track l._id) {
+              <tr>
+                <td>{{ formatUserName(l.user) }}</td>
+                <td>{{ depotLabel(l.user) }}</td>
+                <td>{{ l.type }}</td>
+                <td>{{ formatDate(l.startDate) }} → {{ formatDate(l.endDate) }}</td>
+                <td>{{ l.status }}</td>
+                <td class="actions-cell">
+                  @if (canApprove() && l.status === 'PENDING') {
+                    <button class="btn-primary btn-xs" (click)="decideLeave(l, 'APPROVED')">Approuver</button>
+                    <button class="btn-danger btn-xs" (click)="decideLeave(l, 'REJECTED')">Rejeter</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</section>

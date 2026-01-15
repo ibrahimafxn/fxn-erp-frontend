@@ -1,0 +1,135 @@
+<section class="order-detail">
+  <header class="page-header">
+    <div>
+      <h1>Détail de la commande</h1>
+      <p class="subtitle">Informations principales de la commande.</p>
+    </div>
+    <button class="btn-back" type="button" (click)="backToList()"><i class="bi bi-arrow-left"></i> Retour</button>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement...</div>
+  } @else if (error()) {
+    <div class="state error card">{{ error() }}</div>
+  } @else if (!order()) {
+    <div class="state empty card">Aucune donnee.</div>
+  } @else {
+    <article class="card">
+      <h2 class="section-title"><span class="material-icons">receipt_long</span>Commande</h2>
+      <div class="grid">
+        <div>
+          <div class="label">Référence</div>
+          <div class="value">{{ order()?.reference }}</div>
+        </div>
+        <div>
+          <div class="label">Client</div>
+          <div class="value">{{ order()?.client }}</div>
+        </div>
+        <div>
+          <div class="label">Date</div>
+          <div class="value">{{ order()?.date | date:'dd/MM/yyyy HH:mm' }}</div>
+        </div>
+        <div>
+          <div class="label">Statut</div>
+          <div class="value">{{ order()?.status }}</div>
+        </div>
+        <div>
+          <div class="label">Montant</div>
+          <div class="value">{{ order()?.amount }}</div>
+        </div>
+        <div class="full">
+          <div class="label">Notes</div>
+          <div class="value">{{ order()?.notes || '—' }}</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="section-title"><span class="material-icons">local_shipping</span>Importer dans un dépôt</h2>
+      <p class="subtitle">Ajoute les articles de la commande dans le stock du dépôt sélectionné.</p>
+
+      <div class="actions">
+        <label>
+          Dépôt
+          <select [value]="selectedDepotId()" (change)="onDepotSelect($event)">
+            <option value="">Sélectionner</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+            }
+          </select>
+        </label>
+        <button
+          class="btn-primary"
+          type="button"
+          (click)="openImportModal()"
+          [disabled]="importLoading() || !selectedDepotId() || !isImportable() || !!order()?.importedToDepotAt || (order()?.lines || []).length === 0"
+        ><i class="bi bi-upload"></i> 
+          @if (importLoading()) { Import… } @else { Importer au dépôt }
+        </button>
+      </div>
+
+      @if (order()?.importedToDepotAt) {
+        <div class="state ok">
+          Déjà importée le {{ order()?.importedToDepotAt | date:'dd/MM/yyyy HH:mm' }}
+          vers {{ depotNameById(order()?.importedToDepotId || '') }}.
+        </div>
+      } @else if (!isImportable()) {
+        <div class="state error">Statut commande non importable.</div>
+      }
+
+      @if (importError()) {
+        <div class="state error">{{ importError() }}</div>
+      } @else if (importResult()) {
+        <div class="state ok">{{ importResult() }}</div>
+      }
+    </article>
+
+    <article class="card">
+      <h2 class="section-title"><span class="material-icons">list_alt</span>Articles</h2>
+      @if ((order()?.lines || []).length === 0) {
+        <div class="state empty">Aucun article.</div>
+      } @else {
+        <div class="table">
+          <table>
+            <thead>
+            <tr>
+              <th>Article</th>
+              <th>Type</th>
+              <th>Quantité</th>
+              <th>Prix unitaire</th>
+              <th>Total</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (line of (order()?.lines || []); track $index) {
+                <tr>
+                  <td>{{ line.name }}</td>
+                  <td>{{ line.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
+                  <td>{{ line.quantity }}</td>
+                  <td>{{ line.unitPrice }}</td>
+                  <td>{{ line.total ?? (line.quantity * line.unitPrice) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="lines-total">
+          <div class="label">Total des lignes</div>
+          <div class="value">{{ linesTotal(order()?.lines || []) }}</div>
+        </div>
+      }
+    </article>
+  }
+</section>
+
+<app-confirm-delete-modal
+  [open]="importConfirmOpen()"
+  entityLabel="commande"
+  [entityName]="importEntityName()"
+  dangerHint="Cette action importera les articles de la commande dans le dépôt sélectionné."
+  cancelText="Annuler"
+  confirmText="Importer"
+  [confirming]="importLoading()"
+  (cancel)="cancelImportModal()"
+  (confirm)="confirmImport()"
+></app-confirm-delete-modal>

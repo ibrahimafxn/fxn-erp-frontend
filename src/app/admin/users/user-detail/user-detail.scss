@@ -1,0 +1,141 @@
+.user-detail {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+
+  .subtitle {
+    margin: .25rem 0 0;
+    opacity: .75;
+    font-size: .9rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.state {
+  padding: 1rem;
+  border-radius: .9rem;
+  background: rgba(0, 0, 0, .06);
+  border: 1px solid rgba(255, 255, 255, .06);
+
+  &.loading { opacity: .9; }
+  &.error { background: rgba(255, 0, 0, .08); }
+  &.empty { opacity: .8; }
+
+  code {
+    display: block;
+    margin-top: .5rem;
+    padding: .5rem .75rem;
+    border-radius: .75rem;
+    background: rgba(0, 0, 0, .10);
+    overflow: auto;
+  }
+}
+
+.user-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, .06);
+  border: 1px solid rgba(255, 255, 255, .06);
+  display: grid;
+  gap: 1rem;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: .9rem;
+
+  .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .10);
+  }
+
+  .identity-text {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+
+    h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+  }
+}
+
+.info-grid {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  .info-item {
+    display: grid;
+    gap: .2rem;
+
+    label {
+      font-size: .85rem;
+      opacity: .7;
+    }
+
+    span {
+      font-weight: 600;
+      word-break: break-word;
+    }
+  }
+}
+
+.card-actions {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* -------------------------------------------------
+   Boutons
+------------------------------------------------- */
+
+/* -------------------------------------------------
+   Badge rôle
+------------------------------------------------- */
+.role-badge {
+  font-size: .8rem;
+  padding: .25rem .5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .06);
+  font-weight: 700;
+}
+
+/* Optionnel : styles par rôle */
+.role-dirigeant { background: rgba(255, 200, 0, .14); }
+.role-admin { background: rgba(0, 120, 255, .14); }
+.role-gestion_depot { background: rgba(0, 180, 120, .14); }
+.role-technicien { background: rgba(255, 255, 255, .06); }

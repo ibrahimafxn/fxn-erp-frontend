@@ -1,0 +1,52 @@
+@if (open()) {
+  <div class="modal-backdrop" (click)="onBackdropClick()" (keydown)="onKeydown($event)" tabindex="-1">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Confirmation annulation"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div class="modal-title">{{ title() }}</div>
+
+        <button type="button" class="icon-btn" (click)="onCancel()" aria-label="Fermer"><i class="bi bi-x-lg"></i> 
+          ✕
+        </button>
+      </header>
+
+      <section class="modal-body">
+        <p class="lead">
+          Voulez-vous vraiment annuler {{ entityLabel() }}
+          <span class="strong">{{ displayName() }}</span> ?
+        </p>
+
+        <p class="hint">{{ dangerHint() }}</p>
+
+        @if (entityId()) {
+          <div class="meta">
+            <span class="label">ID</span>
+            <span class="mono">{{ entityId() }}</span>
+          </div>
+        }
+
+        @if (showReason()) {
+          <label class="reason">
+            <span>Motif <span class="required">*</span></span>
+            <textarea rows="3" [value]="reason()" (input)="onReasonInput($event)" [placeholder]="reasonPlaceholder()"></textarea>
+          </label>
+        }
+      </section>
+
+      <footer class="modal-actions">
+        <button type="button" class="btn-outline" (click)="onCancel()" [disabled]="confirming()">
+          {{ cancelText() }}
+        </button>
+
+        <button type="button" class="btn-danger" (click)="onConfirm()" [disabled]="confirming() || (showReason() && !reason().trim())">
+          @if (confirming()) { Annulation… } @else { {{ confirmText() }} }
+        </button>
+      </footer>
+    </div>
+  </div>
+}

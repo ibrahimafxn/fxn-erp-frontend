@@ -1,0 +1,312 @@
+<!-- src/app/admin/resources/vehicles/vehicle-detail/vehicle-detail.html -->
+<section class="vehicle-detail">
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (!hasVehicle()) {
+    <div class="state empty card">Aucune donnée véhicule.</div>
+  } @else {
+    <section class="grid">
+      <!-- IDENTITÉ -->
+      <article class="card">
+        <div class="card-actions">
+          <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+          <button class="btn-outline" type="button" (click)="load()">Actualiser</button>
+          <button class="btn-outline" type="button" (click)="openBreakdowns()">Pannes</button>
+          @if (canDeclareBreakdown()) {
+            <button class="btn-primary" type="button" (click)="declareBreakdown()">Déclarer panne</button>
+          }
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="identity">
+          <div class="avatar">{{ (plateLabel() || 'VE').slice(0,2).toUpperCase() }}</div>
+
+          <div class="identity-text">
+            <div class="name">{{ titleLabel() }}</div>
+
+            <div class="meta">
+              <span class="chip">{{ plateLabel() }}</span>
+              <span class="chip">{{ yearLabel() }}</span>
+              @if (isAssigned()) {
+                <span class="chip chip-warn">Assigné</span>
+              } @else {
+                <span class="chip chip-ok">Disponible</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Plaque</label>
+            <div>{{ plateLabel() }}</div>
+          </div>
+
+          <div class="info-item">
+            <label>Dépôt actuel</label>
+            <div>{{ depotPreviewLabel() }}</div>
+          </div>
+
+          <div class="info-item">
+            <label>Assigné à</label>
+            <div>{{ assignedToLabel() }}</div>
+          </div>
+
+          <div class="info-item">
+            <label>Créé le</label>
+            <div>
+              @if (createdAtValue()) { {{ createdAtValue() | date:'fullDate' }} } @else { — }
+            </div>
+          </div>
+          @if (!isDepotManager()) {
+            <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!hasVehicle()"><i class="bi bi-pencil"></i> Modifier</button>
+          }
+        </div>
+      </article>
+
+      <!-- ACTIONS -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Actions rapides</h2>
+          <span class="hint">Assignation / Reprise</span>
+        </div>
+
+        @if (actionError()) {
+          <div class="state error">{{ actionError() }}</div>
+        }
+
+        <div class="quick-actions">
+          <button class="btn-primary" type="button" (click)="openAssign()" [disabled]="actionSaving() || isAssigned()">
+            Assigner
+          </button>
+
+          <button class="btn-danger" type="button" (click)="openRelease()" [disabled]="actionSaving() || !isAssigned()">
+            Reprendre
+          </button>
+
+          <button class="btn-outline" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x-lg"></i> Fermer</button>
+        </div>
+
+        @if (assignMode() === 'assign') {
+          <div class="panel">
+            <div class="panel-title">Assigner à un technicien</div>
+
+            @if (techniciansLoading()) {
+              <div class="state loading">Chargement techniciens…</div>
+            } @else if (techniciansError()) {
+              <div class="state error">{{ techniciansError() }}</div>
+            } @else {
+              <label class="sub-label">Technicien</label>
+              <select class="select" [value]="selectedTechId()" (change)="onTechSelect($event)">
+                <option value="">— Sélectionner —</option>
+                @for (t of technicians(); track t._id) {
+                  <option [value]="t._id">
+                    {{ technicianLabel(t) }} · {{ t.email || '—' }}
+                  </option>
+                }
+              </select>
+
+              <label class="sub-label">Note</label>
+              <textarea
+                class="note-input"
+                rows="3"
+                placeholder="Optionnel : raison, chantier, commentaire..."
+                [value]="assignNote()"
+                (input)="onAssignNoteChange($event)"
+              ></textarea>
+
+              <div class="panel-actions">
+                <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x"></i> Annuler</button>
+
+                <button
+                  class="btn-primary btn-xs"
+                  type="button"
+                  (click)="assignToTech()"
+                  [disabled]="actionSaving() || !selectedTechId()"
+                >
+                  @if (actionSaving()) { Assignation… } @else { Assigner }
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        @if (assignMode() === 'release') {
+          <div class="panel">
+            <div class="panel-title">Reprendre vers un dépôt</div>
+
+            @if (depotsLoading()) {
+              <div class="state loading">Chargement dépôts…</div>
+            } @else if (depotsError()) {
+              <div class="state error">{{ depotsError() }}</div>
+            } @else {
+              <label class="sub-label">Dépôt cible</label>
+              <select class="select" [value]="selectedDepotId()" (change)="onDepotSelect($event)">
+                <option value="">— Sélectionner —</option>
+                @for (d of depots(); track d._id) {
+                  <option [value]="d._id">{{ depotOptionLabel(d) }} @if (d.city) { · {{ d.city }} }</option>
+                }
+              </select>
+
+              <label class="sub-label">Note</label>
+              <textarea
+                class="note-input"
+                rows="3"
+                placeholder="Optionnel : raison, dépôt de retour, commentaire..."
+                [value]="releaseNote()"
+                (input)="onReleaseNoteChange($event)"
+              ></textarea>
+
+              <div class="panel-actions">
+                <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x"></i> Annuler</button>
+
+                <button
+                  class="btn-danger btn-xs"
+                  type="button"
+                  (click)="releaseToDepot()"
+                  [disabled]="actionSaving() || !selectedDepotId()"
+                >
+                  @if (actionSaving()) { Reprise… } @else { Reprendre }
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <!-- PANNE / REPARATION -->
+      <article class="card">
+        <div class="card-title-row">
+          <h2>Panne / Réparation</h2>
+          <span class="hint">Dernière panne déclarée</span>
+        </div>
+
+        @if (breakdownLoading()) {
+          <div class="state loading">Chargement…</div>
+        } @else if (breakdownError()) {
+          <div class="state error">{{ breakdownError() }}</div>
+        } @else if (!latestBreakdown()) {
+          <div class="state empty">Aucune panne enregistrée.</div>
+        } @else {
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Type</label>
+              <div>{{ latestBreakdown()!.problemType || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Statut</label>
+              <div>{{ breakdownStatusLabel() }}</div>
+            </div>
+            <div class="info-item">
+              <label>Retour</label>
+              <div>{{ breakdownReturnDate() }}</div>
+            </div>
+            <div class="info-item">
+              <label>Coût</label>
+              <div>{{ breakdownCost() }}</div>
+            </div>
+            <div class="info-item">
+              <label>Garage</label>
+              <div>{{ latestBreakdown()!.resolvedGarage || latestBreakdown()!.garageName || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Adresse garage</label>
+              <div>{{ latestBreakdown()!.garageAddress || '—' }}</div>
+            </div>
+            <div class="info-item">
+              <label>Adresse panne</label>
+              <div>{{ latestBreakdown()!.address || '—' }}</div>
+            </div>
+            @if (latestBreakdown()!.resolvedNote) {
+              <div class="info-item">
+                <label>Note</label>
+                <div>{{ latestBreakdown()!.resolvedNote }}</div>
+              </div>
+            }
+          </div>
+        }
+      </article>
+
+      <!-- HISTORIQUE -->
+      <article class="card history-card">
+        <div class="card-title-row">
+          <h2>Historique</h2>
+
+          <div class="history-meta">
+            <span class="pill">Total : {{ historyTotal() }}</span>
+
+            <label class="limit">
+              <span>Par page</span>
+              <select [value]="historyLimit()" (change)="setHistoryLimit($event)">
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        @if (historyLoading()) {
+          <div class="state loading">Chargement historique…</div>
+        } @else if (historyError()) {
+          <div class="state error">{{ historyError() }}</div>
+        } @else if (historyItems().length === 0) {
+          <div class="state empty">Aucun événement pour ce véhicule.</div>
+        } @else {
+          <div class="timeline">
+            @for (it of historyItems(); track it._id) {
+              <div class="event">
+                <div class="dot"></div>
+
+                <div class="content">
+                  <div class="top">
+                    <div class="evt-title">{{ historyTitle(it) }}</div>
+                    <div class="evt-date">
+                      @if (historyWhen(it)) { {{ historyWhen(it) | date:'short' }} } @else { — }
+                    </div>
+                  </div>
+
+                  <div class="details">
+                    <div class="kv">
+                      <span class="k">Auteur</span>
+                      <span class="v">{{ historyAuthorLabel(it) }}</span>
+                    </div>
+
+                    <div class="kv">
+                      <span class="k">Technicien</span>
+                      <span class="v">{{ historyToUserLabel(it) }}</span>
+                    </div>
+
+                    <div class="kv">
+                      <span class="k">Dépôt origine</span>
+                      <span class="v">{{ historyFromDepotLabel(it) }}</span>
+                    </div>
+
+                    @if (historyNote(it)) {
+                      <div class="note">
+                        <span class="k">Note</span>
+                        <span class="v">{{ historyNote(it) }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <footer class="pager">
+            <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+
+            <span class="pill">Page {{ historyPage() }} / {{ historyPageCount() }}</span>
+
+            <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+          </footer>
+        }
+      </article>
+    </section>
+  }
+</section>

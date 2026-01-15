@@ -1,0 +1,132 @@
+<section class="vehicles-list">
+  <header class="page-header">
+    <div>
+      <h1>Véhicules</h1>
+      <p class="subtitle">Recherche, filtres, pagination et actions rapides.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
+      @if (!isDepotManager()) {
+        <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau</button>
+      }
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
+      <input type="text" formControlName="q" placeholder="Rechercher (plaque, marque, modèle)…" />
+
+      @if (!isDepotManager()) {
+        <select formControlName="depot">
+          <option value="">Tous les dépôts</option>
+          @for (d of depots(); track d._id) {
+          <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+          }
+        </select>
+      }
+
+      <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+      <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ errorMessage() }}</div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucun véhicule trouvé.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Véhicule</th>
+          <th>Plaque</th>
+          <th>État</th>
+          <th>Assignation</th>
+          <th>Création</th>
+          @if (canDeclareBreakdown()) {
+            <th class="actions">Actions</th>
+          }
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (v of items(); track trackById($index, v)) {
+            <tr class="row" (click)="openDetail(v)">
+              <td class="main">
+                <div class="name">{{ title(v) }}</div>
+                <div class="sub">{{ v.year || '—' }}</div>
+              </td>
+
+              <td>{{ plate(v) }}</td>
+              <td>{{ v.state || '—' }}</td>
+              <td>{{ assignedLabel(v) }}</td>
+
+              <td>
+                @if (createdAtValue(v)) { {{ createdAtValue(v) | date:'short' }} } @else { — }
+              </td>
+
+              @if (canDeclareBreakdown()) {
+                <td class="actions" (click)="$event.stopPropagation()">
+                  <div class="actions-row">
+                    <button class="btn-outline" type="button" (click)="declareBreakdown(v)">Panne</button>
+
+                    @if (!isDepotManager()) {
+                      <button class="btn-outline edit" type="button" (click)="edit(v)"><i class="bi bi-pencil"></i> Modifier</button>
+
+                      <button
+                        class="btn-outline delete"
+                        type="button"
+                        [disabled]="deletingId() === v._id"
+                        (click)="openDeleteModal(v)"
+                      ><i class="fa-solid fa-trash"></i> 
+                        @if (deletingId() === v._id) { Suppression… } @else { Supprimer }
+                      </button>
+                    }
+                  </div>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+    </footer>
+  }
+
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    [entityLabel]="pendingDeleteLabel()"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    [confirming]="confirmingDelete()"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()">
+  </app-confirm-delete-modal>
+
+
+</section>

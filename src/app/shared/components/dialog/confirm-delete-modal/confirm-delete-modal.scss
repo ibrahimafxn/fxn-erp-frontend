@@ -1,0 +1,95 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+}
+
+.modal {
+  width: min(520px, 100%);
+  border-radius: 1rem;
+  background: rgba(20, 20, 24, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: 1rem 1rem .75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modal-title {
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.icon-btn {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: inherit;
+  border-radius: .75rem;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding: 1rem;
+  display: grid;
+  gap: .6rem;
+}
+
+.lead {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.strong {
+  font-weight: 800;
+}
+
+.hint {
+  margin: 0;
+  opacity: .8;
+  font-size: .9rem;
+}
+
+.meta {
+  margin-top: .25rem;
+  display: grid;
+  gap: .25rem;
+  padding: .75rem;
+  border-radius: .9rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.label {
+  opacity: .7;
+  font-size: .85rem;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: .9rem;
+  word-break: break-all;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .6rem;
+  padding: .9rem 1rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Boutons : même style/couleurs que tes listes */

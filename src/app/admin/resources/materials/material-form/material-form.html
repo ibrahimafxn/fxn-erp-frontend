@@ -1,0 +1,93 @@
+<section class="materials-form">
+  <header class="page-header card">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p class="subtitle">Créer ou modifier un matériel du stock.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-save" type="button" (click)="submit()" [disabled]="!canSubmit()"><i class="fa-solid fa-check"></i> 
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card">
+      <strong>Erreur :</strong> {{ error() }}
+    </div>
+  }
+
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <div class="field">
+        <label>Nom *</label>
+        <input type="text" formControlName="name" placeholder="Ex: Marteau à plaque" />
+        @if (isInvalid('name')) {
+          <small class="hint error">Nom requis (min 2 caractères)</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Catégorie *</label>
+        <select formControlName="category">
+          <option [ngValue]="MaterialCategory.OUTIL">Outil</option>
+          <option [ngValue]="MaterialCategory.EPI">EPI</option>
+        </select>
+
+        @if (isInvalid('category')) {
+          <small class="hint error">La catégorie est obligatoire</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <input type="text" formControlName="description" placeholder="Ex: SN-12345" />
+      </div>
+
+      <div class="field">
+        <label>Quantité *</label>
+        <input type="number" formControlName="quantity" min="0" step="1" />
+        @if (isInvalid('quantity')) {
+          <small class="hint error">Quantité invalide</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Seuil minimum</label>
+        <input type="number" formControlName="minQuantity" min="0" step="1" placeholder="Ex: 5" />
+        @if (isInvalid('minQuantity')) {
+          <small class="hint error">Seuil invalide</small>
+        } @else if (minQuantityTooHigh()) {
+          <small class="hint error">Le seuil doit être inférieur ou égal à la quantité.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Dépôt</label>
+
+        @if (depotsLoading()) {
+          <div class="hint">Chargement des dépôts…</div>
+        } @else if (depotsError()) {
+          <div class="hint error">{{ depotsError() }}</div>
+        } @else {
+          <select formControlName="idDepot">
+            <option [ngValue]="null">— Aucun dépôt —</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+            }
+          </select>
+        }
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-outline" type="button" (click)="cancel()"><i class="bi bi-x"></i> Annuler</button>
+      <button class="btn-save" type="submit" [disabled]="!canSubmit()"><i class="fa-solid fa-check"></i> 
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </form>
+</section>

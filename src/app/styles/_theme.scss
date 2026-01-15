@@ -1,0 +1,71 @@
+/* ===============================
+   FXN GLOBAL THEME
+================================ */
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--fxn-font);
+  background: radial-gradient(1200px 700px at 15% -10%, var(--fxn-bg-glow-1), transparent 60%),
+              radial-gradient(900px 600px at 110% 0%, var(--fxn-bg-glow-2), transparent 55%),
+              linear-gradient(160deg, var(--fxn-bg), var(--fxn-bg-2));
+  color: var(--fxn-text);
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: var(--fxn-primary-soft);
+}
+
+main.app-content {
+  padding: var(--fxn-space-xl);
+  min-height: calc(100vh - 64px);
+  animation: fxn-fade-up .35s ease;
+}
+
+@media (max-width: 900px) {
+  main.app-content {
+    padding: var(--fxn-space-lg);
+  }
+}
+
+/* Titres */
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 700;
+  font-family: var(--fxn-font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Liens */
+a {
+  color: var(--fxn-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+input, select, textarea {
+  font-family: var(--fxn-font);
+  color: inherit;
+}
+
+input:focus, select:focus, textarea:focus, button:focus {
+  outline: none;
+  box-shadow: var(--fxn-ring);
+}
+
+@keyframes fxn-fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

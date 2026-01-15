@@ -1,0 +1,161 @@
+<section class="access-users">
+  <header class="page-header">
+    <div>
+      <h1>Accès connexion</h1>
+      <p class="subtitle">Activer / réinitialiser / désactiver l’accès des techniciens, gestion dépôt, dirigeants.</p>
+    </div>
+
+    <div class="header-actions">
+      <div class="mini-kpi">
+        <span class="label">Sans accès</span>
+        <span class="value">{{ noAccessCount() }}</span>
+      </div>
+      <button class="btn-outline" type="button" (click)="refresh(true)"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
+      <input type="text" formControlName="q" placeholder="Rechercher (nom, email, téléphone)…" />
+
+      <select formControlName="role">
+        <option value="">Tous les rôles</option>
+        <option value="DIRIGEANT">DIRIGEANT</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="GESTION_DEPOT">GESTION_DEPOT</option>
+        <option value="TECHNICIEN">TECHNICIEN</option>
+      </select>
+
+      <select formControlName="depot">
+        <option value="">Tous les dépôts</option>
+        @for (d of depots(); track d._id) { <option [value]="d._id">{{ depotOptionLabel(d) }}</option> }
+      </select>
+
+      <label class="check">
+        <input type="checkbox"
+               [checked]="filterForm.controls.onlyNoAccess.value"
+               (change)="onBoolControlChange($event, 'onlyNoAccess')" />
+        <span>Seulement sans accès</span>
+      </label>
+
+      <div class="search-actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Affiché : {{ visibleItems().length }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ errorMessage() }}</div>
+  } @else if (visibleItems().length === 0) {
+    <div class="state empty card">Aucun utilisateur.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Rôle</th>
+          <th>Dépôt</th>
+          <th>Véhicule</th>
+          <th>Accès</th>
+          <th>Dernière connexion</th>
+          <th class="actions">Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+          @for (u of visibleItems(); track trackById($index, u)) {
+            <tr class="row" [class.no-access]="!u.authEnabled" [class.must-change]="u.mustChangePassword">
+              <td class="main">
+                <div class="name">{{ userLabel(u) }}</div>
+                <div class="sub">{{ u.email || '—' }}</div>
+              </td>
+
+              <td>
+                <span
+                  class="badge role-badge"
+                  [class.role-admin]="u.role === 'ADMIN'"
+                  [class.role-dir]="u.role === 'DIRIGEANT'"
+                  [class.role-depot]="u.role === 'GESTION_DEPOT'"
+                  [class.role-tech]="u.role === 'TECHNICIEN'">
+                  {{ u.role || '—' }}
+                </span>
+              </td>
+              <td>{{ depotLabel(u) }}</td>
+              <td>{{ vehicleLabel(u) }}</td>
+
+              <td>
+                @switch (accessBadge(u)) {
+                  @case ('DISABLED') { <span class="pill danger status-pill">Désactivé</span> }
+                  @case ('MUST_CHANGE') { <span class="pill warn status-pill">Actif · MDP à changer</span> }
+                  @default { <span class="pill ok status-pill">Actif</span> }
+                }
+              </td>
+
+              <td>{{ lastLoginText(u) }}</td>
+
+              <td class="actions">
+                <div class="actions-row">
+                  @if (!u.authEnabled) {
+                    <button class="btn-primary" type="button" (click)="openEnable(u)">Activer</button>
+                  } @else {
+                    <button class="btn-outline" type="button" (click)="openReset(u)">Reset MDP</button>
+                    <button class="btn-danger" type="button" (click)="openDisable(u)">Désactiver</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+    </footer>
+  }
+
+  <!-- Modal activer/reset -->
+  <app-access-credentials-modal
+    [open]="credOpen()"
+    [mode]="credMode()"
+    [user]="selectedUser()"
+    [saving]="credSaving()"
+    [error]="credError()"
+    (cancel)="closeCred()"
+    (confirm)="confirmCred($event)"
+  ></app-access-credentials-modal>
+
+  <!-- Confirm désactivation (réutilise ton modal existant) -->
+  <app-confirm-delete-modal
+    [open]="disableOpen()"
+    entityLabel="l’accès de connexion"
+    [entityName]="pendingDisableUser() ? userLabel(pendingDisableUser()!) : ''"
+    [entityId]="pendingDisableUser()?._id ?? null"
+    dangerHint="L’utilisateur ne pourra plus se connecter tant que l’accès n’est pas réactivé."
+    cancelText="Annuler"
+    confirmText="Désactiver"
+    [confirming]="disableSaving()"
+    (cancel)="closeDisable()"
+    (confirm)="confirmDisable()"
+  ></app-confirm-delete-modal>
+</section>

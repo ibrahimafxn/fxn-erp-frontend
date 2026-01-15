@@ -1,0 +1,105 @@
+<section class="depot-form">
+  <header class="page-header">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p class="subtitle">
+        @if (isCreate()) { Créer un dépôt et (optionnel) lui associer un gestionnaire. }
+        @else { Modifier les informations du dépôt. }
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="loadManagers()"><i class="bi bi-arrow-clockwise"></i> Recharger gestionnaires</button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading">Chargement…</div>
+  }
+
+  @if (!loading() && error()) {
+    <div class="state error">
+      <strong>Erreur :</strong> {{ error() }}
+    </div>
+  }
+
+  <form class="card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <!-- NAME -->
+      <div class="field">
+        <label>Nom du dépôt *</label>
+        <input formControlName="name" type="text" placeholder="Ex: Dépôt Paris Nord" />
+
+        @if (fe('name')) {
+          <small class="hint error">{{ fe('name') }}</small>
+        } @else if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="hint error">Nom requis (min 2 caractères).</small>
+        }
+      </div>
+
+      <!-- CITY -->
+      <div class="field">
+        <label>Ville</label>
+        <input formControlName="city" type="text" placeholder="Ex: Paris" />
+
+        @if (fe('city')) {
+          <small class="hint error">{{ fe('city') }}</small>
+        }
+      </div>
+
+      <!-- ADDRESS -->
+      <div class="field col-2">
+        <label>Adresse</label>
+        <input formControlName="address" type="text" placeholder="Ex: 12 Rue ... (facultatif)" />
+
+        @if (fe('address')) {
+          <small class="hint error">{{ fe('address') }}</small>
+        }
+      </div>
+
+      <!-- PHONE -->
+      <div class="field">
+        <label>Téléphone</label>
+        <input formControlName="phone" type="text" placeholder="Ex: 06 00 00 00 00" />
+
+        @if (fe('phone')) {
+          <small class="hint error">{{ fe('phone') }}</small>
+        }
+      </div>
+
+      <!-- MANAGER -->
+      <div class="field">
+        <label>Gestionnaire (optionnel)</label>
+
+        @if (managersLoading()) {
+          <div class="select-skeleton">Chargement des gestionnaires…</div>
+        } @else if (managersError()) {
+          <small class="hint error">{{ managersError() }}</small>
+        } @else {
+          <select formControlName="managerId">
+            <option value="">— Aucun —</option>
+            @for (u of managers(); track u._id) {
+              <option [value]="u._id">
+                {{ userName(u) }} ({{ u.email || '—' }})
+              </option>
+            }
+          </select>
+
+          @if (fe('managerId')) {
+            <small class="hint error">{{ fe('managerId') }}</small>
+          } @else {
+            <small class="hint">Tu peux laisser vide et l’affecter plus tard.</small>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-x"></i> Annuler</button>
+
+      <button class="btn-save" type="submit" [disabled]="!canSubmit()"><i class="fa-solid fa-check"></i> 
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </form>
+</section>

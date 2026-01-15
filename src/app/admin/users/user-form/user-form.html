@@ -1,0 +1,81 @@
+<section class="user-form">
+  <header class="page-header card">
+    <div>
+      <h1>@if (isEdit()) { Modifier utilisateur } @else { Nouvel utilisateur }</h1>
+      <p class="subtitle">Création / modification d’un utilisateur + rattachements.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-save" type="button" (click)="submit()" [disabled]="saving()"><i class="fa-solid fa-check"></i> 
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (success()) {
+    <div class="state success card">{{ success() }}</div>
+  }
+
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <div class="field">
+        <label>Prénom *</label>
+        <input type="text" formControlName="firstName" placeholder="Ex: Ibrahima" />
+        @if (fieldError('firstName')) {
+          <small class="hint error">{{ fieldError('firstName') }}</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Nom *</label>
+        <input type="text" formControlName="lastName" placeholder="Ex: COULIBALY" />
+        @if (fieldError('lastName')) {
+          <small class="hint error">{{ fieldError('lastName') }}</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" formControlName="email" placeholder="ex: ibrahima@fxn.fr" />
+        @if (fieldError('email')) {
+          <small class="hint error">{{ fieldError('email') }}</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Téléphone</label>
+        <input type="text" formControlName="phone" placeholder="06…" />
+      </div>
+
+      <div class="field">
+        <label>Rôle *</label>
+        <select formControlName="role">
+          @for (r of roles; track r.value) {
+            <option [value]="r.value">{{ r.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Dépôt (select par nom) -->
+      <div class="field">
+        <label>Dépôt</label>
+
+        @if (depotsLoading()) {
+          <div class="hint">Chargement des dépôts…</div>
+        } @else {
+          <select formControlName="idDepot">
+            <option value="">— Aucun dépôt —</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ depotOptionLabel(d) }} @if (d.city) { · {{ d.city }} }</option>
+            }
+          </select>
+          <small class="hint">Sélection actuelle : {{ depotLabelById(form.get('idDepot')?.value || '') }}</small>
+        }
+      </div>
+    </div>
+  </form>
+</section>

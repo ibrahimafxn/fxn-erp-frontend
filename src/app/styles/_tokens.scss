@@ -1,0 +1,197 @@
+/* ===============================
+   FXN DESIGN TOKENS
+================================ */
+
+/* Couleurs principales */
+:root {
+  --fxn-bg: #0b1117;
+  --fxn-bg-2: #111a24;
+  --fxn-surface: #141f2b;
+  --fxn-surface-soft: #182635;
+  --fxn-surface-glass: rgba(20, 32, 45, 0.82);
+
+  --fxn-text: #eef2f6;
+  --fxn-text-muted: #9aa7b5;
+  --fxn-text-soft: #c6d0da;
+
+  --fxn-primary: #21b6b6;
+  --fxn-primary-strong: #0fbf9f;
+  --fxn-primary-soft: rgba(33, 182, 182, 0.18);
+  --fxn-primary-border: rgba(33, 182, 182, 0.55);
+
+  --fxn-accent: #f6a609;
+  --fxn-accent-soft: rgba(246, 166, 9, 0.18);
+  --fxn-danger: #ff5c7c;
+  --fxn-danger-soft: rgba(255, 92, 124, 0.18);
+  --fxn-success: #2ecf9a;
+  --fxn-warning: #f2b94b;
+
+  /* Borders */
+  --fxn-border: rgba(255, 255, 255, 0.08);
+  --fxn-border-strong: rgba(255, 255, 255, 0.16);
+  --fxn-button-outline-bg: rgba(15, 24, 32, 0.55);
+  --fxn-button-outline-border: rgba(255, 255, 255, 0.18);
+
+  /* Shadow */
+  --fxn-shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.24);
+  --fxn-shadow-md: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --fxn-button-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+  --fxn-button-shadow-hover: 0 16px 28px rgba(0, 0, 0, 0.22);
+
+  /* Radius */
+  --fxn-radius-xs: 6px;
+  --fxn-radius-sm: 10px;
+  --fxn-radius-md: 14px;
+  --fxn-radius-lg: 20px;
+  --fxn-radius-xl: 28px;
+
+  /* Spacing */
+  --fxn-space-xs: 0.25rem;
+  --fxn-space-sm: 0.5rem;
+  --fxn-space-md: 1rem;
+  --fxn-space-lg: 1.5rem;
+  --fxn-space-xl: 2.25rem;
+  --fxn-space-2xl: 3rem;
+
+  /* Font */
+  --fxn-font-body: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --fxn-font-display: 'Space Grotesk', var(--fxn-font-body);
+  --fxn-font: var(--fxn-font-body);
+
+  /* Focus ring */
+  --fxn-ring: 0 0 0 3px rgba(33, 182, 182, 0.25);
+
+  /* Background glows */
+  --fxn-bg-glow-1: rgba(33, 182, 182, 0.2);
+  --fxn-bg-glow-2: rgba(246, 166, 9, 0.18);
+}
+
+body.theme-admin {
+  --fxn-bg: #070a12;
+  --fxn-bg-2: #0c1220;
+  --fxn-surface: #0f1726;
+  --fxn-surface-soft: #151f33;
+  --fxn-surface-glass: rgba(15, 23, 38, 0.82);
+  --fxn-text: #e9f1ff;
+  --fxn-text-muted: #93a6c8;
+  --fxn-text-soft: #c3d0e5;
+  --fxn-primary: #2f6bff;
+  --fxn-primary-strong: #1b4fd1;
+  --fxn-primary-soft: rgba(47, 107, 255, 0.18);
+  --fxn-primary-border: rgba(47, 107, 255, 0.55);
+  --fxn-accent: #4aa3ff;
+  --fxn-accent-soft: rgba(74, 163, 255, 0.2);
+  --fxn-border: rgba(100, 145, 255, 0.16);
+  --fxn-border-strong: rgba(100, 145, 255, 0.28);
+  --fxn-button-outline-bg: rgba(10, 16, 28, 0.7);
+  --fxn-button-outline-border: rgba(100, 145, 255, 0.2);
+  --fxn-button-shadow: 0 12px 24px rgba(15, 47, 128, 0.2);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(47, 107, 255, 0.28);
+  --fxn-ring: 0 0 0 3px rgba(47, 107, 255, 0.3);
+  --fxn-bg-glow-1: rgba(47, 107, 255, 0.22);
+  --fxn-bg-glow-2: rgba(12, 30, 62, 0.55);
+}
+
+body.theme-default {
+  --fxn-bg: #f5f8ff;
+  --fxn-bg-2: #eaf1ff;
+  --fxn-surface: #ffffff;
+  --fxn-surface-soft: #f1f6ff;
+  --fxn-surface-glass: rgba(255, 255, 255, 0.82);
+  --fxn-text: #0f1b32;
+  --fxn-text-muted: #51607a;
+  --fxn-text-soft: #6f7f9a;
+  --fxn-primary: #2f6bff;
+  --fxn-primary-strong: #1b4fd1;
+  --fxn-primary-soft: rgba(47, 107, 255, 0.16);
+  --fxn-primary-border: rgba(47, 107, 255, 0.4);
+  --fxn-accent: #4aa3ff;
+  --fxn-accent-soft: rgba(74, 163, 255, 0.2);
+  --fxn-border: rgba(47, 107, 255, 0.12);
+  --fxn-border-strong: rgba(47, 107, 255, 0.22);
+  --fxn-button-outline-bg: rgba(47, 107, 255, 0.08);
+  --fxn-button-outline-border: rgba(47, 107, 255, 0.3);
+  --fxn-button-shadow: 0 12px 24px rgba(47, 107, 255, 0.18);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(47, 107, 255, 0.24);
+  --fxn-ring: 0 0 0 3px rgba(47, 107, 255, 0.2);
+  --fxn-bg-glow-1: rgba(47, 107, 255, 0.12);
+  --fxn-bg-glow-2: rgba(100, 160, 255, 0.14);
+}
+
+body.theme-dirigeant {
+  --fxn-bg: #0a0507;
+  --fxn-bg-2: #12070b;
+  --fxn-surface: #140a10;
+  --fxn-surface-soft: #1b0f16;
+  --fxn-surface-glass: rgba(20, 10, 16, 0.82);
+  --fxn-text: #ffe1e6;
+  --fxn-text-muted: #c28a93;
+  --fxn-text-soft: #e8b5be;
+  --fxn-primary: #c93f3f;
+  --fxn-primary-strong: #8f2a2a;
+  --fxn-primary-soft: rgba(201, 63, 63, 0.18);
+  --fxn-primary-border: rgba(201, 63, 63, 0.55);
+  --fxn-accent: #f07070;
+  --fxn-accent-soft: rgba(240, 112, 112, 0.2);
+  --fxn-border: rgba(200, 90, 90, 0.2);
+  --fxn-border-strong: rgba(200, 90, 90, 0.32);
+  --fxn-button-outline-bg: rgba(14, 8, 10, 0.7);
+  --fxn-button-outline-border: rgba(200, 90, 90, 0.25);
+  --fxn-button-shadow: 0 12px 24px rgba(72, 18, 18, 0.24);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(201, 63, 63, 0.28);
+  --fxn-ring: 0 0 0 3px rgba(201, 63, 63, 0.3);
+  --fxn-bg-glow-1: rgba(201, 63, 63, 0.22);
+  --fxn-bg-glow-2: rgba(40, 12, 12, 0.55);
+}
+
+body.theme-gestion-depot {
+  --fxn-bg: #070c12;
+  --fxn-bg-2: #0c1720;
+  --fxn-surface: #0f1d26;
+  --fxn-surface-soft: #152a33;
+  --fxn-surface-glass: rgba(15, 29, 38, 0.82);
+  --fxn-text: #e9fff5;
+  --fxn-text-muted: #90b9a7;
+  --fxn-text-soft: #bfe2d4;
+  --fxn-primary: #2ad0c7;
+  --fxn-primary-strong: #119a94;
+  --fxn-primary-soft: rgba(42, 208, 199, 0.18);
+  --fxn-primary-border: rgba(42, 208, 199, 0.55);
+  --fxn-accent: #64e7dd;
+  --fxn-accent-soft: rgba(100, 231, 221, 0.2);
+  --fxn-border: rgba(100, 210, 200, 0.18);
+  --fxn-border-strong: rgba(100, 210, 200, 0.3);
+  --fxn-button-outline-bg: rgba(8, 18, 22, 0.7);
+  --fxn-button-outline-border: rgba(100, 210, 200, 0.25);
+  --fxn-button-shadow: 0 12px 24px rgba(12, 70, 66, 0.2);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(42, 208, 199, 0.28);
+  --fxn-ring: 0 0 0 3px rgba(42, 208, 199, 0.3);
+  --fxn-bg-glow-1: rgba(42, 208, 199, 0.22);
+  --fxn-bg-glow-2: rgba(12, 40, 38, 0.55);
+}
+
+body.theme-technicien {
+  --fxn-bg: #0b0d12;
+  --fxn-bg-2: #12161e;
+  --fxn-surface: #171b24;
+  --fxn-surface-soft: #1e2430;
+  --fxn-surface-glass: rgba(23, 27, 36, 0.82);
+  --fxn-text: #eef2f7;
+  --fxn-text-muted: #a0a8b8;
+  --fxn-text-soft: #c7ceda;
+  --fxn-primary: #8b99b3;
+  --fxn-primary-strong: #6f7c94;
+  --fxn-primary-soft: rgba(139, 153, 179, 0.18);
+  --fxn-primary-border: rgba(139, 153, 179, 0.55);
+  --fxn-accent: #b5bfd0;
+  --fxn-accent-soft: rgba(181, 191, 208, 0.2);
+  --fxn-border: rgba(140, 155, 180, 0.2);
+  --fxn-border-strong: rgba(140, 155, 180, 0.32);
+  --fxn-button-outline-bg: rgba(12, 15, 20, 0.7);
+  --fxn-button-outline-border: rgba(140, 155, 180, 0.25);
+  --fxn-button-shadow: 0 12px 24px rgba(20, 24, 32, 0.24);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(140, 155, 180, 0.25);
+  --fxn-ring: 0 0 0 3px rgba(139, 153, 179, 0.3);
+  --fxn-bg-glow-1: rgba(139, 153, 179, 0.22);
+  --fxn-bg-glow-2: rgba(32, 36, 48, 0.55);
+}

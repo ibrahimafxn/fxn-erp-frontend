@@ -1,0 +1,336 @@
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 72px;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  overflow: visible;
+
+  background: rgba(10, 17, 24, 0.8);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* LEFT */
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand {
+  font-weight: 800;
+  font-family: var(--fxn-font-display);
+  letter-spacing: 0.1em;
+  font-size: 1.45rem;
+  text-transform: uppercase;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.1),
+    0 0 18px var(--fxn-primary-soft),
+    0 0 28px var(--fxn-accent-soft),
+    0 12px 24px rgba(0, 0, 0, 0.3);
+  background: rgba(12, 18, 30, 0.55);
+  color: var(--fxn-text);
+  cursor: pointer;
+
+  span {
+    opacity: 1;
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.35);
+  }
+}
+
+.page-title {
+  font-size: 0.95rem;
+  opacity: 0.8;
+  color: var(--fxn-text-soft);
+}
+
+/* RIGHT */
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-btn {
+  background: linear-gradient(120deg, #ffffff, #60a5fa);
+  border-color: rgba(96, 165, 250, 0.7);
+  color: #1f2937;
+}
+
+/* USER MENU */
+
+.user-menu {
+  position: relative;
+}
+
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--fxn-primary);
+  border-radius: 999px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  border: 1px solid var(--fxn-primary-border);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+
+  &:hover {
+    border-color: var(--fxn-primary-strong);
+    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
+    transform: translateY(-1px);
+  }
+}
+
+.user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: linear-gradient(135deg, rgba(33, 182, 182, 0.35), rgba(246, 166, 9, 0.35));
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  color: #ffffff;
+}
+
+.chevron {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  color: #ffffff;
+}
+
+/* DROPDOWN */
+
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  min-width: 360px;
+  border-radius: 1.1rem;
+  background: linear-gradient(160deg, rgba(12, 18, 30, 0.98), rgba(20, 32, 54, 0.98));
+  border: 1px solid rgba(120, 140, 200, 0.18);
+  padding: 0.9rem;
+  box-shadow: var(--fxn-shadow-md);
+  animation: menu-pop 0.18s ease;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.user-meta {
+  padding: 0.75rem 0.75rem 0.6rem;
+  font-size: 0.85rem;
+  border-radius: 0.9rem;
+  background: rgba(12, 22, 38, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+
+  .name {
+    font-weight: 700;
+  }
+
+  .role {
+    opacity: 0.65;
+  }
+}
+
+.dropdown button {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.85rem;
+  background: rgba(15, 23, 42, 0.6);
+  cursor: pointer;
+  color: rgba(226, 238, 246, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.dropdown button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(96, 165, 250, 0.4);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.25);
+}
+
+.dropdown button:focus-visible {
+  outline: none;
+  border-color: rgba(47, 107, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.2);
+}
+
+.menu-section {
+  padding: 0.2rem 0.4rem 0.35rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.menu-group {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.15rem 0.25rem;
+}
+
+.section-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(226, 232, 240, 0.6);
+  padding: 0 0.2rem;
+}
+
+.section-items {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.dropdown .submenu {
+  padding-left: 1.6rem;
+}
+
+.dropdown .material-icons {
+  font-size: 1rem;
+  opacity: 0.7;
+  margin-right: 0.55rem;
+}
+
+.dropdown .danger,
+.dropdown .btn-danger {
+  color: rgba(255, 220, 230, 0.98);
+  background: rgba(153, 27, 27, 0.45);
+  border-color: rgba(248, 113, 113, 0.7);
+}
+
+.dropdown .danger:hover,
+.dropdown .btn-danger:hover {
+  background: rgba(153, 27, 27, 0.6);
+  border-color: rgba(248, 113, 113, 0.9);
+}
+
+.divider {
+  height: 1px;
+  margin: 0.4rem 0;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 184, 28, 0.2);
+  border: 1px solid rgba(255, 184, 28, 0.4);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--fxn-text);
+}
+
+.welcome-toast {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 0.5rem);
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, rgba(24, 34, 56, 0.95), rgba(12, 18, 30, 0.95));
+  color: var(--fxn-text);
+  border: 1px solid rgba(74, 163, 255, 0.35);
+  border-radius: 0.85rem;
+  padding: 0.65rem 0.9rem;
+  min-width: 260px;
+  text-align: center;
+  box-shadow: var(--fxn-shadow-sm);
+  animation: welcome-pop 0.2s ease;
+}
+
+.welcome-toast .welcome-title {
+  font-family: var(--fxn-font-display);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.welcome-toast .welcome-text {
+  margin-top: 0.2rem;
+  color: var(--fxn-text-muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 900px) {
+  .app-header {
+    height: 64px;
+    padding: 0 1rem;
+  }
+
+  .brand {
+    font-size: 0.9rem;
+  }
+
+  .page-title {
+    display: none;
+  }
+
+  .right {
+    gap: 0.5rem;
+  }
+
+  .right .btn-outline {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .user-trigger {
+    padding: 0.25rem 0.4rem;
+  }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .right .btn-outline {
+    display: none;
+  }
+}
+
+@keyframes menu-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes welcome-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

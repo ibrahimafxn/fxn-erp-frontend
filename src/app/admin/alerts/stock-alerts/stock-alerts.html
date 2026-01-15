@@ -1,0 +1,247 @@
+<section class="stock-alerts">
+  <header class="page-header">
+    <div>
+      <h1>Alertes</h1>
+      <p class="subtitle">Stock minimum et maintenance véhicules.</p>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <div class="toolbar-actions">
+      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
+    </div>
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
+      <select formControlName="resourceType">
+        <option value="ALL">Tous types</option>
+        <option value="CONSUMABLE">Consommables</option>
+        <option value="MATERIAL">Matériels</option>
+        <option value="VEHICLE">Véhicules</option>
+      </select>
+      <input type="text" formControlName="q" placeholder="Rechercher (nom, plaque, état)…" />
+
+      @if (!isDepotManager()) {
+        <select formControlName="depot" [disabled]="depotsLoading()">
+          <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
+          @for (d of depots(); track d._id) {
+            <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+          }
+        </select>
+      }
+
+      <div class="actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (filterForm.controls.resourceType.value === 'ALL'
+    && items().length === 0
+    && materialItems().length === 0
+    && vehicleItems().length === 0) {
+    <div class="state empty card">Aucune alerte.</div>
+  } @else if (filterForm.controls.resourceType.value === 'CONSUMABLE' && items().length === 0) {
+    <div class="state empty card">Aucune alerte de stock minimum.</div>
+  } @else if (filterForm.controls.resourceType.value === 'MATERIAL' && materialItems().length === 0) {
+    <div class="state empty card">Aucune alerte de stock minimum.</div>
+  } @else if (filterForm.controls.resourceType.value === 'VEHICLE' && vehicleItems().length === 0) {
+    <div class="state empty card">Aucune alerte véhicule.</div>
+  } @else {
+    @if (filterForm.controls.resourceType.value === 'ALL') {
+      @if (items().length > 0) {
+        <div class="table card">
+          <table class="table-consumables">
+            <thead>
+            <tr>
+              <th>Consommable</th>
+              <th>Dépôt</th>
+              <th>Disponible</th>
+              <th>Stock</th>
+              <th>Seuil</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (c of items(); track c._id) {
+                <tr>
+                  <td>{{ consumableName(c) }}</td>
+                  <td>{{ depotLabel(c) }}</td>
+                  <td>{{ availableQty(c) }} {{ c.unit || '' }}</td>
+                  <td>{{ c.quantity ?? 0 }}</td>
+                  <td>{{ c.minQuantity ?? 0 }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goDetail(c)"><i class="bi bi-eye"></i> Voir</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (materialItems().length > 0) {
+        <div class="table card">
+          <table class="table-materials">
+            <thead>
+            <tr>
+              <th>Matériel</th>
+              <th>Dépôt</th>
+              <th>Disponible</th>
+              <th>Stock</th>
+              <th>Seuil</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (m of materialItems(); track m._id) {
+                <tr>
+                  <td>{{ materialName(m) }}</td>
+                  <td>{{ depotLabelMaterial(m) }}</td>
+                  <td>{{ availableQtyMaterial(m) }}</td>
+                  <td>{{ m.quantity ?? 0 }}</td>
+                  <td>{{ m.minQuantity ?? 0 }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)"><i class="bi bi-eye"></i> Voir</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      @if (vehicleItems().length > 0) {
+        <div class="table card">
+          <table class="table-vehicles">
+            <thead>
+            <tr>
+              <th>Véhicule</th>
+              <th>Dépôt</th>
+              <th>Problème</th>
+              <th>Dépanneuse</th>
+              <th>Réparation</th>
+              <th>Garage</th>
+              <th>Adresse garage</th>
+              <th>Adresse panne</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (v of vehicleItems(); track v._id) {
+                <tr>
+                  <td>{{ vehicleLabel(v) }}</td>
+                  <td>{{ depotLabelVehicle(v) }}</td>
+                  <td>{{ vehicleProblem(v) }}</td>
+                  <td>{{ vehicleTow(v) }}</td>
+                  <td>{{ vehicleRepair(v) }}</td>
+                  <td>{{ vehicleGarage(v) }}</td>
+                  <td class="note">{{ vehicleGarageAddress(v) }}</td>
+                  <td class="note">{{ vehicleBreakdownAddress(v) }}</td>
+                  <td>{{ vehicleBreakdownDate(v) }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)"><i class="bi bi-eye"></i> Voir</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    } @else {
+      <div class="table card">
+        <table
+          class="
+            @if (filterForm.controls.resourceType.value === 'MATERIAL') { table-materials }
+            @else if (filterForm.controls.resourceType.value === 'VEHICLE') { table-vehicles }
+            @else { table-consumables }
+          ">
+          <thead>
+          <tr>
+            @if (filterForm.controls.resourceType.value === 'MATERIAL') {
+              <th>Matériel</th>
+            } @else {
+              <th>Consommable</th>
+            }
+            <th>Dépôt</th>
+            <th>Disponible</th>
+            <th>Stock</th>
+            <th>Seuil</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+            @if (filterForm.controls.resourceType.value === 'CONSUMABLE') {
+              @for (c of items(); track c._id) {
+                <tr>
+                  <td>{{ consumableName(c) }}</td>
+                  <td>{{ depotLabel(c) }}</td>
+                  <td>{{ availableQty(c) }} {{ c.unit || '' }}</td>
+                  <td>{{ c.quantity ?? 0 }}</td>
+                  <td>{{ c.minQuantity ?? 0 }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goDetail(c)"><i class="bi bi-eye"></i> Voir</button>
+                  </td>
+                </tr>
+              }
+            } @else if (filterForm.controls.resourceType.value === 'MATERIAL') {
+              @for (m of materialItems(); track m._id) {
+                <tr>
+                  <td>{{ materialName(m) }}</td>
+                  <td>{{ depotLabelMaterial(m) }}</td>
+                  <td>{{ availableQtyMaterial(m) }}</td>
+                  <td>{{ m.quantity ?? 0 }}</td>
+                  <td>{{ m.minQuantity ?? 0 }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)"><i class="bi bi-eye"></i> Voir</button>
+                  </td>
+                </tr>
+              }
+            } @else {
+              @for (v of vehicleItems(); track v._id) {
+                <tr>
+                  <td>{{ vehicleLabel(v) }}</td>
+                  <td>{{ depotLabelVehicle(v) }}</td>
+                  <td>{{ vehicleProblem(v) }}</td>
+                  <td>{{ vehicleTow(v) }}</td>
+                  <td>{{ vehicleRepair(v) }}</td>
+                  <td>{{ vehicleGarage(v) }}</td>
+                  <td class="note">{{ vehicleGarageAddress(v) }}</td>
+                  <td class="note">{{ vehicleBreakdownAddress(v) }}</td>
+                  <td>{{ vehicleBreakdownDate(v) }}</td>
+                  <td class="actions">
+                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)"><i class="bi bi-eye"></i> Voir</button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+    </footer>
+  }
+</section>

@@ -1,0 +1,73 @@
+<section class="vehicles-form">
+  <header class="page-header card">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p class="subtitle">Créer ou modifier un véhicule.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-save" type="button" (click)="submit()" [disabled]="!canSubmit()"><i class="fa-solid fa-check"></i> 
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  }
+
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <div class="field">
+        <label>Plaque</label>
+        <input type="text" formControlName="plateNumber" placeholder="Ex: AB-123-CD" />
+        @if (isInvalid('plateNumber')) { <small class="hint error">Plaque invalide</small> }
+      </div>
+
+      <div class="field">
+        <label>Marque</label>
+        <input type="text" formControlName="brand" placeholder="Ex: Renault" />
+      </div>
+
+      <div class="field">
+        <label>Modèle</label>
+        <input type="text" formControlName="model" placeholder="Ex: Kangoo" />
+      </div>
+
+      <div class="field">
+        <label>Année</label>
+        <input type="number" formControlName="year" min="1900" />
+      </div>
+
+      <div class="field">
+        <label>État</label>
+        <input type="text" formControlName="state" placeholder="Ex: OK / Révision / HS" />
+      </div>
+
+      <div class="field">
+        <label>Dépôt</label>
+        @if (depotsLoading()) {
+          <div class="hint">Chargement des dépôts…</div>
+        } @else if (depotsError()) {
+          <div class="hint error">{{ depotsError() }}</div>
+        } @else {
+          <select formControlName="idDepot">
+            <option [ngValue]="null">— Aucun dépôt —</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+            }
+          </select>
+        }
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-outline" type="button" (click)="cancel()"><i class="bi bi-x"></i> Annuler</button>
+      <button class="btn-save" type="submit" [disabled]="!canSubmit()"><i class="fa-solid fa-check"></i> 
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </form>
+</section>

@@ -1,0 +1,100 @@
+<section class="orders-page">
+  <header class="page-header">
+    <div>
+      <h1>Commandes</h1>
+      <p class="subtitle">Suivi minimal des commandes en attente d'integration.</p>
+    </div>
+    <button class="btn-primary" type="button" (click)="createNew()">Nouvelle commande</button>
+  </header>
+
+  <article class="card">
+    <h2 class="section-title"><span class="material-icons">receipt_long</span>Liste des commandes</h2>
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
+      <label>
+        Recherche
+        <input type="text" formControlName="q" placeholder="Reference ou client" />
+      </label>
+      <label>
+        Statut
+        <select formControlName="status">
+          <option value="">Tous</option>
+          <option value="En cours">En cours</option>
+          <option value="Livrée">Livrée</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+
+    @if (loading()) {
+      <div class="state loading">Chargement...</div>
+    } @else if (error()) {
+      <div class="state error">Erreur : {{ error() }}</div>
+    } @else if (items().length === 0) {
+      <div class="state empty">Aucune commande.</div>
+    } @else {
+      <div class="table">
+        <table>
+          <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Client</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Montant</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (order of items(); track order._id) {
+              <tr class="row-clickable" (click)="openDetail(order)">
+                <td>{{ order.reference }}</td>
+                <td>{{ order.client }}</td>
+                <td>{{ order.date | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ order.status }}</td>
+                <td>{{ order.amount }}</td>
+                <td class="actions-cell">
+                  <button class="btn-outline edit" type="button" (click)="$event.stopPropagation(); openEdit(order)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline delete" type="button" (click)="$event.stopPropagation(); openDeleteModal(order)"><i class="fa-solid fa-trash"></i> Supprimer</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pager">
+        <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+          <i class="bi bi-chevron-left"></i> ← Precedent
+        </button>
+        <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i> Suivant →
+        </button>
+      </footer>
+    }
+  </article>
+</section>
+
+<app-confirm-delete-modal
+  [open]="deleteModalOpen()"
+  entityLabel="commande"
+  [entityName]="pendingDeleteName()"
+  [confirming]="!!deletingId()"
+  (cancel)="closeDeleteModal()"
+  (confirm)="confirmDelete()"
+></app-confirm-delete-modal>

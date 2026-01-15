@@ -1,0 +1,203 @@
+/* -------------------------------------------------
+   Page
+------------------------------------------------- */
+.consumables-list {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+/* -------------------------------------------------
+   Header
+------------------------------------------------- */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 750;
+  }
+
+  .subtitle {
+    margin: .25rem 0 0;
+    opacity: .75;
+    font-size: .9rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+}
+
+/* -------------------------------------------------
+   Card
+------------------------------------------------- */
+.card {
+  background: rgba(0, 0, 0, .05);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+/* -------------------------------------------------
+   Toolbar (search + meta)
+------------------------------------------------- */
+.toolbar {
+  display: grid;
+  gap: .85rem;
+
+  .search {
+    display: grid;
+    grid-template-columns: 1.4fr .9fr auto auto;
+    gap: .6rem;
+
+    @media (max-width: 900px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  input,
+  select {
+    padding: .55rem .65rem;
+    border-radius: .7rem;
+    border: 1px solid rgba(255, 255, 255, .15);
+    background: rgba(255, 255, 255, .06);
+    color: inherit;
+    outline: none;
+  }
+
+  input:focus,
+  select:focus {
+    border-color: rgba(0, 120, 255, .6);
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    padding: .25rem .55rem;
+    border-radius: 999px;
+    font-size: .8rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .12);
+  }
+
+  .limit {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+
+    span {
+      font-size: .85rem;
+      opacity: .75;
+    }
+
+    select {
+      padding: .35rem .5rem;
+      border-radius: .65rem;
+    }
+  }
+}
+
+/* -------------------------------------------------
+   States
+------------------------------------------------- */
+.state {
+  padding: 1rem;
+  border-radius: .9rem;
+  background: rgba(0, 0, 0, .06);
+  border: 1px solid rgba(255, 255, 255, .06);
+
+  &.loading { opacity: .85; }
+  &.empty { opacity: .8; }
+  &.error {
+    background: rgba(255, 0, 0, .08);
+  }
+}
+
+/* -------------------------------------------------
+   Table
+------------------------------------------------- */
+.table {
+  padding: 0;
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px;
+  }
+
+  thead th {
+    text-align: left;
+    font-size: .8rem;
+    opacity: .75;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    vertical-align: middle;
+  }
+
+  .actions {
+    text-align: right;
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  .row {
+    cursor: pointer;
+  }
+
+  .row:hover {
+    background: rgba(255, 255, 255, .03);
+  }
+
+  .main {
+    .name {
+      font-weight: 750;
+    }
+  }
+}
+
+/* -------------------------------------------------
+   Pager
+------------------------------------------------- */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+/* -------------------------------------------------
+   Buttons
+------------------------------------------------- */
+.actions {
+  display: flex;
+  gap: .5rem; // ✅ espace entre Modifier & Supprimer
+  white-space: nowrap;
+}
+
+.actions-row {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}

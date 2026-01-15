@@ -1,0 +1,202 @@
+<section class="resource-detail">
+  <header class="page-header">
+    <div>
+      <h1>Matériel</h1>
+      <p class="subtitle">Détails et historique complet.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
+      <button class="btn-outline" type="button" (click)="refresh()"><i class="bi bi-arrow-clockwise"></i> Rafraîchir</button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (!material()) {
+    <div class="state empty card">Matériel introuvable.</div>
+  } @else {
+    <section class="grid">
+      <article class="card info-card">
+        <div class="info-title">{{ materialName() }}</div>
+        <div class="info-sub">{{ material()?.description || '—' }}</div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Catégorie</label>
+            <div>{{ categoryLabel() }}</div>
+          </div>
+          <div class="info-item">
+            <label>Dépôt</label>
+            <div>{{ depotName() }}</div>
+          </div>
+          <div class="info-item">
+            <label>Quantité</label>
+            <div>{{ material()?.quantity ?? 0 }}</div>
+          </div>
+          <div class="info-item">
+            <label>Attribué</label>
+            <div>{{ material()?.assignedQuantity ?? 0 }}</div>
+          </div>
+          <div class="info-item">
+            <label>Disponible</label>
+            <div>{{ availableQty() }}</div>
+          </div>
+          <div class="info-item">
+            <label>Seuil min</label>
+            <div>{{ material()?.minQuantity ?? 0 }}</div>
+          </div>
+          <div class="info-item">
+            <label>Créé le</label>
+            <div>
+              @if (material()?.createdAt) { {{ material()?.createdAt | date:'short' }} } @else { — }
+            </div>
+          </div>
+        </div>
+        @if (!isDepotManager()) {
+          <div class="actions">
+            <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!material()"><i class="bi bi-pencil"></i> Modifier</button>
+            <button class="btn-outline delete" type="button" (click)="openDeleteModal()" [disabled]="deleting() || !material()"><i class="fa-solid fa-trash"></i> Supprimer</button>
+          </div>
+        }
+      </article>
+
+      @if (canReserve()) {
+        <article class="card reserve-card">
+          <div class="card-title-row">
+            <h2>Réservation matériel</h2>
+            <span class="pill">Disponible : {{ availableQty() }}</span>
+            <span class="pill">Attribué tech : {{ assignedForSelectedTech() }}</span>
+          </div>
+          <p class="subtitle">Attribue un matériel à un technicien de ce dépôt.</p>
+
+          <form class="reserve-form" [formGroup]="reserveForm">
+            <div class="form-grid">
+              <label>
+                Technicien
+                <select formControlName="toUser" [disabled]="techniciansLoading() || reserveLoading() || releaseLoading()">
+                  <option value="" disabled>Choisir un technicien</option>
+                  @for (t of technicians(); track t._id) {
+                    <option [value]="t._id">{{ technicianLabel(t) }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                Quantité
+                <input type="number" min="1" [attr.max]="availableQty()" formControlName="qty" [disabled]="reserveLoading() || releaseLoading()" />
+              </label>
+            </div>
+
+            <label>
+              Note
+              <textarea rows="3" formControlName="note" placeholder="Motif ou commentaire (facultatif)…"></textarea>
+            </label>
+
+            @if (techniciansLoading()) {
+              <div class="state loading">Chargement des techniciens…</div>
+            } @else if (techniciansError()) {
+              <div class="state error">{{ techniciansError() }}</div>
+            } @else if (technicians().length === 0) {
+              <div class="state empty">Aucun technicien disponible pour ce dépôt.</div>
+            }
+
+            @if (reserveError()) {
+              <div class="state error">{{ reserveError() }}</div>
+            } @else if (reserveSuccess()) {
+              <div class="state success">{{ reserveSuccess() }}</div>
+            } @else if (releaseError()) {
+              <div class="state error">{{ releaseError() }}</div>
+            } @else if (releaseSuccess()) {
+              <div class="state success">{{ releaseSuccess() }}</div>
+            }
+
+            <div class="actions">
+              <button class="btn-outline" type="button" (click)="clearReserve()"><i class="bi bi-x"></i> Effacer</button>
+              <button class="btn-outline" type="button" (click)="submitRelease()" [disabled]="releaseLoading() || reserveForm.invalid">
+                Reprendre
+              </button>
+              <button class="btn-primary" type="button" (click)="submitReserve()" [disabled]="reserveLoading() || reserveForm.invalid || availableQty() <= 0">
+                Réserver
+              </button>
+            </div>
+          </form>
+        </article>
+      }
+
+      <article class="card history-card">
+        <div class="card-title-row">
+          <h2>Historique (entrées/sorties)</h2>
+          <div class="history-meta">
+            <span class="pill">Total : {{ historyTotal() }}</span>
+            <label class="limit">
+              <span>Par page</span>
+              <select [value]="historyLimit()" (change)="setHistoryLimit($event)">
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        @if (historyLoading()) {
+          <div class="state loading">Chargement historique…</div>
+        } @else if (historyError()) {
+          <div class="state error">{{ historyError() }}</div>
+        } @else if (historyItems().length === 0) {
+          <div class="state empty">Aucun historique.</div>
+        } @else {
+          <div class="table">
+            <table>
+              <thead>
+              <tr>
+                <th>Date</th>
+                <th>Action</th>
+                <th>Quantité</th>
+                <th>Auteur</th>
+                <th>Technicien</th>
+                <th>Dépôt</th>
+                <th>Note</th>
+              </tr>
+              </thead>
+              <tbody>
+                @for (it of historyItems(); track it._id) {
+                  <tr>
+                    <td>
+                      @if (createdAtValue(it)) { {{ createdAtValue(it) | date:'short' }} } @else { — }
+                    </td>
+                    <td><span class="badge">{{ actionLabel(it?.attribution?.action) }}</span></td>
+                    <td>{{ it?.attribution?.quantity ?? 1 }}</td>
+                    <td>{{ authorLabel(it) }}</td>
+                    <td>{{ toUserLabel(it) }}</td>
+                    <td>{{ depotLabel(it) }}</td>
+                    <td class="note">{{ noteLabel(it) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <footer class="pager">
+            <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+            <span class="pill">Page {{ historyPage() }} / {{ historyPageCount() }}</span>
+            <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+          </footer>
+        }
+      </article>
+    </section>
+  }
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    entityLabel="le matériel"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    [confirming]="deleting()"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()"
+  />
+</section>
