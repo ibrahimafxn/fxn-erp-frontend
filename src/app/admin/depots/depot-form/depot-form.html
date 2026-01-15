@@ -9,8 +9,8 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()">Retour</button>
-      <button class="btn-outline" type="button" (click)="loadManagers()">Recharger gestionnaires</button>
+      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+      <button class="btn-outline" type="button" (click)="loadManagers()"><i class="bi bi-arrow-clockwise"></i> Recharger gestionnaires</button>
     </div>
   </header>
 
@@ -96,9 +96,9 @@
     </div>
 
     <div class="actions">
-      <button class="btn-outline" type="button" (click)="back()">Annuler</button>
+      <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-x"></i> Annuler</button>
 
-      <button class="btn-save" type="submit" [disabled]="!canSubmit()">
+      <button class="btn-save" type="submit" [disabled]="!canSubmit()"><i class="fa-solid fa-check"></i> 
         @if (saving()) { Enregistrement… } @else { Enregistrer }
       </button>
     </div>

@@ -10,7 +10,7 @@
         <span class="label">Sans accès</span>
         <span class="value">{{ noAccessCount() }}</span>
       </div>
-      <button class="btn-outline" type="button" (click)="refresh(true)">Recharger</button>
+      <button class="btn-outline" type="button" (click)="refresh(true)"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
     </div>
   </header>
 
@@ -39,7 +39,7 @@
       </label>
 
       <div class="search-actions">
-        <button class="btn-outline" type="submit">Rechercher</button>
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
         <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
       </div>
     </form>
@@ -129,8 +129,8 @@
     </div>
 
     <footer class="pager">
-      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">← Précédent</button>
-      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">Suivant →</button>
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
     </footer>
   }
 

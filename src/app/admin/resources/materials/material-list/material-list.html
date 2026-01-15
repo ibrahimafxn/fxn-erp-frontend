@@ -6,11 +6,11 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()">Retour</button>
-      <button class="btn-outline" type="button" (click)="exportCsv()">Exporter CSV</button>
-      <button class="btn-outline" type="button" (click)="exportPdf()">Exporter PDF</button>
+      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
       @if (!isDepotManager()) {
-        <button class="btn-primary" type="button" (click)="createNew()">Nouveau</button>
+        <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau</button>
       }
     </div>
   </header>
@@ -28,7 +28,7 @@
         </select>
       }
 
-      <button class="btn-outline" type="submit">Rechercher</button>
+      <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
       <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
     </form>
 
@@ -64,9 +64,6 @@
           <th>Quantité</th>
           <th>Dépôt</th>
           <th>Création</th>
-          @if (!isDepotManager()) {
-            <th class="actions">Actions</th>
-          }
         </tr>
         </thead>
 
@@ -85,26 +82,6 @@
               <td>
                 @if (createdAtValue(m)) { {{ createdAtValue(m) | date:'short' }} } @else { — }
               </td>
-
-              @if (!isDepotManager()) {
-                <td class="actions" (click)="$event.stopPropagation()">
-                  <!-- ✅ Ajouter un peu d’espace entre les boutons -->
-                  <div class="actions-row">
-                    <button class="btn-outline edit" type="button" (click)="edit(m)">
-                      Modifier
-                    </button>
-
-                    <button
-                      class="btn-danger"
-                      type="button"
-                      [disabled]="deletingId() === m._id"
-                      (click)="openDeleteModal(m)"
-                    >
-                      @if (deletingId() === m._id) { Suppression… } @else { Supprimer }
-                    </button>
-                  </div>
-                </td>
-              }
             </tr>
           }
         </tbody>
@@ -112,13 +89,9 @@
     </div>
 
     <footer class="pager">
-      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">
-        ← Précédent
-      </button>
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
 
-      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">
-        Suivant →
-      </button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
     </footer>
   }
   <!-- ✅ MODAL suppression -->

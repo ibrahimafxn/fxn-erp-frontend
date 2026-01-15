@@ -13,11 +13,12 @@ import {AttributionHistoryItem, AttributionHistoryResult, Depot, Material, Role,
 import {DetailBack} from '../../../../core/utils/detail-back';
 import {formatDepotName, formatPersonName, formatResourceName} from '../../../../core/utils/text-format';
 import {downloadBlob} from '../../../../core/utils/download';
+import {ConfirmDeleteModal} from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
   selector: 'app-material-detail',
   standalone: true,
-  imports: [CommonModule, DatePipe, ReactiveFormsModule],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './material-detail.html',
   styleUrl: './material-detail.scss',
 })
@@ -52,6 +53,12 @@ export class MaterialDetail extends DetailBack {
   });
   readonly canPrevHistory = computed(() => this.historyPage() > 1);
   readonly canNextHistory = computed(() => this.historyPage() < this.historyPageCount());
+  readonly isDepotManager = computed(() => this.authSvc.getUserRole() === Role.GESTION_DEPOT);
+
+  readonly deleteModalOpen = signal(false);
+  readonly pendingDeleteId = signal<string | null>(null);
+  readonly pendingDeleteName = signal<string>('');
+  readonly deleting = signal(false);
 
   readonly availableQty = computed(() => {
     const m = this.material();
@@ -136,6 +143,46 @@ export class MaterialDetail extends DetailBack {
   refresh(): void {
     this.load();
     this.loadHistory(true);
+  }
+
+  edit(): void {
+    const m = this.material();
+    if (!m?._id || this.isDepotManager()) return;
+    this.router.navigate(['/admin/resources/materials', m._id, 'edit']).then();
+  }
+
+  openDeleteModal(): void {
+    if (this.isDepotManager()) return;
+    const m = this.material();
+    if (!m?._id) return;
+    this.pendingDeleteId.set(m._id);
+    this.pendingDeleteName.set(this.materialName());
+    this.deleteModalOpen.set(true);
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalOpen.set(false);
+    this.pendingDeleteId.set(null);
+    this.pendingDeleteName.set('');
+  }
+
+  confirmDelete(): void {
+    if (this.isDepotManager()) return;
+    const id = this.pendingDeleteId();
+    if (!id) return;
+    this.deleteModalOpen.set(false);
+    this.deleting.set(true);
+
+    this.svc.remove(id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        const fallback = this.isDepotManager() ? '/depot/resources/materials' : '/admin/resources/materials';
+        this.back(fallback);
+      },
+      error: () => {
+        this.deleting.set(false);
+      }
+    });
   }
 
   // Export PDF des mouvements (entrées/sorties) liés à la ressource.

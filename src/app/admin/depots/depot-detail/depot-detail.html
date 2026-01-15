@@ -18,8 +18,8 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()">Retour</button>
-      <button class="btn-outline" type="button" (click)="load()">Recharger</button>
+      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+      <button class="btn-outline" type="button" (click)="load()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
     </div>
   </header>
 
@@ -104,9 +104,7 @@
                     type="button"
                     (click)="closeManagerEdit()"
                     [disabled]="managerSaving()"
-                  >
-                    Annuler
-                  </button>
+                  ><i class="bi bi-x"></i> Annuler</button>
 
                   <button
                     class="btn-danger btn-xs"
@@ -122,7 +120,7 @@
                     type="button"
                     (click)="saveManager()"
                     [disabled]="managerSaving()"
-                  >
+                  ><i class="fa-solid fa-check"></i> 
                     @if (managerSaving()) {
                       Enregistrement…
                     } @else {
@@ -149,7 +147,7 @@
         <div class="divider"></div>
 
         <div class="card-actions">
-          <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasDepot()">Modifier</button>
+          <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasDepot()"><i class="bi bi-pencil"></i> Modifier</button>
         </div>
       </article>
 
@@ -194,7 +192,7 @@
         </div>
 
         <div class="card-actions left">
-          <button class="btn-outline btn-xs" type="button" (click)="openAllTechnicians()">Voir tout</button>
+          <button class="btn-outline btn-xs" type="button" (click)="openAllTechnicians()"><i class="bi bi-eye"></i> Voir tout</button>
         </div>
 
         @if (techLoading()) {
@@ -217,9 +215,7 @@
                 </div>
 
                 <div class="mini-right" (click)="$event.stopPropagation()">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="editTechnician(t)">
-                    Modifier
-                  </button>
+                  <button class="btn-outline btn-xs edit" type="button" (click)="editTechnician(t)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -234,7 +230,7 @@
         </div>
 
         <div class="card-actions left">
-          <button class="btn-outline btn-xs" type="button" (click)="openAllMaterials()">Voir tout</button>
+          <button class="btn-outline btn-xs" type="button" (click)="openAllMaterials()"><i class="bi bi-eye"></i> Voir tout</button>
         </div>
 
         @if (materialsLoading()) {
@@ -257,9 +253,7 @@
                 </div>
 
                 <div class="mini-right">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="$event.stopPropagation(); editMaterial(m)">
-                    Modifier
-                  </button>
+                  <button class="btn-outline btn-xs edit" type="button" (click)="$event.stopPropagation(); editMaterial(m)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -274,7 +268,7 @@
         </div>
 
         <div class="card-actions left">
-          <button class="btn-outline btn-xs" type="button" (click)="openAllConsumables()">Voir tout</button>
+          <button class="btn-outline btn-xs" type="button" (click)="openAllConsumables()"><i class="bi bi-eye"></i> Voir tout</button>
         </div>
 
         @if (consumablesLoading()) {
@@ -297,9 +291,7 @@
                 </div>
 
                 <div class="mini-right">
-                  <button class="btn-primary btn-xs" type="button" (click)="$event.stopPropagation(); modifierConsumable(c)">
-                    Modifier
-                  </button>
+                  <button class="btn-primary btn-xs" type="button" (click)="$event.stopPropagation(); modifierConsumable(c)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -387,7 +379,7 @@
         </div>
 
         <div class="card-actions left">
-          <button class="btn-outline btn-xs" type="button" (click)="openAllVehicles()">Voir tout</button>
+          <button class="btn-outline btn-xs" type="button" (click)="openAllVehicles()"><i class="bi bi-eye"></i> Voir tout</button>
         </div>
 
         @if (vehiclesLoading()) {
@@ -415,9 +407,7 @@
                 </div>
 
                 <div class="mini-right" (click)="$event.stopPropagation()">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="editVehicle(v)">
-                    Modifier
-                  </button>
+                  <button class="btn-outline btn-xs edit" type="button" (click)="editVehicle(v)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }

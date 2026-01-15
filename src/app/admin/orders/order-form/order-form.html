@@ -4,7 +4,7 @@
       <h1>{{ title() }}</h1>
       <p class="subtitle">Renseigne les informations de base.</p>
     </div>
-    <button class="btn-back" type="button" (click)="backToList()">Retour</button>
+    <button class="btn-back" type="button" (click)="backToList()"><i class="bi bi-arrow-left"></i> Retour</button>
   </header>
 
   <div class="form-shell">
@@ -50,7 +50,7 @@
         <div class="lines full">
           <div class="lines-header">
             <h3 class="section-title"><span class="material-icons">playlist_add</span>Lignes d'articles</h3>
-            <button class="btn-outline" type="button" (click)="addLine()">Ajouter une ligne</button>
+            <button class="btn-outline" type="button" (click)="addLine()"><i class="bi bi-plus"></i> Ajouter une ligne</button>
           </div>
 
           @if (resourcesError()) {
@@ -105,7 +105,7 @@
         </div>
 
         <div class="actions full">
-          <button class="btn-save" type="submit" [disabled]="saving() || form.invalid">
+          <button class="btn-save" type="submit" [disabled]="saving() || form.invalid"><i class="fa-solid fa-check"></i> 
             {{ isEdit() ? 'Enregistrer les modifications' : 'Enregistrer la commande' }}
           </button>
         </div>

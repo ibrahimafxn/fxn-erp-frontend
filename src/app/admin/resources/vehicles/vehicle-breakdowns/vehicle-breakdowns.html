@@ -6,7 +6,7 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="backToDetail()">Retour</button>
+      <button class="btn-back" type="button" (click)="backToDetail()"><i class="bi bi-arrow-left"></i> Retour</button>
       @if (canDeclareBreakdown()) {
         <button class="btn-primary" type="button" (click)="declareBreakdown()">Déclarer une panne</button>
       }
@@ -80,12 +80,8 @@
     </div>
 
     <footer class="pager">
-      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">
-        ← Précédent
-      </button>
-      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">
-        Suivant →
-      </button>
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
     </footer>
   }
 </section>
@@ -97,7 +93,7 @@
         <div class="panel-title">Retour de réparation</div>
         <div class="panel-subtitle">Complète les infos de clôture.</div>
       </div>
-      <button class="btn-outline btn-xs" type="button" (click)="closeResolve()" [disabled]="resolvingId()">Fermer</button>
+      <button class="btn-outline btn-xs" type="button" (click)="closeResolve()" [disabled]="resolvingId()"><i class="bi bi-x-lg"></i> Fermer</button>
     </div>
 
     <form class="panel-form" [formGroup]="resolveForm" (ngSubmit)="confirmResolve()">
@@ -119,8 +115,8 @@
       </div>
 
       <div class="panel-actions">
-        <button class="btn-outline" type="button" (click)="closeResolve()" [disabled]="resolvingId()">Annuler</button>
-        <button class="btn-primary" type="submit" [disabled]="resolvingId()">Valider</button>
+        <button class="btn-outline" type="button" (click)="closeResolve()" [disabled]="resolvingId()"><i class="bi bi-x"></i> Annuler</button>
+        <button class="btn-primary" type="submit" [disabled]="resolvingId()"><i class="fa-solid fa-check"></i> Valider</button>
       </div>
     </form>
   </div>

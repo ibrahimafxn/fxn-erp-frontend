@@ -28,9 +28,7 @@
     <div class="hero-actions">
       <button class="btn-outline" type="button" (click)="goToHistory()">Journal des mouvements</button>
       <button class="btn-outline" type="button" (click)="goToOnboarding()">Onboarding</button>
-      <button class="btn-primary" type="button" (click)="adminService.loadDashboardStats()">
-        Recharger les données
-      </button>
+      <button class="btn-primary" type="button" (click)="adminService.loadDashboardStats()"><i class="bi bi-arrow-clockwise"></i> Recharger les données</button>
     </div>
   </header>
 
@@ -146,7 +144,7 @@
   <section class="history-section" *ngIf="recentHistory().length">
     <div class="history-header">
       <h2>Derniers mouvements de stock</h2>
-      <button class="btn-outline" type="button" (click)="goToHistory()">Voir tout</button>
+      <button class="btn-outline" type="button" (click)="goToHistory()"><i class="bi bi-eye"></i> Voir tout</button>
     </div>
 
     <div class="history-table-wrapper">

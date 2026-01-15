@@ -4,7 +4,7 @@
       <h1>Détail de la commande</h1>
       <p class="subtitle">Informations principales de la commande.</p>
     </div>
-    <button class="btn-back" type="button" (click)="backToList()">Retour</button>
+    <button class="btn-back" type="button" (click)="backToList()"><i class="bi bi-arrow-left"></i> Retour</button>
   </header>
 
   @if (loading()) {
@@ -63,7 +63,7 @@
           type="button"
           (click)="openImportModal()"
           [disabled]="importLoading() || !selectedDepotId() || !isImportable() || !!order()?.importedToDepotAt || (order()?.lines || []).length === 0"
-        >
+        ><i class="bi bi-upload"></i> 
           @if (importLoading()) { Import… } @else { Importer au dépôt }
         </button>
       </div>

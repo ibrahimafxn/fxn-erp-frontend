@@ -8,8 +8,8 @@
 
   <section class="toolbar card">
     <div class="toolbar-actions">
-      <button class="btn-outline" type="button" (click)="exportCsv()">Exporter CSV</button>
-      <button class="btn-outline" type="button" (click)="exportPdf()">Exporter PDF</button>
+      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
     </div>
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <select formControlName="resourceType">
@@ -30,7 +30,7 @@
       }
 
       <div class="actions">
-        <button class="btn-outline" type="submit">Rechercher</button>
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
         <button class="btn-outline" type="button" (click)="clearSearch()">Effacer</button>
       </div>
     </form>
@@ -89,7 +89,7 @@
                   <td>{{ c.quantity ?? 0 }}</td>
                   <td>{{ c.minQuantity ?? 0 }}</td>
                   <td class="actions">
-                    <button class="btn-outline" type="button" (click)="goDetail(c)">Voir</button>
+                    <button class="btn-outline" type="button" (click)="goDetail(c)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
               }
@@ -120,7 +120,7 @@
                   <td>{{ m.quantity ?? 0 }}</td>
                   <td>{{ m.minQuantity ?? 0 }}</td>
                   <td class="actions">
-                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)">Voir</button>
+                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
               }
@@ -159,7 +159,7 @@
                   <td class="note">{{ vehicleBreakdownAddress(v) }}</td>
                   <td>{{ vehicleBreakdownDate(v) }}</td>
                   <td class="actions">
-                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)">Voir</button>
+                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
               }
@@ -199,7 +199,7 @@
                   <td>{{ c.quantity ?? 0 }}</td>
                   <td>{{ c.minQuantity ?? 0 }}</td>
                   <td class="actions">
-                    <button class="btn-outline" type="button" (click)="goDetail(c)">Voir</button>
+                    <button class="btn-outline" type="button" (click)="goDetail(c)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
               }
@@ -212,7 +212,7 @@
                   <td>{{ m.quantity ?? 0 }}</td>
                   <td>{{ m.minQuantity ?? 0 }}</td>
                   <td class="actions">
-                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)">Voir</button>
+                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
               }
@@ -229,7 +229,7 @@
                   <td class="note">{{ vehicleBreakdownAddress(v) }}</td>
                   <td>{{ vehicleBreakdownDate(v) }}</td>
                   <td class="actions">
-                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)">Voir</button>
+                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
               }
@@ -240,12 +240,8 @@
     }
 
     <footer class="pager">
-      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">
-        ← Précédent
-      </button>
-      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">
-        Suivant →
-      </button>
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
     </footer>
   }
 </section>

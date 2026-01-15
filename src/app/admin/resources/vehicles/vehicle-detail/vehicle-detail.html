@@ -12,7 +12,7 @@
       <!-- IDENTITÉ -->
       <article class="card">
         <div class="card-actions">
-          <button class="btn-back" type="button" (click)="back()">Retour</button>
+          <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
           <button class="btn-outline" type="button" (click)="load()">Actualiser</button>
           <button class="btn-outline" type="button" (click)="openBreakdowns()">Pannes</button>
           @if (canDeclareBreakdown()) {
@@ -63,7 +63,7 @@
             </div>
           </div>
           @if (!isDepotManager()) {
-            <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasVehicle()">Modifier</button>
+            <button class="btn-primary" type="button" (click)="edit()" [disabled]="!hasVehicle()"><i class="bi bi-pencil"></i> Modifier</button>
           }
         </div>
       </article>
@@ -88,9 +88,7 @@
             Reprendre
           </button>
 
-          <button class="btn-outline" type="button" (click)="closeActions()" [disabled]="actionSaving()">
-            Fermer
-          </button>
+          <button class="btn-outline" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x-lg"></i> Fermer</button>
         </div>
 
         @if (assignMode() === 'assign') {
@@ -122,9 +120,7 @@
               ></textarea>
 
               <div class="panel-actions">
-                <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()">
-                  Annuler
-                </button>
+                <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x"></i> Annuler</button>
 
                 <button
                   class="btn-primary btn-xs"
@@ -166,9 +162,7 @@
               ></textarea>
 
               <div class="panel-actions">
-                <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()">
-                  Annuler
-                </button>
+                <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x"></i> Annuler</button>
 
                 <button
                   class="btn-danger btn-xs"
@@ -305,15 +299,11 @@
           </div>
 
           <footer class="pager">
-            <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()">
-              ← Précédent
-            </button>
+            <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
 
             <span class="pill">Page {{ historyPage() }} / {{ historyPageCount() }}</span>
 
-            <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()">
-              Suivant →
-            </button>
+            <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()"><i class="bi bi-chevron-right"></i> Suivant →</button>
           </footer>
         }
       </article>

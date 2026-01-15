@@ -23,6 +23,7 @@ import { Role } from '../../../core/models/roles.model';
   styleUrls: ['./interventions-dashboard.scss']
 })
 export class InterventionsDashboard {
+  private readonly RATES_VIS_KEY = 'fxn.interventions.showRates';
   private svc = inject(InterventionService);
   private fb = inject(FormBuilder);
   private ratesService = inject(InterventionRatesService);
@@ -42,6 +43,7 @@ export class InterventionsDashboard {
   readonly rateSaving = signal(false);
   readonly rateSuccess = signal<string | null>(null);
   readonly rateError = signal<string | null>(null);
+  readonly showRates = signal(true);
 
   readonly summaryItems = signal<InterventionSummaryItem[]>([]);
   readonly totals = signal<InterventionTotals | null>(null);
@@ -56,6 +58,66 @@ export class InterventionsDashboard {
   readonly detailPage = signal(1);
   readonly detailLimit = signal(20);
   readonly detailTechnician = signal<string | null>(null);
+  readonly detailGroups = computed(() => {
+    const items = this.detailItems();
+    const order = [
+      { key: 'racPavillon', label: 'Raccordement pavillon' },
+      { key: 'racImmeuble', label: 'Raccordement immeuble' },
+      { key: 'reconnexion', label: 'Reconnexion' },
+      { key: 'sav', label: 'SAV' },
+      { key: 'b2b', label: 'Raccordement B2B' },
+      { key: 'other', label: 'Autres' }
+    ];
+    const buckets = new Map(order.map((group) => [group.key, [] as InterventionItem[]]));
+
+    for (const item of items) {
+      const categories = Array.isArray(item.categories) ? item.categories : [];
+      const type = this.normalizeText(item.type);
+      const status = this.normalizeText(item.statut);
+      const isClosed = status.includes('CLOTURE') && status.includes('TERMINEE');
+      const isReconnexion = type.includes('RECO') || this.hasReconnexionInArticles(item.articlesRaw);
+      const isB2b = categories.includes('racProS')
+        || categories.includes('racProC')
+        || this.hasB2bInArticles(item.articlesRaw);
+      let key = 'other';
+      if (isClosed && isReconnexion) key = 'reconnexion';
+      else if (categories.includes('racPavillon')) key = 'racPavillon';
+      else if (categories.includes('racImmeuble')) key = 'racImmeuble';
+      else if (categories.includes('reconnexion')) key = 'reconnexion';
+      else if (categories.includes('sav')) key = 'sav';
+      else if (isB2b) key = 'b2b';
+      else {
+        if (type.includes('PRESTA') && type.includes('COMPL')) key = 'other';
+        else if (type.includes('SAV')) key = 'sav';
+        else if (isReconnexion) key = 'reconnexion';
+      }
+      (buckets.get(key) || buckets.get('other'))?.push(item);
+    }
+
+    return order
+      .map((group) => ({ ...group, items: buckets.get(group.key) || [] }))
+      .filter((group) => group.items.length > 0);
+  });
+
+  private normalizeText(value?: string | null): string {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .trim();
+  }
+
+  private hasReconnexionInArticles(raw?: string | null): boolean {
+    const normalized = this.normalizeText(raw);
+    if (!normalized) return false;
+    return normalized.includes('RECOIP') || normalized.includes('RECO');
+  }
+
+  private hasB2bInArticles(raw?: string | null): boolean {
+    const normalized = this.normalizeText(raw);
+    if (!normalized) return false;
+    return normalized.includes('RACPRO') || normalized.includes('RAC PRO');
+  }
 
   readonly filters = signal<InterventionFilters>({
     regions: [],
@@ -88,6 +150,10 @@ export class InterventionsDashboard {
     const l = this.detailLimit();
     return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
   });
+
+  private touchStartX = 0;
+  private touchStartY = 0;
+  private touchTargetTech: string | null = null;
 
   readonly rateFields = [
     { key: 'racPavillon', label: 'Raccordement pavillon', code: 'RACPAV' },
@@ -155,6 +221,14 @@ export class InterventionsDashboard {
     })
   });
 
+  toggleRates(): void {
+    this.showRates.update((value) => {
+      const next = !value;
+      localStorage.setItem(this.RATES_VIS_KEY, String(next));
+      return next;
+    });
+  }
+
   private readonly rateSync = effect(() => {
     const rates = this.ratesService.rates();
     this.rateForm.patchValue(rates, { emitEvent: false });
@@ -164,6 +238,10 @@ export class InterventionsDashboard {
   readonly rates = this.ratesService.rates;
 
   constructor() {
+    const stored = localStorage.getItem(this.RATES_VIS_KEY);
+    if (stored != null) {
+      this.showRates.set(stored !== 'false');
+    }
     this.loadFilters();
     this.ratesService.refresh().subscribe();
     this.refresh();
@@ -181,6 +259,42 @@ export class InterventionsDashboard {
     this.detailOpen.set(false);
     this.detailItems.set([]);
     this.detailError.set(null);
+  }
+
+  onRowTouchStart(event: TouchEvent, technician: string): void {
+    if (!technician || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    this.touchStartX = touch.clientX;
+    this.touchStartY = touch.clientY;
+    this.touchTargetTech = technician;
+  }
+
+  onRowTouchEnd(event: TouchEvent): void {
+    if (!this.touchTargetTech || event.changedTouches.length !== 1) return;
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - this.touchStartX;
+    const deltaY = touch.clientY - this.touchStartY;
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 40 && deltaX < 0) {
+      this.openDetail(this.touchTargetTech);
+    }
+    this.touchTargetTech = null;
+  }
+
+  onDetailTouchStart(event: TouchEvent): void {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    this.touchStartX = touch.clientX;
+    this.touchStartY = touch.clientY;
+  }
+
+  onDetailTouchEnd(event: TouchEvent): void {
+    if (event.changedTouches.length !== 1) return;
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - this.touchStartX;
+    const deltaY = touch.clientY - this.touchStartY;
+    if (Math.abs(deltaX) > 60 && Math.abs(deltaY) < 40 && deltaX > 0) {
+      this.closeDetail();
+    }
   }
 
   detailPrev(): void {
@@ -555,6 +669,7 @@ export class InterventionsDashboard {
 
   formatArticleCodes(raw?: string | null): string {
     if (!raw) return '—';
+    const excluded = new Set(['CABLE_PAV_1', 'CABLE_PAV_2', 'CABLE_PAV_3', 'CABLE_PAV_4']);
     const parts = String(raw)
       .split(/[,;+]/)
       .map((part) => part.trim())
@@ -562,7 +677,8 @@ export class InterventionsDashboard {
       .map((part) => part.replace(/"/g, '').trim())
       .map((part) => part.replace(/\s+x?\d+$/i, '').trim())
       .filter(Boolean)
-      .map((part) => part.toUpperCase());
+      .map((part) => part.toUpperCase())
+      .filter((part) => !excluded.has(part));
     return parts.length ? parts.join(', ') : '—';
   }
 

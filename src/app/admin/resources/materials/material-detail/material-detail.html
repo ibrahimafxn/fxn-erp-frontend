@@ -6,10 +6,10 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-back" type="button" (click)="back()">Retour</button>
-      <button class="btn-outline" type="button" (click)="exportCsv()">Exporter CSV</button>
-      <button class="btn-outline" type="button" (click)="exportPdf()">Exporter PDF</button>
-      <button class="btn-outline" type="button" (click)="refresh()">Rafraîchir</button>
+      <button class="btn-back" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
+      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
+      <button class="btn-outline" type="button" (click)="refresh()"><i class="bi bi-arrow-clockwise"></i> Rafraîchir</button>
     </div>
   </header>
 
@@ -57,6 +57,12 @@
             </div>
           </div>
         </div>
+        @if (!isDepotManager()) {
+          <div class="actions">
+            <button class="btn-outline" type="button" (click)="edit()" [disabled]="!material()"><i class="bi bi-pencil"></i> Modifier</button>
+            <button class="btn-danger" type="button" (click)="openDeleteModal()" [disabled]="deleting() || !material()"><i class="fa-solid fa-trash"></i> Supprimer</button>
+          </div>
+        }
       </article>
 
       @if (canReserve()) {
@@ -176,16 +182,21 @@
           </div>
 
           <footer class="pager">
-            <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()">
-              ← Précédent
-            </button>
+            <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
             <span class="pill">Page {{ historyPage() }} / {{ historyPageCount() }}</span>
-            <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()">
-              Suivant →
-            </button>
+            <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()"><i class="bi bi-chevron-right"></i> Suivant →</button>
           </footer>
         }
       </article>
     </section>
   }
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    entityLabel="le matériel"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    [confirming]="deleting()"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()"
+  />
 </section>
