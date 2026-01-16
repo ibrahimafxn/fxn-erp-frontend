@@ -36,13 +36,7 @@ export class OrderDetail {
     const status = String(this.order()?.status || '').toUpperCase();
     if (!status) return false;
     if (status.includes('ANNULE') || status.includes('ECHEC') || status.includes('REFUSE')) return false;
-    return (
-      status.includes('VALIDE')
-      || status.includes('LIVR')
-      || status.includes('RECEPTION')
-      || status.includes('TERMINE')
-      || status.includes('CLOTURE')
-    );
+    return true;
   });
 
   constructor() {
