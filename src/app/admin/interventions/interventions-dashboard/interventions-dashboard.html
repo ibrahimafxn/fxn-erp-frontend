@@ -122,7 +122,7 @@
           <span class="value">{{ (compareTotals()?.delta || 0) | number:'1.0-0' }} €</span>
         </div>
         <div class="invoice-tags">
-          @for (inv of invoiceSummary()?.invoices || []; track inv._id) {
+          @for (inv of displayedInvoices(); track inv.attachmentRef || inv.filename) {
             <span class="pill">{{ inv.attachmentRef || inv.filename }} · {{ inv.totalHt | number:'1.0-0' }} €</span>
           }
         </div>

@@ -53,6 +53,7 @@ export class InterventionsDashboard {
   readonly compareLoading = signal(false);
   readonly compareError = signal<string | null>(null);
   readonly invoiceSummary = signal<InterventionInvoiceSummary | null>(null);
+  readonly lastImportedInvoices = signal<InterventionInvoiceSummary['invoices']>([]);
   readonly compareResult = signal<InterventionCompare | null>(null);
   readonly selectedPeriodKey = signal<string>('');
 
@@ -259,6 +260,13 @@ export class InterventionsDashboard {
     }
     return Array.from(map.entries()).map(([key, label]) => ({ key, label }));
   });
+  readonly displayedInvoices = computed(() => {
+    const last = this.lastImportedInvoices();
+    if (last.length) return last;
+    const invoices = this.invoiceSummary()?.invoices || [];
+    const period = this.selectedPeriodKey();
+    return period ? invoices.filter((inv) => inv.periodKey === period) : invoices;
+  });
   readonly compareTotals = computed(() => {
     const compare = this.compareResult();
     if (!compare) return null;
@@ -433,11 +441,17 @@ export class InterventionsDashboard {
       next: (res) => {
         this.invoiceLoading.set(false);
         if (res.success) {
-          const data = res.data as { imported?: number; skipped?: number; updated?: number } | undefined;
+          const data = res.data as {
+            imported?: number;
+            skipped?: number;
+            updated?: number;
+            invoices?: InterventionInvoiceSummary['invoices'];
+          } | undefined;
           const imported = data?.imported ?? 0;
           const skipped = data?.skipped ?? 0;
           const updated = data?.updated ?? 0;
           this.invoiceResult.set(`Factures importées : ${imported}. Mises à jour : ${updated}. Ignorées : ${skipped}.`);
+          this.lastImportedInvoices.set(data?.invoices || []);
           this.resetInvoiceInput();
           this.loadInvoices();
           this.refreshCompare();
@@ -567,6 +581,7 @@ export class InterventionsDashboard {
     const el = event.target instanceof HTMLSelectElement ? event.target : null;
     if (!el) return;
     this.selectedPeriodKey.set(el.value);
+    this.lastImportedInvoices.set([]);
     this.refreshCompare();
   }
 
