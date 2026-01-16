@@ -433,10 +433,11 @@ export class InterventionsDashboard {
       next: (res) => {
         this.invoiceLoading.set(false);
         if (res.success) {
-          const data = res.data as { imported?: number; skipped?: number } | undefined;
+          const data = res.data as { imported?: number; skipped?: number; updated?: number } | undefined;
           const imported = data?.imported ?? 0;
           const skipped = data?.skipped ?? 0;
-          this.invoiceResult.set(`Factures importées : ${imported}. Ignorées : ${skipped}.`);
+          const updated = data?.updated ?? 0;
+          this.invoiceResult.set(`Factures importées : ${imported}. Mises à jour : ${updated}. Ignorées : ${skipped}.`);
           this.resetInvoiceInput();
           this.loadInvoices();
           this.refreshCompare();
