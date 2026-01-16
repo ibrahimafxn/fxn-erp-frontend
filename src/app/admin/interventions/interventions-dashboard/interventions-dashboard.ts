@@ -169,6 +169,10 @@ export class InterventionsDashboard {
 
   readonly rateFields = [
     { key: 'racPavillon', label: 'Raccordement pavillon', code: 'RACPAV' },
+    { key: 'cablePav1', label: 'Câble pavillon tranche 1', code: 'CABLE_PAV_1' },
+    { key: 'cablePav2', label: 'Câble pavillon tranche 2', code: 'CABLE_PAV_2' },
+    { key: 'cablePav3', label: 'Câble pavillon tranche 3', code: 'CABLE_PAV_3' },
+    { key: 'cablePav4', label: 'Câble pavillon tranche 4', code: 'CABLE_PAV_4' },
     { key: 'clem', label: 'Mise en service', code: 'CLEM' },
     { key: 'reconnexion', label: 'Reconnexion', code: 'RECOIP' },
     { key: 'racImmeuble', label: 'Raccordement immeuble', code: 'RACIH' },
@@ -178,6 +182,7 @@ export class InterventionsDashboard {
     { key: 'deprise', label: 'Déplacement prise', code: 'DEPLPRISE' },
     { key: 'demo', label: 'Démonstration service', code: 'DEMO' },
     { key: 'sav', label: 'Service après-vente', code: 'SAV' },
+    { key: 'savExp', label: 'SAV Expédition', code: 'SAV_EXP' },
     { key: 'refrac', label: 'Raccord refait', code: 'REFRAC' },
     { key: 'refcDgr', label: 'Dégradation client', code: 'REFC_DGR' }
   ] as const;
@@ -186,6 +191,22 @@ export class InterventionsDashboard {
     racPavillon: this.fb.nonNullable.group({
       total: [140, [Validators.required, Validators.min(0)]],
       fxn: [10, [Validators.required, Validators.min(0)]]
+    }),
+    cablePav1: this.fb.nonNullable.group({
+      total: [20, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    cablePav2: this.fb.nonNullable.group({
+      total: [40, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    cablePav3: this.fb.nonNullable.group({
+      total: [60, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    cablePav4: this.fb.nonNullable.group({
+      total: [80, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
     }),
     clem: this.fb.nonNullable.group({
       total: [5, [Validators.required, Validators.min(0)]],
@@ -222,6 +243,10 @@ export class InterventionsDashboard {
     sav: this.fb.nonNullable.group({
       total: [10, [Validators.required, Validators.min(0)]],
       fxn: [10, [Validators.required, Validators.min(0)]]
+    }),
+    savExp: this.fb.nonNullable.group({
+      total: [0, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
     }),
     refrac: this.fb.nonNullable.group({
       total: [0, [Validators.required, Validators.min(0)]],
@@ -809,6 +834,10 @@ export class InterventionsDashboard {
 
     return (
       get(item.racPavillon) * share(rates.racPavillon) +
+      get(item.cablePav1) * share(rates.cablePav1) +
+      get(item.cablePav2) * share(rates.cablePav2) +
+      get(item.cablePav3) * share(rates.cablePav3) +
+      get(item.cablePav4) * share(rates.cablePav4) +
       get(item.clem) * share(rates.clem) +
       get(item.reconnexion) * share(rates.reconnexion) +
       get(item.racImmeuble) * share(rates.racImmeuble) +
@@ -818,6 +847,7 @@ export class InterventionsDashboard {
       get(item.deprise) * share(rates.deprise) +
       get(item.demo) * share(rates.demo) +
       get(item.sav) * share(rates.sav) +
+      get(item.savExp) * share(rates.savExp) +
       get(item.refrac) * share(rates.refrac) +
       get(item.refcDgr) * share(rates.refcDgr)
     );

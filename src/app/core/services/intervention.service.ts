@@ -18,6 +18,7 @@ export type InterventionSummaryItem = {
   demo?: number;
   refrac?: number;
   refcDgr?: number;
+  savExp?: number;
   cablePav1: number;
   cablePav2: number;
   cablePav3: number;
@@ -40,6 +41,7 @@ export type InterventionTotals = {
   demo?: number;
   refrac?: number;
   refcDgr?: number;
+  savExp?: number;
   cablePav1: number;
   cablePav2: number;
   cablePav3: number;
