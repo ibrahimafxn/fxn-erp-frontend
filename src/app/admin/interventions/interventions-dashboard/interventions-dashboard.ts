@@ -451,7 +451,14 @@ export class InterventionsDashboard {
           const skipped = data?.skipped ?? 0;
           const updated = data?.updated ?? 0;
           this.invoiceResult.set(`Factures importées : ${imported}. Mises à jour : ${updated}. Ignorées : ${skipped}.`);
-          this.lastImportedInvoices.set(data?.invoices || []);
+          const importedInvoices = data?.invoices || [];
+          this.lastImportedInvoices.set(importedInvoices);
+          if (importedInvoices.length) {
+            const firstPeriod = importedInvoices.find((inv) => inv.periodKey)?.periodKey || '';
+            if (firstPeriod) {
+              this.selectedPeriodKey.set(firstPeriod);
+            }
+          }
           this.resetInvoiceInput();
           this.loadInvoices();
           this.refreshCompare();
@@ -543,7 +550,9 @@ export class InterventionsDashboard {
       next: (res) => {
         this.invoiceSummary.set(res.data);
         const options = this.periodOptions();
-        if (!this.selectedPeriodKey() && options.length) {
+        const current = this.selectedPeriodKey();
+        const stillValid = options.some((opt) => opt.key === current);
+        if ((!current || !stillValid) && options.length) {
           this.selectedPeriodKey.set(options[0].key);
         }
         this.refreshCompare();
