@@ -216,6 +216,10 @@ export class InterventionService {
     );
   }
 
+  resetInvoices(): Observable<{ success: boolean; data: { deleted: number } }> {
+    return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/invoices/reset`);
+  }
+
   compare(query: InterventionSummaryQuery & { periodKey?: string } = {}): Observable<{ success: boolean; data: InterventionCompare }> {
     let params = new HttpParams();
     if (query.fromDate) params = params.set('fromDate', query.fromDate);

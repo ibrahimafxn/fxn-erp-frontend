@@ -308,7 +308,7 @@ export class InterventionsDashboard {
       this.showRates.set(stored !== 'false');
     }
     this.loadFilters();
-    this.loadInvoices();
+    this.resetInvoicesOnLoad();
     this.ratesService.refresh().subscribe();
     this.refresh();
   }
@@ -583,6 +583,21 @@ export class InterventionsDashboard {
         this.refreshCompare();
       },
       error: () => {}
+    });
+  }
+
+  private resetInvoicesOnLoad(): void {
+    this.svc.resetInvoices().subscribe({
+      next: () => {
+        this.invoiceSummary.set(null);
+        this.lastImportedInvoices.set([]);
+        this.compareResult.set(null);
+        this.selectedPeriodKey.set('');
+        this.loadInvoices();
+      },
+      error: () => {
+        this.loadInvoices();
+      }
     });
   }
 
