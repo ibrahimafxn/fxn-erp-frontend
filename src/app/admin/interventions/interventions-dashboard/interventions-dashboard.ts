@@ -834,10 +834,6 @@ export class InterventionsDashboard {
 
     return (
       get(item.racPavillon) * share(rates.racPavillon) +
-      get(item.cablePav1) * share(rates.cablePav1) +
-      get(item.cablePav2) * share(rates.cablePav2) +
-      get(item.cablePav3) * share(rates.cablePav3) +
-      get(item.cablePav4) * share(rates.cablePav4) +
       get(item.clem) * share(rates.clem) +
       get(item.reconnexion) * share(rates.reconnexion) +
       get(item.racImmeuble) * share(rates.racImmeuble) +
