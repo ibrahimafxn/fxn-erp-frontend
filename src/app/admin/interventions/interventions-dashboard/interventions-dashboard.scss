@@ -84,6 +84,111 @@
   min-width: 0;
 }
 
+.invoice {
+  display: grid;
+  gap: 1rem;
+}
+
+.invoice-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  h2 { margin: 0; }
+  p { margin: .25rem 0 0; color: var(--fxn-text-muted); }
+}
+
+.invoice-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 1rem;
+}
+
+.invoice-import {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.invoice-summary {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.summary-card {
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--fxn-border);
+  background: rgba(15, 22, 36, 0.55);
+  display: grid;
+  gap: 0.35rem;
+}
+
+.summary-card .label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fxn-text-muted);
+}
+
+.summary-card .value {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.summary-card.negative {
+  border-color: rgba(255, 120, 120, 0.5);
+  color: #ffb4b4;
+}
+
+.invoice-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  grid-column: 1 / -1;
+}
+
+.compare-table {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.compare-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.compare-table thead th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fxn-text-muted);
+  padding: 0.5rem 0.75rem;
+}
+
+.compare-table tbody td {
+  padding: 0.6rem 0.75rem;
+  border-top: 1px solid var(--fxn-border);
+  font-size: 0.85rem;
+}
+
+.compare-table tbody tr.alert {
+  background: rgba(255, 112, 112, 0.08);
+}
+
+@media (max-width: 900px) {
+  .invoice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .rates {
   display: grid;
   gap: 1rem;

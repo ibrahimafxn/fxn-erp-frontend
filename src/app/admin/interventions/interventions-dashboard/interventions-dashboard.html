@@ -51,6 +51,123 @@
     <div class="state ok card">{{ resetResult() }}</div>
   }
 
+  <section class="invoice card">
+    <div class="invoice-head">
+      <div>
+        <h2><span class="material-icons">receipt_long</span>Factures ERT</h2>
+        <p>Importe les PDF d’attachement puis compare aux interventions OSIRIS.</p>
+      </div>
+      <div class="invoice-period">
+        <label>
+          Période facture
+          <select [value]="selectedPeriodKey()" (change)="onPeriodChange($event)">
+            <option value="">Toutes</option>
+            @for (p of periodOptions(); track p.key) {
+              <option [value]="p.key">{{ p.label }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="invoice-grid">
+      <div class="invoice-import">
+        <label class="file-input" [class.disabled]="invoiceLoading()">
+          <input
+            #invoiceInput
+            type="file"
+            accept=".pdf"
+            multiple
+            [disabled]="invoiceLoading()"
+            (click)="onInvoiceClick()"
+            (change)="onInvoiceChange($event)"
+          />
+          <span class="material-icons" aria-hidden="true">upload_file</span>
+          <span>Choisir les factures PDF</span>
+        </label>
+        @if (selectedInvoices.length) {
+          <div class="file-meta">
+            <span class="material-icons" aria-hidden="true">description</span>
+            <span>{{ selectedInvoices.length }} fichier(s) sélectionné(s)</span>
+          </div>
+        }
+        <div class="invoice-actions">
+          <button class="btn-primary" type="button" (click)="importInvoices()" [disabled]="invoiceLoading()">
+            <span class="material-icons" aria-hidden="true">cloud_upload</span>
+            @if (invoiceLoading()) { Import… } @else { Importer factures }
+          </button>
+          <button class="btn-outline" type="button" (click)="refreshCompare()" [disabled]="compareLoading()">
+            <span class="material-icons" aria-hidden="true">compare</span>
+            @if (compareLoading()) { Analyse… } @else { Comparer }
+          </button>
+        </div>
+        @if (invoiceError()) {
+          <p class="state error">{{ invoiceError() }}</p>
+        } @else if (invoiceResult()) {
+          <p class="state ok">{{ invoiceResult() }}</p>
+        }
+      </div>
+
+      <div class="invoice-summary">
+        <div class="summary-card">
+          <span class="label">Total facturé (HT)</span>
+          <span class="value">{{ (invoiceSummary()?.totalHt || 0) | number:'1.0-0' }} €</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total OSIRIS estimé</span>
+          <span class="value">{{ (compareTotals()?.osiris || 0) | number:'1.0-0' }} €</span>
+        </div>
+        <div class="summary-card" [class.negative]="(compareTotals()?.delta || 0) < 0">
+          <span class="label">Écart</span>
+          <span class="value">{{ (compareTotals()?.delta || 0) | number:'1.0-0' }} €</span>
+        </div>
+        <div class="invoice-tags">
+          @for (inv of invoiceSummary()?.invoices || []; track inv._id) {
+            <span class="pill">{{ inv.attachmentRef || inv.filename }} · {{ inv.totalHt | number:'1.0-0' }} €</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (compareError()) {
+      <div class="state error">{{ compareError() }}</div>
+    }
+    @if (compareResult()) {
+      <div class="compare-table">
+        <div class="table-head">
+          <h3><span class="material-icons">rule</span>Comparaison par prestation</h3>
+          <p>Quantités et montants facturés vs OSIRIS.</p>
+        </div>
+        <table>
+          <thead>
+          <tr>
+            <th>Code</th>
+            <th>OSIRIS Qté</th>
+            <th>Facture Qté</th>
+            <th>Écart Qté</th>
+            <th>OSIRIS €</th>
+            <th>Facture €</th>
+            <th>Écart €</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (row of compareResult()?.rows || []; track row.code) {
+              <tr [class.alert]="row.deltaQty !== 0 || row.deltaAmount !== 0">
+                <td data-label="Code" class="mono">{{ row.code }}</td>
+                <td data-label="OSIRIS Qté">{{ row.osirisQty }}</td>
+                <td data-label="Facture Qté">{{ row.invoiceQty }}</td>
+                <td data-label="Écart Qté">{{ row.deltaQty }}</td>
+                <td data-label="OSIRIS €">{{ row.osirisAmount | number:'1.0-0' }} €</td>
+                <td data-label="Facture €">{{ row.invoiceAmount | number:'1.0-0' }} €</td>
+                <td data-label="Écart €">{{ row.deltaAmount | number:'1.0-0' }} €</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
   @if (canEditRates()) {
     <section class="rates card">
       <div class="rates-head">

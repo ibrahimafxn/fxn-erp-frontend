@@ -8,7 +8,9 @@ import {
   InterventionSummaryItem,
   InterventionFilters,
   InterventionTotals,
-  InterventionItem
+  InterventionItem,
+  InterventionInvoiceSummary,
+  InterventionCompare
 } from '../../../core/services/intervention.service';
 import { InterventionRatesService, InterventionRates } from '../../../core/services/intervention-rates.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
@@ -30,6 +32,7 @@ export class InterventionsDashboard {
   private auth = inject(AuthService);
 
   @ViewChild('csvInput') private csvInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('invoiceInput') private invoiceInput?: ElementRef<HTMLInputElement>;
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -44,6 +47,14 @@ export class InterventionsDashboard {
   readonly rateSuccess = signal<string | null>(null);
   readonly rateError = signal<string | null>(null);
   readonly showRates = signal(true);
+  readonly invoiceLoading = signal(false);
+  readonly invoiceResult = signal<string | null>(null);
+  readonly invoiceError = signal<string | null>(null);
+  readonly compareLoading = signal(false);
+  readonly compareError = signal<string | null>(null);
+  readonly invoiceSummary = signal<InterventionInvoiceSummary | null>(null);
+  readonly compareResult = signal<InterventionCompare | null>(null);
+  readonly selectedPeriodKey = signal<string>('');
 
   readonly summaryItems = signal<InterventionSummaryItem[]>([]);
   readonly totals = signal<InterventionTotals | null>(null);
@@ -235,7 +246,28 @@ export class InterventionsDashboard {
   });
 
   selectedFile: File | null = null;
+  selectedInvoices: File[] = [];
   readonly rates = this.ratesService.rates;
+  readonly periodOptions = computed(() => {
+    const invoices = this.invoiceSummary()?.invoices || [];
+    const map = new Map<string, string>();
+    for (const invoice of invoices) {
+      if (!invoice.periodKey) continue;
+      if (!map.has(invoice.periodKey)) {
+        map.set(invoice.periodKey, invoice.periodLabel || invoice.periodKey);
+      }
+    }
+    return Array.from(map.entries()).map(([key, label]) => ({ key, label }));
+  });
+  readonly compareTotals = computed(() => {
+    const compare = this.compareResult();
+    if (!compare) return null;
+    return {
+      osiris: compare.osiris.totalAmount || 0,
+      invoice: compare.invoice.totalAmount || 0,
+      delta: (compare.osiris.totalAmount || 0) - (compare.invoice.totalAmount || 0)
+    };
+  });
 
   constructor() {
     const stored = localStorage.getItem(this.RATES_VIS_KEY);
@@ -243,6 +275,7 @@ export class InterventionsDashboard {
       this.showRates.set(stored !== 'false');
     }
     this.loadFilters();
+    this.loadInvoices();
     this.ratesService.refresh().subscribe();
     this.refresh();
   }
@@ -340,6 +373,23 @@ export class InterventionsDashboard {
     this.importResult.set(null);
   }
 
+  onInvoiceClick(): void {
+    const input = this.invoiceInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+    this.selectedInvoices = [];
+    this.invoiceError.set(null);
+    this.invoiceResult.set(null);
+  }
+
+  onInvoiceChange(event: Event): void {
+    const el = event.target instanceof HTMLInputElement ? event.target : null;
+    this.selectedInvoices = el?.files ? Array.from(el.files) : [];
+    this.invoiceError.set(null);
+    this.invoiceResult.set(null);
+  }
+
   importCsv(): void {
     if (!this.selectedFile) {
       this.importError.set('Sélectionne un fichier CSV.');
@@ -367,6 +417,38 @@ export class InterventionsDashboard {
         this.importLoading.set(false);
         this.importError.set(this.apiError(err, 'Erreur import CSV'));
         this.resetFileInput();
+      }
+    });
+  }
+
+  importInvoices(): void {
+    if (!this.selectedInvoices.length) {
+      this.invoiceError.set('Sélectionne au moins un PDF.');
+      return;
+    }
+    this.invoiceLoading.set(true);
+    this.invoiceError.set(null);
+    this.invoiceResult.set(null);
+    this.svc.importInvoices(this.selectedInvoices).subscribe({
+      next: (res) => {
+        this.invoiceLoading.set(false);
+        if (res.success) {
+          const data = res.data as { imported?: number; skipped?: number } | undefined;
+          const imported = data?.imported ?? 0;
+          const skipped = data?.skipped ?? 0;
+          this.invoiceResult.set(`Factures importées : ${imported}. Ignorées : ${skipped}.`);
+          this.resetInvoiceInput();
+          this.loadInvoices();
+          this.refreshCompare();
+          return;
+        }
+        this.invoiceError.set(res.message || 'Erreur import factures');
+        this.resetInvoiceInput();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.invoiceLoading.set(false);
+        this.invoiceError.set(this.apiError(err, 'Erreur import factures'));
+        this.resetInvoiceInput();
       }
     });
   }
@@ -441,6 +523,52 @@ export class InterventionsDashboard {
     });
   }
 
+  private loadInvoices(): void {
+    this.svc.invoiceSummary().subscribe({
+      next: (res) => {
+        this.invoiceSummary.set(res.data);
+        const options = this.periodOptions();
+        if (!this.selectedPeriodKey() && options.length) {
+          this.selectedPeriodKey.set(options[0].key);
+        }
+        this.refreshCompare();
+      },
+      error: () => {}
+    });
+  }
+
+  refreshCompare(): void {
+    const f = this.filterForm.getRawValue();
+    this.compareLoading.set(true);
+    this.compareError.set(null);
+    this.svc.compare({
+      fromDate: f.fromDate || undefined,
+      toDate: f.toDate || undefined,
+      technician: f.technician || undefined,
+      region: f.region || undefined,
+      client: f.client || undefined,
+      status: f.status || undefined,
+      type: f.type || undefined,
+      periodKey: this.selectedPeriodKey() || undefined
+    }).subscribe({
+      next: (res) => {
+        this.compareResult.set(res.data);
+        this.compareLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.compareLoading.set(false);
+        this.compareError.set(this.apiError(err, 'Erreur comparaison factures'));
+      }
+    });
+  }
+
+  onPeriodChange(event: Event): void {
+    const el = event.target instanceof HTMLSelectElement ? event.target : null;
+    if (!el) return;
+    this.selectedPeriodKey.set(el.value);
+    this.refreshCompare();
+  }
+
   private loadDetail(): void {
     const tech = this.detailTechnician();
     if (!tech) return;
@@ -491,6 +619,7 @@ export class InterventionsDashboard {
   search(): void {
     this.page.set(1);
     this.refresh();
+    this.refreshCompare();
   }
 
   clearFilters(): void {
@@ -505,6 +634,7 @@ export class InterventionsDashboard {
     });
     this.page.set(1);
     this.refresh();
+    this.refreshCompare();
   }
 
   saveRates(): void {
@@ -626,6 +756,14 @@ export class InterventionsDashboard {
   resetFileInput(): void {
     this.selectedFile = null;
     const input = this.csvInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  resetInvoiceInput(): void {
+    this.selectedInvoices = [];
+    const input = this.invoiceInput?.nativeElement;
     if (input) {
       input.value = '';
     }
