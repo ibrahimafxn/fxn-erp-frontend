@@ -148,10 +148,36 @@
 }
 
 .invoice-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
   grid-column: 1 / -1;
+}
+
+.invoice-tags-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.invoice-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  background: rgba(30, 64, 175, 0.15);
+  color: var(--fxn-text);
+  font-size: 0.8rem;
+}
+
+.invoice-pill .code {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.invoice-pill .amount {
+  font-weight: 600;
+  color: #93c5fd;
 }
 
 .compare-table {

@@ -121,9 +121,12 @@
           <span class="label">Écart</span>
           <span class="value">{{ (compareTotals()?.delta || 0) | number:'1.0-0' }} €</span>
         </div>
-        <div class="invoice-tags">
+        <div class="invoice-tags invoice-tags-grid">
           @for (inv of displayedInvoices(); track inv.attachmentRef || inv.filename) {
-            <span class="pill">{{ inv.attachmentRef || inv.filename }} · {{ inv.totalHt | number:'1.0-0' }} €</span>
+            <span class="pill invoice-pill">
+              <span class="code">{{ inv.attachmentRef || inv.filename }}</span>
+              <span class="amount">{{ inv.totalHt | number:'1.0-0' }} €</span>
+            </span>
           }
         </div>
       </div>
