@@ -292,6 +292,9 @@ export class InterventionsDashboard {
     const period = this.selectedPeriodKey();
     return period ? invoices.filter((inv) => inv.periodKey === period) : invoices;
   });
+  readonly invoiceTotalHt = computed(() => {
+    return this.displayedInvoices().reduce((acc, inv) => acc + Number(inv.totalHt || 0), 0);
+  });
   readonly compareTotals = computed(() => {
     const compare = this.compareResult();
     if (!compare) return null;

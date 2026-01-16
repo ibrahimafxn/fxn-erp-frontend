@@ -111,7 +111,7 @@
       <div class="invoice-summary">
         <div class="summary-card">
           <span class="label">Total facturé (HT)</span>
-          <span class="value">{{ (invoiceSummary()?.totalHt || 0) | number:'1.0-0' }} €</span>
+          <span class="value">{{ invoiceTotalHt() | number:'1.0-0' }} €</span>
         </div>
         <div class="summary-card">
           <span class="label">Total OSIRIS estimé</span>
