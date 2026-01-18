@@ -247,4 +247,11 @@ export class ConsumableList extends DetailBack {
   }
 
   trackById = (_: number, c: Consumable) => c._id;
+
+  availableQty(c: Consumable): number {
+    const total = Number(c.quantity ?? 0);
+    const assigned = Number(c.assignedQuantity ?? 0);
+    if (!Number.isFinite(total) || !Number.isFinite(assigned)) return 0;
+    return Math.max(0, total - assigned);
+  }
 }

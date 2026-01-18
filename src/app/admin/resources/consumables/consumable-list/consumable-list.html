@@ -62,7 +62,7 @@
         <tr>
           <th>Consommable</th>
           <th>Unité</th>
-          <th>Quantité</th>
+          <th>Disponible</th>
           <th>Dépôt</th>
           <th>Création</th>
         </tr>
@@ -76,7 +76,7 @@
               </td>
 
               <td><span class="tag">{{ c.unit }}</span></td>
-              <td><span class="qty">{{ c.quantity }}</span></td>
+              <td><span class="qty">{{ availableQty(c) }} {{ c.unit }}</span></td>
               <td>{{ depotLabel(c) }}</td>
 
               <td>

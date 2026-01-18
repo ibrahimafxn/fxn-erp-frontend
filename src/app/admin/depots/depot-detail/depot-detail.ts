@@ -567,7 +567,7 @@ export class DepotDetail extends DetailBack{
     this.managerCandidatesLoading.set(true);
     this.managerError.set(null);
 
-    this.userService.refreshUsers(true, { role: 'GESTION_DEPOT', page: 1, limit: 100 }).subscribe({
+    this.userService.refreshUsers(true, { role: 'GESTION_DEPOT,ADMIN,DIRIGEANT', page: 1, limit: 100 }).subscribe({
       next: (result) => {
         this.managerCandidates.set(result.items ?? []);
         this.managerCandidatesLoading.set(false);

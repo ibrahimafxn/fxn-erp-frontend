@@ -8,7 +8,9 @@ import {
   InterventionSummaryItem,
   InterventionFilters,
   InterventionTotals,
-  InterventionItem
+  InterventionItem,
+  InterventionInvoiceSummary,
+  InterventionCompare
 } from '../../../core/services/intervention.service';
 import { InterventionRatesService, InterventionRates } from '../../../core/services/intervention-rates.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
@@ -30,6 +32,7 @@ export class InterventionsDashboard {
   private auth = inject(AuthService);
 
   @ViewChild('csvInput') private csvInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('invoiceInput') private invoiceInput?: ElementRef<HTMLInputElement>;
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -44,6 +47,15 @@ export class InterventionsDashboard {
   readonly rateSuccess = signal<string | null>(null);
   readonly rateError = signal<string | null>(null);
   readonly showRates = signal(true);
+  readonly invoiceLoading = signal(false);
+  readonly invoiceResult = signal<string | null>(null);
+  readonly invoiceError = signal<string | null>(null);
+  readonly compareLoading = signal(false);
+  readonly compareError = signal<string | null>(null);
+  readonly invoiceSummary = signal<InterventionInvoiceSummary | null>(null);
+  readonly lastImportedInvoices = signal<InterventionInvoiceSummary['invoices']>([]);
+  readonly compareResult = signal<InterventionCompare | null>(null);
+  readonly selectedPeriodKey = signal<string>('');
 
   readonly summaryItems = signal<InterventionSummaryItem[]>([]);
   readonly totals = signal<InterventionTotals | null>(null);
@@ -157,6 +169,10 @@ export class InterventionsDashboard {
 
   readonly rateFields = [
     { key: 'racPavillon', label: 'Raccordement pavillon', code: 'RACPAV' },
+    { key: 'cablePav1', label: 'Câble pavillon tranche 1', code: 'CABLE_PAV_1' },
+    { key: 'cablePav2', label: 'Câble pavillon tranche 2', code: 'CABLE_PAV_2' },
+    { key: 'cablePav3', label: 'Câble pavillon tranche 3', code: 'CABLE_PAV_3' },
+    { key: 'cablePav4', label: 'Câble pavillon tranche 4', code: 'CABLE_PAV_4' },
     { key: 'clem', label: 'Mise en service', code: 'CLEM' },
     { key: 'reconnexion', label: 'Reconnexion', code: 'RECOIP' },
     { key: 'racImmeuble', label: 'Raccordement immeuble', code: 'RACIH' },
@@ -166,6 +182,7 @@ export class InterventionsDashboard {
     { key: 'deprise', label: 'Déplacement prise', code: 'DEPLPRISE' },
     { key: 'demo', label: 'Démonstration service', code: 'DEMO' },
     { key: 'sav', label: 'Service après-vente', code: 'SAV' },
+    { key: 'savExp', label: 'SAV Expédition', code: 'SAV_EXP' },
     { key: 'refrac', label: 'Raccord refait', code: 'REFRAC' },
     { key: 'refcDgr', label: 'Dégradation client', code: 'REFC_DGR' }
   ] as const;
@@ -174,6 +191,22 @@ export class InterventionsDashboard {
     racPavillon: this.fb.nonNullable.group({
       total: [140, [Validators.required, Validators.min(0)]],
       fxn: [10, [Validators.required, Validators.min(0)]]
+    }),
+    cablePav1: this.fb.nonNullable.group({
+      total: [20, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    cablePav2: this.fb.nonNullable.group({
+      total: [40, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    cablePav3: this.fb.nonNullable.group({
+      total: [60, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    cablePav4: this.fb.nonNullable.group({
+      total: [80, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
     }),
     clem: this.fb.nonNullable.group({
       total: [5, [Validators.required, Validators.min(0)]],
@@ -211,6 +244,10 @@ export class InterventionsDashboard {
       total: [10, [Validators.required, Validators.min(0)]],
       fxn: [10, [Validators.required, Validators.min(0)]]
     }),
+    savExp: this.fb.nonNullable.group({
+      total: [0, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
     refrac: this.fb.nonNullable.group({
       total: [0, [Validators.required, Validators.min(0)]],
       fxn: [0, [Validators.required, Validators.min(0)]]
@@ -235,7 +272,38 @@ export class InterventionsDashboard {
   });
 
   selectedFile: File | null = null;
+  selectedInvoices: File[] = [];
   readonly rates = this.ratesService.rates;
+  readonly periodOptions = computed(() => {
+    const invoices = this.invoiceSummary()?.invoices || [];
+    const map = new Map<string, string>();
+    for (const invoice of invoices) {
+      if (!invoice.periodKey) continue;
+      if (!map.has(invoice.periodKey)) {
+        map.set(invoice.periodKey, invoice.periodLabel || invoice.periodKey);
+      }
+    }
+    return Array.from(map.entries()).map(([key, label]) => ({ key, label }));
+  });
+  readonly displayedInvoices = computed(() => {
+    const last = this.lastImportedInvoices();
+    if (last.length) return last;
+    const invoices = this.invoiceSummary()?.invoices || [];
+    const period = this.selectedPeriodKey();
+    return period ? invoices.filter((inv) => inv.periodKey === period) : invoices;
+  });
+  readonly invoiceTotalHt = computed(() => {
+    return this.displayedInvoices().reduce((acc, inv) => acc + Number(inv.totalHt || 0), 0);
+  });
+  readonly compareTotals = computed(() => {
+    const compare = this.compareResult();
+    if (!compare) return null;
+    return {
+      osiris: compare.osiris.totalAmount || 0,
+      invoice: compare.invoice.totalAmount || 0,
+      delta: (compare.osiris.totalAmount || 0) - (compare.invoice.totalAmount || 0)
+    };
+  });
 
   constructor() {
     const stored = localStorage.getItem(this.RATES_VIS_KEY);
@@ -243,6 +311,7 @@ export class InterventionsDashboard {
       this.showRates.set(stored !== 'false');
     }
     this.loadFilters();
+    this.resetInvoicesOnLoad();
     this.ratesService.refresh().subscribe();
     this.refresh();
   }
@@ -340,6 +409,23 @@ export class InterventionsDashboard {
     this.importResult.set(null);
   }
 
+  onInvoiceClick(): void {
+    const input = this.invoiceInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+    this.selectedInvoices = [];
+    this.invoiceError.set(null);
+    this.invoiceResult.set(null);
+  }
+
+  onInvoiceChange(event: Event): void {
+    const el = event.target instanceof HTMLInputElement ? event.target : null;
+    this.selectedInvoices = el?.files ? Array.from(el.files) : [];
+    this.invoiceError.set(null);
+    this.invoiceResult.set(null);
+  }
+
   importCsv(): void {
     if (!this.selectedFile) {
       this.importError.set('Sélectionne un fichier CSV.');
@@ -367,6 +453,52 @@ export class InterventionsDashboard {
         this.importLoading.set(false);
         this.importError.set(this.apiError(err, 'Erreur import CSV'));
         this.resetFileInput();
+      }
+    });
+  }
+
+  importInvoices(): void {
+    if (!this.selectedInvoices.length) {
+      this.invoiceError.set('Sélectionne au moins un PDF.');
+      return;
+    }
+    this.invoiceLoading.set(true);
+    this.invoiceError.set(null);
+    this.invoiceResult.set(null);
+    this.svc.importInvoices(this.selectedInvoices).subscribe({
+      next: (res) => {
+        this.invoiceLoading.set(false);
+        if (res.success) {
+          const data = res.data as {
+            imported?: number;
+            skipped?: number;
+            updated?: number;
+            invoices?: InterventionInvoiceSummary['invoices'];
+          } | undefined;
+          const imported = data?.imported ?? 0;
+          const skipped = data?.skipped ?? 0;
+          const updated = data?.updated ?? 0;
+          this.invoiceResult.set(`Factures importées : ${imported}. Mises à jour : ${updated}. Ignorées : ${skipped}.`);
+          const importedInvoices = data?.invoices || [];
+          this.lastImportedInvoices.set(importedInvoices);
+          if (importedInvoices.length) {
+            const firstPeriod = importedInvoices.find((inv) => inv.periodKey)?.periodKey || '';
+            if (firstPeriod) {
+              this.selectedPeriodKey.set(firstPeriod);
+            }
+          }
+          this.resetInvoiceInput();
+          this.loadInvoices();
+          this.refreshCompare();
+          return;
+        }
+        this.invoiceError.set(res.message || 'Erreur import factures');
+        this.resetInvoiceInput();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.invoiceLoading.set(false);
+        this.invoiceError.set(this.apiError(err, 'Erreur import factures'));
+        this.resetInvoiceInput();
       }
     });
   }
@@ -441,6 +573,70 @@ export class InterventionsDashboard {
     });
   }
 
+  private loadInvoices(): void {
+    this.svc.invoiceSummary().subscribe({
+      next: (res) => {
+        this.invoiceSummary.set(res.data);
+        const options = this.periodOptions();
+        const current = this.selectedPeriodKey();
+        const stillValid = options.some((opt) => opt.key === current);
+        if ((!current || !stillValid) && options.length) {
+          this.selectedPeriodKey.set(options[0].key);
+        }
+        this.refreshCompare();
+      },
+      error: () => {}
+    });
+  }
+
+  private resetInvoicesOnLoad(): void {
+    this.svc.resetInvoices().subscribe({
+      next: () => {
+        this.invoiceSummary.set(null);
+        this.lastImportedInvoices.set([]);
+        this.compareResult.set(null);
+        this.selectedPeriodKey.set('');
+        this.loadInvoices();
+      },
+      error: () => {
+        this.loadInvoices();
+      }
+    });
+  }
+
+  refreshCompare(): void {
+    const f = this.filterForm.getRawValue();
+    this.compareLoading.set(true);
+    this.compareError.set(null);
+    this.svc.compare({
+      fromDate: f.fromDate || undefined,
+      toDate: f.toDate || undefined,
+      technician: f.technician || undefined,
+      region: f.region || undefined,
+      client: f.client || undefined,
+      status: f.status || undefined,
+      type: f.type || undefined,
+      periodKey: this.selectedPeriodKey() || undefined
+    }).subscribe({
+      next: (res) => {
+        this.compareResult.set(res.data);
+        this.compareLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.compareLoading.set(false);
+        this.compareError.set(this.apiError(err, 'Erreur comparaison factures'));
+      }
+    });
+  }
+
+  onPeriodChange(event: Event): void {
+    const el = event.target instanceof HTMLSelectElement ? event.target : null;
+    if (!el) return;
+    this.selectedPeriodKey.set(el.value);
+    this.lastImportedInvoices.set([]);
+    this.refreshCompare();
+  }
+
   private loadDetail(): void {
     const tech = this.detailTechnician();
     if (!tech) return;
@@ -491,6 +687,7 @@ export class InterventionsDashboard {
   search(): void {
     this.page.set(1);
     this.refresh();
+    this.refreshCompare();
   }
 
   clearFilters(): void {
@@ -505,6 +702,7 @@ export class InterventionsDashboard {
     });
     this.page.set(1);
     this.refresh();
+    this.refreshCompare();
   }
 
   saveRates(): void {
@@ -631,6 +829,14 @@ export class InterventionsDashboard {
     }
   }
 
+  resetInvoiceInput(): void {
+    this.selectedInvoices = [];
+    const input = this.invoiceInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+  }
+
   private sumRevenue(
     item: InterventionSummaryItem | InterventionTotals,
     rates: InterventionRates,
@@ -655,6 +861,7 @@ export class InterventionsDashboard {
       get(item.deprise) * share(rates.deprise) +
       get(item.demo) * share(rates.demo) +
       get(item.sav) * share(rates.sav) +
+      get(item.savExp) * share(rates.savExp) +
       get(item.refrac) * share(rates.refrac) +
       get(item.refcDgr) * share(rates.refcDgr)
     );

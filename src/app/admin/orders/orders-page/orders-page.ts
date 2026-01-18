@@ -152,4 +152,15 @@ export class OrdersPage {
     this.page.set(1);
     this.refresh();
   }
+
+  formatAmount(value?: number | string | null): string {
+    const amount = Number(value ?? 0);
+    if (!Number.isFinite(amount)) return '0.00';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  }
 }

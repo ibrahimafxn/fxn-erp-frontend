@@ -74,6 +74,7 @@
           <th>Email</th>
           <th>Rôle</th>
           <th>Dépôt</th>
+          <th>Accès</th>
           <th>Création</th>
         </tr>
         </thead>
@@ -82,17 +83,42 @@
           @for (u of items(); track trackById($index, u)) {
             <tr class="row" (click)="openDetail(u)">
               <td class="main">
-                <div class="name">{{ userName(u) }}</div>
-                <div class="sub">{{ u.phone || '—' }}</div>
+                <div class="user-cell">
+                  <div class="avatar">
+                    @if (u.photoUrl || u.avatarUrl) {
+                      <img [src]="u.photoUrl || u.avatarUrl" alt="Photo de profil" />
+                    } @else {
+                      <span>{{ userInitials(u) }}</span>
+                    }
+                  </div>
+                  <div class="user-info">
+                    <div class="name">{{ userName(u) }}</div>
+                    <div class="sub">{{ u.phone || u.email || '—' }}</div>
+                  </div>
+                </div>
               </td>
 
               <td>{{ u.email || '—' }}</td>
 
               <td>
-                <span class="badge">{{ u.role || '—' }}</span>
+                <span
+                  class="badge role"
+                  [class.role-admin]="u.role === 'ADMIN'"
+                  [class.role-dirigeant]="u.role === 'DIRIGEANT'"
+                  [class.role-depot]="u.role === 'GESTION_DEPOT'"
+                  [class.role-tech]="u.role === 'TECHNICIEN'"
+                >{{ u.role || '—' }}</span>
               </td>
 
-              <td>{{ depotLabel(u) }}</td>
+              <td>
+                <span class="depot-pill" [class.empty]="!u.idDepot">{{ depotLabel(u) }}</span>
+              </td>
+
+              <td>
+                <span class="access-pill" [class.off]="!u.authEnabled">
+                  {{ u.authEnabled ? 'Accès actif' : 'Accès désactivé' }}
+                </span>
+              </td>
 
                 <td>
                 @if (createdAtValue(u)) {

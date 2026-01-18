@@ -31,7 +31,7 @@
   .header-actions {
     display: flex;
     gap: .5rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
   }
@@ -53,6 +53,13 @@
 .toolbar {
   display: grid;
   gap: .85rem;
+  position: sticky;
+  top: 80px;
+  z-index: 5;
+  background: rgba(6, 10, 18, 0.75);
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  padding: 0.85rem;
 
   width: 100%;
   max-width: 100%;
@@ -82,6 +89,11 @@
     background: rgba(255, 255, 255, .06);
     color: inherit;
     outline: none;
+  }
+
+  .search button {
+    align-self: end;
+    height: 40px;
   }
 
   input:focus,
@@ -180,16 +192,122 @@
 
   .row {
     cursor: pointer;
+    transition: background 0.18s ease, transform 0.18s ease;
   }
 
   .row:hover {
     background: rgba(255, 255, 255, .03);
+    transform: translateY(-1px);
   }
 
   .main {
     .name {
       font-weight: 750;
     }
+  }
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.user-info {
+  display: grid;
+  gap: .15rem;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: .85rem;
+  color: var(--fxn-text);
+  background: linear-gradient(135deg, rgba(61, 140, 255, 0.35), rgba(33, 182, 182, 0.35));
+  border: 1px solid rgba(255, 255, 255, .16);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.badge.role {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(12, 18, 30, .35);
+}
+
+.badge.role-admin {
+  color: #b8ddff;
+  border-color: rgba(88, 164, 255, 0.5);
+  background: rgba(24, 80, 160, 0.25);
+}
+
+.badge.role-dirigeant {
+  color: #9ff0d3;
+  border-color: rgba(47, 190, 160, 0.55);
+  background: rgba(14, 70, 58, 0.35);
+}
+
+.badge.role-depot {
+  color: #ffd79a;
+  border-color: rgba(255, 179, 92, 0.55);
+  background: rgba(90, 52, 10, 0.3);
+}
+
+.badge.role-tech {
+  color: #e7d7ff;
+  border-color: rgba(168, 126, 255, 0.5);
+  background: rgba(52, 22, 90, 0.35);
+}
+
+.depot-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(33, 182, 182, 0.18);
+  color: #c9f3ee;
+
+  &.empty {
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.access-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
+  border: 1px solid rgba(46, 204, 113, 0.45);
+  background: rgba(46, 204, 113, 0.18);
+  color: #c7f7d8;
+
+  &.off {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.18);
+    color: #ffd3d3;
   }
 }
 

@@ -147,6 +147,10 @@ export class AppHeader {
     this.router.navigate([this.stockAlertsLink()]).then();
   }
 
+  goRevenue(): void {
+    this.router.navigate(['/admin/revenue']).then();
+  }
+
   logout(): void {
     this.auth.logout(true).subscribe();
   }
@@ -186,6 +190,7 @@ export class AppHeader {
     if (url.includes('/orders')) return 'Commandes';
     if (url.includes('/alerts/stock')) return 'Alertes';
     if (url.includes('/interventions')) return 'Interventions';
+    if (url.includes('/revenue')) return "Chiffre d'affaires";
     if (url.includes('/consumables')) return 'Consommables';
     if (url.includes('/materials')) return 'Matériels';
     return 'Dashboard';

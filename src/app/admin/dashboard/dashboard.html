@@ -1,7 +1,7 @@
 <section class="admin-dashboard">
   <header class="hero">
     <div class="hero-text">
-      <span class="hero-badge">ERP FXN · ERT Technologie</span>
+      <span class="hero-badge">ERP FXN · ERT Technologies</span>
       <h1>Poste de commandement des stocks</h1>
       <p class="subtitle">
         Vue stratégique des matériels, consommables et véhicules pour piloter le terrain en temps réel.
@@ -27,14 +27,14 @@
 
     <div class="hero-actions">
       <button class="btn-outline btn-history" type="button" (click)="goToHistory()">
-        <span class="material-icons" aria-hidden="true">swap_horiz</span>
+        <span class="material-icons notranslate" aria-hidden="true">swap_horiz</span>
         <span class="btn-text">
           <span class="title">Journal des mouvements</span>
           <span class="meta">Historique des stocks</span>
         </span>
       </button>
       <button class="btn-outline btn-onboarding" type="button" (click)="goToOnboarding()">
-        <span class="material-icons" aria-hidden="true">rocket_launch</span>
+        <span class="material-icons notranslate" aria-hidden="true">rocket_launch</span>
         <span class="btn-text">
           <span class="title">Onboarding</span>
           <span class="meta">Importer fichiers CSV</span>
@@ -42,7 +42,7 @@
         <span class="badge">CSV</span>
       </button>
       <button class="btn-outline btn-reload" type="button" (click)="adminService.loadDashboardStats()">
-        <span class="material-icons" aria-hidden="true">refresh</span>
+        <span class="material-icons notranslate" aria-hidden="true">refresh</span>
         <span class="btn-text">
           <span class="title">Rafraîchir</span>
           <span class="meta">Actualiser les indicateurs</span>
@@ -83,7 +83,7 @@
   <section class="action-grid">
     <article class="action-card" (click)="goToNewUser()">
       <div class="action-head">
-        <span class="material-icons action-icon">person_add</span>
+        <span class="material-icons notranslate action-icon">person_add</span>
         <span class="action-tag">Accès rapide</span>
       </div>
       <div class="action-title">Nouveau collaborateur</div>
@@ -91,7 +91,7 @@
     </article>
     <article class="action-card" (click)="goToNewDepot()">
       <div class="action-head">
-        <span class="material-icons action-icon">warehouse</span>
+        <span class="material-icons notranslate action-icon">warehouse</span>
         <span class="action-tag">Logistique</span>
       </div>
       <div class="action-title">Nouveau dépôt</div>
@@ -99,7 +99,7 @@
     </article>
     <article class="action-card" (click)="goToInterventions()">
       <div class="action-head">
-        <span class="material-icons action-icon">upload_file</span>
+        <span class="material-icons notranslate action-icon">upload_file</span>
         <span class="action-tag">Import</span>
       </div>
       <div class="action-title">Importer interventions</div>
@@ -107,7 +107,7 @@
     </article>
     <article class="action-card" (click)="goToStockAlerts()">
       <div class="action-head">
-        <span class="material-icons action-icon">warning</span>
+        <span class="material-icons notranslate action-icon">warning</span>
         <span class="action-tag">Surveillance</span>
       </div>
       <div class="action-title">Voir les alertes</div>
@@ -118,7 +118,7 @@
   <!-- KPIs principaux -->
   <section class="kpi-grid" *ngIf="stats() as s">
     <article class="kpi-card clickable" (click)="goToUsers()">
-      <div class="kpi-icon kpi-users"><span class="material-icons" aria-hidden="true">people</span></div>
+      <div class="kpi-icon kpi-users"><span class="material-icons notranslate" aria-hidden="true">people</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Utilisateurs</div>
         <div class="kpi-value">{{ s.totalUsers }}</div>
@@ -127,7 +127,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToDepots()">
-      <div class="kpi-icon kpi-depots"><span class="material-icons" aria-hidden="true">warehouse</span></div>
+      <div class="kpi-icon kpi-depots"><span class="material-icons notranslate" aria-hidden="true">warehouse</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Dépôts</div>
         <div class="kpi-value">{{ s.totalDepots }}</div>
@@ -136,7 +136,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToResources('materials')">
-      <div class="kpi-icon kpi-materials"><span class="material-icons" aria-hidden="true">handyman</span></div>
+      <div class="kpi-icon kpi-materials"><span class="material-icons notranslate" aria-hidden="true">handyman</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Matériels</div>
         <div class="kpi-value">{{ s.totalMaterials }}</div>
@@ -145,7 +145,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToResources('consumables')">
-      <div class="kpi-icon kpi-consumables"><span class="material-icons" aria-hidden="true">inventory_2</span></div>
+      <div class="kpi-icon kpi-consumables"><span class="material-icons notranslate" aria-hidden="true">inventory_2</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Consommables</div>
         <div class="kpi-value">{{ s.totalConsumables }}</div>
@@ -154,7 +154,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToResources('vehicles')">
-      <div class="kpi-icon kpi-vehicles"><span class="material-icons" aria-hidden="true">local_shipping</span></div>
+      <div class="kpi-icon kpi-vehicles"><span class="material-icons notranslate" aria-hidden="true">local_shipping</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Véhicules</div>
         <div class="kpi-value">{{ s.totalVehicles }}</div>
@@ -163,7 +163,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToStockAlerts()">
-      <div class="kpi-icon kpi-alerts"><span class="material-icons" aria-hidden="true">report</span></div>
+      <div class="kpi-icon kpi-alerts"><span class="material-icons notranslate" aria-hidden="true">report</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Alertes</div>
         <div class="kpi-value">{{ s.totalAlerts ?? s.totalLowStock ?? 0 }}</div>

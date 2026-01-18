@@ -45,6 +45,19 @@
   font-size: 1.4rem;
   background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
   border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .hero-text h1 {
@@ -101,6 +114,25 @@
   gap: .75rem;
   align-items: flex-start;
   z-index: 1;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+
+  input {
+    display: none;
+  }
+}
+
+.upload-error {
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.6rem;
+  font-size: 0.8rem;
 }
 
 .profile-grid {

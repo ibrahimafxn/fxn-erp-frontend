@@ -4,6 +4,8 @@ import {AuthGuard} from '../../core/guards/auth.guard';
 import {RoleGuard} from '../../core/guards/role.guard';
 import {Role} from '../../core/models/roles.model';
 
+const DEPOT_ACCESS_ROLES = [Role.GESTION_DEPOT, Role.ADMIN, Role.DIRIGEANT];
+
 /**
  * Routes pour le gestionnaire de dépôt
  * - Dashboard principal du dépôt
@@ -16,7 +18,7 @@ export const DEPOT_ROUTES: Routes = [
       import('./depot-dashboard/depot-dashboard').then(m => m.DepotDashboard),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])  // ✅ enum, plus de lambda, plus de string brute
+      RoleGuard(DEPOT_ACCESS_ROLES)  // ✅ enum, plus de lambda, plus de string brute
       // tu peux aussi ouvrir aux techniciens si tu veux :
       // RoleGuard([Role.GESTION_DEPOT, Role.TECHNICIEN])
     ]
@@ -27,7 +29,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/resources/materials/material-list/material-list').then(m => m.MaterialList),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -36,7 +38,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/resources/materials/material-detail/material-detail').then(m => m.MaterialDetail),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -45,7 +47,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/resources/consumables/consumable-list/consumable-list').then(m => m.ConsumableList),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -54,7 +56,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/resources/consumables/consumable-detail/consumables-detail').then(m => m.ConsumablesDetail),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -63,7 +65,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/resources/vehicles/vehicle-list/vehicle-list').then(m => m.VehicleList),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -72,7 +74,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/resources/vehicles/vehicle-detail/vehicle-detail').then(m => m.VehicleDetail),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -81,7 +83,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/resources/vehicles/vehicle-breakdown/vehicle-breakdown').then(m => m.VehicleBreakdown),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -90,7 +92,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/resources/vehicles/vehicle-breakdowns/vehicle-breakdowns').then(m => m.VehicleBreakdowns),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -99,7 +101,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/history/history-list/history-list').then(m => m.HistoryList),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -108,7 +110,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/reservations/reservations-list/reservations-list').then(m => m.ReservationsList),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -117,7 +119,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/receipts/receipt-page/receipt-page').then(m => m.ReceiptPage),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   },
   {
@@ -126,7 +128,7 @@ export const DEPOT_ROUTES: Routes = [
       import('../../admin/alerts/stock-alerts/stock-alerts').then(m => m.StockAlerts),
     canActivate: [
       AuthGuard,
-      RoleGuard([Role.GESTION_DEPOT])
+      RoleGuard(DEPOT_ACCESS_ROLES)
     ]
   }
 ];

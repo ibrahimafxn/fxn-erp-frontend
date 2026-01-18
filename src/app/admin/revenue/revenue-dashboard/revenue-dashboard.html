@@ -1,0 +1,166 @@
+<section class="revenue-page">
+  <header class="page-header">
+    <div>
+      <h1>Chiffre d'affaires</h1>
+      <p class="subtitle">Saisie mensuelle HT et évolution cumulée.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="loadAll()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+      <label>
+        Mois
+        <select formControlName="month">
+          <option value="">Tous</option>
+          @for (m of monthOptions(); track m.value) {
+            <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Année
+        <select formControlName="year">
+          <option value="">Toutes</option>
+          @for (y of yearOptions(); track y) {
+            <option [value]="y">{{ y }}</option>
+          }
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="grid">
+    <article class="card form-card">
+      <div class="card-title">Saisie mensuelle</div>
+      <form class="form" [formGroup]="createForm" (ngSubmit)="submit()">
+        <label>
+          Mois
+          <select formControlName="month">
+            <option value="" disabled>Choisir</option>
+            @for (m of monthOptions(); track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Année
+          <select formControlName="year">
+            <option value="" disabled>Choisir</option>
+            @for (y of yearOptions(); track y) {
+              <option [value]="y">{{ y }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          CA HT
+          <input type="number" min="0" step="1" formControlName="amountHt" />
+        </label>
+        <label class="note">
+          Note
+          <input type="text" formControlName="note" placeholder="Optionnel" />
+        </label>
+        <div class="form-actions">
+          <button class="btn-primary" type="submit" [disabled]="createForm.invalid || loading()">
+            @if (editing()) { Mettre à jour } @else { Enregistrer }
+          </button>
+          @if (editing()) {
+            <button class="btn-outline" type="button" (click)="cancelEdit()" [disabled]="loading()">Annuler</button>
+          }
+        </div>
+      </form>
+    </article>
+
+    <article class="card kpi-card">
+      <div class="kpi-title">CA cumulé</div>
+      <div class="kpi-value">{{ formatCurrency(total()) }}</div>
+      <div class="kpi-sub">Période sélectionnée</div>
+    </article>
+
+    <article class="card chart-card">
+      <div class="card-title">Évolution mensuelle</div>
+      <div class="series-list">
+        @for (point of series(); track point.key) {
+          <div class="series-item">
+            <span class="series-month">{{ formatMonth(point) }}</span>
+            <span class="series-ht">{{ formatCurrency(point.amountHt) }}</span>
+            <span class="series-cum">{{ formatCurrency(point.cumulativeHt) }}</span>
+          </div>
+        }
+      </div>
+    </article>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else {
+    <div class="table card revenue-table">
+      <table>
+        <thead>
+        <tr>
+          <th>Mois</th>
+          <th>Montant HT</th>
+          <th>Note</th>
+          <th>Auteur</th>
+          <th>MAJ</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td><span class="month-pill">{{ formatMonth(item) }}</span></td>
+              <td><span class="amount-pill">{{ formatCurrency(item.amountHt) }}</span></td>
+              <td class="note">{{ item.note || '—' }}</td>
+              <td><span class="author">{{ authorLabel(item.createdBy || item.updatedBy) }}</span></td>
+              <td>
+                @if (item.updatedAt) { {{ item.updatedAt | date:'short' }} } @else { — }
+                @if (item.updatedBy) { · {{ authorLabel(item.updatedBy) }} }
+              </td>
+              <td class="actions">
+                <button class="btn-outline edit" type="button" (click)="startEdit(item)"><i class="bi bi-pencil"></i> Modifier</button>
+                <button class="btn-outline delete" type="button" (click)="openDeleteModal(item)"><i class="fa-solid fa-trash"></i> Supprimer</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <app-confirm-delete-modal
+      [open]="deleteModalOpen()"
+      entityLabel="le CA mensuel"
+      [entityName]="pendingDelete() ? formatMonth(pendingDelete()!) : ''"
+      [entityId]="pendingDelete()?._id ?? null"
+      [confirming]="deleting()"
+      dangerHint="Cette action est irréversible."
+      (cancel)="closeDeleteModal()"
+      (confirm)="confirmDelete()"
+    />
+    <div class="list-meta">
+      <div class="meta">
+        <span class="pill">Total : {{ totalCount() }}</span>
+        <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+        <label class="limit">
+          <span>Par page</span>
+          <select [value]="limit()" (change)="setLimit($event)">
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+        </label>
+      </div>
+      <div class="pager">
+        <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
+        <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+      </div>
+    </div>
+  }
+</section>

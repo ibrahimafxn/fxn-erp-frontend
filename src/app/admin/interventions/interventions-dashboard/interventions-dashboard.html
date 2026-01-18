@@ -15,12 +15,12 @@
           (click)="onFileClick()"
           (change)="onFileChange($event)"
         />
-        <span class="material-icons" aria-hidden="true">upload_file</span>
+        <span class="material-icons notranslate" aria-hidden="true">upload_file</span>
         <span>Choisir un export CSV</span>
       </label>
       @if (selectedFile) {
         <div class="file-meta">
-          <span class="material-icons" aria-hidden="true">description</span>
+          <span class="material-icons notranslate" aria-hidden="true">description</span>
           <span>{{ selectedFile.name }}</span>
         </div>
       }
@@ -30,11 +30,11 @@
         (click)="openResetModal()"
         [disabled]="resetLoading() || importLoading() || selectedFile || !hasData()"
       >
-        <span class="material-icons" aria-hidden="true">delete_forever</span>
+        <span class="material-icons notranslate" aria-hidden="true">delete_forever</span>
         @if (resetLoading()) { Reset… } @else { Reset data }
       </button>
       <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading() || !selectedFile">
-        <span class="material-icons" aria-hidden="true">cloud_upload</span>
+        <span class="material-icons notranslate" aria-hidden="true">cloud_upload</span>
         @if (importLoading()) { Import… } @else { Importer }
       </button>
     </div>
@@ -51,12 +51,132 @@
     <div class="state ok card">{{ resetResult() }}</div>
   }
 
+  <section class="invoice card">
+    <div class="invoice-head">
+      <div>
+        <h2><span class="material-icons notranslate">receipt_long</span>Factures ERT</h2>
+        <p>Importe les PDF d’attachement puis compare aux interventions OSIRIS.</p>
+      </div>
+      <div class="invoice-period">
+        <label>
+          Période facture
+          <select [value]="selectedPeriodKey()" (change)="onPeriodChange($event)">
+            <option value="">Toutes</option>
+            @for (p of periodOptions(); track p.key) {
+              <option [value]="p.key">{{ p.label }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="invoice-grid">
+      <div class="invoice-import">
+        <label class="file-input" [class.disabled]="invoiceLoading()">
+          <input
+            #invoiceInput
+            type="file"
+            accept=".pdf"
+            multiple
+            [disabled]="invoiceLoading()"
+            (click)="onInvoiceClick()"
+            (change)="onInvoiceChange($event)"
+          />
+          <span class="material-icons notranslate" aria-hidden="true">upload_file</span>
+          <span>Choisir les factures PDF</span>
+        </label>
+        @if (selectedInvoices.length) {
+          <div class="file-meta">
+            <span class="material-icons notranslate" aria-hidden="true">description</span>
+            <span>{{ selectedInvoices.length }} fichier(s) sélectionné(s)</span>
+          </div>
+        }
+        <div class="invoice-actions">
+          <button class="btn-primary" type="button" (click)="importInvoices()" [disabled]="invoiceLoading()">
+            <span class="material-icons notranslate" aria-hidden="true">cloud_upload</span>
+            @if (invoiceLoading()) { Import… } @else { Importer factures }
+          </button>
+          <button class="btn-outline" type="button" (click)="refreshCompare()" [disabled]="compareLoading()">
+            <span class="material-icons notranslate" aria-hidden="true">compare</span>
+            @if (compareLoading()) { Analyse… } @else { Comparer }
+          </button>
+        </div>
+        @if (invoiceError()) {
+          <p class="state error">{{ invoiceError() }}</p>
+        } @else if (invoiceResult()) {
+          <p class="state ok">{{ invoiceResult() }}</p>
+        }
+      </div>
+
+      <div class="invoice-summary">
+        <div class="summary-card">
+          <span class="label">Total facturé (HT)</span>
+          <span class="value">{{ invoiceTotalHt() | number:'1.0-0' }} €</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Total OSIRIS estimé</span>
+          <span class="value">{{ (compareTotals()?.osiris || 0) | number:'1.0-0' }} €</span>
+        </div>
+        <div class="summary-card" [class.negative]="(compareTotals()?.delta || 0) < 0">
+          <span class="label">Écart</span>
+          <span class="value">{{ (compareTotals()?.delta || 0) | number:'1.0-0' }} €</span>
+        </div>
+        <div class="invoice-tags invoice-tags-grid">
+          @for (inv of displayedInvoices(); track inv.attachmentRef || inv.filename) {
+            <span class="pill invoice-pill">
+              <span class="code">{{ inv.attachmentRef || inv.filename }}</span>
+              <span class="amount">{{ inv.totalHt | number:'1.0-0' }} €</span>
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (compareError()) {
+      <div class="state error">{{ compareError() }}</div>
+    }
+    @if (compareResult()) {
+      <div class="compare-table">
+        <div class="table-head">
+          <h3><span class="material-icons notranslate">rule</span>Comparaison par prestation</h3>
+          <p>Quantités et montants facturés vs OSIRIS.</p>
+        </div>
+        <table>
+          <thead>
+          <tr>
+            <th>Code</th>
+            <th>OSIRIS Qté</th>
+            <th>Facture Qté</th>
+            <th>Écart Qté</th>
+            <th>OSIRIS €</th>
+            <th>Facture €</th>
+            <th>Écart €</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (row of compareResult()?.rows || []; track row.code) {
+              <tr [class.alert]="row.deltaQty !== 0 || row.deltaAmount !== 0">
+                <td data-label="Code" class="mono">{{ row.code }}</td>
+                <td data-label="OSIRIS Qté">{{ row.osirisQty }}</td>
+                <td data-label="Facture Qté">{{ row.invoiceQty }}</td>
+                <td data-label="Écart Qté">{{ row.deltaQty }}</td>
+                <td data-label="OSIRIS €">{{ row.osirisAmount | number:'1.0-0' }} €</td>
+                <td data-label="Facture €">{{ row.invoiceAmount | number:'1.0-0' }} €</td>
+                <td data-label="Écart €">{{ row.deltaAmount | number:'1.0-0' }} €</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
   @if (canEditRates()) {
     <section class="rates card">
       <div class="rates-head">
         <div>
-          <h2><span class="material-icons">tune</span>Tarifs prestations</h2>
-          <p>Définis la part FIBRUP et la part technicien pour chaque prestation.</p>
+          <h2><span class="material-icons notranslate">tune</span>Tarifs prestations</h2>
+          <p>Définis la part FXN et la part technicien pour chaque prestation.</p>
         </div>
 
         <div class="rates-actions">
@@ -85,7 +205,7 @@
                   <input type="number" min="0" step="1" formControlName="total" />
                 </label>
                 <label>
-                  FIBRUP
+                  FXN
                   <input type="number" min="0" step="1" formControlName="fxn" />
                 </label>
                 <div class="tech-readonly">
@@ -94,7 +214,7 @@
                 </div>
               </div>
               @if (isRateInvalid(r.key)) {
-                <p class="rate-error">Le montant FIBRUP ne peut pas dépasser le total.</p>
+                <p class="rate-error">Le montant FXN ne peut pas dépasser le total.</p>
               }
             </div>
           }
@@ -107,7 +227,7 @@
         }
       } @else {
         <div class="rates-collapsed">
-          <span class="material-icons" aria-hidden="true">visibility_off</span>
+          <span class="material-icons notranslate" aria-hidden="true">visibility_off</span>
           Tarifs masqués.
         </div>
       }
@@ -128,7 +248,7 @@
   <div class="revenue card accent">
     <div class="revenue-head">
       <h2>
-        <span class="material-icons">attach_money</span>
+        <span class="material-icons notranslate">attach_money</span>
         Chiffre d’affaires
         <span
           class="info-tooltip"
@@ -136,14 +256,14 @@
           role="button"
           aria-label="Estimation basée sur les tarifs et les interventions filtrées."
         >
-          <span class="material-icons" aria-hidden="true">info</span>
+          <span class="material-icons notranslate" aria-hidden="true">info</span>
           <span class="tooltip-text">Estimation basée sur les tarifs et les interventions filtrées.</span>
         </span>
       </h2>
       <p>Calculé à partir des tarifs et des interventions filtrées.</p>
     </div>
     <div class="revenue-item">
-      <span class="label">Chiffre d’affaires FIBRUP</span>
+      <span class="label">Chiffre d’affaires FXN</span>
       <span class="value">{{ totalRevenue().fxn | number:'1.0-0' }} €</span>
     </div>
     <div class="revenue-item">
@@ -212,8 +332,8 @@
         </select>
       </label>
       <div class="actions">
-        <button class="btn-outline btn-search" type="submit" [disabled]="loading()"><span class="material-icons" aria-hidden="true">search</span>Rechercher</button>
-        <button class="btn-outline btn-clear" type="button" (click)="clearFilters()"><span class="material-icons" aria-hidden="true">clear</span>Effacer</button>
+        <button class="btn-outline btn-search" type="submit" [disabled]="loading()"><span class="material-icons notranslate" aria-hidden="true">search</span>Rechercher</button>
+        <button class="btn-outline btn-clear" type="button" (click)="clearFilters()"><span class="material-icons notranslate" aria-hidden="true">clear</span>Effacer</button>
       </div>
     </form>
 
@@ -228,7 +348,7 @@
   } @else {
     <div class="summary card">
       <div class="summary-head">
-        <h2><span class="material-icons">insights</span>Synthèse rapide</h2>
+        <h2><span class="material-icons notranslate">insights</span>Synthèse rapide</h2>
         <p>Volumes globaux sur la période sélectionnée.</p>
       </div>
       <div class="summary-grid">
@@ -277,7 +397,7 @@
 
     <div class="table card">
       <div class="table-head">
-        <h2><span class="material-icons">table_chart</span>Détail par technicien</h2>
+        <h2><span class="material-icons notranslate">table_chart</span>Détail par technicien</h2>
         <p>Indicateurs et chiffre d’affaires par intervenant. Clique sur un technicien pour afficher ses interventions.</p>
       </div>
       <table>
@@ -294,7 +414,7 @@
           <th>SAV</th>
           <th>CLEM</th>
           <th>Autres</th>
-          <th>CA FIBRUP</th>
+          <th>CA FXN</th>
           <th>CA Tech</th>
         </tr>
         </thead>
@@ -327,7 +447,7 @@
               <td data-label="SAV">{{ it.sav }}</td>
               <td data-label="CLEM">{{ it.clem }}</td>
               <td data-label="Autres">{{ it.other + it.racAutre }}</td>
-              <td data-label="CA FIBRUP">{{ fxnRevenue(it) | number:'1.0-0' }}</td>
+              <td data-label="CA FXN">{{ fxnRevenue(it) | number:'1.0-0' }}</td>
               <td data-label="CA Tech">{{ techRevenue(it) | number:'1.0-0' }}</td>
             </tr>
           }
@@ -366,7 +486,7 @@
     >
       <div class="overlay-header">
         <div>
-          <h3 class="section-title"><span class="material-icons">assignment</span>Interventions du technicien</h3>
+          <h3 class="section-title"><span class="material-icons notranslate">assignment</span>Interventions du technicien</h3>
           <p class="subtitle">{{ detailTechnician() }}</p>
         </div>
         <button class="btn-outline" type="button" (click)="closeDetail()"><i class="bi bi-x-lg"></i> Fermer</button>

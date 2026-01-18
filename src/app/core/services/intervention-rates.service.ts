@@ -20,8 +20,13 @@ export type InterventionRates = {
   deprise: InterventionRate;
   demo: InterventionRate;
   sav: InterventionRate;
+  savExp: InterventionRate;
   refrac: InterventionRate;
   refcDgr: InterventionRate;
+  cablePav1: InterventionRate;
+  cablePav2: InterventionRate;
+  cablePav3: InterventionRate;
+  cablePav4: InterventionRate;
 };
 
 const DEFAULT_RATES: InterventionRates = {
@@ -35,8 +40,13 @@ const DEFAULT_RATES: InterventionRates = {
   deprise: { total: 50, fxn: 0 },
   demo: { total: 10, fxn: 10 },
   sav: { total: 10, fxn: 10 },
+  savExp: { total: 0, fxn: 0 },
   refrac: { total: 0, fxn: 0 },
-  refcDgr: { total: 50, fxn: 0 }
+  refcDgr: { total: 50, fxn: 0 },
+  cablePav1: { total: 20, fxn: 0 },
+  cablePav2: { total: 40, fxn: 0 },
+  cablePav3: { total: 60, fxn: 0 },
+  cablePav4: { total: 80, fxn: 0 }
 };
 
 @Injectable({ providedIn: 'root' })
@@ -81,8 +91,13 @@ export class InterventionRatesService {
       DEPLPRISE: rates.deprise,
       DEMO: rates.demo,
       SAV: rates.sav,
+      SAV_EXP: rates.savExp,
       REFRAC: rates.refrac,
-      REFC_DGR: rates.refcDgr
+      REFC_DGR: rates.refcDgr,
+      CABLE_PAV_1: rates.cablePav1,
+      CABLE_PAV_2: rates.cablePav2,
+      CABLE_PAV_3: rates.cablePav3,
+      CABLE_PAV_4: rates.cablePav4
     };
   }
 
@@ -99,8 +114,13 @@ export class InterventionRatesService {
       deprise: data['DEPLPRISE'] ?? DEFAULT_RATES.deprise,
       demo: data['DEMO'] ?? DEFAULT_RATES.demo,
       sav: data['SAV'] ?? DEFAULT_RATES.sav,
+      savExp: data['SAV_EXP'] ?? DEFAULT_RATES.savExp,
       refrac: data['REFRAC'] ?? DEFAULT_RATES.refrac,
-      refcDgr: data['REFC_DGR'] ?? DEFAULT_RATES.refcDgr
+      refcDgr: data['REFC_DGR'] ?? DEFAULT_RATES.refcDgr,
+      cablePav1: data['CABLE_PAV_1'] ?? DEFAULT_RATES.cablePav1,
+      cablePav2: data['CABLE_PAV_2'] ?? DEFAULT_RATES.cablePav2,
+      cablePav3: data['CABLE_PAV_3'] ?? DEFAULT_RATES.cablePav3,
+      cablePav4: data['CABLE_PAV_4'] ?? DEFAULT_RATES.cablePav4
     };
   }
 }

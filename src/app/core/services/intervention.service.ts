@@ -18,6 +18,7 @@ export type InterventionSummaryItem = {
   demo?: number;
   refrac?: number;
   refcDgr?: number;
+  savExp?: number;
   cablePav1: number;
   cablePav2: number;
   cablePav3: number;
@@ -40,6 +41,7 @@ export type InterventionTotals = {
   demo?: number;
   refrac?: number;
   refcDgr?: number;
+  savExp?: number;
   cablePav1: number;
   cablePav2: number;
   cablePav3: number;
@@ -90,6 +92,46 @@ export type InterventionFilters = {
   statuses: string[];
   technicians: string[];
   types: string[];
+};
+
+export type InterventionInvoiceItem = {
+  code: string;
+  label?: string;
+  unitPrice?: number;
+  quantity: number;
+  total: number;
+};
+
+export type InterventionInvoiceDoc = {
+  _id: string;
+  attachmentRef: string;
+  periodLabel: string;
+  periodKey: string;
+  totalHt: number;
+  filename?: string;
+};
+
+export type InterventionInvoiceSummary = {
+  totalHt: number;
+  byCode: Record<string, InterventionInvoiceItem>;
+  invoices: InterventionInvoiceDoc[];
+};
+
+export type InterventionCompareRow = {
+  code: string;
+  osirisQty: number;
+  invoiceQty: number;
+  deltaQty: number;
+  osirisAmount: number;
+  invoiceAmount: number;
+  deltaAmount: number;
+  unitPrice: number;
+};
+
+export type InterventionCompare = {
+  osiris: { totalAmount: number; byCode: Record<string, { code: string; quantity: number }> };
+  invoice: { totalAmount: number; byCode: Record<string, InterventionInvoiceItem> };
+  rows: InterventionCompareRow[];
 };
 
 export type InterventionSummaryQuery = {
@@ -152,5 +194,42 @@ export class InterventionService {
 
   resetAll(): Observable<{ success: boolean; data: { deleted: number } }> {
     return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/reset`);
+  }
+
+  importInvoices(files: File[]): Observable<{ success: boolean; data?: unknown; message?: string }> {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append('files', file);
+    }
+    return this.http.post<{ success: boolean; data?: unknown; message?: string }>(
+      `${this.baseUrl}/invoices/import`,
+      formData
+    );
+  }
+
+  invoiceSummary(periodKey?: string): Observable<{ success: boolean; data: InterventionInvoiceSummary }> {
+    let params = new HttpParams();
+    if (periodKey) params = params.set('periodKey', periodKey);
+    return this.http.get<{ success: boolean; data: InterventionInvoiceSummary }>(
+      `${this.baseUrl}/invoices/summary`,
+      { params }
+    );
+  }
+
+  resetInvoices(): Observable<{ success: boolean; data: { deleted: number } }> {
+    return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/invoices/reset`);
+  }
+
+  compare(query: InterventionSummaryQuery & { periodKey?: string } = {}): Observable<{ success: boolean; data: InterventionCompare }> {
+    let params = new HttpParams();
+    if (query.fromDate) params = params.set('fromDate', query.fromDate);
+    if (query.toDate) params = params.set('toDate', query.toDate);
+    if (query.technician) params = params.set('technician', query.technician);
+    if (query.region) params = params.set('region', query.region);
+    if (query.client) params = params.set('client', query.client);
+    if (query.status) params = params.set('status', query.status);
+    if (query.type) params = params.set('type', query.type);
+    if (query.periodKey) params = params.set('periodKey', query.periodKey);
+    return this.http.get<{ success: boolean; data: InterventionCompare }>(`${this.baseUrl}/compare`, { params });
   }
 }

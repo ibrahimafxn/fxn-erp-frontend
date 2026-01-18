@@ -1,8 +1,8 @@
 <header class="app-header">
   <!-- LEFT -->
   <div class="left">
-    <div class="brand" [routerLink]="dashboardLink()">
-      FXN <span>ERP</span>
+    <div class="brand" [routerLink]="dashboardLink()" role="button" aria-label="Accueil">
+      <img class="brand-logo" src="/fxn_logo_header.png" alt="FXN" />
     </div>
 
     <div class="page-title">
@@ -34,10 +34,10 @@
               <div class="section-label">Administration</div>
               <div class="section-items">
                 @if (canManageAccess()) {
-                  <button (click)="goUserAccess()"><span class="material-icons">key</span>Accès connexion</button>
+                  <button (click)="goUserAccess()"><span class="material-icons notranslate">key</span>Accès connexion</button>
                 }
                 @if (canViewHr()) {
-                  <button (click)="goHr()"><span class="material-icons">badge</span>Ressources humaines</button>
+                  <button (click)="goHr()"><span class="material-icons notranslate">badge</span>Ressources humaines</button>
                 }
               </div>
             </div>
@@ -46,10 +46,19 @@
               <div class="section-label">Opérations</div>
               <div class="section-items">
                 @if (canViewMovements()) {
-                  <button (click)="goMovements()"><span class="material-icons">swap_horiz</span>Journal des mouvements</button>
+                  <button (click)="goMovements()"><span class="material-icons notranslate">swap_horiz</span>Journal des mouvements</button>
                 }
                 @if (canViewInterventions()) {
-                  <button (click)="goInterventions()"><span class="material-icons">attach_money</span>Calcul d'attachement</button>
+                  <button (click)="goInterventions()"><span class="material-icons notranslate">attach_money</span>Calcul d'attachement</button>
+                }
+              </div>
+            </div>
+
+            <div class="menu-group">
+              <div class="section-label">Finance</div>
+              <div class="section-items">
+                @if (canManageAccess()) {
+                  <button (click)="goRevenue()"><span class="material-icons notranslate">insights</span>Chiffre d'affaires</button>
                 }
               </div>
             </div>
@@ -58,14 +67,14 @@
               <div class="section-label">Stock</div>
               <div class="section-items">
                 @if (canViewMovements()) {
-                  <button (click)="goReceipts()"><span class="material-icons">inventory_2</span>Réceptions stock</button>
+                  <button (click)="goReceipts()"><span class="material-icons notranslate">inventory_2</span>Réceptions stock</button>
                 }
                 @if (canManageAccess()) {
-                  <button (click)="goOrders()"><span class="material-icons">receipt_long</span>Commandes</button>
+                  <button (click)="goOrders()"><span class="material-icons notranslate">receipt_long</span>Commandes</button>
                 }
                 @if (canViewMovements()) {
                   <button (click)="goStockAlerts()">
-                    <span class="material-icons">report</span>
+                    <span class="material-icons notranslate">report</span>
                     Alertes
                     @if (alertsCount() > 0) {
                       <span class="badge">{{ alertsCount() }}</span>
@@ -76,9 +85,9 @@
                   <div class="menu-section">
                     <div class="section-label">Réservations</div>
                     <div class="section-items">
-                      <button class="submenu" (click)="goReservations()"><span class="material-icons">widgets</span>Consommables</button>
+                      <button class="submenu" (click)="goReservations()"><span class="material-icons notranslate">widgets</span>Consommables</button>
                       @if (canViewMaterialReservations()) {
-                        <button class="submenu" (click)="goMaterialReservations()"><span class="material-icons">handyman</span>Matériels</button>
+                        <button class="submenu" (click)="goMaterialReservations()"><span class="material-icons notranslate">handyman</span>Matériels</button>
                       }
                     </div>
                   </div>
@@ -89,7 +98,7 @@
             <div class="menu-group">
               <div class="section-label">Compte</div>
               <div class="section-items">
-                <button (click)="goProfile()"><span class="material-icons">person</span>Mon profil</button>
+                <button (click)="goProfile()"><span class="material-icons notranslate">person</span>Mon profil</button>
                 <button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
               </div>
             </div>
