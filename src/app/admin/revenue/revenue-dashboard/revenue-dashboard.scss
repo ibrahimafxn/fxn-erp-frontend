@@ -1,0 +1,346 @@
+.revenue-page {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -20% -10% auto;
+    height: 240px;
+    background:
+      radial-gradient(420px 220px at 10% 10%, rgba(52, 120, 255, 0.18), transparent 70%),
+      radial-gradient(360px 220px at 90% 0%, rgba(20, 180, 150, 0.16), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 750;
+  }
+
+  .subtitle {
+    margin: .25rem 0 0;
+    color: var(--fxn-text-muted);
+    font-size: .9rem;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+}
+
+.toolbar.card,
+.table.card,
+.card {
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: linear-gradient(135deg, rgba(10, 16, 28, 0.75), rgba(12, 20, 34, 0.95));
+  backdrop-filter: blur(10px);
+  box-shadow: var(--fxn-shadow-sm);
+}
+
+.toolbar.card {
+  padding: 1rem;
+}
+
+.filters {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+
+  label {
+    display: grid;
+    gap: .35rem;
+    font-size: .85rem;
+  }
+
+  input,
+  select {
+    min-width: 160px;
+    padding: .6rem .75rem;
+    border-radius: .75rem;
+    border: 1px solid var(--fxn-border);
+    background: rgba(10, 16, 28, 0.6);
+    color: inherit;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  input:focus,
+  select:focus {
+    border-color: rgba(96, 165, 250, 0.65);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+
+  .actions {
+    display: inline-flex;
+    gap: .5rem;
+    align-items: flex-end;
+  }
+
+  .actions .btn-outline {
+    height: 40px;
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  .pill {
+    padding: .2rem .6rem;
+    border-radius: 999px;
+    border: 1px solid rgba(96, 165, 250, 0.35);
+    background: rgba(15, 23, 42, 0.6);
+    font-size: .85rem;
+  }
+
+  .limit {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+  }
+
+  select {
+    padding: .45rem .55rem;
+    border-radius: .7rem;
+    border: 1px solid var(--fxn-border);
+    background: rgba(10, 16, 28, 0.6);
+    color: inherit;
+  }
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.list-meta {
+  display: grid;
+  gap: .75rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 1.4fr;
+  gap: 1rem;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-card {
+  padding: 1rem;
+}
+
+.form {
+  display: grid;
+  gap: .75rem;
+
+  label {
+    display: grid;
+    gap: .35rem;
+    font-size: .85rem;
+  }
+
+  input,
+  select {
+    padding: .6rem .75rem;
+    border-radius: .75rem;
+    border: 1px solid var(--fxn-border);
+    background: rgba(10, 16, 28, 0.6);
+    color: inherit;
+  }
+
+  .note input {
+    max-width: 100%;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.kpi-card {
+  padding: 1rem;
+  display: grid;
+  align-content: start;
+  gap: .3rem;
+  background: linear-gradient(135deg, rgba(16, 26, 44, 0.9), rgba(10, 18, 30, 0.9));
+  border: 1px solid rgba(96, 165, 250, 0.25);
+}
+
+.kpi-title {
+  font-size: .85rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--fxn-text-muted);
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 800;
+  text-shadow: 0 0 18px rgba(59, 130, 246, 0.25);
+}
+
+.kpi-sub {
+  font-size: .85rem;
+  color: var(--fxn-text-muted);
+}
+
+.chart-card {
+  padding: 1rem;
+  display: grid;
+  gap: .75rem;
+}
+
+.series-list {
+  display: grid;
+  gap: .35rem;
+  font-size: .8rem;
+  color: var(--fxn-text-muted);
+}
+
+.series-item {
+  display: grid;
+  grid-template-columns: 90px 1fr 1fr;
+  gap: .6rem;
+  padding: .25rem .35rem;
+  border-radius: .6rem;
+  background: rgba(12, 18, 30, 0.4);
+}
+
+.series-month {
+  font-weight: 700;
+  color: var(--fxn-text);
+}
+
+.series-ht::before {
+  content: 'HT: ';
+  color: rgba(59, 130, 246, 0.85);
+}
+
+.series-cum::before {
+  content: 'Cumul: ';
+  color: rgba(20, 184, 166, 0.85);
+}
+
+.state {
+  padding: .9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: rgba(12, 18, 30, 0.8);
+  &.error { background: var(--fxn-danger-soft); }
+}
+
+.table.card {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.revenue-table {
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, rgba(12, 18, 30, 0.9), rgba(10, 16, 26, 0.85));
+}
+
+table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+thead th {
+  text-align: left;
+  font-size: .85rem;
+  opacity: .8;
+  padding: .85rem .9rem;
+  border-bottom: 1px solid var(--fxn-border);
+  background: rgba(12, 18, 30, 0.8);
+}
+
+tbody td {
+  padding: .85rem .9rem;
+  border-bottom: 1px solid var(--fxn-border);
+}
+
+tbody tr {
+  transition: background .18s ease;
+}
+
+tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.month-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .65rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.16);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.amount {
+  font-weight: 800;
+  font-size: .95rem;
+  color: #e6f0ff;
+}
+
+.amount-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 207, 154, 0.45);
+  background: rgba(46, 207, 154, 0.18);
+  color: #d7ffee;
+  font-weight: 800;
+}
+
+.note {
+  max-width: 280px;
+  color: var(--fxn-text-muted);
+}
+
+.author {
+  font-weight: 600;
+}
+
+.actions {
+  text-align: right;
+  white-space: nowrap;
+
+  .btn-outline + .btn-outline {
+    margin-left: .4rem;
+  }
+}

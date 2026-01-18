@@ -84,6 +84,13 @@ export class UserList extends DetailBack {
     return name || u.email || u._id;
   }
 
+  userInitials(u: User): string {
+    const first = u.firstName?.[0] ?? '';
+    const last = u.lastName?.[0] ?? '';
+    const value = `${first}${last}`.toUpperCase();
+    return value || (u.email?.[0] ?? '').toUpperCase();
+  }
+
   refresh(force = false): void {
     const v = this.filterForm.getRawValue();
 

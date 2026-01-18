@@ -15,7 +15,7 @@
     <div class="state empty card">Aucune donnee.</div>
   } @else {
     <article class="card">
-      <h2 class="section-title"><span class="material-icons">receipt_long</span>Commande</h2>
+      <h2 class="section-title"><span class="material-icons notranslate">receipt_long</span>Commande</h2>
       <div class="grid">
         <div>
           <div class="label">Référence</div>
@@ -45,7 +45,7 @@
     </article>
 
     <article class="card">
-      <h2 class="section-title"><span class="material-icons">local_shipping</span>Importer dans un dépôt</h2>
+      <h2 class="section-title"><span class="material-icons notranslate">local_shipping</span>Importer dans un dépôt</h2>
       <p class="subtitle">Ajoute les articles de la commande dans le stock du dépôt sélectionné.</p>
 
       <div class="actions">
@@ -85,7 +85,7 @@
     </article>
 
     <article class="card">
-      <h2 class="section-title"><span class="material-icons">list_alt</span>Articles</h2>
+      <h2 class="section-title"><span class="material-icons notranslate">list_alt</span>Articles</h2>
       @if ((order()?.lines || []).length === 0) {
         <div class="state empty">Aucun article.</div>
       } @else {

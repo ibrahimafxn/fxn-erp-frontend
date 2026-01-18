@@ -1,10 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -17,6 +19,8 @@ export class Profile {
   private auth = inject(AuthService);
   private router = inject(Router);
   private depotService = inject(DepotService);
+  private http = inject(HttpClient);
+  private apiBase = (environment.apiBaseUrl || '').replace(/\/+$/, '');
 
   readonly user = this.auth.user$;
   readonly depotName = signal('—');
@@ -33,6 +37,11 @@ export class Profile {
     const u = this.user();
     if (!u) return '';
     return `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase();
+  });
+
+  readonly photoUrl = computed(() => {
+    const u = this.user();
+    return u?.photoUrl || u?.avatarUrl || '';
   });
 
   readonly roleLabel = computed(() => {
@@ -70,6 +79,9 @@ export class Profile {
     }
     return [];
   });
+
+  readonly uploadLoading = signal(false);
+  readonly uploadError = signal<string | null>(null);
 
   private readonly depotSync = effect(() => {
     const idDepot = this.user()?.idDepot ?? null;
@@ -109,5 +121,105 @@ export class Profile {
 
   logout(): void {
     this.auth.logout(true).subscribe();
+  }
+
+  onPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.uploadError.set('Format invalide (PNG ou JPG).');
+      if (input) input.value = '';
+      return;
+    }
+    const maxSize = 5 * 1024 * 1024;
+    this.uploadLoading.set(true);
+    this.uploadError.set(null);
+
+    this.compressImage(file)
+      .then((compressed) => {
+        if (compressed.size > maxSize) {
+          this.uploadLoading.set(false);
+          this.uploadError.set('Fichier trop lourd (max 5 Mo) même après compression.');
+          if (input) input.value = '';
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', compressed);
+
+        this.http.post<{ success: boolean; data?: { photoUrl?: string; avatarUrl?: string } }>(
+          `${this.apiBase}/users/me/avatar`,
+          formData
+        ).subscribe({
+          next: (res) => {
+            const url = res?.data?.photoUrl || res?.data?.avatarUrl || '';
+            if (url) {
+              this.auth.updateCurrentUser({ photoUrl: url, avatarUrl: url });
+            }
+            this.uploadLoading.set(false);
+            if (input) input.value = '';
+          },
+          error: (err: HttpErrorResponse) => {
+            this.uploadLoading.set(false);
+            this.uploadError.set(this.apiError(err, 'Erreur upload photo'));
+            if (input) input.value = '';
+          }
+        });
+      })
+      .catch(() => {
+        this.uploadLoading.set(false);
+        this.uploadError.set('Impossible de compresser la photo.');
+        if (input) input.value = '';
+      });
+  }
+
+  private compressImage(file: File): Promise<File> {
+    const maxDim = 512;
+    const quality = 0.82;
+    const blobUrl = URL.createObjectURL(file);
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          const targetW = Math.max(1, Math.round(img.width * scale));
+          const targetH = Math.max(1, Math.round(img.height * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas non disponible'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Compression échouée'));
+              return;
+            }
+            const safeName = file.name.replace(/\.[^.]+$/, '') || 'avatar';
+            resolve(new File([blob], `${safeName}.jpg`, { type: 'image/jpeg' }));
+          }, 'image/jpeg', quality);
+        } finally {
+          URL.revokeObjectURL(blobUrl);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl);
+        reject(new Error('Image invalide'));
+      };
+      img.src = blobUrl;
+    });
+  }
+
+  private apiError(err: HttpErrorResponse, fallback: string): string {
+    const apiMsg =
+      typeof err.error === 'object' && err.error !== null && 'message' in err.error
+        ? String((err.error as { message?: unknown }).message ?? '')
+        : '';
+    return apiMsg || err.message || fallback;
   }
 }

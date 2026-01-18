@@ -8,7 +8,7 @@
   </header>
 
   <article class="card">
-    <h2 class="section-title"><span class="material-icons">receipt_long</span>Liste des commandes</h2>
+    <h2 class="section-title"><span class="material-icons notranslate">receipt_long</span>Liste des commandes</h2>
     <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
       <label>
         Recherche
@@ -68,7 +68,13 @@
                 <td>{{ order.client }}</td>
                 <td>{{ order.date | date:'dd/MM/yyyy HH:mm' }}</td>
                 <td>{{ order.status }}</td>
-                <td>{{ order.amount }}</td>
+                <td>
+                  <span
+                    class="amount-pill"
+                    [class.status-delivered]="order.status === 'Livrée'"
+                    [class.status-pending]="order.status === 'En cours'"
+                  >{{ formatAmount(order.amount) }}</span>
+                </td>
                 <td class="actions-cell">
                   <button class="btn-outline edit" type="button" (click)="$event.stopPropagation(); openEdit(order)"><i class="bi bi-pencil"></i> Modifier</button>
                   <button class="btn-outline delete" type="button" (click)="$event.stopPropagation(); openDeleteModal(order)"><i class="fa-solid fa-trash"></i> Supprimer</button>

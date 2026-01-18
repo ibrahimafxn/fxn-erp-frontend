@@ -105,6 +105,29 @@ td {
   font-size: 0.95rem;
 }
 
+.amount-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 800;
+  color: #e3f0ff;
+  background: rgba(59, 130, 246, 0.18);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
+.amount-pill.status-delivered {
+  color: #d7ffe7;
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.amount-pill.status-pending {
+  color: #ffe9c7;
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
 .actions-cell {
   text-align: right;
   display: flex;

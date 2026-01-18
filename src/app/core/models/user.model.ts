@@ -17,6 +17,8 @@ export interface User {
   email: string;
   phone?: string;
   address?: string;
+  avatarUrl?: string;
+  photoUrl?: string;
 
   /** Rôle / Affectations */
   role: Role;

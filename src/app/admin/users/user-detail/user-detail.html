@@ -24,7 +24,11 @@
 
       <div class="identity">
         <div class="avatar">
-          {{ (u.firstName || '—').charAt(0) }}{{ (u.lastName || '—').charAt(0) }}
+          @if (u.photoUrl || u.avatarUrl) {
+            <img [src]="u.photoUrl || u.avatarUrl" alt="Photo de profil" />
+          } @else {
+            <span>{{ (u.firstName || '—').charAt(0) }}{{ (u.lastName || '—').charAt(0) }}</span>
+          }
         </div>
 
         <div class="identity-text">

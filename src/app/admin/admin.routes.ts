@@ -97,6 +97,11 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () =>
       import('./interventions/interventions-dashboard/interventions-dashboard').then(m => m.InterventionsDashboard)
   },
+  {
+    path: 'revenue',
+    loadComponent: () =>
+      import('./revenue/revenue-dashboard/revenue-dashboard').then(m => m.RevenueDashboard)
+  },
 
   // -----------------------------
   // MATERIALS

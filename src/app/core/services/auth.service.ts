@@ -18,6 +18,8 @@ export interface AuthUser {
   lastName?: string;
   email: string;
   phone?: string;
+  photoUrl?: string;
+  avatarUrl?: string;
   role: Role;
   idDepot?: string | null;
   assignedVehicle?: string | null;
@@ -162,6 +164,12 @@ export class AuthService {
   hasRole(roles: AuthUser['role'][]): boolean {
     const role = this.getUserRole();
     return !!role && roles.includes(role);
+  }
+
+  updateCurrentUser(patch: Partial<AuthUser>): void {
+    const current = this._user();
+    if (!current) return;
+    this.persistUser({ ...current, ...patch });
   }
 
   // ─────────────────────────────────────────────

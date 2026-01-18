@@ -112,7 +112,7 @@ export class DepotForm extends DetailBack {
     this.managersLoading.set(true);
     this.managersError.set(null);
 
-    this.userService.refreshUsers(true, { role: 'GESTION_DEPOT', page: 1, limit: 200 }).subscribe({
+    this.userService.refreshUsers(true, { role: 'GESTION_DEPOT,ADMIN,DIRIGEANT', page: 1, limit: 200 }).subscribe({
       next: result => {
         this.managers.set(result.items || []);
         this.managersLoading.set(false);
