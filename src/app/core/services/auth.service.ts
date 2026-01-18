@@ -1,7 +1,7 @@
 // src/app/core/services/auth.service.ts
 
 import {inject, Injectable, signal} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {Observable, of, ReplaySubject, throwError} from 'rxjs';
 import {catchError, filter, map, take, tap} from 'rxjs/operators';
@@ -31,10 +31,12 @@ export interface AuthUser {
 export interface LoginResponse {
   accessToken: string;
   user?: AuthUser;
+  csrfToken?: string;
 }
 
 const LS_KEY_ACCESS = 'fxn_access_token';
 const LS_KEY_USER = 'fxn_user';
+const LS_KEY_CSRF = 'fxn_csrf_token';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +53,7 @@ export class AuthService {
    * que l'utilisateur reste connecté après refresh de la page).
    */
   private accessToken: string | null = this.loadAccessTokenFromStorage();
+  private csrfToken: string | null = this.loadCsrfTokenFromStorage();
 
   /**
    * User courant sous forme de signal.
@@ -92,6 +95,15 @@ export class AuthService {
     }
   }
 
+  private loadCsrfTokenFromStorage(): string | null {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      return localStorage.getItem(LS_KEY_CSRF);
+    } catch {
+      return null;
+    }
+  }
+
   private persistAccessToken(token: string | null): void {
     this.accessToken = token;
     if (typeof localStorage === 'undefined') return;
@@ -121,6 +133,25 @@ export class AuthService {
     } catch {
       // ignore storage errors
     }
+  }
+
+  private persistCsrfToken(token: string | null): void {
+    this.csrfToken = token;
+    if (typeof localStorage === 'undefined') return;
+    try {
+      if (token) {
+        localStorage.setItem(LS_KEY_CSRF, token);
+      } else {
+        localStorage.removeItem(LS_KEY_CSRF);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  private buildCsrfHeaders(): HttpHeaders {
+    if (!this.csrfToken) return new HttpHeaders();
+    return new HttpHeaders({ 'X-XSRF-TOKEN': this.csrfToken });
   }
 
   // ─────────────────────────────────────────────
@@ -199,6 +230,9 @@ export class AuthService {
             throw new Error('Réponse login invalide : accessToken manquant');
           }
           this.persistAccessToken(resp.accessToken);
+          if (resp.csrfToken) {
+            this.persistCsrfToken(resp.csrfToken);
+          }
           if (resp.user) {
             this.persistUser(resp.user);
           }
@@ -214,7 +248,10 @@ export class AuthService {
    */
   logout(redirect = true): Observable<any> {
     const logout$ = this.http
-      .post(`${this.apiBase}/auth/logout`, {}, { withCredentials: true })
+      .post(`${this.apiBase}/auth/logout`, {}, {
+        withCredentials: true,
+        headers: this.buildCsrfHeaders()
+      })
       .pipe(
         catchError(() => {
           // même si le backend renvoie une erreur, on force le logout côté front
@@ -225,6 +262,7 @@ export class AuthService {
     // Nettoyage côté front immédiat
     this.persistAccessToken(null);
     this.persistUser(null);
+    this.persistCsrfToken(null);
     this.refreshInProgress = false;
     this.refreshSubject = new ReplaySubject<string | null>(1);
 
@@ -268,7 +306,10 @@ export class AuthService {
     this.refreshInProgress = true;
 
     const refresh$ = this.http
-      .post<LoginResponse>(`${this.apiBase}/auth/refresh`, {}, { withCredentials: true })
+      .post<LoginResponse>(`${this.apiBase}/auth/refresh`, {}, {
+        withCredentials: true,
+        headers: this.buildCsrfHeaders()
+      })
       .pipe(
         tap(resp => {
           if (!resp || !resp.accessToken) {
@@ -276,6 +317,9 @@ export class AuthService {
           }
           // Mise à jour côté front
           this.persistAccessToken(resp.accessToken);
+          if (resp.csrfToken) {
+            this.persistCsrfToken(resp.csrfToken);
+          }
           if (resp.user) {
             this.persistUser(resp.user);
           }
