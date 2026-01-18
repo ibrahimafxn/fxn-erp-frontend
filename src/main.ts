@@ -2,11 +2,16 @@
 import {bootstrapApplication} from '@angular/platform-browser';
 import {provideRouter} from '@angular/router';
 import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
+import {inject} from '@vercel/analytics';
 
 import {App} from './app/app';
 import {AppConfig} from './app/app.config';
 import { isDevMode } from '@angular/core';
 import { provideServiceWorker } from '@angular/service-worker';
+
+// Initialize Vercel Web Analytics
+inject();
+
 bootstrapApplication(App, {
   providers: [
     provideRouter(AppConfig.routes),
