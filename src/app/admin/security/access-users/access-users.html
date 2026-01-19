@@ -115,6 +115,7 @@
               <td class="actions">
                 <div class="actions-row">
                   @if (!u.authEnabled) {
+                    <button class="btn-outline" type="button" disabled>Reset MDP</button>
                     <button class="btn-primary" type="button" (click)="openEnable(u)">Activer</button>
                   } @else {
                     <button class="btn-outline" type="button" (click)="openReset(u)">Reset MDP</button>

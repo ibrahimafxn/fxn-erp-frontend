@@ -16,7 +16,13 @@
       <!-- USER MENU -->
       <div class="user-menu">
         <button class="user-trigger" (click)="toggleMenu()">
-          <div class="avatar">{{ initials() }}</div>
+          <div class="avatar">
+            @if (avatarUrl()) {
+              <img class="avatar-img" [src]="avatarUrl()" [alt]="displayName()" />
+            } @else {
+              {{ initials() }}
+            }
+          </div>
           <span class="user-name">{{ displayName() }}</span>
           <span class="chevron">▾</span>
         </button>
@@ -30,76 +36,82 @@
 
             <div class="divider"></div>
 
-            <div class="menu-group">
-              <div class="section-label">Administration</div>
-              <div class="section-items">
-                @if (canManageAccess()) {
-                  <button (click)="goUserAccess()"><span class="material-icons notranslate">key</span>Accès connexion</button>
-                }
-                @if (canViewHr()) {
-                  <button (click)="goHr()"><span class="material-icons notranslate">badge</span>Ressources humaines</button>
-                }
-              </div>
-            </div>
-
-            <div class="menu-group">
-              <div class="section-label">Opérations</div>
-              <div class="section-items">
-                @if (canViewMovements()) {
-                  <button (click)="goMovements()"><span class="material-icons notranslate">swap_horiz</span>Journal des mouvements</button>
-                }
-                @if (canViewInterventions()) {
-                  <button (click)="goInterventions()"><span class="material-icons notranslate">attach_money</span>Calcul d'attachement</button>
-                }
-              </div>
-            </div>
-
-            <div class="menu-group">
-              <div class="section-label">Finance</div>
-              <div class="section-items">
-                @if (canManageAccess()) {
-                  <button (click)="goRevenue()"><span class="material-icons notranslate">insights</span>Chiffre d'affaires</button>
-                }
-              </div>
-            </div>
-
-            <div class="menu-group">
-              <div class="section-label">Stock</div>
-              <div class="section-items">
-                @if (canViewMovements()) {
-                  <button (click)="goReceipts()"><span class="material-icons notranslate">inventory_2</span>Réceptions stock</button>
-                }
-                @if (canManageAccess()) {
-                  <button (click)="goOrders()"><span class="material-icons notranslate">receipt_long</span>Commandes</button>
-                }
-                @if (canViewMovements()) {
-                  <button (click)="goStockAlerts()">
-                    <span class="material-icons notranslate">report</span>
-                    Alertes
-                    @if (alertsCount() > 0) {
-                      <span class="badge">{{ alertsCount() }}</span>
+            <div class="menu-grid">
+              <div class="menu-col">
+                <div class="menu-group admin-group">
+                  <div class="section-label">Administration</div>
+                  <div class="section-items">
+                    @if (canManageAccess()) {
+                      <button mat-button (click)="goUserAccess()"><span class="material-icons notranslate">key</span>Accès connexion</button>
                     }
-                  </button>
-                }
-                @if (canViewMovements()) {
-                  <div class="menu-section">
-                    <div class="section-label">Réservations</div>
-                    <div class="section-items">
-                      <button class="submenu" (click)="goReservations()"><span class="material-icons notranslate">widgets</span>Consommables</button>
-                      @if (canViewMaterialReservations()) {
-                        <button class="submenu" (click)="goMaterialReservations()"><span class="material-icons notranslate">handyman</span>Matériels</button>
-                      }
-                    </div>
+                    @if (canViewHr()) {
+                      <button mat-button (click)="goHr()"><span class="material-icons notranslate">badge</span>Ressources humaines</button>
+                    }
                   </div>
-                }
-              </div>
-            </div>
+                </div>
 
-            <div class="menu-group">
-              <div class="section-label">Compte</div>
-              <div class="section-items">
-                <button (click)="goProfile()"><span class="material-icons notranslate">person</span>Mon profil</button>
-                <button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
+                <div class="menu-group ops-group">
+                  <div class="section-label">Opérations</div>
+                  <div class="section-items">
+                    @if (canViewMovements()) {
+                      <button mat-button (click)="goMovements()"><span class="material-icons notranslate">swap_horiz</span>Journal des mouvements</button>
+                    }
+                    @if (canViewInterventions()) {
+                      <button mat-button (click)="goInterventions()"><span class="material-icons notranslate">attach_money</span>Calcul d'attachement</button>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="menu-col">
+                <div class="menu-group stock-group">
+                  <div class="section-label">Stock</div>
+                  <div class="section-items">
+                    @if (canViewMovements()) {
+                      <button mat-button (click)="goReceipts()"><span class="material-icons notranslate">inventory_2</span>Réceptions stock</button>
+                    }
+                    @if (canManageAccess()) {
+                      <button mat-button (click)="goOrders()"><span class="material-icons notranslate">receipt_long</span>Commandes</button>
+                    }
+                    @if (canViewMovements()) {
+                      <button mat-button (click)="goStockAlerts()">
+                        <span class="material-icons notranslate">report</span>
+                        Alertes
+                        @if (alertsCount() > 0) {
+                          <span class="badge">{{ alertsCount() }}</span>
+                        }
+                      </button>
+                    }
+                    @if (canViewMovements()) {
+                      <div class="menu-section">
+                        <div class="section-label">Réservations</div>
+                        <div class="section-items">
+                          <button mat-button class="submenu" (click)="goReservations()"><span class="material-icons notranslate">widgets</span>Consommables</button>
+                          @if (canViewMaterialReservations()) {
+                            <button mat-button class="submenu" (click)="goMaterialReservations()"><span class="material-icons notranslate">handyman</span>Matériels</button>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="menu-group finance-group">
+                  <div class="section-label">Finance</div>
+                  <div class="section-items">
+                    @if (canManageAccess()) {
+                      <button mat-button (click)="goRevenue()"><span class="material-icons notranslate">insights</span>Chiffre d'affaires</button>
+                    }
+                  </div>
+                </div>
+
+                <div class="menu-group account-group">
+                  <div class="section-label">Compte</div>
+                  <div class="section-items">
+                    <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span>Mon profil</button>
+                    <button mat-button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

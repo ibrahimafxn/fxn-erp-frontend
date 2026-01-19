@@ -23,15 +23,28 @@ export interface AuthUser {
   role: Role;
   idDepot?: string | null;
   assignedVehicle?: string | null;
+  mfaEnabled?: boolean;
+  passwordExpiresAt?: string | Date | null;
 }
 
 /**
  * Réponse standard des endpoints /auth/login et /auth/refresh
  */
 export interface LoginResponse {
-  accessToken: string;
+  accessToken?: string;
   user?: AuthUser;
   csrfToken?: string;
+  mfaRequired?: boolean;
+  mfaSetupRequired?: boolean;
+  mfaToken?: string;
+  passwordExpired?: boolean;
+  message?: string;
+}
+
+export interface MfaSetupResponse {
+  secret: string;
+  otpauthUrl: string;
+  qrDataUrl: string;
 }
 
 const LS_KEY_ACCESS = 'fxn_access_token';
@@ -218,7 +231,7 @@ export class AuthService {
    *   - stocke accessToken en mémoire + localStorage
    *   - stocke user
    */
-  login(credentials: { email: string; password: string }): Observable<LoginResponse> {
+  login(credentials: { email: string; password: string; mfaCode?: string }): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${this.apiBase}/auth/login`, credentials, {
         // IMPORTANT pour que le cookie refreshToken soit posé
@@ -226,9 +239,29 @@ export class AuthService {
       })
       .pipe(
         tap(resp => {
-          if (!resp || !resp.accessToken) {
-            throw new Error('Réponse login invalide : accessToken manquant');
+          if (resp?.accessToken) {
+            this.persistAccessToken(resp.accessToken);
+            if (resp.csrfToken) {
+              this.persistCsrfToken(resp.csrfToken);
+            }
+            if (resp.user) {
+              this.persistUser(resp.user);
+            }
           }
+        })
+      );
+  }
+
+  startMfaSetup(mfaToken: string): Observable<MfaSetupResponse> {
+    return this.http.post<MfaSetupResponse>(`${this.apiBase}/auth/mfa/setup`, { mfaToken });
+  }
+
+  verifyMfaSetup(mfaToken: string, code: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiBase}/auth/mfa/verify`, { mfaToken, code }, {
+      withCredentials: true
+    }).pipe(
+      tap(resp => {
+        if (resp?.accessToken) {
           this.persistAccessToken(resp.accessToken);
           if (resp.csrfToken) {
             this.persistCsrfToken(resp.csrfToken);
@@ -236,8 +269,13 @@ export class AuthService {
           if (resp.user) {
             this.persistUser(resp.user);
           }
-        })
-      );
+        }
+      })
+    );
+  }
+
+  changePassword(payload: { email: string; currentPassword: string; newPassword: string; mfaCode?: string }): Observable<{ success: boolean; message?: string }> {
+    return this.http.post<{ success: boolean; message?: string }>(`${this.apiBase}/auth/change-password`, payload);
   }
 
   /**
@@ -326,7 +364,12 @@ export class AuthService {
           // on envoie le nouveau token aux abonnés
           this.refreshSubject.next(resp.accessToken);
         }),
-        map(resp => resp.accessToken),
+        map(resp => {
+          if (!resp?.accessToken) {
+            throw new Error('Réponse refresh invalide : accessToken manquant');
+          }
+          return resp.accessToken;
+        }),
         catchError(err => {
           // En cas d'échec du refresh, on avertit les abonnés avec null
           this.refreshSubject.next(null);

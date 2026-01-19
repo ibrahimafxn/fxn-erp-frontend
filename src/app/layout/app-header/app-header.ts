@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
 import { AuthService, AuthUser } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
 import { formatPersonName } from '../../core/utils/text-format';
@@ -9,7 +10,7 @@ import { AlertsService } from '../../core/services/alerts.service';
 @Component({
   standalone: true,
   selector: 'app-header',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatButtonModule],
   templateUrl: './app-header.html',
   styleUrls: ['./app-header.scss'],
 })
@@ -64,6 +65,11 @@ export class AppHeader {
     const u = this.user();
     if (!u) return '';
     return `${u.firstName?.[0] ?? ''}${u.lastName?.[0] ?? ''}`.toUpperCase();
+  });
+
+  readonly avatarUrl = computed(() => {
+    const u = this.user();
+    return u?.photoUrl || u?.avatarUrl || '';
   });
 
   readonly roleLabel = computed(() => {

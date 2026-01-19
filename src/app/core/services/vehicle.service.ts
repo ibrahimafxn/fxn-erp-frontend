@@ -285,13 +285,7 @@ export class VehicleService {
     params = params.set('limit', String(safeLimit));
     params = params.set('_ts', String(Date.now()));
 
-    return this.http.get<VehiclesApiShape>(`${this.baseUrl}/alerts`, {
-      params,
-      headers: {
-        'Cache-Control': 'no-cache',
-        Pragma: 'no-cache'
-      }
-    }).pipe(
+    return this.http.get<VehiclesApiShape>(`${this.baseUrl}/alerts`, { params }).pipe(
       map((resp) => this.normalizeListResponse(resp, safePage, safeLimit)),
       catchError((err) => this.handleError(err as HttpErrorResponse))
     );

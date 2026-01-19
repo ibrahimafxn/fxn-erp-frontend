@@ -7,48 +7,33 @@
         Vue stratégique des matériels, consommables et véhicules pour piloter le terrain en temps réel.
       </p>
 
-      @if (stats(); as s) {
-        <div class="hero-kpis">
-          <div class="hero-kpi">
-            <span class="label">Utilisateurs</span>
-            <span class="value">{{ s.totalUsers }}</span>
-          </div>
-          <div class="hero-kpi">
-            <span class="label">Dépôts</span>
-            <span class="value">{{ s.totalDepots }}</span>
-          </div>
-          <div class="hero-kpi">
-            <span class="label">Flotte</span>
-            <span class="value">{{ s.totalVehicles }}</span>
-          </div>
+      <div class="hero-foot">
+        <div class="hero-actions">
+          <button class="btn-outline btn-history" type="button" (click)="goToHistory()">
+            <span class="material-icons notranslate" aria-hidden="true">swap_horiz</span>
+            <span class="btn-text">
+              <span class="title">Journal des mouvements</span>
+              <span class="meta">Historique des stocks</span>
+            </span>
+          </button>
+          <button class="btn-outline btn-onboarding" type="button" (click)="goToOnboarding()">
+            <span class="material-icons notranslate" aria-hidden="true">rocket_launch</span>
+            <span class="btn-text">
+              <span class="title">Onboarding</span>
+              <span class="meta">Importer fichiers CSV</span>
+            </span>
+            <span class="badge">CSV</span>
+          </button>
+          <button class="btn-outline btn-reload" type="button" (click)="adminService.loadDashboardStats()">
+            <span class="material-icons notranslate" aria-hidden="true">refresh</span>
+            <span class="btn-text">
+              <span class="title">Rafraîchir</span>
+              <span class="meta">Actualiser les indicateurs</span>
+            </span>
+            <span class="badge">Live</span>
+          </button>
         </div>
-      }
-    </div>
-
-    <div class="hero-actions">
-      <button class="btn-outline btn-history" type="button" (click)="goToHistory()">
-        <span class="material-icons notranslate" aria-hidden="true">swap_horiz</span>
-        <span class="btn-text">
-          <span class="title">Journal des mouvements</span>
-          <span class="meta">Historique des stocks</span>
-        </span>
-      </button>
-      <button class="btn-outline btn-onboarding" type="button" (click)="goToOnboarding()">
-        <span class="material-icons notranslate" aria-hidden="true">rocket_launch</span>
-        <span class="btn-text">
-          <span class="title">Onboarding</span>
-          <span class="meta">Importer fichiers CSV</span>
-        </span>
-        <span class="badge">CSV</span>
-      </button>
-      <button class="btn-outline btn-reload" type="button" (click)="adminService.loadDashboardStats()">
-        <span class="material-icons notranslate" aria-hidden="true">refresh</span>
-        <span class="btn-text">
-          <span class="title">Rafraîchir</span>
-          <span class="meta">Actualiser les indicateurs</span>
-        </span>
-        <span class="badge">Live</span>
-      </button>
+      </div>
     </div>
   </header>
 
@@ -118,7 +103,7 @@
   <!-- KPIs principaux -->
   <section class="kpi-grid" *ngIf="stats() as s">
     <article class="kpi-card clickable" (click)="goToUsers()">
-      <div class="kpi-icon kpi-users"><span class="material-icons notranslate" aria-hidden="true">people</span></div>
+      <div class="kpi-icon kpi-users"><span class="material-icons notranslate" aria-hidden="true">groups</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Utilisateurs</div>
         <div class="kpi-value">{{ s.totalUsers }}</div>
@@ -127,7 +112,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToDepots()">
-      <div class="kpi-icon kpi-depots"><span class="material-icons notranslate" aria-hidden="true">warehouse</span></div>
+      <div class="kpi-icon kpi-depots"><span class="material-icons notranslate" aria-hidden="true">home_work</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Dépôts</div>
         <div class="kpi-value">{{ s.totalDepots }}</div>
@@ -136,7 +121,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToResources('materials')">
-      <div class="kpi-icon kpi-materials"><span class="material-icons notranslate" aria-hidden="true">handyman</span></div>
+      <div class="kpi-icon kpi-materials"><span class="material-icons notranslate" aria-hidden="true">build_circle</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Matériels</div>
         <div class="kpi-value">{{ s.totalMaterials }}</div>
@@ -145,7 +130,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToResources('consumables')">
-      <div class="kpi-icon kpi-consumables"><span class="material-icons notranslate" aria-hidden="true">inventory_2</span></div>
+      <div class="kpi-icon kpi-consumables"><span class="material-icons notranslate" aria-hidden="true">inventory</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Consommables</div>
         <div class="kpi-value">{{ s.totalConsumables }}</div>
@@ -154,7 +139,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToResources('vehicles')">
-      <div class="kpi-icon kpi-vehicles"><span class="material-icons notranslate" aria-hidden="true">local_shipping</span></div>
+      <div class="kpi-icon kpi-vehicles"><span class="material-icons notranslate" aria-hidden="true">directions_car</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Véhicules</div>
         <div class="kpi-value">{{ s.totalVehicles }}</div>
@@ -163,7 +148,7 @@
     </article>
 
     <article class="kpi-card clickable" (click)="goToStockAlerts()">
-      <div class="kpi-icon kpi-alerts"><span class="material-icons notranslate" aria-hidden="true">report</span></div>
+      <div class="kpi-icon kpi-alerts"><span class="material-icons notranslate" aria-hidden="true">warning</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Alertes</div>
         <div class="kpi-value">{{ s.totalAlerts ?? s.totalLowStock ?? 0 }}</div>
