@@ -166,6 +166,29 @@
   }
 }
 
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.remember-device {
+  margin: 0.2rem 0 1.2rem;
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+  }
+}
+
 button {
   width: 100%;
   padding: 0.85rem 1rem;

@@ -40,6 +40,21 @@
             />
           </div>
 
+          <div class="form-group">
+            <label for="login-mfa">Code MFA</label>
+            <input id="login-mfa" formControlName="mfaCode" type="text" autocomplete="one-time-code" placeholder="123456" />
+            @if (mfaRequired()) {
+              <div class="hint">Un code a été envoyé par email.</div>
+            }
+          </div>
+
+          <div class="remember-device">
+            <label>
+              <input type="checkbox" formControlName="rememberDevice" />
+              <span>Se souvenir de cet appareil (30 jours)</span>
+            </label>
+          </div>
+
           <button type="submit" [disabled]="loading()">
             @if (loading()){
               <span>Connexion...</span>
@@ -47,54 +62,6 @@
               <span>Se connecter</span>
             }
           </button>
-        </form>
-      }
-
-      @if (step() === 'mfa') {
-        <form [formGroup]="mfaForm" (ngSubmit)="submitMfa()">
-          <div class="form-group">
-            <label for="mfa-code">Code MFA</label>
-            <input id="mfa-code" formControlName="code" type="text" autocomplete="one-time-code" placeholder="123456" />
-          </div>
-
-          <button type="submit" [disabled]="loading()">
-            @if (loading()){
-              <span>Validation...</span>
-            }@else{
-              <span>Valider</span>
-            }
-          </button>
-
-          <button class="btn-link" type="button" (click)="backToLogin()">Revenir</button>
-        </form>
-      }
-
-      @if (step() === 'setup') {
-        <div class="mfa-setup">
-          <p class="form-subtitle">Scannez le QR code puis saisissez le code généré.</p>
-          @if (qrDataUrl()){
-            <img class="qr" [src]="qrDataUrl()" alt="QR MFA" />
-          }
-          @if (sharedSecret()){
-            <div class="secret">Clé: {{ sharedSecret() }}</div>
-          }
-        </div>
-
-        <form [formGroup]="setupForm" (ngSubmit)="submitMfaSetup()">
-          <div class="form-group">
-            <label for="setup-code">Code MFA</label>
-            <input id="setup-code" formControlName="code" type="text" autocomplete="one-time-code" placeholder="123456" />
-          </div>
-
-          <button type="submit" [disabled]="loading()">
-            @if (loading()){
-              <span>Activation...</span>
-            }@else{
-              <span>Activer MFA</span>
-            }
-          </button>
-
-          <button class="btn-link" type="button" (click)="backToLogin()">Revenir</button>
         </form>
       }
 

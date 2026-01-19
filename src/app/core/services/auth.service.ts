@@ -35,16 +35,8 @@ export interface LoginResponse {
   user?: AuthUser;
   csrfToken?: string;
   mfaRequired?: boolean;
-  mfaSetupRequired?: boolean;
-  mfaToken?: string;
   passwordExpired?: boolean;
   message?: string;
-}
-
-export interface MfaSetupResponse {
-  secret: string;
-  otpauthUrl: string;
-  qrDataUrl: string;
 }
 
 const LS_KEY_ACCESS = 'fxn_access_token';
@@ -231,7 +223,7 @@ export class AuthService {
    *   - stocke accessToken en mémoire + localStorage
    *   - stocke user
    */
-  login(credentials: { email: string; password: string; mfaCode?: string }): Observable<LoginResponse> {
+  login(credentials: { email: string; password: string; mfaCode?: string; rememberDevice?: boolean }): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${this.apiBase}/auth/login`, credentials, {
         // IMPORTANT pour que le cookie refreshToken soit posé
@@ -252,27 +244,6 @@ export class AuthService {
       );
   }
 
-  startMfaSetup(mfaToken: string): Observable<MfaSetupResponse> {
-    return this.http.post<MfaSetupResponse>(`${this.apiBase}/auth/mfa/setup`, { mfaToken });
-  }
-
-  verifyMfaSetup(mfaToken: string, code: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiBase}/auth/mfa/verify`, { mfaToken, code }, {
-      withCredentials: true
-    }).pipe(
-      tap(resp => {
-        if (resp?.accessToken) {
-          this.persistAccessToken(resp.accessToken);
-          if (resp.csrfToken) {
-            this.persistCsrfToken(resp.csrfToken);
-          }
-          if (resp.user) {
-            this.persistUser(resp.user);
-          }
-        }
-      })
-    );
-  }
 
   changePassword(payload: { email: string; currentPassword: string; newPassword: string; mfaCode?: string }): Observable<{ success: boolean; message?: string }> {
     return this.http.post<{ success: boolean; message?: string }>(`${this.apiBase}/auth/change-password`, payload);

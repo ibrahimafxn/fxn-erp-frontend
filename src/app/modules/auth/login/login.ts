@@ -21,13 +21,9 @@ export class Login {
   // --- Formulaires réactifs ---
   form: FormGroup = this.fb.group({
     email: ['', Validators.required],
-    password: ['', Validators.required]
-  });
-  mfaForm: FormGroup = this.fb.group({
-    code: ['', Validators.required]
-  });
-  setupForm: FormGroup = this.fb.group({
-    code: ['', Validators.required]
+    password: ['', Validators.required],
+    mfaCode: [''],
+    rememberDevice: [true]
   });
   passwordForm: FormGroup = this.fb.group({
     newPassword: ['', Validators.required],
@@ -39,10 +35,8 @@ export class Login {
   loading = signal(false);
   error = signal<string | null>(null);
   success = signal<string | null>(null);
-  step = signal<'login' | 'mfa' | 'setup' | 'password'>('login');
-  mfaToken = signal<string | null>(null);
-  qrDataUrl = signal<string | null>(null);
-  sharedSecret = signal<string | null>(null);
+  step = signal<'login' | 'password'>('login');
+  mfaRequired = signal(false);
   private pendingEmail = signal<string | null>(null);
   private pendingPassword = signal<string | null>(null);
 
@@ -58,7 +52,9 @@ export class Login {
 
     const credentials = {
       email: this.form.value.email,
-      password: this.form.value.password
+      password: this.form.value.password,
+      mfaCode: String(this.form.value.mfaCode || '').trim() || undefined,
+      rememberDevice: Boolean(this.form.value.rememberDevice)
     };
 
     this.auth.login(credentials).subscribe({
@@ -69,26 +65,17 @@ export class Login {
         this.pendingPassword.set(String(credentials.password || ''));
 
         if (resp?.mfaRequired) {
-          this.step.set('mfa');
-          return;
-        }
-
-        if (resp?.mfaSetupRequired) {
-          if (!resp.mfaToken) {
-            this.error.set('Configuration MFA indisponible.');
-            return;
-          }
-          this.mfaToken.set(resp.mfaToken);
-          this.step.set('setup');
-          this.loadMfaSetup(resp.mfaToken);
+          this.mfaRequired.set(true);
           return;
         }
 
         if (resp?.accessToken) {
+          this.mfaRequired.set(false);
           this.redirectAfterLogin();
           return;
         }
 
+        this.mfaRequired.set(false);
         this.error.set(resp?.message || 'Connexion refusée.');
       },
       error: (err) => {
@@ -97,59 +84,17 @@ export class Login {
           this.pendingEmail.set(String(credentials.email || '').trim());
           this.pendingPassword.set(String(credentials.password || ''));
           this.step.set('password');
+          this.mfaRequired.set(false);
           this.error.set(err?.error?.message || 'Mot de passe expiré.');
           return;
         }
+        if (err?.error?.mfaRequired) {
+          this.mfaRequired.set(true);
+          this.error.set(err?.error?.message || 'Code MFA requis.');
+          return;
+        }
+        this.mfaRequired.set(false);
         this.error.set(err?.error?.message || 'Identifiants invalides');
-      }
-    });
-  }
-
-  submitMfa(): void {
-    if (this.mfaForm.invalid) return;
-    const email = this.pendingEmail();
-    const password = this.pendingPassword();
-    if (!email || !password) return;
-
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.auth.login({ email, password, mfaCode: this.mfaForm.value.code }).subscribe({
-      next: (resp) => {
-        this.loading.set(false);
-        if (resp?.accessToken) {
-          this.redirectAfterLogin();
-          return;
-        }
-        this.error.set(resp?.message || 'Code MFA invalide.');
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(err?.error?.message || 'Code MFA invalide.');
-      }
-    });
-  }
-
-  submitMfaSetup(): void {
-    if (this.setupForm.invalid) return;
-    const token = this.mfaToken();
-    if (!token) return;
-
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.auth.verifyMfaSetup(token, this.setupForm.value.code).subscribe({
-      next: (resp) => {
-        this.loading.set(false);
-        if (resp?.accessToken) {
-          this.redirectAfterLogin();
-          return;
-        }
-        this.error.set(resp?.message || 'Code MFA invalide.');
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(err?.error?.message || 'Code MFA invalide.');
       }
     });
   }
@@ -197,21 +142,8 @@ export class Login {
     this.step.set('login');
     this.error.set(null);
     this.success.set(null);
-    this.mfaToken.set(null);
-    this.qrDataUrl.set(null);
-    this.sharedSecret.set(null);
-  }
-
-  private loadMfaSetup(token: string): void {
-    this.auth.startMfaSetup(token).subscribe({
-      next: (resp) => {
-        this.qrDataUrl.set(resp.qrDataUrl);
-        this.sharedSecret.set(resp.secret);
-      },
-      error: (err) => {
-        this.error.set(err?.error?.message || 'Impossible de charger la configuration MFA.');
-      }
-    });
+    this.mfaRequired.set(false);
+    this.form.patchValue({ mfaCode: '' });
   }
 
   private redirectAfterLogin(): void {
