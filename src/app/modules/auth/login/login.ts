@@ -127,12 +127,16 @@ export class Login {
           this.success.set('Mot de passe mis à jour. Vous pouvez vous connecter.');
           this.step.set('login');
           this.passwordForm.reset();
+          this.mfaRequired.set(false);
           return;
         }
         this.error.set(resp?.message || 'Erreur mise à jour mot de passe.');
       },
       error: (err) => {
         this.loading.set(false);
+        if (err?.error?.mfaRequired) {
+          this.mfaRequired.set(true);
+        }
         this.error.set(err?.error?.message || 'Erreur mise à jour mot de passe.');
       }
     });
