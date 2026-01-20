@@ -10,8 +10,8 @@
   --dash-glow-strong: var(--fxn-border-strong);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  padding: 1.5rem 0 2rem;
+  gap: 1.5rem;
+  padding: 1.25rem 0 1.75rem;
   position: relative;
   color: var(--dash-ink);
   overflow-x: clip;
@@ -31,8 +31,8 @@
 
   .hero {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 2rem;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
     padding: 2rem;
     border-radius: 1.5rem;
     background: linear-gradient(135deg, var(--dash-surface-strong), var(--dash-surface));
@@ -98,6 +98,14 @@
     flex-wrap: wrap;
   }
 
+  .hero-foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
   .hero-kpi {
     background: var(--dash-surface);
     border: 1px solid var(--dash-border);
@@ -122,16 +130,16 @@
 
   .hero-actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: .75rem;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 2rem;
     align-items: stretch;
-    justify-content: flex-end;
     z-index: 1;
 
     .btn-outline,
     .btn-primary {
-      min-width: 220px;
-      width: 220px;
+      min-width: 170px;
+      width: 170px;
       align-items: center;
       justify-content: space-between;
     }
@@ -145,7 +153,7 @@
       border: 1px solid rgba(117, 195, 255, 0.35);
       background: linear-gradient(135deg, rgba(16, 26, 44, 0.92), rgba(12, 18, 30, 0.92));
       box-shadow: inset 0 0 0 1px rgba(67, 144, 255, 0.15), 0 18px 28px rgba(5, 10, 18, 0.25);
-      width: 220px;
+      width: 170px;
     }
 
     .btn-onboarding .material-icons {
@@ -200,7 +208,7 @@
       border: 1px solid rgba(120, 208, 156, 0.35);
       background: linear-gradient(135deg, rgba(14, 26, 26, 0.92), rgba(10, 18, 24, 0.92));
       box-shadow: inset 0 0 0 1px rgba(100, 200, 165, 0.15), 0 18px 28px rgba(5, 10, 18, 0.25);
-      width: 220px;
+      width: 170px;
     }
 
     .btn-history .material-icons {
@@ -325,7 +333,7 @@
   }
 
   .status-bar {
-    min-height: 1.2rem;
+    min-height: 0.6rem;
 
     .status {
       font-size: 0.85rem;
@@ -351,6 +359,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+    margin-top: -0.25rem;
     position: relative;
     z-index: 1;
   }
@@ -378,6 +387,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1rem;
+    margin-top: -0.15rem;
     position: relative;
     z-index: 1;
   }
@@ -444,12 +454,13 @@
 
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.85rem;
+    margin-top: -0.1rem;
   }
 
   .kpi-card {
-    padding: 1.15rem 1.25rem;
+    padding: 0.95rem 1.05rem;
     border-radius: 1.1rem;
     background: var(--dash-surface);
     border: 1px solid var(--dash-border);
@@ -488,8 +499,8 @@
   }
 
   .kpi-icon {
-    width: 46px;
-    height: 46px;
+    width: 40px;
+    height: 40px;
     border-radius: 14px;
     display: grid;
     place-items: center;
@@ -500,7 +511,7 @@
   }
 
   .kpi-icon .material-icons {
-    font-size: 1.35rem;
+    font-size: 1.1rem;
     opacity: 0.85;
   }
 
@@ -510,21 +521,28 @@
   .kpi-icon.kpi-vehicles { background: var(--dash-glow); border-color: var(--dash-border); }
   .kpi-icon.kpi-alerts { background: var(--dash-glow); border-color: var(--dash-border); }
 
+  .kpi-icon.kpi-users .material-icons { color: #38bdf8; }
+  .kpi-icon.kpi-depots .material-icons { color: #60a5fa; }
+  .kpi-icon.kpi-materials .material-icons { color: #a78bfa; }
+  .kpi-icon.kpi-consumables .material-icons { color: #34d399; }
+  .kpi-icon.kpi-vehicles .material-icons { color: #fbbf24; }
+  .kpi-icon.kpi-alerts .material-icons { color: #f87171; }
+
   .kpi-label {
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     color: var(--dash-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
 
   .kpi-value {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 700;
     margin-top: .2rem;
   }
 
   .kpi-footer {
-    font-size: 0.8rem;
+    font-size: 0.72rem;
     color: var(--dash-muted);
   }
 
@@ -571,14 +589,16 @@
     }
 
     .hero-actions {
-      flex-direction: row;
-      justify-content: flex-start;
       flex-wrap: wrap;
     }
 
     .hero-actions .btn-outline,
     .hero-actions .btn-primary {
       min-width: 0;
+    }
+
+    .kpi-grid {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
   }
 

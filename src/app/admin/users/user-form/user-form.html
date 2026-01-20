@@ -6,6 +6,9 @@
     </div>
 
     <div class="header-actions">
+      <button class="btn-outline" type="button" routerLink="/admin/dashboard">
+        <i class="fa-solid fa-arrow-left"></i> Annuler
+      </button>
       <button class="btn-save" type="button" (click)="submit()" [disabled]="saving()"><i class="fa-solid fa-check"></i> 
         @if (saving()) { Enregistrement… } @else { Enregistrer }
       </button>
@@ -24,7 +27,7 @@
     <div class="grid">
       <div class="field">
         <label>Prénom *</label>
-        <input type="text" formControlName="firstName" placeholder="Ex: Ibrahima" />
+        <input type="text" formControlName="firstName" placeholder="Prénom" />
         @if (fieldError('firstName')) {
           <small class="hint error">{{ fieldError('firstName') }}</small>
         }
@@ -32,7 +35,7 @@
 
       <div class="field">
         <label>Nom *</label>
-        <input type="text" formControlName="lastName" placeholder="Ex: COULIBALY" />
+        <input type="text" formControlName="lastName" placeholder="Nom" />
         @if (fieldError('lastName')) {
           <small class="hint error">{{ fieldError('lastName') }}</small>
         }
@@ -40,7 +43,7 @@
 
       <div class="field">
         <label>Email</label>
-        <input type="email" formControlName="email" placeholder="ex: ibrahima@fxn.fr" />
+        <input type="email" formControlName="email" placeholder="email@api.fr" />
         @if (fieldError('email')) {
           <small class="hint error">{{ fieldError('email') }}</small>
         }

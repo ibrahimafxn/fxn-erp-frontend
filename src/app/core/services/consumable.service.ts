@@ -265,13 +265,7 @@ export class ConsumableService {
     if (typeof filter.limit === 'number') params = params.set('limit', String(filter.limit));
     params = params.set('_ts', String(Date.now()));
 
-    return this.http.get<ApiResponse<ConsumableListResult>>(`${this.baseUrl}/alerts`, {
-      params,
-      headers: {
-        'Cache-Control': 'no-cache',
-        Pragma: 'no-cache'
-      }
-    }).pipe(
+    return this.http.get<ApiResponse<ConsumableListResult>>(`${this.baseUrl}/alerts`, { params }).pipe(
       map((resp) => resp.data),
       catchError((err: HttpErrorResponse) => this.handleHttpError(err))
     );

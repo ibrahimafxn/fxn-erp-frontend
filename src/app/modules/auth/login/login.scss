@@ -166,6 +166,29 @@
   }
 }
 
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.remember-device {
+  margin: 0.2rem 0 1.2rem;
+
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+  }
+}
+
 button {
   width: 100%;
   padding: 0.85rem 1rem;
@@ -198,6 +221,52 @@ button:disabled {
   padding: 0.75rem 1rem;
   border-radius: 12px;
   text-align: center;
+}
+
+.success {
+  background: rgba(33, 200, 140, 0.18);
+  color: #bff7df;
+  border: 1px solid rgba(33, 200, 140, 0.2);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.btn-link {
+  margin-top: 0.6rem;
+  background: transparent;
+  color: var(--muted);
+  box-shadow: none;
+  border: none;
+  text-decoration: underline;
+  width: auto;
+  padding: 0;
+  align-self: center;
+}
+
+.mfa-setup {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.mfa-setup .qr {
+  width: 180px;
+  height: 180px;
+  border-radius: 16px;
+  padding: 0.5rem;
+  background: #0c111b;
+  border: 1px solid var(--stroke);
+}
+
+.mfa-setup .secret {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: rgba(15, 20, 32, 0.6);
+  border: 1px dashed rgba(100, 145, 255, 0.2);
+  padding: 0.4rem 0.6rem;
+  border-radius: 10px;
 }
 
 @keyframes rise-in {

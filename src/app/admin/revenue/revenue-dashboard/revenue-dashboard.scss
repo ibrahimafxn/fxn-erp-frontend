@@ -211,6 +211,18 @@
   text-shadow: 0 0 18px rgba(59, 130, 246, 0.25);
 }
 
+.kpi-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(46, 207, 154, 0.55);
+  background: rgba(46, 207, 154, 0.18);
+  color: #d7ffee;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  font-size: 1.2rem;
+}
+
 .kpi-sub {
   font-size: .85rem;
   color: var(--fxn-text-muted);
