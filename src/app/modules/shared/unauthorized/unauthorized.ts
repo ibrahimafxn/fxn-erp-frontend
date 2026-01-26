@@ -24,7 +24,7 @@ export class Unauthorized {
     const r = this.role();
     if (r === Role.ADMIN || r === Role.DIRIGEANT) return '/admin/dashboard';
     if (r === Role.GESTION_DEPOT) return '/depot';
-    if (r === Role.TECHNICIEN) return '/depot';
+    if (r === Role.TECHNICIEN) return '/technician';
     return '/login';
   });
 

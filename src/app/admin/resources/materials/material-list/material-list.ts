@@ -15,6 +15,8 @@ import { Role } from '../../../../core/models/roles.model';
 import { formatResourceName, formatDepotName } from '../../../../core/utils/text-format';
 import { downloadBlob } from '../../../../core/utils/download';
 
+type SortKey = 'name' | 'available' | 'category' | 'depot' | 'updatedAt';
+
 @Component({
   standalone: true,
   selector: 'app-material-list',
@@ -65,6 +67,36 @@ export class MaterialList extends DetailBack {
   // Derived data (toujours depuis result)
   // -----------------------------
   readonly items = computed(() => this.result()?.items ?? []);
+  readonly sortKey = signal<SortKey>('name');
+  readonly sortDir = signal<'asc' | 'desc'>('asc');
+  readonly sortedItems = computed(() => {
+    const key = this.sortKey();
+    const dir = this.sortDir();
+    const items = [...this.items()];
+    const factor = dir === 'asc' ? 1 : -1;
+
+    items.sort((a, b) => {
+      switch (key) {
+        case 'name':
+          return factor * this.materialName(a).localeCompare(this.materialName(b));
+        case 'category':
+          return factor * String(a.category || '').localeCompare(String(b.category || ''));
+        case 'available':
+          return factor * (this.availableQty(a) - this.availableQty(b));
+        case 'depot':
+          return factor * this.depotLabel(a).localeCompare(this.depotLabel(b));
+        case 'updatedAt': {
+          const aTime = new Date(this.updatedAtValue(a) || 0).getTime();
+          const bTime = new Date(this.updatedAtValue(b) || 0).getTime();
+          return factor * (aTime - bTime);
+        }
+        default:
+          return 0;
+      }
+    });
+
+    return items;
+  });
   readonly total = computed(() => this.result()?.total ?? 0);
 
   readonly pageCount = computed(() => {
@@ -77,6 +109,7 @@ export class MaterialList extends DetailBack {
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
+  readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
 
   constructor() {
     super();
@@ -180,8 +213,13 @@ export class MaterialList extends DetailBack {
   // Actions
   // -----------------------------
   openDetail(m: Material): void {
-    const base = this.isDepotManager() ? '/depot/resources/materials' : '/admin/resources/materials';
-    const tail = this.isDepotManager() ? ['detail'] : [];
+    if (this.isReadOnly()) return;
+    const base = this.isDepotManager()
+      ? '/depot/resources/materials'
+      : this.isReadOnly()
+        ? '/technician/resources/materials'
+        : '/admin/resources/materials';
+    const tail = this.isDepotManager() || this.isReadOnly() ? ['detail'] : [];
     this.router.navigate([base, m._id, ...tail]).then();
   }
 
@@ -253,6 +291,10 @@ export class MaterialList extends DetailBack {
     return m.createdAt ?? null;
   }
 
+  updatedAtValue(m: Material): string | Date | null {
+    return m.updatedAt ?? null;
+  }
+
   depotLabel(m: Material): string {
     const d = m.idDepot;
     if (!d) return '—';
@@ -276,6 +318,35 @@ export class MaterialList extends DetailBack {
     return formatResourceName(m.name) || '—';
   }
 
+  availableQty(m: Material): number {
+    const total = Number(m.quantity ?? 0);
+    const assigned = Number(m.assignedQuantity ?? 0);
+    if (!Number.isFinite(total) || !Number.isFinite(assigned)) return 0;
+    return Math.max(0, total - assigned);
+  }
+
+  setSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+    this.sortKey.set(key);
+    this.sortDir.set('asc');
+  }
+
+  setUpdatedSort(event: Event): void {
+    const el = event.target instanceof HTMLSelectElement ? event.target : null;
+    if (!el) return;
+    const dir = el.value === 'desc' ? 'desc' : 'asc';
+    this.sortKey.set('updatedAt');
+    this.sortDir.set(dir);
+  }
+
+  sortIndicator(key: SortKey): string {
+    if (this.sortKey() !== key) return '';
+    return this.sortDir() === 'asc' ? '^' : 'v';
+  }
+
   depotOptionLabel(d: Depot): string {
     return formatDepotName(d.name ?? '') || '—';
   }
@@ -288,7 +359,7 @@ export class MaterialList extends DetailBack {
   // Depots pour le filtre
   // -----------------------------
   private loadDepots(): void {
-    if (this.isDepotManager()) return;
+    if (this.isDepotManager() || this.isReadOnly()) return;
     this.depotsLoading.set(true);
 
     this.depotSvc.refreshDepots(true, { page: 1, limit: 200 }).subscribe({

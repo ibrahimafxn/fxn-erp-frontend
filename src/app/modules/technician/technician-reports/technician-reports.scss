@@ -1,0 +1,275 @@
+.technician-reports {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.technician-reports .subtitle {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.technician-reports .form-card,
+.technician-reports .list-card {
+  padding: 18px;
+}
+
+.technician-reports .report-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.technician-reports label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.technician-reports input,
+.technician-reports textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  background: linear-gradient(180deg, rgba(8, 12, 20, 0.96), rgba(12, 18, 30, 0.92));
+  color: #e8f1ff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.technician-reports input::placeholder,
+.technician-reports textarea::placeholder {
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.technician-reports input:focus,
+.technician-reports textarea:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.65);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  background: linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(12, 20, 34, 0.95));
+}
+
+.technician-reports .prestations-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.technician-reports .prestations-list {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.technician-reports .prestation-item {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.technician-reports .prestation-item .prestation-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(96, 165, 250, 0.5);
+  background: rgba(15, 23, 42, 0.9);
+  color: #e6efff;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-pavillon,
+.technician-reports .prestations-pill.pill-pavillon {
+  border-color: rgba(59, 130, 246, 0.95) !important;
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(59, 130, 246, 0.65)) !important;
+  color: #eff6ff !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-professionnel,
+.technician-reports .prestations-pill.pill-professionnel {
+  border-color: rgba(239, 68, 68, 0.9) !important;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.8), rgba(239, 68, 68, 0.7)) !important;
+  color: #fff1f2 !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-complementaire,
+.technician-reports .prestations-pill.pill-complementaire {
+  border-color: rgba(34, 197, 94, 0.85) !important;
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.8), rgba(148, 163, 184, 0.6)) !important;
+  color: #f0fdf4 !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-reconnexion,
+.technician-reports .prestations-pill.pill-reconnexion {
+  border-color: rgba(136, 19, 55, 0.95) !important;
+  background: linear-gradient(135deg, rgba(127, 29, 29, 0.9), rgba(136, 19, 55, 0.75)) !important;
+  color: #ffe4e6 !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-immeuble,
+.technician-reports .prestations-pill.pill-immeuble {
+  border-color: rgba(34, 211, 238, 0.95) !important;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(14, 116, 144, 0.75)) !important;
+  color: #ecfeff !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-sav,
+.technician-reports .prestations-pill.pill-sav {
+  border-color: rgba(148, 163, 184, 0.95) !important;
+  background: linear-gradient(135deg, rgba(71, 85, 105, 0.9), rgba(100, 116, 139, 0.75)) !important;
+  color: #f1f5f9 !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-f8,
+.technician-reports .prestations-pill.pill-f8 {
+  border-color: rgba(245, 158, 11, 0.95) !important;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.9), rgba(180, 83, 9, 0.75)) !important;
+  color: #fffbeb !important;
+}
+
+.technician-reports .full {
+  grid-column: 1 / -1;
+}
+
+.technician-reports .actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.technician-reports .list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.technician-reports .table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.technician-reports th,
+.technician-reports td {
+  padding: 12px 10px;
+}
+
+.technician-reports .note {
+  max-width: 420px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.technician-reports .prestations-cell {
+  min-width: 220px;
+}
+
+.technician-reports .prestations-summary {
+  display: grid;
+  gap: 6px;
+}
+
+.technician-reports .prestations-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+  font-size: 12px;
+  width: fit-content;
+}
+
+.technician-reports .prestations-pill .qty {
+  font-weight: 700;
+  color: #dbeafe;
+}
+.technician-reports .actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.technician-reports .pager {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (max-width: 900px) {
+  .technician-reports .report-form {
+    grid-template-columns: 1fr;
+  }
+
+  .technician-reports .prestations-list {
+    grid-template-columns: 1fr;
+  }
+
+  .technician-reports .table table,
+  .technician-reports .table thead,
+  .technician-reports .table tbody,
+  .technician-reports .table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .technician-reports .table thead {
+    display: none;
+  }
+
+  .technician-reports .table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .technician-reports .table tr {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px;
+    background: rgba(10, 16, 28, 0.6);
+  }
+
+  .technician-reports .table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+  }
+
+  .technician-reports .table td.prestations-cell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .technician-reports .prestations-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .technician-reports .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+  }
+
+  .technician-reports .table td.actions {
+    justify-content: flex-end;
+    margin-top: 6px;
+  }
+
+  .technician-reports .table td.actions::before {
+    content: '';
+  }
+
+  .technician-reports .table td.note.is-empty {
+    display: none;
+  }
+}

@@ -82,7 +82,7 @@
         <tbody>
           @for (u of items(); track trackById($index, u)) {
             <tr class="row" (click)="openDetail(u)">
-              <td class="main">
+              <td class="main" data-label="Utilisateur">
                 <div class="user-cell">
                   <div class="avatar">
                     @if (u.photoUrl || u.avatarUrl) {
@@ -98,9 +98,9 @@
                 </div>
               </td>
 
-              <td>{{ u.email || '—' }}</td>
+              <td data-label="Email">{{ u.email || '—' }}</td>
 
-              <td>
+              <td data-label="Rôle">
                 <span
                   class="badge role"
                   [class.role-admin]="u.role === 'ADMIN'"
@@ -110,17 +110,17 @@
                 >{{ u.role || '—' }}</span>
               </td>
 
-              <td>
+              <td data-label="Dépôt">
                 <span class="depot-pill" [class.empty]="!u.idDepot">{{ depotLabel(u) }}</span>
               </td>
 
-              <td>
+              <td data-label="Accès">
                 <span class="access-pill" [class.off]="!u.authEnabled">
                   {{ u.authEnabled ? 'Accès actif' : 'Accès désactivé' }}
                 </span>
               </td>
 
-                <td>
+                <td data-label="Création">
                 @if (createdAtValue(u)) {
                   {{ formatDate(u.createdAt)}}
                 } @else {

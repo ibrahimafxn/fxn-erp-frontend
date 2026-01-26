@@ -1,0 +1,147 @@
+.bpu-type-list {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+
+  .subtitle {
+    margin: .25rem 0 0;
+    color: var(--fxn-text-muted);
+    font-size: .9rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.card {
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-glass);
+  box-shadow: var(--fxn-shadow-sm);
+}
+
+.state {
+  padding: .9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-glass);
+  &.error { background: var(--fxn-danger-soft); }
+}
+
+.table.card {
+  padding: 0;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+
+thead th {
+  text-align: left;
+  font-size: .85rem;
+  opacity: .8;
+  padding: .85rem .9rem;
+  border-bottom: 1px solid var(--fxn-border);
+  white-space: nowrap;
+}
+
+tbody td {
+  padding: .85rem .9rem;
+  border-bottom: 1px solid var(--fxn-border);
+  vertical-align: middle;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface);
+  font-weight: 600;
+}
+
+.actions-group {
+  display: inline-flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 980px) {
+  .page-header {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 700px) {
+  .bpu-type-list {
+    padding: 1rem;
+  }
+
+  .table.card {
+    overflow: hidden;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  td,
+  th {
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  tbody tr {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 0.9rem;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-soft);
+  }
+
+  tbody td {
+    padding: 0;
+    border-bottom: none;
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 8px;
+    white-space: normal;
+  }
+
+  tbody td::before {
+    content: attr(data-label);
+    color: var(--fxn-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+}

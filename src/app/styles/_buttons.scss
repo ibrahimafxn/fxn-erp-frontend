@@ -71,6 +71,24 @@ button {
   border-color: rgba(255, 90, 111, 0.7);
 }
 
+.btn-outline.primary {
+  background: rgba(46, 117, 255, 0.15);
+  border-color: rgba(46, 117, 255, 0.55);
+  color: #dbe7ff;
+}
+
+.btn-outline.danger {
+  background: rgba(255, 90, 111, 0.12);
+  border-color: rgba(255, 90, 111, 0.6);
+  color: rgba(255, 170, 170, 0.95);
+}
+
+.btn-outline.warning {
+  background: rgba(242, 185, 75, 0.16);
+  border-color: rgba(242, 185, 75, 0.55);
+  color: #ffe9bf;
+}
+
 
 .btn-primary:hover,
 .btn-danger:hover,

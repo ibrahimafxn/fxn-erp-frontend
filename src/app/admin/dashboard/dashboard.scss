@@ -533,6 +533,8 @@
     color: var(--dash-muted);
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .kpi-value {
@@ -599,6 +601,11 @@
 
     .kpi-grid {
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .kpi-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
     }
   }
 

@@ -8,6 +8,8 @@ export type OrderLine = {
   resourceType: 'MATERIAL' | 'CONSUMABLE';
   name: string;
   item?: string;
+  description?: string;
+  applyTva?: boolean;
   quantity: number;
   unitPrice: number;
   total?: number;
@@ -91,6 +93,87 @@ export class OrderService {
     return this.http.post<{ success: boolean; data: { count: number } }>(
       `${this.baseUrl}/${id}/import-to-depot`,
       { depotId }
+    );
+  }
+
+  importPdfPreview(file: File, client?: string): Observable<{
+    success: boolean;
+    data: {
+      reference: string;
+      client: string;
+      date: string;
+      status: string;
+      amount: number;
+      notes: string;
+      lines: Array<{
+        resourceId: string | null;
+        resourceType: 'MATERIAL' | 'CONSUMABLE' | null;
+        name: string;
+        designation?: string;
+        description?: string;
+        quantity: number;
+        unitPrice: number;
+        total: number;
+        totalHt?: number;
+        totalTva?: number;
+        totalTtc?: number;
+      }>;
+      errors: Array<{ row: number; message: string }>;
+    };
+  }> {
+    const formData = new FormData();
+    formData.append('files', file);
+    if (client && client.trim()) {
+      formData.append('client', client.trim());
+    }
+    return this.http.post<{
+      success: boolean;
+      data: {
+        reference: string;
+        client: string;
+        date: string;
+        status: string;
+        amount: number;
+        notes: string;
+        lines: Array<{
+          resourceId: string | null;
+          resourceType: 'MATERIAL' | 'CONSUMABLE' | null;
+          name: string;
+          designation?: string;
+          description?: string;
+          quantity: number;
+          unitPrice: number;
+          total: number;
+          totalHt?: number;
+          totalTva?: number;
+          totalTtc?: number;
+        }>;
+        errors: Array<{ row: number; message: string }>;
+      };
+    }>(
+      `${this.baseUrl}/import/pdf`,
+      formData
+    );
+  }
+
+  confirmImportPdf(payload: {
+    reference: string;
+    client: string;
+    date: string;
+    notes?: string;
+    amount?: number;
+    lines: Array<{
+      resourceId: string;
+      resourceType: 'MATERIAL' | 'CONSUMABLE';
+      name: string;
+      quantity: number;
+      unitPrice: number;
+      total: number;
+    }>;
+  }): Observable<{ success: boolean; data: { created: number; skipped: number; errors: Array<{ row: number; message: string }> } }> {
+    return this.http.post<{ success: boolean; data: { created: number; skipped: number; errors: Array<{ row: number; message: string }> } }>(
+      `${this.baseUrl}/import/pdf/confirm`,
+      payload
     );
   }
 }

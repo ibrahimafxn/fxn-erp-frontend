@@ -1,0 +1,96 @@
+<section class="technician-history">
+  <header class="page-header">
+    <div>
+      <h1>Historique des attributions</h1>
+      <p class="subtitle">Retrouvez vos attributions et reprises de ressources.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="refresh()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+      <input type="text" formControlName="q" placeholder="Rechercher (nom, plaque…)" />
+
+      <select formControlName="resourceType">
+        <option value="">Toutes ressources</option>
+        <option value="MATERIAL">Matériels</option>
+        <option value="CONSUMABLE">Consommables</option>
+        <option value="VEHICLE">Véhicules</option>
+      </select>
+
+      <select formControlName="action">
+        <option value="">Toutes actions</option>
+        <option value="ATTRIBUTION">Attribution</option>
+        <option value="REPRISE">Reprise</option>
+      </select>
+
+      <select formControlName="quickRange" (change)="applyQuickRange()">
+        <option value="">Période</option>
+        <option value="this-week">Cette semaine</option>
+        <option value="this-month">Ce mois</option>
+      </select>
+
+      <input type="date" formControlName="from" />
+      <input type="date" formControlName="to" />
+
+      <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+      <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+    </form>
+
+    <div class="meta">
+      <span class="pill">Total : {{ total() }}</span>
+      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
+      <label class="limit">
+        <span>Par page</span>
+        <select [value]="limit()" (change)="onLimitChange($event)">
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucun historique disponible.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>Ressource</th>
+          <th>Action</th>
+          <th>Quantité</th>
+          <th>Note</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td data-label="Date">{{ item.createdAt | date:'short' }}</td>
+              <td data-label="Ressource">{{ resourceLabel(item) }}</td>
+              <td data-label="Action">
+                <span class="badge" [ngClass]="actionClass(item)">{{ actionLabel(item) }}</span>
+              </td>
+              <td data-label="Quantité">{{ quantityLabel(item) }}</td>
+              <td data-label="Note">{{ noteLabel(item) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager">
+      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">← Précédent</button>
+      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">Suivant →</button>
+    </footer>
+  }
+</section>

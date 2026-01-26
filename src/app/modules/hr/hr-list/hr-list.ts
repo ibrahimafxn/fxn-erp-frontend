@@ -74,6 +74,7 @@ export class HrList {
   readonly docTypes = [
     { value: 'CNI', label: 'CNI' },
     { value: 'PERMIS', label: 'Permis' },
+    { value: 'CONTRAT', label: 'Contrat' },
     { value: 'CARTE_VITALE', label: 'Carte vitale' },
     { value: 'ATTESTATION', label: 'Attestation' },
     { value: 'HABILITATION', label: 'Habilitation' }
@@ -144,7 +145,7 @@ export class HrList {
     detail: this.fb.nonNullable.control(''),
     expiryDate: this.fb.nonNullable.control('')
   });
-  readonly docFile = signal<File | null>(null);
+  readonly docFiles = signal<File[]>([]);
   readonly habilitationOptions = [
     { value: 'ELECTRIQUE', label: 'Électrique' },
     { value: 'TRAVAIL_HAUTEUR', label: 'Travail en hauteur' }
@@ -261,6 +262,7 @@ export class HrList {
   selectEmployee(item: EmployeeSummary): void {
     this.selected.set(item);
     this.patchProfile(item.profile || null);
+    this.scrollToProfile();
     const userId = item.user?._id || '';
     if (!userId) return;
     this.hr.listDocs({ user: userId }).subscribe((docs: EmployeeDoc[]) => this.docs.set(docs || []));
@@ -330,42 +332,44 @@ export class HrList {
 
   onDocFileChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input?.files?.[0] || null;
-    this.docFile.set(file);
+    const files = input?.files ? Array.from(input.files) : [];
+    this.docFiles.set(files);
   }
 
   addDoc(fileInput?: HTMLInputElement): void {
     const current = this.selected();
     if (!current?.user?._id) return;
     const payload = this.docForm.getRawValue();
-    const file = this.docFile();
-    if (!file) return;
+    const files = this.docFiles();
+    if (!files.length) return;
     if (payload.type === 'HABILITATION' && !payload.detail) return;
 
-    const formData = new FormData();
-    formData.append('user', current.user._id);
-    formData.append('type', payload.type);
-    formData.append('detail', payload.detail || '');
-    if (payload.expiryDate) {
-      formData.append('expiryDate', payload.expiryDate);
-    }
-    formData.append('file', file);
-
-    this.hr.addDocument(formData).subscribe({
-      next: (doc: EmployeeDoc) => {
-        this.docs.set([doc, ...this.docs()]);
-        this.docForm.patchValue({ detail: '', expiryDate: '' });
-        this.docFile.set(null);
-        if (fileInput) fileInput.value = '';
-        this.refreshCompliance(current.user._id);
-        this.loadEmployees();
-        this.loadHistory(current.user._id);
-        this.refreshDocAlerts();
-      },
-      error: (err: any) => {
-        this.error.set(err?.message || 'Erreur ajout document');
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('user', current.user._id);
+      formData.append('type', payload.type);
+      formData.append('detail', payload.detail || '');
+      if (payload.expiryDate) {
+        formData.append('expiryDate', payload.expiryDate);
       }
-    });
+      formData.append('file', file);
+
+      this.hr.addDocument(formData).subscribe({
+        next: (doc: EmployeeDoc) => {
+          this.docs.set([doc, ...this.docs()]);
+          this.refreshCompliance(current.user._id);
+          this.loadEmployees();
+          this.loadHistory(current.user._id);
+          this.refreshDocAlerts();
+        },
+        error: (err: any) => {
+          this.error.set(err?.message || 'Erreur ajout document');
+        }
+      });
+    }
+    this.docForm.patchValue({ detail: '', expiryDate: '' });
+    this.docFiles.set([]);
+    if (fileInput) fileInput.value = '';
   }
 
   refreshCompliance(userId: string): void {
@@ -607,6 +611,19 @@ export class HrList {
     return `${environment.apiBaseUrl}/hr/docs/${doc._id}/pdf`;
   }
 
+  openDoc(doc: EmployeeDoc): void {
+    this.hr.downloadDoc(doc._id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener');
+        window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      },
+      error: () => {
+        this.error.set('Téléchargement document impossible.');
+      }
+    });
+  }
+
   isRequiredDocSatisfied(type: string): boolean {
     return this.docs().some((d) => d.type === type && this.isDocValid(d));
   }
@@ -624,5 +641,12 @@ export class HrList {
     if (item.action === 'DOC_ADD') return `${this.docTypeLabel(meta.type || '')}`.trim();
     if (item.action === 'DOC_DELETE') return `${this.docTypeLabel(meta.type || '')}`.trim();
     return '—';
+  }
+
+  private scrollToProfile(): void {
+    setTimeout(() => {
+      const el = document.getElementById('hr-employee-profile');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   }
 }

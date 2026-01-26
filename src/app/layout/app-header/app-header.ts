@@ -83,6 +83,7 @@ export class AppHeader {
   });
 
   readonly isDepotManager = computed(() => this.user()?.role === 'GESTION_DEPOT');
+  readonly isTechnician = computed(() => this.user()?.role === 'TECHNICIEN');
 
   readonly canManageAccess = computed(() => {
     const role = this.user()?.role;
@@ -92,8 +93,13 @@ export class AppHeader {
   readonly canViewHr = computed(() => this.canManageAccess());
   readonly canViewMovements = computed(() => this.canManageAccess() || this.isDepotManager());
   readonly canViewInterventions = computed(() => this.canManageAccess());
+  readonly canViewTechnicianActivity = computed(() => this.canManageAccess());
   readonly canViewMaterialReservations = computed(() => this.canManageAccess());
-  readonly dashboardLink = computed(() => (this.isDepotManager() ? '/depot' : '/admin/dashboard'));
+  readonly dashboardLink = computed(() => {
+    if (this.isDepotManager()) return '/depot';
+    if (this.isTechnician()) return '/technician';
+    return '/admin/dashboard';
+  });
   readonly movementsLink = computed(() => (this.isDepotManager() ? '/depot/history' : '/admin/history'));
   readonly reservationsLink = computed(() => (this.isDepotManager() ? '/depot/reservations' : '/admin/reservations'));
   readonly materialReservationsLink = computed(() => '/admin/reservations/materials');
@@ -133,6 +139,14 @@ export class AppHeader {
     this.router.navigate(['/admin/interventions']).then();
   }
 
+  goTechnicianActivity(): void {
+    this.router.navigate(['/admin/technicians/activity']).then();
+  }
+
+  goBpu(): void {
+    this.router.navigate(['/admin/bpu']).then();
+  }
+
   goReservations(): void {
     this.router.navigate([this.reservationsLink()]).then();
   }
@@ -157,6 +171,26 @@ export class AppHeader {
     this.router.navigate(['/admin/revenue']).then();
   }
 
+  goTechMaterials(): void {
+    this.router.navigate(['/technician/resources/materials']).then();
+  }
+
+  goTechConsumables(): void {
+    this.router.navigate(['/technician/resources/consumables']).then();
+  }
+
+  goTechVehicles(): void {
+    this.router.navigate(['/technician/resources/vehicles']).then();
+  }
+
+  goTechReports(): void {
+    this.router.navigate(['/technician/reports']).then();
+  }
+
+  goTechHistory(): void {
+    this.router.navigate(['/technician/history']).then();
+  }
+
   logout(): void {
     this.auth.logout(true).subscribe();
   }
@@ -179,23 +213,34 @@ export class AppHeader {
       if (url.includes('/resources/vehicles')) return 'Véhicules';
       if (url.includes('/resources/materials')) return 'Matériels';
       if (url.includes('/resources/consumables')) return 'Consommables';
-      if (url.includes('/reservations')) return 'Réservations';
+      if (url.includes('/reservations')) return 'Attributions';
       if (url.includes('/receipts')) return 'Réceptions';
       if (url.includes('/alerts/stock')) return 'Alertes';
       if (url.includes('/history')) return 'Mouvements';
       return 'Dépôt';
     }
+    if (url.startsWith('/technician')) {
+      if (url.includes('/resources/vehicles')) return 'Véhicules';
+      if (url.includes('/resources/materials')) return 'Matériels';
+      if (url.includes('/resources/consumables')) return 'Consommables';
+      if (url.includes('/reports')) return 'Rapport quotidien';
+      if (url.includes('/history')) return 'Historique';
+      return 'Technicien';
+    }
+    if (url.includes('/unauthorized')) return 'Accès refusé';
     if (url.includes('/depots')) return 'Dépôts';
     if (url.includes('/users')) return 'Utilisateurs';
     if (url.includes('/hr')) return 'Ressources humaines';
     if (url.includes('/security/user-access')) return 'Accès connexion';
-    if (url.includes('/reservations/materials')) return 'Réservations matériels';
-    if (url.includes('/reservations')) return 'Réservations';
+    if (url.includes('/reservations/materials')) return 'Attributions matériels';
+    if (url.includes('/reservations')) return 'Attributions';
     if (url.includes('/receipts')) return 'Réceptions';
     if (url.includes('/orders/new')) return 'Nouvelle commande';
     if (url.includes('/orders')) return 'Commandes';
     if (url.includes('/alerts/stock')) return 'Alertes';
     if (url.includes('/interventions')) return 'Interventions';
+    if (url.includes('/technicians/activity')) return 'Prestations techniciens';
+    if (url.includes('/bpu')) return 'BPU prestations';
     if (url.includes('/revenue')) return "Chiffre d'affaires";
     if (url.includes('/consumables')) return 'Consommables';
     if (url.includes('/materials')) return 'Matériels';

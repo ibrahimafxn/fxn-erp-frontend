@@ -128,18 +128,18 @@ export class MaterialService {
   }
 
   // -----------------------------
-  // TRANSACTION : réserve un matériel
+  // TRANSACTION : attribue un matériel
   // -----------------------------
 
   reserve(payload: ReserveMaterialPayload): Observable<ReserveMaterialResult> {
     return this.http
-      .post<ReserveMaterialResult>(`${this.baseUrl}/reserve`, payload)
+      .post<ReserveMaterialResult>(`${this.baseUrl}/assign`, payload)
       .pipe(catchError((err: HttpErrorResponse) => this.handleError(err)));
   }
 
   releaseReservation(payload: ReserveMaterialPayload): Observable<ReserveMaterialResult> {
     return this.http
-      .post<ReserveMaterialResult>(`${this.baseUrl}/reserve/release`, payload)
+      .post<ReserveMaterialResult>(`${this.baseUrl}/assign/release`, payload)
       .pipe(catchError((err: HttpErrorResponse) => this.handleError(err)));
   }
 

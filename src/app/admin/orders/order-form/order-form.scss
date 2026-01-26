@@ -123,20 +123,53 @@
 .line-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 0.8fr);
   align-items: end;
 }
 
-.line-grid label:nth-child(1) {
+.line-grid .designation {
   grid-column: 1 / 2;
 }
 
-.line-grid label:nth-child(2) {
+.line-grid .designation select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.line-grid .quantity {
   grid-column: 2 / 3;
 }
 
-.line-grid label:nth-child(3) {
+.line-grid .quantity input {
+  width: 100%;
+  max-width: 100%;
+}
+
+.line-grid .description {
+  grid-column: 1 / -1;
+}
+
+.line-grid .unit-price {
   grid-column: 1 / 2;
+}
+
+.line-grid .tva-toggle {
+  grid-column: 2 / 3;
+}
+
+.line-grid .tva-toggle .toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--fxn-radius-sm);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
+}
+
+.line-grid .tva-toggle input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
 }
 
 .line-total {
@@ -156,13 +189,18 @@
 }
 
 .totals {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
   padding: 14px 16px;
   border-radius: var(--fxn-radius-sm);
   background: var(--fxn-surface-soft);
   border: 1px solid var(--fxn-border-strong);
+}
+
+.total-item {
+  display: grid;
+  gap: 6px;
 }
 
 .totals .value {
@@ -212,6 +250,11 @@
 }
 
 @media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .form-shell {
     grid-template-columns: 1fr;
   }
@@ -222,5 +265,39 @@
 
   .line-grid {
     grid-template-columns: 1fr;
+  }
+
+  .line-grid .line-field,
+  .line-total {
+    grid-column: auto;
+  }
+
+  .line-total {
+    grid-column: auto;
+  }
+
+  .lines-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .line-actions {
+    justify-content: flex-start;
+  }
+
+  .totals {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .actions .btn-save {
+    width: 100%;
+    justify-content: center;
   }
 }

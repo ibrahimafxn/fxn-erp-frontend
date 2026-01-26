@@ -35,7 +35,7 @@
         </div>
         <div>
           <div class="label">Montant</div>
-          <div class="value">{{ order()?.amount }}</div>
+          <div class="value">{{ formatCurrency(order()?.amount) }}</div>
         </div>
         <div class="full">
           <div class="label">Notes</div>
@@ -106,8 +106,8 @@
                   <td>{{ line.name }}</td>
                   <td>{{ line.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
                   <td>{{ line.quantity }}</td>
-                  <td>{{ line.unitPrice }}</td>
-                  <td>{{ line.total ?? (line.quantity * line.unitPrice) }}</td>
+                  <td>{{ formatCurrency(line.unitPrice) }}</td>
+                  <td>{{ formatCurrency(line.total ?? (line.quantity * line.unitPrice)) }}</td>
                 </tr>
               }
             </tbody>
@@ -115,7 +115,7 @@
         </div>
         <div class="lines-total">
           <div class="label">Total des lignes</div>
-          <div class="value">{{ linesTotal(order()?.lines || []) }}</div>
+          <div class="value">{{ formatCurrency(linesTotal(order()?.lines || [])) }}</div>
         </div>
       }
     </article>

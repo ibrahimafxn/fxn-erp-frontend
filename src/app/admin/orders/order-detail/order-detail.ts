@@ -58,6 +58,17 @@ export class OrderDetail {
     return lines.reduce((sum, line) => sum + (line.total ?? (line.quantity * line.unitPrice)), 0);
   }
 
+  formatCurrency(value?: number | string | null): string {
+    const amount = Number(value ?? 0);
+    if (!Number.isFinite(amount)) return '0 €';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  }
+
   depotOptionLabel(d: Depot): string {
     return formatDepotName(d.name ?? '') || d.name || '—';
   }

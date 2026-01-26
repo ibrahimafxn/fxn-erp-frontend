@@ -31,13 +31,24 @@
 
           <div class="form-group">
             <label for="login-password">Mot de passe</label>
-            <input
-              id="login-password"
-              formControlName="password"
-              type="password"
-              autocomplete="current-password"
-              placeholder="Entrez votre mot de passe"
-            />
+            <div class="password-field">
+              <input
+                id="login-password"
+                formControlName="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                autocomplete="current-password"
+                placeholder="Entrez votre mot de passe"
+              />
+              <button
+                type="button"
+                class="toggle-visibility"
+                (click)="togglePassword()"
+                [attr.aria-pressed]="showPassword()"
+                [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+              >
+                @if (showPassword()) { Masquer } @else { Afficher }
+              </button>
+            </div>
           </div>
 
           @if (mfaRequired()) {
@@ -48,7 +59,7 @@
             </div>
           }
 
-          <div class="remember-device">
+          <div class="remember-device" [class.is-hidden]="!showRememberDevice()">
             <label>
               <input type="checkbox" formControlName="rememberDevice" />
               <span>Se souvenir de cet appareil (30 jours)</span>

@@ -60,28 +60,39 @@
           @for (line of lines.controls; track $index) {
             <div class="line-card" [formGroup]="lineGroup($index)">
               <div class="line-grid">
-                <label>
-                  Article
+                <label class="line-field designation">
+                  Désignation
                   <select formControlName="resourceId" (change)="onResourceChange($index)">
                     <option value="">
-                      {{ resourcesLoading() ? 'Chargement…' : 'Sélectionner un article' }}
+                      {{ resourcesLoading() ? 'Chargement…' : 'Sélectionner une désignation' }}
                     </option>
                     @for (res of resources(); track res._id) {
                       <option [value]="res._id">{{ resourceLabel(res) }}</option>
                     }
                   </select>
                 </label>
-                <label>
+                <label class="line-field quantity">
                   Quantité
                   <input type="number" min="1" formControlName="quantity" />
                 </label>
-                <label>
+                <label class="line-field description">
+                  Description
+                  <input type="text" formControlName="description" placeholder="Précisions (optionnel)" />
+                </label>
+                <label class="line-field unit-price">
                   Prix unitaire
                   <input type="number" min="0" formControlName="unitPrice" />
                 </label>
+                <label class="line-field tva-toggle">
+                  TVA
+                  <label class="toggle">
+                    <input type="checkbox" formControlName="applyTva" />
+                    <span>Appliquer la TVA</span>
+                  </label>
+                </label>
                 <div class="line-total">
                   <div class="label">Total de la ligne</div>
-                  <div class="value">{{ lineTotal($index) }}</div>
+                  <div class="value">{{ formatCurrency(lineTotal($index)) }}</div>
                 </div>
               </div>
               <div class="line-actions">
@@ -100,8 +111,18 @@
         }
 
         <div class="totals full">
-          <div class="label">Total des lignes</div>
-          <div class="value">{{ linesTotal() }}</div>
+          <div class="total-item">
+            <div class="label">Montant HT</div>
+            <div class="value">{{ formatCurrency(linesTotal()) }}</div>
+          </div>
+          <div class="total-item">
+            <div class="label">Montant TVA</div>
+            <div class="value">{{ formatCurrency(tvaAmount()) }}</div>
+          </div>
+          <div class="total-item">
+            <div class="label">Montant TTC</div>
+            <div class="value">{{ formatCurrency(ttcAmount()) }}</div>
+          </div>
         </div>
 
         <div class="actions full">

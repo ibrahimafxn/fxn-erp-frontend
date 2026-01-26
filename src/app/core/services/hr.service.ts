@@ -93,6 +93,10 @@ export class HrService {
     return this.http.delete<{ success: boolean }>(`${API_BASE}/hr/docs/${id}`);
   }
 
+  downloadDoc(id: string) {
+    return this.http.get(`${API_BASE}/hr/docs/${id}/pdf`, { responseType: 'blob' });
+  }
+
   checkUserCompliance(userId: string, requiredTypes: string[] = []) {
     return this.http.post<{ success: boolean; data: ComplianceResult }>(`${API_BASE}/hr/check-compliance`, { userId, requiredTypes })
       .pipe(map(resp => resp.data));

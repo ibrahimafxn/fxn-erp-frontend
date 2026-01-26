@@ -62,7 +62,7 @@
                           <td>{{ docTypeLabel(d.type) }}</td>
                           <td>{{ formatDate(d.expiryDate) }}</td>
                           <td>
-                            <a [href]="docPdfUrl(d)" download>Télécharger PDF</a>
+                            <button type="button" class="doc-link" (click)="openDoc(d)">Ouvrir PDF</button>
                           </td>
                         </tr>
                       }
@@ -104,7 +104,7 @@
           </select>
           <button class="btn-outline" (click)="resetEmployeeFilters()">Réinitialiser</button>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap employees-table">
           <table>
             <thead>
               <tr>
@@ -119,10 +119,14 @@
               @for (e of employees(); track e.user._id) {
                 <tr [class.active]="selected()?.user?._id === e.user._id" (click)="selectEmployee(e)">
                   <td>{{ formatUserName(e.user) }}</td>
-                  <td><span class="pill role-pill">{{ e.user.role || '—' }}</span></td>
+                  <td><span class="pill role-pill" [class.tech]="e.user.role === 'TECHNICIEN'">{{ e.user.role || '—' }}</span></td>
                   <td>{{ depotLabel(e.user) }}</td>
                   <td>{{ e.user.phone || '—' }}</td>
-                  <td>{{ complianceLabel(e) }}</td>
+                  <td>
+                    @if (e.compliance?.ok) {
+                      <span class="pill ok">{{ complianceLabel(e) }}</span>
+                    }
+                  </td>
                 </tr>
               }
             </tbody>
@@ -140,7 +144,7 @@
         </div>
       </div>
 
-      <div class="panel detail">
+      <div class="panel detail" id="hr-employee-profile">
         @if (selected(); as s) {
           <h2 class="section-title"><span class="material-icons notranslate">assignment_ind</span>Dossier employé</h2>
           <div class="identity">
@@ -169,7 +173,7 @@
               <label>Contrat</label>
               <select formControlName="contractType">
                 @for (t of contractTypes; track t) {
-                  <option [value]="t">{{ t }}</option>
+                  <option [value]="t">@if (t === 'FREELANCE') { Auto entrepreneur } @else { {{ t }} }</option>
                 }
               </select>
             </div>
@@ -209,7 +213,10 @@
                 <option [value]="t.value">{{ t.label }}</option>
               }
             </select>
-            <input #docFileInput type="file" accept=".pdf,.jpeg,.jpg,.png" (change)="onDocFileChange($event)" />
+            <input #docFileInput type="file" accept=".pdf,.jpeg,.jpg,.png" multiple (change)="onDocFileChange($event)" />
+            @if (docFiles().length) {
+              <span class="file-count">{{ docFiles().length }} fichier(s)</span>
+            }
             @if (isHabilitationSelected()) {
               <select formControlName="detail">
                 @for (o of habilitationOptions; track o.value) {
@@ -223,7 +230,7 @@
             <button class="btn-outline" type="button" (click)="addDoc(docFileInput)"><i class="bi bi-plus"></i> Ajouter</button>
           </form>
 
-          <div class="table-wrap" id="hr-documents">
+          <div class="table-wrap docs-table-wrap" id="hr-documents">
             <table>
               <thead>
                 <tr>
@@ -237,20 +244,20 @@
               <tbody>
                 @for (d of filteredDocs(); track d._id) {
                   <tr [class.doc-valid]="isDocValid(d)" [class.doc-expired]="isDocExpired(d)">
-                    <td>{{ d.type }}</td>
-                    <td>{{ d.detail || '—' }}</td>
-                    <td>{{ formatDate(d.expiryDate) }}</td>
-                    <td>
-                      <a [href]="docPdfUrl(d)" download>Télécharger PDF</a>
+                    <td data-label="Type">{{ d.type }}</td>
+                    <td data-label="Détail">{{ d.detail || '—' }}</td>
+                    <td data-label="Expiration">{{ formatDate(d.expiryDate) }}</td>
+                    <td data-label="Document">
+                      <button type="button" class="doc-link" (click)="openDoc(d)">Ouvrir PDF</button>
                     </td>
-                    <td>
+                    <td data-label="Action">
                       <button
-                        class="btn-outline btn-xs"
+                        class="btn-outline btn-xs delete"
                         type="button"
                         [disabled]="deletingDocId() === d._id"
                         (click)="openDeleteDocModal(d)"
                       ><i class="fa-solid fa-trash"></i> 
-                        @if (deletingDocId() === d._id) { Suppression… } @else { Supprimer }
+                        @if (deletingDocId() === d._id) { Suppression… }
                       </button>
                     </td>
                   </tr>

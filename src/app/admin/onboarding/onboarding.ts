@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ImportService, ImportResult } from '../../core/services/import.service';
 
-type StepId = 'depots' | 'users' | 'materials' | 'consumables' | 'vehicles';
+type StepId = 'depots' | 'users' | 'materials' | 'consumables' | 'vehicles' | 'orders';
 
 type StepConfig = {
   id: StepId;
@@ -72,6 +72,17 @@ export class Onboarding {
         'plateNumber,brand,model,year,state,depot,assignedTo',
         'AA-123-BB,Renault,Kangoo,2021,Disponible,Depot Nord,tech@fxn.com'
       ].join('\n')
+    },
+    {
+      id: 'orders',
+      title: 'Importer les commandes',
+      description: 'Charge les commandes et leurs lignes (répéter la référence pour plusieurs lignes).',
+      filename: 'orders-template.csv',
+      template: [
+        'reference,client,date,status,amount,notes,resourceType,resourceName,quantity,unitPrice',
+        'CMD-1001,Client A,2024-01-15,VALIDEE,0,Commande test,MATERIAL,Perceuse,2,45',
+        'CMD-1001,Client A,2024-01-15,VALIDEE,0,Commande test,CONSUMABLE,Touret 500,4,3.5'
+      ].join('\n')
     }
   ];
 
@@ -129,7 +140,8 @@ export class Onboarding {
         : step === 'users' ? this.importSvc.importUsers(csv)
           : step === 'materials' ? this.importSvc.importMaterials(csv)
             : step === 'consumables' ? this.importSvc.importConsumables(csv)
-              : this.importSvc.importVehicles(csv);
+              : step === 'vehicles' ? this.importSvc.importVehicles(csv)
+                : this.importSvc.importOrders(csv);
 
     req.subscribe({
       next: (res) => {

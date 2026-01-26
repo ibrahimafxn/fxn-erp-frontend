@@ -54,6 +54,14 @@ export class AttributionService {
   // GET history
   listHistory(filter?: any) {
     const params = filter ? { params: filter } : {};
-    return this.http.get<any[]>(`${API_BASE}/attributions/history`, params);
+    return this.http.get<any>(`${API_BASE}/attributions/history`, params).pipe(
+      map((resp) => {
+        if (resp && typeof resp === 'object' && 'items' in resp) {
+          return resp as { items: any[]; total: number; page: number; limit: number };
+        }
+        const items = Array.isArray(resp) ? resp : [];
+        return { items, total: items.length, page: 1, limit: items.length || 0 };
+      })
+    );
   }
 }

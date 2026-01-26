@@ -84,12 +84,12 @@
         <tbody>
           @for (u of visibleItems(); track trackById($index, u)) {
             <tr class="row" [class.no-access]="!u.authEnabled" [class.must-change]="u.mustChangePassword">
-              <td class="main">
+              <td class="main" data-label="Utilisateur">
                 <div class="name">{{ userLabel(u) }}</div>
                 <div class="sub">{{ u.email || '—' }}</div>
               </td>
 
-              <td>
+              <td data-label="Rôle">
                 <span
                   class="badge role-badge"
                   [class.role-admin]="u.role === 'ADMIN'"
@@ -99,10 +99,10 @@
                   {{ u.role || '—' }}
                 </span>
               </td>
-              <td>{{ depotLabel(u) }}</td>
-              <td>{{ vehicleLabel(u) }}</td>
+              <td data-label="Dépôt">{{ depotLabel(u) }}</td>
+              <td data-label="Véhicule">{{ vehicleLabel(u) }}</td>
 
-              <td>
+              <td data-label="Accès">
                 @switch (accessBadge(u)) {
                   @case ('DISABLED') { <span class="pill danger status-pill">Désactivé</span> }
                   @case ('MUST_CHANGE') { <span class="pill warn status-pill">Actif · MDP à changer</span> }
@@ -110,9 +110,9 @@
                 }
               </td>
 
-              <td>{{ lastLoginText(u) }}</td>
+              <td data-label="Dernière connexion">{{ lastLoginText(u) }}</td>
 
-              <td class="actions">
+              <td class="actions" data-label="Actions">
                 <div class="actions-row">
                   @if (!u.authEnabled) {
                     <button class="btn-outline" type="button" disabled>Reset MDP</button>

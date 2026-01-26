@@ -34,22 +34,24 @@
             <label>Dépôt</label>
             <div>{{ depotName() }}</div>
           </div>
-          <div class="info-item">
-            <label>Quantité</label>
-            <div>{{ material()?.quantity ?? 0 }}</div>
-          </div>
-          <div class="info-item">
-            <label>Attribué</label>
-            <div>{{ material()?.assignedQuantity ?? 0 }}</div>
-          </div>
-          <div class="info-item">
-            <label>Disponible</label>
-            <div>{{ availableQty() }}</div>
-          </div>
-          <div class="info-item">
-            <label>Seuil min</label>
-            <div>{{ material()?.minQuantity ?? 0 }}</div>
-          </div>
+          @if (!isReadOnly()) {
+            <div class="info-item">
+              <label>Quantité</label>
+              <div>{{ material()?.quantity ?? 0 }}</div>
+            </div>
+            <div class="info-item">
+              <label>Attribué</label>
+              <div>{{ material()?.assignedQuantity ?? 0 }}</div>
+            </div>
+            <div class="info-item">
+              <label>Disponible</label>
+              <div>{{ availableQty() }}</div>
+            </div>
+            <div class="info-item">
+              <label>Seuil min</label>
+              <div>{{ material()?.minQuantity ?? 0 }}</div>
+            </div>
+          }
           <div class="info-item">
             <label>Créé le</label>
             <div>
@@ -57,7 +59,7 @@
             </div>
           </div>
         </div>
-        @if (!isDepotManager()) {
+        @if (!isDepotManager() && !isReadOnly()) {
           <div class="actions">
             <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!material()"><i class="bi bi-pencil"></i> Modifier</button>
             <button class="btn-outline delete" type="button" (click)="openDeleteModal()" [disabled]="deleting() || !material()"><i class="fa-solid fa-trash"></i> Supprimer</button>
@@ -68,7 +70,7 @@
       @if (canReserve()) {
         <article class="card reserve-card">
           <div class="card-title-row">
-            <h2>Réservation matériel</h2>
+            <h2>Attribution matériel</h2>
             <span class="pill">Disponible : {{ availableQty() }}</span>
             <span class="pill">Attribué tech : {{ assignedForSelectedTech() }}</span>
           </div>
@@ -120,7 +122,7 @@
                 Reprendre
               </button>
               <button class="btn-primary" type="button" (click)="submitReserve()" [disabled]="reserveLoading() || reserveForm.invalid || availableQty() <= 0">
-                Réserver
+                Attribuer
               </button>
             </div>
           </form>

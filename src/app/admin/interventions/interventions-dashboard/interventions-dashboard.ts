@@ -187,6 +187,28 @@ export class InterventionsDashboard {
     { key: 'refcDgr', label: 'Dégradation client', code: 'REFC_DGR' }
   ] as const;
 
+  private readonly revenueKeys = new Set([
+    'racPavillon',
+    'clem',
+    'reconnexion',
+    'racImmeuble',
+    'racProS',
+    'racProC',
+    'racF8',
+    'deprise',
+    'demo',
+    'sav',
+    'savExp',
+    'refrac',
+    'refcDgr'
+  ]);
+
+  private readonly rateCodeMap = new Map<string, keyof InterventionRates>(
+    this.rateFields
+      .filter((field) => this.revenueKeys.has(field.key))
+      .map((field) => [field.code, field.key as keyof InterventionRates])
+  );
+
   readonly rateForm = this.fb.nonNullable.group({
     racPavillon: this.fb.nonNullable.group({
       total: [140, [Validators.required, Validators.min(0)]],
@@ -298,10 +320,19 @@ export class InterventionsDashboard {
   readonly compareTotals = computed(() => {
     const compare = this.compareResult();
     if (!compare) return null;
+    const rates = this.rates();
+    let osirisTotal = 0;
+    for (const row of compare.rows || []) {
+      const key = this.rateCodeMap.get(String(row.code || ''));
+      if (!key) continue;
+      const qty = Number(row.osirisQty || 0);
+      const rate = rates[key];
+      osirisTotal += qty * Number(rate?.total || 0);
+    }
     return {
-      osiris: compare.osiris.totalAmount || 0,
+      osiris: osirisTotal,
       invoice: compare.invoice.totalAmount || 0,
-      delta: (compare.osiris.totalAmount || 0) - (compare.invoice.totalAmount || 0)
+      delta: osirisTotal - (compare.invoice.totalAmount || 0)
     };
   });
 

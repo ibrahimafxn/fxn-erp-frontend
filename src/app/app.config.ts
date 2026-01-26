@@ -7,6 +7,7 @@ import {RoleGuard} from './core/guards/role.guard';
 import {AuthInterceptor} from './core/interceptors/auth.interceptor';
 import {DEPOT_ROUTES} from './modules/depot/depot.routes';
 import {ADMIN_ROUTES} from './admin/admin.routes';
+import {TECHNICIAN_ROUTES} from './modules/technician/technician.routes';
 import {Role} from './core/models/roles.model';
 import {LOCALE_ID} from '@angular/core';
 import {registerLocaleData} from '@angular/common';
@@ -33,10 +34,19 @@ export const AppConfig = {
         AuthGuard,
         RoleGuard([
           Role.GESTION_DEPOT,
-          Role.TECHNICIEN,
           Role.ADMIN,
           Role.DIRIGEANT
         ])
+      ]
+    },
+
+    // --- Espace technicien ---
+    {
+      path: 'technician',
+      loadChildren: () => Promise.resolve(TECHNICIAN_ROUTES),
+      canActivate: [
+        AuthGuard,
+        RoleGuard([Role.TECHNICIEN])
       ]
     },
 

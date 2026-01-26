@@ -32,6 +32,11 @@
       </div>
 
       <div class="field">
+        <label>Description</label>
+        <input type="text" formControlName="description" placeholder="Ex: SN-12345" />
+      </div>
+
+      <div class="field">
         <label>Unité *</label>
         <select formControlName="unit">
           <option value="pcs">pcs</option>
@@ -57,8 +62,6 @@
         <input type="number" formControlName="minQuantity" min="0" step="1" placeholder="Ex: 5" />
         @if (isInvalid('minQuantity')) {
           <small class="hint error">Seuil invalide</small>
-        } @else if (minQuantityTooHigh()) {
-          <small class="hint error">Le seuil doit être inférieur ou égal à la quantité.</small>
         }
       </div>
 
@@ -77,7 +80,6 @@
             }
           </select>
         }
-        <small class="hint">Optionnel : assigne le consommable à un dépôt précis.</small>
       </div>
     </div>
 

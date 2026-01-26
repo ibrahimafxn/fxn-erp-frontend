@@ -4,7 +4,28 @@
       <h1>Commandes</h1>
       <p class="subtitle">Suivi minimal des commandes en attente d'integration.</p>
     </div>
-    <button class="btn-primary" type="button" (click)="createNew()">Nouvelle commande</button>
+    <div class="header-actions">
+      <label class="import-client">
+        Fournisseur
+        <input
+          type="text"
+          placeholder="Nom du fournisseur"
+          [disabled]="importLoading()"
+          [value]="importClient()"
+          (input)="importClient.set(($event.target as HTMLInputElement).value)"
+        />
+      </label>
+      <label class="btn-outline file-upload" [class.disabled]="importLoading() || !importClient().trim()">
+        <input
+          type="file"
+          accept="application/pdf"
+          [disabled]="importLoading() || !importClient().trim()"
+          (change)="importPdf($event)"
+        />
+        <i class="bi bi-upload"></i> Importer PDF
+      </label>
+      <button class="btn-primary" type="button" [disabled]="importLoading()" (click)="createNew()">Nouvelle commande</button>
+    </div>
   </header>
 
   <article class="card">
@@ -12,19 +33,20 @@
     <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
       <label>
         Recherche
-        <input type="text" formControlName="q" placeholder="Reference ou client" />
+        <input type="text" formControlName="q" placeholder="Reference ou client" [disabled]="importLoading()" />
       </label>
       <label>
         Statut
-        <select formControlName="status">
+        <select formControlName="status" [disabled]="importLoading()">
           <option value="">Tous</option>
           <option value="En cours">En cours</option>
+          <option value="Validée">Validée</option>
           <option value="Livrée">Livrée</option>
         </select>
       </label>
       <div class="actions">
-        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
-        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+        <button class="btn-outline" type="submit" [disabled]="importLoading()"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline" type="button" [disabled]="importLoading()" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
       </div>
     </form>
 
@@ -41,6 +63,12 @@
         </select>
       </label>
     </div>
+
+    @if (importLoading()) {
+      <div class="state loading">Import PDF en cours…</div>
+    } @else if (importError()) {
+      <div class="state error">Erreur import : {{ importError() }}</div>
+    }
 
     @if (loading()) {
       <div class="state loading">Chargement...</div>
@@ -104,3 +132,68 @@
   (cancel)="closeDeleteModal()"
   (confirm)="confirmDelete()"
 ></app-confirm-delete-modal>
+
+@if (importModalOpen() && importPreview(); as preview) {
+  <div class="modal-backdrop" (click)="closeImportModal()"></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Commande importée</div>
+        <div class="modal-sub">Référence {{ preview.reference }} · {{ preview.client }}</div>
+      </div>
+      <button class="btn-outline" type="button" [disabled]="importLoading()" (click)="closeImportModal()">Fermer</button>
+    </div>
+
+    @if (preview.errors.length) {
+      <div class="state error">
+        Certaines lignes n'ont pas été reconnues. Corrige les articles avant validation.
+      </div>
+      <div class="errors">
+        @for (e of preview.errors; track e.row + e.message) {
+          <div class="error-item">{{ e.message }}</div>
+        }
+      </div>
+    }
+
+    <div class="table modal-table">
+      <table>
+        <thead>
+        <tr>
+          <th>Désignation</th>
+          <th>Description</th>
+          <th>Quantité</th>
+          <th>PU HT</th>
+          <th>Montant HT</th>
+          <th>TVA</th>
+          <th>TTC</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (line of preview.lines; track line.designation + line.name) {
+            <tr>
+              <td>{{ line.designation || line.name }}</td>
+              <td>{{ line.description || '—' }}</td>
+              <td>{{ line.quantity }}</td>
+              <td>{{ line.unitPrice | number:'1.2-2' }}</td>
+              <td>{{ line.totalHt ?? line.total | number:'1.2-2' }}</td>
+              <td>{{ line.totalTva ?? 0 | number:'1.2-2' }}</td>
+              <td>{{ line.totalTtc ?? 0 | number:'1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-actions">
+      <span class="pill">Statut: {{ preview.status }}</span>
+      <span class="pill">Montant: {{ formatAmount(preview.amount) }}</span>
+      <span class="pill">Total TVA: {{ formatAmount(importTotalTva()) }}</span>
+      <button
+        class="btn-primary"
+        type="button"
+        [disabled]="importLoading() || preview.lines.length === 0"
+        (click)="confirmImport()"
+      >Valider la commande</button>
+    </div>
+  </div>
+}

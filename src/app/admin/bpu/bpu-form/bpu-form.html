@@ -1,0 +1,55 @@
+<section class="bpu-form">
+  <header class="page-header card">
+    <div>
+      <h1>Nouveau BPU</h1>
+      <p class="subtitle">Créer une prestation BPU.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="cancel()"><i class="bi bi-arrow-left"></i> Annuler</button>
+      <button class="btn-primary" type="button" (click)="submit()" [disabled]="!canSubmit()">
+        <i class="bi bi-check"></i> @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  }
+
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <label>
+        Type BPU
+        <select formControlName="segment">
+          <option value="AUTO">Auto-entrepreneur</option>
+          <option value="SALARIE">Salarié</option>
+        </select>
+      </label>
+
+      <label>
+        Prestation
+        <input type="text" formControlName="prestation" placeholder="Ex: Raccordement pavillon" />
+        @if (isInvalid('prestation')) {
+          <small class="hint error">Prestation requise (min 2 caractères).</small>
+        }
+      </label>
+
+      <label>
+        Code
+        <input type="text" formControlName="code" placeholder="Ex: RACPAV" />
+        @if (isInvalid('code')) {
+          <small class="hint error">Code requis (min 2 caractères).</small>
+        }
+      </label>
+
+      <label>
+        Prix unitaire
+        <input type="number" min="0" step="1" formControlName="unitPrice" />
+        @if (isInvalid('unitPrice')) {
+          <small class="hint error">Prix unitaire invalide.</small>
+        }
+      </label>
+    </div>
+  </form>
+</section>

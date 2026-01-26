@@ -1,0 +1,68 @@
+<section class="bpu-type-list">
+  <header class="page-header">
+    <div>
+      <h1>BPU</h1>
+      <p class="subtitle">Liste des BPU enregistrés.</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-primary" type="button" (click)="createNew()">
+        <i class="bi bi-plus"></i> Nouveau
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (sortedItems().length === 0) {
+    <div class="state empty card">Aucun BPU trouvé.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>Type BPU</th>
+          <th class="actions">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (item of sortedItems(); track item._id || item.type) {
+            <tr>
+              <td data-label="Type BPU">
+                <span class="pill">{{ item.type || '—' }}</span>
+              </td>
+              <td class="actions" data-label="Actions">
+                <div class="actions-group">
+                  <button class="btn-outline edit" type="button" (click)="edit(item)">
+                    <i class="bi bi-pencil"></i> Modifier
+                  </button>
+                  <button
+                    class="btn-outline delete"
+                    type="button"
+                    [disabled]="deletingId() === item._id"
+                    (click)="openDeleteModal(item)"
+                  >
+                    <i class="fa-solid fa-trash"></i>
+                    @if (deletingId() === item._id) { Suppression… } @else { Supprimer }
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    entityLabel="le BPU"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    [confirming]="pendingDeleteId() !== null && deletingId() === pendingDeleteId()"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()">
+  </app-confirm-delete-modal>
+</section>

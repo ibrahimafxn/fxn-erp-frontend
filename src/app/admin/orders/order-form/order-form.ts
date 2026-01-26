@@ -20,6 +20,7 @@ export class OrderForm {
   private resourcesSvc = inject(ResourceListService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private readonly tvaRate = 0.2;
 
   readonly saving = signal(false);
   readonly submitError = signal<string | null>(null);
@@ -108,6 +109,30 @@ export class OrderForm {
     return this.lines.controls.reduce((sum, _, index) => sum + this.lineTotal(index), 0);
   }
 
+  tvaAmount(): number {
+    return this.lines.controls.reduce((sum, _, index) => {
+      const group = this.lines.at(index) as FormGroup;
+      const applyTva = Boolean(group.get('applyTva')?.value);
+      if (!applyTva) return sum;
+      return sum + this.lineTotal(index) * this.tvaRate;
+    }, 0);
+  }
+
+  ttcAmount(): number {
+    return this.linesTotal() + this.tvaAmount();
+  }
+
+  formatCurrency(value?: number | string | null): string {
+    const amount = Number(value ?? 0);
+    if (!Number.isFinite(amount)) return '0 €';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  }
+
   submit(): void {
     if (this.form.invalid || this.saving()) return;
 
@@ -129,6 +154,8 @@ export class OrderForm {
         resourceType: line["resourceType"] || resources.find((r) => r._id === line["resourceId"])?.type || '',
         name: String(line["name"] || resources.find((r) => r._id === line["resourceId"])?.name || '').trim(),
         item: String(line["name"] || resources.find((r) => r._id === line["resourceId"])?.name || '').trim(),
+        description: String(line["description"] || '').trim() || undefined,
+        applyTva: Boolean(line["applyTva"]),
         quantity: Number(line["quantity"] || 0),
         unitPrice: Number(line["unitPrice"] || 0)
       }))
@@ -166,6 +193,8 @@ export class OrderForm {
       resourceId: this.fb.nonNullable.control('', [Validators.required]),
       resourceType: this.fb.nonNullable.control('', [Validators.required]),
       name: this.fb.nonNullable.control('', [Validators.required]),
+      description: this.fb.nonNullable.control(''),
+      applyTva: this.fb.nonNullable.control(true),
       quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
       unitPrice: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)])
     });
@@ -191,6 +220,8 @@ export class OrderForm {
             resourceId: line.resourceId || '',
             resourceType: line.resourceType || '',
             name: line.name || '',
+            description: line.description || '',
+            applyTva: line.applyTva ?? true,
             quantity: line.quantity || 1,
             unitPrice: line.unitPrice || 0
           });

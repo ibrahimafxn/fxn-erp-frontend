@@ -83,12 +83,12 @@
             <tbody>
               @for (c of items(); track c._id) {
                 <tr>
-                  <td>{{ consumableName(c) }}</td>
-                  <td>{{ depotLabel(c) }}</td>
-                  <td>{{ availableQty(c) }} {{ c.unit || '' }}</td>
-                  <td>{{ c.quantity ?? 0 }}</td>
-                  <td>{{ c.minQuantity ?? 0 }}</td>
-                  <td class="actions">
+                  <td data-label="Consommable">{{ consumableName(c) }}</td>
+                  <td data-label="Dépôt">{{ depotLabel(c) }}</td>
+                  <td data-label="Disponible">{{ availableQty(c) }} {{ c.unit || '' }}</td>
+                  <td data-label="Stock">{{ c.quantity ?? 0 }}</td>
+                  <td data-label="Seuil">{{ c.minQuantity ?? 0 }}</td>
+                  <td data-label="Action" class="actions">
                     <button class="btn-outline" type="button" (click)="goDetail(c)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
@@ -114,12 +114,12 @@
             <tbody>
               @for (m of materialItems(); track m._id) {
                 <tr>
-                  <td>{{ materialName(m) }}</td>
-                  <td>{{ depotLabelMaterial(m) }}</td>
-                  <td>{{ availableQtyMaterial(m) }}</td>
-                  <td>{{ m.quantity ?? 0 }}</td>
-                  <td>{{ m.minQuantity ?? 0 }}</td>
-                  <td class="actions">
+                  <td data-label="Matériel">{{ materialName(m) }}</td>
+                  <td data-label="Dépôt">{{ depotLabelMaterial(m) }}</td>
+                  <td data-label="Disponible">{{ availableQtyMaterial(m) }}</td>
+                  <td data-label="Stock">{{ m.quantity ?? 0 }}</td>
+                  <td data-label="Seuil">{{ m.minQuantity ?? 0 }}</td>
+                  <td data-label="Action" class="actions">
                     <button class="btn-outline" type="button" (click)="goMaterialDetail(m)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
@@ -149,16 +149,16 @@
             <tbody>
               @for (v of vehicleItems(); track v._id) {
                 <tr>
-                  <td>{{ vehicleLabel(v) }}</td>
-                  <td>{{ depotLabelVehicle(v) }}</td>
-                  <td>{{ vehicleProblem(v) }}</td>
-                  <td>{{ vehicleTow(v) }}</td>
-                  <td>{{ vehicleRepair(v) }}</td>
-                  <td>{{ vehicleGarage(v) }}</td>
-                  <td class="note">{{ vehicleGarageAddress(v) }}</td>
-                  <td class="note">{{ vehicleBreakdownAddress(v) }}</td>
-                  <td>{{ vehicleBreakdownDate(v) }}</td>
-                  <td class="actions">
+                  <td data-label="Véhicule">{{ vehicleLabel(v) }}</td>
+                  <td data-label="Dépôt">{{ depotLabelVehicle(v) }}</td>
+                  <td data-label="Problème">{{ vehicleProblem(v) }}</td>
+                  <td data-label="Dépanneuse">{{ vehicleTow(v) }}</td>
+                  <td data-label="Réparation">{{ vehicleRepair(v) }}</td>
+                  <td data-label="Garage">{{ vehicleGarage(v) }}</td>
+                  <td data-label="Adresse garage" class="note">{{ vehicleGarageAddress(v) }}</td>
+                  <td data-label="Adresse panne" class="note">{{ vehicleBreakdownAddress(v) }}</td>
+                  <td data-label="Date">{{ vehicleBreakdownDate(v) }}</td>
+                  <td data-label="Action" class="actions">
                     <button class="btn-outline" type="button" (click)="goVehicleDetail(v)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
@@ -193,12 +193,12 @@
             @if (filterForm.controls.resourceType.value === 'CONSUMABLE') {
               @for (c of items(); track c._id) {
                 <tr>
-                  <td>{{ consumableName(c) }}</td>
-                  <td>{{ depotLabel(c) }}</td>
-                  <td>{{ availableQty(c) }} {{ c.unit || '' }}</td>
-                  <td>{{ c.quantity ?? 0 }}</td>
-                  <td>{{ c.minQuantity ?? 0 }}</td>
-                  <td class="actions">
+                  <td data-label="Consommable">{{ consumableName(c) }}</td>
+                  <td data-label="Dépôt">{{ depotLabel(c) }}</td>
+                  <td data-label="Disponible">{{ availableQty(c) }} {{ c.unit || '' }}</td>
+                  <td data-label="Stock">{{ c.quantity ?? 0 }}</td>
+                  <td data-label="Seuil">{{ c.minQuantity ?? 0 }}</td>
+                  <td data-label="Action" class="actions">
                     <button class="btn-outline" type="button" (click)="goDetail(c)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
@@ -206,12 +206,12 @@
             } @else if (filterForm.controls.resourceType.value === 'MATERIAL') {
               @for (m of materialItems(); track m._id) {
                 <tr>
-                  <td>{{ materialName(m) }}</td>
-                  <td>{{ depotLabelMaterial(m) }}</td>
-                  <td>{{ availableQtyMaterial(m) }}</td>
-                  <td>{{ m.quantity ?? 0 }}</td>
-                  <td>{{ m.minQuantity ?? 0 }}</td>
-                  <td class="actions">
+                  <td data-label="Matériel">{{ materialName(m) }}</td>
+                  <td data-label="Dépôt">{{ depotLabelMaterial(m) }}</td>
+                  <td data-label="Disponible">{{ availableQtyMaterial(m) }}</td>
+                  <td data-label="Stock">{{ m.quantity ?? 0 }}</td>
+                  <td data-label="Seuil">{{ m.minQuantity ?? 0 }}</td>
+                  <td data-label="Action" class="actions">
                     <button class="btn-outline" type="button" (click)="goMaterialDetail(m)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>
@@ -219,16 +219,16 @@
             } @else {
               @for (v of vehicleItems(); track v._id) {
                 <tr>
-                  <td>{{ vehicleLabel(v) }}</td>
-                  <td>{{ depotLabelVehicle(v) }}</td>
-                  <td>{{ vehicleProblem(v) }}</td>
-                  <td>{{ vehicleTow(v) }}</td>
-                  <td>{{ vehicleRepair(v) }}</td>
-                  <td>{{ vehicleGarage(v) }}</td>
-                  <td class="note">{{ vehicleGarageAddress(v) }}</td>
-                  <td class="note">{{ vehicleBreakdownAddress(v) }}</td>
-                  <td>{{ vehicleBreakdownDate(v) }}</td>
-                  <td class="actions">
+                  <td data-label="Véhicule">{{ vehicleLabel(v) }}</td>
+                  <td data-label="Dépôt">{{ depotLabelVehicle(v) }}</td>
+                  <td data-label="Problème">{{ vehicleProblem(v) }}</td>
+                  <td data-label="Dépanneuse">{{ vehicleTow(v) }}</td>
+                  <td data-label="Réparation">{{ vehicleRepair(v) }}</td>
+                  <td data-label="Garage">{{ vehicleGarage(v) }}</td>
+                  <td data-label="Adresse garage" class="note">{{ vehicleGarageAddress(v) }}</td>
+                  <td data-label="Adresse panne" class="note">{{ vehicleBreakdownAddress(v) }}</td>
+                  <td data-label="Date">{{ vehicleBreakdownDate(v) }}</td>
+                  <td data-label="Action" class="actions">
                     <button class="btn-outline" type="button" (click)="goVehicleDetail(v)"><i class="bi bi-eye"></i> Voir</button>
                   </td>
                 </tr>

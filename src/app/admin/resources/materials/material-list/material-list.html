@@ -6,9 +6,11 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
-      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
-      @if (!isDepotManager()) {
+      @if (!isReadOnly()) {
+        <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+        <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
+      }
+      @if (!isDepotManager() && !isReadOnly()) {
         <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau</button>
       }
     </div>
@@ -18,7 +20,7 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <input type="text" formControlName="q" placeholder="Rechercher (nom, catégorie, ref…)…" />
 
-      @if (!isDepotManager()) {
+      @if (!isDepotManager() && !isReadOnly()) {
         <select formControlName="depot">
           <option value="">Tous les dépôts</option>
           @for (d of depots(); track d._id) {
@@ -44,6 +46,7 @@
           <option [value]="100">100</option>
         </select>
       </label>
+
     </div>
   </section>
 
@@ -58,28 +61,55 @@
       <table>
         <thead>
         <tr>
-          <th>Matériel</th>
-          <th>Catégorie</th>
-          <th>Quantité</th>
-          <th>Dépôt</th>
-          <th>Création</th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('name')">
+              Matériel <span class="sort-indicator">{{ sortIndicator('name') }}</span>
+            </button>
+          </th>
+          @if (!isReadOnly()) {
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('available')">
+                Disponible <span class="sort-indicator">{{ sortIndicator('available') }}</span>
+              </button>
+            </th>
+          }
+          @if (!isReadOnly()) {
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('category')">
+                Catégorie <span class="sort-indicator">{{ sortIndicator('category') }}</span>
+              </button>
+            </th>
+          }
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('depot')">
+              Dépôt <span class="sort-indicator">{{ sortIndicator('depot') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('updatedAt')">
+              Mise à jour * <span class="sort-indicator">{{ sortIndicator('updatedAt') }}</span>
+            </button>
+          </th>
         </tr>
         </thead>
 
         <tbody>
-          @for (m of items(); track trackById($index, m)) {
+          @for (m of sortedItems(); track trackById($index, m)) {
             <tr class="row" (click)="openDetail(m)">
-              <td class="main">
+              <td class="main" data-label="Matériel">
                 <div class="name">{{ materialName(m) }}</div>
-                <div class="sub">{{ m.description || '—' }}</div>
               </td>
 
-              <td><span class="tag">{{ m.category || '—' }}</span></td>
-              <td><span class="qty">{{ m.quantity ?? 0 }}</span></td>
-              <td>{{ depotLabel(m) }}</td>
+              @if (!isReadOnly()) {
+                <td data-label="Disponible"><span class="qty">{{ availableQty(m) }}</span></td>
+              }
+              @if (!isReadOnly()) {
+                <td data-label="Catégorie"><span class="tag">{{ m.category || '—' }}</span></td>
+              }
+              <td data-label="Dépôt">{{ depotLabel(m) }}</td>
 
-              <td>
-                @if (createdAtValue(m)) { {{ createdAtValue(m) | date:'short' }} } @else { — }
+              <td data-label="Mise à jour">
+                @if (updatedAtValue(m)) { {{ updatedAtValue(m) | date:'short' }} } @else { — }
               </td>
             </tr>
           }

@@ -1,0 +1,84 @@
+<section class="bpu-page">
+  <header class="page-header">
+    <div>
+      <h1>BPU prestations</h1>
+      <p class="subtitle">Bordereau des prix unitaires (global).</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
+      <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau BPU</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <label>
+      Type BPU
+      <select [value]="currentSegment()" (change)="onSegmentChange($event)">
+        <option value="AUTO">Auto-entrepreneur</option>
+        <option value="SALARIE">Salarié</option>
+      </select>
+    </label>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucune prestation BPU.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+        <tr>
+          <th>
+            <button class="sort-btn" type="button" (click)="toggleSortPrestation()">
+              Prestation <span class="sort-indicator">{{ sortIndicator() }}</span>
+            </button>
+          </th>
+          <th>Code</th>
+          <th>Prix unitaire</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (item of sortedItems(); track item._id || item.code) {
+            <tr>
+              <td data-label="Prestation">
+                <span
+                  [class.pill-blue]="isBluePill(item.code)"
+                  [class.pill-orange]="isOrangePill(item.code)"
+                  [class.pill-green]="isGreenPill(item.code)"
+                  [class.pill-yellow]="isYellowPill(item.code)"
+                  [class.pill-aqua]="isAquaPill(item.code)"
+                  [class.pill-turquoise]="isTurquoisePill(item.code)"
+                  [class.pill-violet]="isVioletPill(item.code)"
+                  [class.text-red]="isRedText(item.code)"
+                >
+                  {{ item.prestation || '—' }}
+                </span>
+              </td>
+              <td data-label="Code" class="mono">
+                <span
+                  [class.pill-blue]="isBluePill(item.code)"
+                  [class.pill-orange]="isOrangePill(item.code)"
+                  [class.pill-green]="isGreenPill(item.code)"
+                  [class.pill-yellow]="isYellowPill(item.code)"
+                  [class.pill-aqua]="isAquaPill(item.code)"
+                  [class.pill-turquoise]="isTurquoisePill(item.code)"
+                  [class.pill-violet]="isVioletPill(item.code)"
+                  [class.text-red]="isRedText(item.code)"
+                >
+                  {{ item.code || '—' }}
+                </span>
+              </td>
+              <td data-label="Prix unitaire">
+                {{ item.unitPrice | number:'1.0-0' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

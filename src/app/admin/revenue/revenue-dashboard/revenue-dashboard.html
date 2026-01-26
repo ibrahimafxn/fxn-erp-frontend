@@ -5,7 +5,7 @@
       <p class="subtitle">Saisie mensuelle HT et évolution cumulée.</p>
     </div>
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="loadAll()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
+      <button class="btn-outline" type="button" (click)="reloadGlobal()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
     </div>
   </header>
 
@@ -17,6 +17,14 @@
           <option value="">Tous</option>
           @for (m of monthOptions(); track m.value) {
             <option [value]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Période
+        <select formControlName="period">
+          @for (p of periodOptions; track p.value) {
+            <option [value]="p.value">{{ p.label }}</option>
           }
         </select>
       </label>
@@ -40,34 +48,103 @@
     <article class="card form-card">
       <div class="card-title">Saisie mensuelle</div>
       <form class="form" [formGroup]="createForm" (ngSubmit)="submit()">
-        <label>
-          Mois
-          <select formControlName="month">
-            <option value="" disabled>Choisir</option>
-            @for (m of monthOptions(); track m.value) {
-              <option [value]="m.value">{{ m.label }}</option>
-            }
-          </select>
+        <label class="file-field">
+          Factures (PDF, PNG, JPEG)
+          <div class="file-input" [class.disabled]="loading()">
+            <input
+              #revenueFiles
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              multiple
+              [disabled]="loading()"
+              (click)="onAttachmentClick()"
+              (change)="onAttachmentChange($event)"
+            />
+            <i class="bi bi-paperclip" aria-hidden="true"></i>
+            <span>Choisir des fichiers</span>
+          </div>
+          <span class="file-hint">Max 10 fichiers · 10 Mo/fichier</span>
+          @if (fileError()) {
+            <span class="file-error">{{ fileError() }}</span>
+          }
+          @if (selectedAttachments().length) {
+            <div class="file-list">
+              @for (file of selectedAttachments(); track file.name) {
+                <div class="file-chip">
+                  <span class="name">{{ file.name }}</span>
+                  <span class="size">{{ formatFileSize(file.size) }}</span>
+                  <button type="button" class="btn-outline" (click)="removeAttachment($index)">Retirer</button>
+                </div>
+              }
+            </div>
+          }
+          @if (editingAttachments().length) {
+            <div class="file-existing">
+              <span class="label">Déjà enregistrées</span>
+              <div class="file-links">
+                @for (attachment of editingAttachments(); track attachment.url || attachment.filename) {
+                  <div class="file-link-item">
+                    <button
+                      type="button"
+                      class="attachment-link"
+                      [attr.title]="attachmentLabel(attachment)"
+                      (click)="openAttachment(editing()?._id || '', attachment)"
+                    >
+                      {{ attachmentLabel(attachment) }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-outline"
+                      [disabled]="attachmentDeleting() === attachment.filename || loading()"
+                      (click)="removeExistingAttachment(attachment)"
+                    >
+                      @if (attachmentDeleting() === attachment.filename) { Suppression… } @else { Supprimer }
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </label>
-        <label>
-          Année
-          <select formControlName="year">
-            <option value="" disabled>Choisir</option>
-            @for (y of yearOptions(); track y) {
-              <option [value]="y">{{ y }}</option>
-            }
-          </select>
-        </label>
-        <label>
-          CA HT
-          <input type="number" min="0" step="1" formControlName="amountHt" />
-        </label>
+        <div class="form-row">
+          <label>
+            Mois
+            <select formControlName="month" [disabled]="!canEditManual()">
+              <option value="" disabled>Choisir</option>
+              @for (m of monthOptions(); track m.value) {
+                <option [value]="m.value">{{ m.label }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Année
+            <select formControlName="year" [disabled]="!canEditManual()">
+              <option value="" disabled>Choisir</option>
+              @for (y of yearOptions(); track y) {
+                <option [value]="y">{{ y }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <div class="form-row">
+          <label>
+            Chiffre d'affaires
+            <input type="number" min="0" step="1" formControlName="amountHt" [disabled]="!canEditManual()" />
+          </label>
+          <label>
+            Pénalité
+            <input type="number" step="1" formControlName="penalty" [disabled]="!canEditManual()" />
+          </label>
+        </div>
         <label class="note">
           Note
-          <input type="text" formControlName="note" placeholder="Optionnel" />
+          <input type="text" formControlName="note" placeholder="Optionnel" [disabled]="!canEditManual()" />
         </label>
+        @if (!canEditManual()) {
+          <div class="state">Importe d'abord les factures pour activer la saisie.</div>
+        }
         <div class="form-actions">
-          <button class="btn-primary" type="submit" [disabled]="createForm.invalid || loading()">
+          <button class="btn-primary" type="submit" [disabled]="createForm.invalid || loading() || !canEditManual()">
             @if (editing()) { Mettre à jour } @else { Enregistrer }
           </button>
           @if (editing()) {
@@ -79,21 +156,44 @@
 
     <article class="card kpi-card">
       <div class="kpi-title">CA cumulé</div>
-      <div class="kpi-value"><span class="kpi-pill">{{ formatCurrency(total()) }}</span></div>
-      <div class="kpi-sub">Période sélectionnée</div>
+      <div class="kpi-value"><span class="kpi-pill">{{ formatCurrency(summaryTotal()) }}</span></div>
+      <div class="kpi-penalty">
+        <span class="label">Pénalité cumulée</span>
+        <span class="value">{{ formatCurrency(summaryPenaltyTotal()) }}</span>
+      </div>
+      <div class="kpi-sub">{{ selectedPeriodLabel() }}</div>
     </article>
 
     <article class="card chart-card">
       <div class="card-title">Évolution mensuelle</div>
-      <div class="series-list">
-        @for (point of series(); track point.key) {
-          <div class="series-item">
-            <span class="series-month">{{ formatMonth(point) }}</span>
-            <span class="series-ht">{{ formatCurrency(point.amountHt) }}</span>
-            <span class="series-cum">{{ formatCurrency(point.cumulativeHt) }}</span>
+      @if (series().length) {
+        <div class="chart-shell">
+          <div class="chart-legend">
+            <div class="legend-item"><span class="legend-swatch amount"></span>CA HT</div>
           </div>
-        }
-      </div>
+          <div class="chart-canvas">
+            <div class="chart-grid"></div>
+            <div class="chart-bars">
+              @for (point of series(); track point.key) {
+                <div
+                  class="chart-bar"
+                  [class.current]="isCurrentMonth(point)"
+                  [style.--bar-height]="amountHeight(point)"
+                  [style.--dot-height]="cumulativeHeight(point)"
+                  [attr.title]="tooltipLabel(point)"
+                >
+                  <div class="bar-fill"></div>
+                  <div class="bar-dot" aria-hidden="true"></div>
+                  <div class="bar-value">{{ formatCompactCurrency(point.cumulativeHt) }}</div>
+                  <div class="bar-label">{{ formatMonthShort(point) }}</div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="state">Aucune donnée pour l'instant.</div>
+      }
     </article>
   </section>
 
@@ -108,7 +208,9 @@
         <tr>
           <th>Mois</th>
           <th>Montant HT</th>
+          <th>Pénalité</th>
           <th>Note</th>
+          <th>Factures</th>
           <th>Auteur</th>
           <th>MAJ</th>
           <th></th>
@@ -117,15 +219,66 @@
         <tbody>
           @for (item of items(); track item._id) {
             <tr>
-              <td><span class="month-pill">{{ formatMonth(item) }}</span></td>
-              <td><span class="amount-pill">{{ formatCurrency(item.amountHt) }}</span></td>
-              <td class="note">{{ item.note || '—' }}</td>
-              <td><span class="author">{{ authorLabel(item.createdBy || item.updatedBy) }}</span></td>
-              <td>
+              <td data-label="Mois"><span class="month-pill">{{ formatMonth(item) }}</span></td>
+              <td data-label="Montant HT"><span class="amount-pill">{{ formatCurrency(item.amountHt) }}</span></td>
+              <td data-label="Pénalité">
+                @if ((item.penalty || 0) !== 0) {
+                  <span class="amount-pill penalty">{{ formatCurrency(item.penalty || 0) }}</span>
+                } @else {
+                  —
+                }
+              </td>
+              <td class="note" data-label="Note">
+                <div class="note-content">
+                  <span>@if (item.note) { Note } @else { — }</span>
+                  @if ((item.penalty || 0) !== 0) {
+                    <button
+                      class="penalty-tip"
+                      type="button"
+                      [attr.title]="(item.note || 'Pénalité') + ' · ' + formatCurrency(item.penalty || 0)"
+                    >€</button>
+                  }
+                </div>
+              </td>
+              <td class="attachments" data-label="Factures">
+                @if (item.attachments?.length) {
+                  <div class="attachment-list">
+                    <button
+                      class="btn-outline attachments-toggle"
+                      type="button"
+                      (click)="toggleRowAttachments(item._id)"
+                    >
+                      Factures ({{ item.attachments?.length || 0 }})
+                    </button>
+                    @if (isRowAttachmentsOpen(item._id)) {
+                      <div class="attachment-items">
+                        @for (attachment of item.attachments || []; track attachment.url || attachment.filename) {
+                          @if (attachmentDownloadUrl(item._id, attachment)) {
+                            <button
+                              type="button"
+                              class="attachment-link"
+                              [attr.title]="attachmentLabel(attachment)"
+                              (click)="openAttachment(item._id, attachment)"
+                            >
+                              {{ attachmentLabel(attachment) }}
+                            </button>
+                          } @else {
+                            <span [attr.title]="attachmentLabel(attachment)">{{ attachmentLabel(attachment) }}</span>
+                          }
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  —
+                }
+              </td>
+              <td data-label="Auteur"><span class="author">{{ authorLabel(item.createdBy || item.updatedBy) }}</span></td>
+              <td data-label="MAJ">
                 @if (item.updatedAt) { {{ item.updatedAt | date:'short' }} } @else { — }
                 @if (item.updatedBy) { · {{ authorLabel(item.updatedBy) }} }
               </td>
-              <td class="actions">
+              <td class="actions" data-label="Actions">
                 <button class="btn-outline edit" type="button" (click)="startEdit(item)"><i class="bi bi-pencil"></i> Modifier</button>
                 <button class="btn-outline delete" type="button" (click)="openDeleteModal(item)"><i class="fa-solid fa-trash"></i> Supprimer</button>
               </td>

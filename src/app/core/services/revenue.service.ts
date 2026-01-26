@@ -8,11 +8,22 @@ export type RevenueItem = {
   year: number;
   month: number;
   amountHt: number;
+  penalty?: number;
   note?: string;
+  attachments?: RevenueAttachment[];
   createdBy?: RevenueUser | null;
   updatedBy?: RevenueUser | null;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+};
+
+export type RevenueAttachment = {
+  filename: string;
+  originalName?: string;
+  mimeType?: string;
+  size?: number;
+  url?: string;
+  uploadedAt?: string | Date;
 };
 
 export type RevenueUser = {
@@ -37,11 +48,20 @@ export type RevenueSummaryPoint = {
   month: number;
   amountHt: number;
   cumulativeHt: number;
+  penalty?: number;
 };
 
 export type RevenueSummaryResponse = {
   series: RevenueSummaryPoint[];
   total: number;
+};
+
+export type RevenuePenaltyPreview = {
+  penalty: number;
+  amountHt?: number | null;
+  note?: string | null;
+  month?: number | null;
+  year?: number | null;
 };
 
 type ApiResponse<T> = { success: boolean; data: T; message?: string };
@@ -72,12 +92,62 @@ export class RevenueService {
     return this.http.get<ApiResponse<RevenueSummaryResponse>>(`${this.baseUrl}/summary`, { params });
   }
 
-  upsert(payload: { year: number; month: number; amountHt: number; note?: string }) {
+  upsert(payload: { year: number; month: number; amountHt: number; penalty?: number; note?: string }) {
     return this.http.post<ApiResponse<RevenueItem>>(this.baseUrl, payload);
   }
 
-  update(id: string, payload: { year: number; month: number; amountHt: number; note?: string }) {
+  upsertWithAttachments(payload: { year: number; month: number; amountHt: number; penalty?: number; note?: string }, files: File[]) {
+    const formData = new FormData();
+    formData.append('year', String(payload.year));
+    formData.append('month', String(payload.month));
+    formData.append('amountHt', String(payload.amountHt));
+    formData.append('penalty', String(payload.penalty ?? 0));
+    if (typeof payload.note === 'string') {
+      formData.append('note', payload.note);
+    }
+    for (const file of files) {
+      formData.append('files', file);
+    }
+    return this.http.post<ApiResponse<RevenueItem>>(`${this.baseUrl}/attachments`, formData);
+  }
+
+  previewPenalty(files: File[]) {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append('files', file);
+    }
+    return this.http.post<ApiResponse<RevenuePenaltyPreview>>(`${this.baseUrl}/attachments/penalty`, formData);
+  }
+
+  update(id: string, payload: { year: number; month: number; amountHt: number; penalty?: number; note?: string }) {
     return this.http.put<ApiResponse<RevenueItem>>(`${this.baseUrl}/${id}`, payload);
+  }
+
+  updateWithAttachments(id: string, payload: { year: number; month: number; amountHt: number; penalty?: number; note?: string }, files: File[]) {
+    const formData = new FormData();
+    formData.append('year', String(payload.year));
+    formData.append('month', String(payload.month));
+    formData.append('amountHt', String(payload.amountHt));
+    formData.append('penalty', String(payload.penalty ?? 0));
+    if (typeof payload.note === 'string') {
+      formData.append('note', payload.note);
+    }
+    for (const file of files) {
+      formData.append('files', file);
+    }
+    return this.http.put<ApiResponse<RevenueItem>>(`${this.baseUrl}/${id}/attachments`, formData);
+  }
+
+  removeAttachment(id: string, filename: string) {
+    const encoded = encodeURIComponent(filename);
+    return this.http.delete<ApiResponse<RevenueItem>>(`${this.baseUrl}/${id}/attachments/${encoded}`);
+  }
+
+  downloadAttachment(id: string, filename: string) {
+    const encoded = encodeURIComponent(filename);
+    return this.http.get(`${this.baseUrl}/${id}/attachments/${encoded}/download`, {
+      responseType: 'blob'
+    });
   }
 
   remove(id: string) {

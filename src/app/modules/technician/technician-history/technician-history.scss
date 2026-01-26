@@ -1,0 +1,220 @@
+.technician-history {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 750;
+  }
+
+  .subtitle {
+    margin: .25rem 0 0;
+    opacity: .75;
+    font-size: .9rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.card {
+  background: rgba(0, 0, 0, .05);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+.toolbar {
+  display: grid;
+  gap: .85rem;
+}
+
+.search {
+  display: grid;
+  grid-template-columns: 1.3fr .9fr .8fr .7fr .7fr .7fr auto auto;
+  gap: .6rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.search input,
+.search select {
+  padding: .55rem .65rem;
+  border-radius: .7rem;
+  border: 1px solid rgba(255, 255, 255, .15);
+  background: rgba(255, 255, 255, .06);
+  color: inherit;
+  outline: none;
+}
+
+.search input:focus,
+.search select:focus {
+  border-color: rgba(0, 120, 255, .6);
+}
+
+.meta {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.limit {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+
+  span {
+    font-size: .85rem;
+    opacity: .75;
+  }
+
+  select {
+    padding: .35rem .5rem;
+    border-radius: .65rem;
+    background: rgba(8, 12, 20, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: inherit;
+  }
+}
+
+.pill {
+  padding: .25rem .55rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .12);
+}
+
+.state {
+  padding: 1rem;
+
+  &.loading { opacity: .9; }
+  &.error { background: rgba(255,0,60,.10); }
+  &.empty { opacity: .8; }
+}
+
+.table {
+  padding: 0;
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px;
+  }
+
+  thead th {
+    text-align: left;
+    font-size: .8rem;
+    opacity: .75;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: .85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+    vertical-align: middle;
+  }
+
+  .row {
+    cursor: default;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .06);
+}
+
+.badge-assign {
+  border-color: rgba(59, 130, 246, 0.8);
+  background: rgba(37, 99, 235, 0.18);
+  color: #bfdbfe;
+}
+
+.badge-release {
+  border-color: rgba(239, 68, 68, 0.8);
+  background: rgba(185, 28, 28, 0.18);
+  color: #fecaca;
+}
+
+.pager {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  .technician-history {
+    padding: 1rem;
+  }
+
+  .table table {
+    min-width: 0;
+  }
+
+  .table table,
+  .table thead,
+  .table tbody,
+  .table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: grid;
+    gap: .75rem;
+  }
+
+  .table tr {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: .6rem .7rem;
+    background: rgba(10, 16, 28, 0.6);
+  }
+
+  .table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .4rem 0;
+    border-bottom: none;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+  }
+}

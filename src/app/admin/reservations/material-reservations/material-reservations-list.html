@@ -1,7 +1,7 @@
 <section class="reservations">
   <header class="page-header">
     <div>
-      <h1>Réservations matériels</h1>
+      <h1>Attributions matériels</h1>
       <p class="subtitle">Filtre par technicien et période.</p>
     </div>
 
@@ -83,7 +83,7 @@
   } @else if (error()) {
     <div class="state error card"><strong>Erreur :</strong> {{ errorMessage() }}</div>
   } @else if (items().length === 0) {
-    <div class="state empty card">Aucune réservation trouvée.</div>
+    <div class="state empty card">Aucune attribution trouvée.</div>
   } @else {
     <div class="table card">
       <table>
@@ -93,10 +93,8 @@
           <th>Matériel</th>
           <th>Quantité</th>
           <th>Technicien</th>
-          <th>Attribué</th>
           <th>Dépôt</th>
           <th>Auteur</th>
-          <th>Type</th>
           <th>Note</th>
           <th>Action</th>
         </tr>
@@ -104,25 +102,23 @@
         <tbody>
           @for (m of items(); track m._id) {
             <tr>
-              <td>{{ createdAtText(m) }}</td>
-              <td class="mono">{{ resourceLabel(m) }}</td>
-              <td>{{ m.quantity }} {{ m.unit }}</td>
-              <td>{{ technicianLabelById(m.to.id) }}</td>
-              <td>{{ assignedForTech(m.to.id) }} {{ m.unit }}</td>
-              <td>{{ depotLabelById(m.from.id) }}</td>
-              <td>{{ authorLabel(m) }}</td>
-              <td>{{ actionLabel(m.action) }}</td>
-              <td class="note">{{ m.note || '—' }}</td>
-              <td>
+              <td data-label="Date">{{ createdAtText(m) }}</td>
+              <td data-label="Matériel" class="mono">{{ resourceLabel(m) }}</td>
+              <td data-label="Quantité">{{ m.quantity }} {{ m.unit }}</td>
+              <td data-label="Technicien">{{ technicianLabelById(m.to.id) }}</td>
+              <td data-label="Dépôt">{{ depotLabelById(m.from.id) }}</td>
+              <td data-label="Auteur">{{ authorLabel(m) }}</td>
+              <td data-label="Note" class="note">{{ m.note || '—' }}</td>
+              <td data-label="Action">
                 <button
-                  class="btn-outline"
+                  class="btn-outline primary"
                   type="button"
                   (click)="releaseFromRow(m)"
                   [disabled]="!canRelease(m) || rowActionLoading()[m._id]">
                   Reprendre
                 </button>
                 <button
-                  class="btn-outline"
+                  class="btn-outline danger"
                   type="button"
                   (click)="cancelFromRow(m)"
                   [disabled]="!canCancel(m) || rowCancelLoading()[m._id]"><i class="bi bi-x"></i> Annuler</button>
@@ -148,7 +144,7 @@
 
 <app-confirm-cancel-modal
   [open]="cancelModalOpen()"
-  entityLabel="la réservation"
+  entityLabel="l'attribution"
   [entityName]="cancelTarget() ? resourceLabel(cancelTarget()!) : ''"
   [entityId]="cancelTarget()?._id ?? null"
   [confirming]="cancelTarget() ? rowCancelLoading()[cancelTarget()!._id] : false"

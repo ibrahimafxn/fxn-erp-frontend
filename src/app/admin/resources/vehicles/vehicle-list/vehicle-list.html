@@ -6,9 +6,11 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
-      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
-      @if (!isDepotManager()) {
+      @if (!isReadOnly()) {
+        <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
+        <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
+      }
+      @if (!isDepotManager() && !isReadOnly()) {
         <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau</button>
       }
     </div>
@@ -18,7 +20,7 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
       <input type="text" formControlName="q" placeholder="Rechercher (plaque, marque, modèle)…" />
 
-      @if (!isDepotManager()) {
+      @if (!isDepotManager() && !isReadOnly()) {
         <select formControlName="depot">
           <option value="">Tous les dépôts</option>
           @for (d of depots(); track d._id) {
@@ -72,23 +74,23 @@
         <tbody>
           @for (v of items(); track trackById($index, v)) {
             <tr class="row" (click)="openDetail(v)">
-              <td class="main">
+              <td class="main" data-label="Véhicule">
                 <div class="name">{{ title(v) }}</div>
                 <div class="sub">{{ v.year || '—' }}</div>
               </td>
 
-              <td>{{ plate(v) }}</td>
-              <td>{{ v.state || '—' }}</td>
-              <td>{{ assignedLabel(v) }}</td>
+              <td data-label="Plaque">{{ plate(v) }}</td>
+              <td data-label="État">{{ v.state || '—' }}</td>
+              <td data-label="Assignation">{{ assignedLabel(v) }}</td>
 
-              <td>
+              <td data-label="Création">
                 @if (createdAtValue(v)) { {{ createdAtValue(v) | date:'short' }} } @else { — }
               </td>
 
               @if (canDeclareBreakdown()) {
-                <td class="actions" (click)="$event.stopPropagation()">
+                <td class="actions" data-label="Actions" (click)="$event.stopPropagation()">
                   <div class="actions-row">
-                    <button class="btn-outline" type="button" (click)="declareBreakdown(v)">Panne</button>
+                    <button class="btn-outline warning" type="button" (click)="declareBreakdown(v)">Panne</button>
 
                     @if (!isDepotManager()) {
                       <button class="btn-outline edit" type="button" (click)="edit(v)"><i class="bi bi-pencil"></i> Modifier</button>
@@ -99,7 +101,7 @@
                         [disabled]="deletingId() === v._id"
                         (click)="openDeleteModal(v)"
                       ><i class="fa-solid fa-trash"></i> 
-                        @if (deletingId() === v._id) { Suppression… } @else { Supprimer }
+                        @if (deletingId() === v._id) { Suppression… }
                       </button>
                     }
                   </div>

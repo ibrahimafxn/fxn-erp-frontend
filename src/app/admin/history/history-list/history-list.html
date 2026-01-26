@@ -206,7 +206,7 @@
               <td class="actions-cell" data-label="Action">
                 <div class="row-actions">
                   <button
-                    class="btn-outline"
+                    class="btn-outline warning"
                     type="button"
                     (click)="openCancelModal(m)"
                     [disabled]="!canCancel(m) || cancelLoading()[m._id]"><i class="bi bi-x"></i> Annuler</button>
@@ -234,6 +234,7 @@
   [entityName]="cancelTarget() ? resourceLabel(cancelTarget()!) : ''"
   [entityId]="cancelTarget()?._id ?? null"
   [confirming]="cancelTarget() ? cancelLoading()[cancelTarget()!._id] : false"
+  [showReason]="false"
   (cancel)="closeCancelModal()"
   (confirm)="confirmCancel($event)"
 ></app-confirm-cancel-modal>

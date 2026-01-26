@@ -29,6 +29,38 @@ export class OrdersPage {
   readonly deletingId = signal<string | null>(null);
   readonly pendingDeleteId = signal<string | null>(null);
   readonly pendingDeleteName = signal<string>('');
+  readonly importLoading = signal(false);
+  readonly importError = signal<string | null>(null);
+  readonly importResult = signal<string | null>(null);
+  readonly importClient = signal('');
+  readonly importPreview = signal<{
+    reference: string;
+    client: string;
+    date: string;
+    status: string;
+    amount: number;
+    notes: string;
+    lines: Array<{
+      resourceId: string | null;
+      resourceType: 'MATERIAL' | 'CONSUMABLE' | null;
+      name: string;
+      designation?: string;
+      description?: string;
+      quantity: number;
+      unitPrice: number;
+      total: number;
+      totalHt?: number;
+      totalTva?: number;
+      totalTtc?: number;
+    }>;
+    errors: Array<{ row: number; message: string }>;
+  } | null>(null);
+  readonly importModalOpen = signal(false);
+  readonly importTotalTva = computed(() => {
+    const preview = this.importPreview();
+    if (!preview) return 0;
+    return preview.lines.reduce((sum, line) => sum + Number(line.totalTva ?? 0), 0);
+  });
 
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -87,6 +119,80 @@ export class OrdersPage {
         this.error.set(apiMsg || err.message || 'Erreur suppression commande');
         this.deletingId.set(null);
         this.closeDeleteModal();
+      }
+    });
+  }
+
+  importPdf(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.[0];
+    if (!file) return;
+    this.importLoading.set(true);
+    this.importError.set(null);
+    this.importPreview.set(null);
+    this.orders.importPdfPreview(file, this.importClient()).subscribe({
+      next: (res) => {
+        this.importLoading.set(false);
+        this.importPreview.set(res.data || null);
+        this.importModalOpen.set(true);
+        this.importClient.set('');
+        if (input) input.value = '';
+      },
+      error: (err: HttpErrorResponse) => {
+        const apiMsg =
+          typeof err.error === 'object' && err.error !== null && 'message' in err.error
+            ? String((err.error as { message?: unknown }).message ?? '')
+            : '';
+        this.importLoading.set(false);
+        this.importError.set(apiMsg || err.message || 'Erreur import PDF');
+        if (input) input.value = '';
+      }
+    });
+  }
+
+  closeImportModal(): void {
+    this.importModalOpen.set(false);
+  }
+
+  confirmImport(): void {
+    const preview = this.importPreview();
+    if (!preview) return;
+    const validLines = preview.lines
+      .filter((line) => line.resourceId && line.resourceType)
+      .map((line) => ({
+        resourceId: line.resourceId as string,
+        resourceType: line.resourceType as 'MATERIAL' | 'CONSUMABLE',
+        name: line.name,
+        description: line.description || '',
+        quantity: Number(line.quantity || 0),
+        unitPrice: Number(line.unitPrice || 0),
+        total: Number(line.total || 0)
+      }))
+      .filter((line) => line.quantity > 0);
+
+    this.importLoading.set(true);
+    this.importError.set(null);
+    this.orders.confirmImportPdf({
+      reference: preview.reference,
+      client: preview.client,
+      date: preview.date,
+      notes: preview.notes,
+      amount: preview.amount,
+      lines: validLines
+    }).subscribe({
+      next: () => {
+        this.importLoading.set(false);
+        this.importModalOpen.set(false);
+        this.importPreview.set(null);
+        this.refresh();
+      },
+      error: (err: HttpErrorResponse) => {
+        const apiMsg =
+          typeof err.error === 'object' && err.error !== null && 'message' in err.error
+            ? String((err.error as { message?: unknown }).message ?? '')
+            : '';
+        this.importLoading.set(false);
+        this.importError.set(apiMsg || err.message || 'Erreur import PDF');
       }
     });
   }

@@ -134,7 +134,7 @@ export class ReservationsList {
       fromDate: dates.fromDate,
       toDate: dates.toDate
     }).subscribe({
-      next: (blob) => downloadBlob(blob, `reservations-${new Date().toISOString().slice(0, 10)}.csv`),
+      next: (blob) => downloadBlob(blob, `attributions-consommables-${new Date().toISOString().slice(0, 10)}.csv`),
       error: () => {}
     });
   }
@@ -153,7 +153,7 @@ export class ReservationsList {
       fromDate: dates.fromDate,
       toDate: dates.toDate
     }).subscribe({
-      next: (blob) => downloadBlob(blob, `reservations-${new Date().toISOString().slice(0, 10)}.pdf`),
+      next: (blob) => downloadBlob(blob, `attributions-consommables-${new Date().toISOString().slice(0, 10)}.pdf`),
       error: () => {}
     });
   }
@@ -268,7 +268,7 @@ export class ReservationsList {
 
   releaseFromRow(m: Movement): void {
     if (!this.canRelease(m)) return;
-    const ok = window.confirm('Confirmer la reprise de cette réservation ?');
+    const ok = window.confirm("Confirmer la reprise de cette attribution ?");
     if (!ok) return;
 
     this.setRowActionLoading(m._id, true);

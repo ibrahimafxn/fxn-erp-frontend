@@ -38,6 +38,20 @@
 
             <div class="menu-grid">
               <div class="menu-col">
+                @if (isTechnician()) {
+                  <div class="menu-group admin-group">
+                    <div class="section-label">Technicien</div>
+                    <div class="section-items">
+                      <button mat-button (click)="goTechMaterials()"><span class="material-icons notranslate">handyman</span>Matériels</button>
+                      <button mat-button (click)="goTechConsumables()"><span class="material-icons notranslate">inventory_2</span>Consommables</button>
+                      <button mat-button (click)="goTechVehicles()"><span class="material-icons notranslate">directions_car</span>Véhicules</button>
+                      <button mat-button (click)="goTechReports()"><span class="material-icons notranslate">event_note</span>Rapport quotidien</button>
+                      <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span>Historique</button>
+                    </div>
+                  </div>
+                }
+
+              @if (!isTechnician()) {
                 <div class="menu-group admin-group">
                   <div class="section-label">Administration</div>
                   <div class="section-items">
@@ -59,11 +73,16 @@
                     @if (canViewInterventions()) {
                       <button mat-button (click)="goInterventions()"><span class="material-icons notranslate">attach_money</span>Calcul d'attachement</button>
                     }
+                    @if (canViewTechnicianActivity()) {
+                      <button mat-button (click)="goTechnicianActivity()"><span class="material-icons notranslate">history</span>Prestations techniciens</button>
+                    }
                   </div>
                 </div>
-              </div>
+              }
+            </div>
 
-              <div class="menu-col">
+            <div class="menu-col">
+              @if (!isTechnician()) {
                 <div class="menu-group stock-group">
                   <div class="section-label">Stock</div>
                   <div class="section-items">
@@ -84,7 +103,7 @@
                     }
                     @if (canViewMovements()) {
                       <div class="menu-section">
-                        <div class="section-label">Réservations</div>
+                        <div class="section-label">Attributions</div>
                         <div class="section-items">
                           <button mat-button class="submenu" (click)="goReservations()"><span class="material-icons notranslate">widgets</span>Consommables</button>
                           @if (canViewMaterialReservations()) {
@@ -101,9 +120,11 @@
                   <div class="section-items">
                     @if (canManageAccess()) {
                       <button mat-button (click)="goRevenue()"><span class="material-icons notranslate">insights</span>Chiffre d'affaires</button>
+                      <button mat-button (click)="goBpu()"><span class="material-icons notranslate">price_check</span>BPU prestations</button>
                     }
                   </div>
                 </div>
+              }
 
                 <div class="menu-group account-group">
                   <div class="section-label">Compte</div>

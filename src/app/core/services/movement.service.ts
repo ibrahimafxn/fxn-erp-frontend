@@ -95,6 +95,33 @@ export class MovementService {
     return this.listMovements(force, filter);
   }
 
+  listRaw(filter?: Parameters<MovementService['listMovements']>[1]): Observable<MovementListResult> {
+    let params = new HttpParams();
+    if (filter?.resourceType) params = params.set('resourceType', filter.resourceType);
+    if (filter?.resourceId) params = params.set('resourceId', filter.resourceId);
+    if (filter?.resourceName) params = params.set('resourceName', filter.resourceName);
+    if (filter?.action) params = params.set('action', filter.action);
+    if (filter?.reason) params = params.set('reason', filter.reason);
+    if (filter?.status) params = params.set('status', filter.status);
+    if (filter?.depotId) params = params.set('depotId', filter.depotId);
+    if (filter?.fromType) params = params.set('fromType', filter.fromType);
+    if (filter?.fromId) params = params.set('fromId', filter.fromId);
+    if (filter?.toType) params = params.set('toType', filter.toType);
+    if (filter?.toId) params = params.set('toId', filter.toId);
+    if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
+    if (filter?.toDate) params = params.set('toDate', filter.toDate);
+    if (filter?.page) params = params.set('page', String(filter.page));
+    if (filter?.limit) params = params.set('limit', String(filter.limit));
+
+    return this.http.get<ApiResponse<MovementListResult>>(this.baseUrl, { params }).pipe(
+      map(resp => {
+        if (!resp?.success) throw resp;
+        return resp.data;
+      }),
+      catchError(err => this.handleError(err))
+    );
+  }
+
   exportCsv(filter?: Parameters<MovementService['listMovements']>[1]): Observable<Blob> {
     let params = new HttpParams();
     if (filter?.resourceType) params = params.set('resourceType', filter.resourceType);

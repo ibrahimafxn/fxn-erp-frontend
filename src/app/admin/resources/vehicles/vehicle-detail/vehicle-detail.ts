@@ -108,6 +108,7 @@ export class VehicleDetail extends DetailBack {
 
   readonly statusLabel = computed(() => (this.isAssigned() ? 'Assigné' : 'Disponible'));
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
+  readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
   readonly canDeclareBreakdown = computed(() => {
     const role = this.auth.getUserRole();
     return role === Role.ADMIN || role === Role.DIRIGEANT || role === Role.GESTION_DEPOT;
@@ -116,7 +117,9 @@ export class VehicleDetail extends DetailBack {
   constructor() {
     super();
     this.loadDepots();
-    this.loadTechnicians();
+    if (!this.isReadOnly()) {
+      this.loadTechnicians();
+    }
     this.load();
   }
 
@@ -539,20 +542,28 @@ export class VehicleDetail extends DetailBack {
   }
 
   edit(): void {
-    if (this.isDepotManager()) return;
+    if (this.isDepotManager() || this.isReadOnly()) return;
     if (!this.id) return;
     this.router.navigate(['/admin/resources/vehicles', this.id, 'edit']).then();
   }
 
   openBreakdowns(): void {
     if (!this.id) return;
-    const base = this.isDepotManager() ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    const base = this.isDepotManager()
+      ? '/depot/resources/vehicles'
+      : this.isReadOnly()
+        ? '/technician/resources/vehicles'
+        : '/admin/resources/vehicles';
     this.router.navigate([base, this.id, 'breakdowns']).then();
   }
 
   declareBreakdown(): void {
     if (!this.id || !this.canDeclareBreakdown()) return;
-    const base = this.isDepotManager() ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    const base = this.isDepotManager()
+      ? '/depot/resources/vehicles'
+      : this.isReadOnly()
+        ? '/technician/resources/vehicles'
+        : '/admin/resources/vehicles';
     this.router.navigate([base, this.id, 'breakdown']).then();
   }
 }

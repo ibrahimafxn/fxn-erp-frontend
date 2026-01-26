@@ -1,0 +1,55 @@
+<section class="technician-dashboard">
+  <header class="page-header">
+    <div>
+      <h1>Tableau de bord technicien</h1>
+      <p class="subtitle">Accès rapide au stock, aux véhicules et à votre rapport quotidien.</p>
+    </div>
+  </header>
+
+  <div class="action-grid">
+    <article class="action-card" (click)="goReports()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">event_note</span>
+        <span class="action-tag">Rapport</span>
+      </div>
+      <div class="action-title">Saisir le rapport du jour</div>
+      <div class="action-subtitle">Nombre d'interventions + commentaire.</div>
+    </article>
+
+    <article class="action-card" (click)="goStock()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">handyman</span>
+        <span class="action-tag">Matériels</span>
+      </div>
+      <div class="action-title">Consulter les matériels</div>
+      <div class="action-subtitle">Inventaire du dépôt et références disponibles.</div>
+    </article>
+
+    <article class="action-card" (click)="goConsumables()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">inventory_2</span>
+        <span class="action-tag">Consommables</span>
+      </div>
+      <div class="action-title">Consulter les consommables</div>
+      <div class="action-subtitle">Quantités disponibles et seuils minimum.</div>
+    </article>
+
+    <article class="action-card" (click)="goVehicles()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">directions_car</span>
+        <span class="action-tag">Véhicules</span>
+      </div>
+      <div class="action-title">Véhicules et incidents</div>
+      <div class="action-subtitle">Détails des véhicules et pannes en cours.</div>
+    </article>
+
+    <article class="action-card" (click)="goHistory()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">history</span>
+        <span class="action-tag">Historique</span>
+      </div>
+      <div class="action-title">Historique des attributions</div>
+      <div class="action-subtitle">Consulter les attributions et reprises.</div>
+    </article>
+  </div>
+</section>

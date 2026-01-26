@@ -11,6 +11,7 @@ export interface Consumable {
   idConsumable?: string;
   ref?: string;
   name: string;
+  description?: string;
   unit?: string;             // ex: 'pcs', 'box', 'meter'
   quantity?: number;
   minQuantity?: number; // quantité déjà réservée/attribuée

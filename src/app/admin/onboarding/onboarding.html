@@ -1,4 +1,4 @@
-<section class="onboarding">
+<section class="onboarding" [attr.data-step]="activeStep()">
   <header class="page-header">
     <div>
       <h1>Onboarding</h1>
@@ -12,6 +12,7 @@
         <button
           type="button"
           class="step"
+          [attr.data-step]="s.id"
           [class.active]="activeStep() === s.id"
           (click)="setStep(s.id)"
         >

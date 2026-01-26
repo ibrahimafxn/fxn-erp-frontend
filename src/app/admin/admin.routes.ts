@@ -98,6 +98,18 @@ export const ADMIN_ROUTES: Routes = [
       import('./interventions/interventions-dashboard/interventions-dashboard').then(m => m.InterventionsDashboard)
   },
   {
+    path: 'bpu',
+    loadComponent: () => import('./bpu/bpu-type-list/bpu-type-list').then(m => m.BpuTypeList)
+  },
+  {
+    path: 'bpu/new',
+    loadComponent: () => import('./bpu/bpu-type-form/bpu-type-form').then(m => m.BpuTypeForm)
+  },
+  {
+    path: 'bpu/:id/edit',
+    loadComponent: () => import('./bpu/bpu-type-form/bpu-type-form').then(m => m.BpuTypeForm)
+  },
+  {
     path: 'revenue',
     loadComponent: () =>
       import('./revenue/revenue-dashboard/revenue-dashboard').then(m => m.RevenueDashboard)
@@ -232,6 +244,11 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'hr',
     loadComponent: () => import('../modules/hr/hr-list/hr-list').then(m => m.HrList)
+  },
+  {
+    path: 'technicians/activity',
+    loadComponent: () =>
+      import('./technicians/technician-activity/technician-activity').then(m => m.TechnicianActivity)
   }
 
   // Optionnel (on fera après)

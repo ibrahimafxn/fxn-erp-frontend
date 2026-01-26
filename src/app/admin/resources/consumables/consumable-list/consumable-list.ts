@@ -18,6 +18,8 @@ import { Role } from '../../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../../core/utils/text-format';
 import { downloadBlob } from '../../../../core/utils/download';
 
+type SortKey = 'name' | 'available' | 'depot' | 'updatedAt' | 'unit';
+
 @Component({
   standalone: true,
   selector: 'app-consumable-list',
@@ -61,6 +63,36 @@ export class ConsumableList extends DetailBack {
 
   // Derived data
   readonly items = computed(() => this.result()?.items ?? []);
+  readonly sortKey = signal<SortKey>('name');
+  readonly sortDir = signal<'asc' | 'desc'>('asc');
+  readonly sortedItems = computed(() => {
+    const key = this.sortKey();
+    const dir = this.sortDir();
+    const items = [...this.items()];
+    const factor = dir === 'asc' ? 1 : -1;
+
+    items.sort((a, b) => {
+      switch (key) {
+        case 'name':
+          return factor * this.consumableName(a).localeCompare(this.consumableName(b));
+        case 'available':
+          return factor * (this.availableQty(a) - this.availableQty(b));
+        case 'depot':
+          return factor * this.depotLabel(a).localeCompare(this.depotLabel(b));
+        case 'unit':
+          return factor * String(a.unit || '').localeCompare(String(b.unit || ''));
+        case 'updatedAt': {
+          const aTime = new Date(this.updatedAtValue(a) || 0).getTime();
+          const bTime = new Date(this.updatedAtValue(b) || 0).getTime();
+          return factor * (aTime - bTime);
+        }
+        default:
+          return 0;
+      }
+    });
+
+    return items;
+  });
   readonly total = computed(() => this.result()?.total ?? 0);
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -68,6 +100,7 @@ export class ConsumableList extends DetailBack {
     return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
   });
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
+  readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
 
   constructor() {
     super();
@@ -127,8 +160,13 @@ export class ConsumableList extends DetailBack {
   }
 
   openDetail(c: Consumable): void {
-    const base = this.isDepotManager() ? '/depot/resources/consumables' : '/admin/resources/consumables';
-    const tail = this.isDepotManager() ? ['detail'] : [];
+    if (this.isReadOnly()) return;
+    const base = this.isDepotManager()
+      ? '/depot/resources/consumables'
+      : this.isReadOnly()
+        ? '/technician/resources/consumables'
+        : '/admin/resources/consumables';
+    const tail = this.isDepotManager() || this.isReadOnly() ? ['detail'] : [];
     this.router.navigate([base, c._id, ...tail]).then();
   }
 
@@ -198,6 +236,28 @@ export class ConsumableList extends DetailBack {
     });
   }
 
+  setSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+    this.sortKey.set(key);
+    this.sortDir.set('asc');
+  }
+
+  setUpdatedSort(event: Event): void {
+    const el = event.target instanceof HTMLSelectElement ? event.target : null;
+    if (!el) return;
+    const dir = el.value === 'desc' ? 'desc' : 'asc';
+    this.sortKey.set('updatedAt');
+    this.sortDir.set(dir);
+  }
+
+  sortIndicator(key: SortKey): string {
+    if (this.sortKey() !== key) return '';
+    return this.sortDir() === 'asc' ? '^' : 'v';
+  }
+
   errorMessage(): string {
     const err: HttpErrorResponse | null = this.error();
     if (!err) return '';
@@ -210,6 +270,10 @@ export class ConsumableList extends DetailBack {
 
   createdAtValue(c: Consumable): string | Date | null {
     return c.createdAt ?? null;
+  }
+
+  updatedAtValue(c: Consumable): string | Date | null {
+    return c.updatedAt ?? null;
   }
 
   /** Label dépôt (si idDepot est peuplé côté backend -> objet) */
@@ -234,7 +298,7 @@ export class ConsumableList extends DetailBack {
   }
 
   private loadDepots(): void {
-    if (this.isDepotManager()) return;
+    if (this.isDepotManager() || this.isReadOnly()) return;
     this.depotsLoading.set(true);
 
     this.depotService.refreshDepots(true, { page: 1, limit: 200 }).subscribe({

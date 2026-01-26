@@ -73,18 +73,29 @@
 }
 
 .table.card { padding: 0; overflow: hidden; }
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
 thead th {
   text-align: left;
   font-size: .9rem;
   opacity: .8;
   padding: .85rem .9rem;
   border-bottom: 1px solid rgba(255,255,255,.10);
+  min-width: 0;
 }
 tbody td {
   padding: .85rem .9rem;
   border-bottom: 1px solid rgba(255,255,255,.06);
   vertical-align: middle;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1300px) {
+  thead th,
+  tbody td {
+    padding: .6rem .65rem;
+    font-size: .88rem;
+  }
 }
 
 td .btn-outline + .btn-outline {
@@ -95,7 +106,20 @@ tbody td:last-child {
   display: flex;
   flex-direction: column;
   gap: .35rem;
-  align-items: flex-start;
+  align-items: stretch;
+}
+
+tbody td:last-child .btn-outline {
+  padding: .45rem .7rem;
+  font-size: .82rem;
+  white-space: nowrap;
+  width: 100%;
+  justify-content: center;
+}
+
+th:last-child,
+td:last-child {
+  width: 130px;
 }
 
 .pill {
@@ -111,6 +135,59 @@ tbody td:last-child {
 .pill.danger { background: rgba(255,0,60,.12); border-color: rgba(255,0,60,.22); }
 
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-.note { max-width: 320px; word-break: break-word; }
+.note { max-width: 240px; word-break: break-word; }
 
 .pager { display:flex; justify-content: space-between; gap:.75rem; flex-wrap: wrap; }
+
+@media (max-width: 900px) {
+  .table.card {
+    overflow-x: auto;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  td,
+  th {
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: .75rem .9rem;
+  }
+
+  tbody td {
+    padding: .35rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .75rem;
+  }
+
+  tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    opacity: .75;
+  }
+
+  tbody td:last-child {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  tbody td:last-child::before {
+    margin-bottom: .35rem;
+  }
+
+  tbody td:last-child button {
+    width: 100%;
+    justify-content: center;
+  }
+}

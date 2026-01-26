@@ -1,0 +1,116 @@
+<section class="technician-activity">
+  <header class="page-header">
+    <div>
+      <h1>Historique technicien</h1>
+      <p class="subtitle">Attributions et interventions sur la période choisie.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="refreshAll()"><i class="bi bi-arrow-clockwise"></i> Rafraîchir</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+      <label>
+        Technicien
+        <select formControlName="technicianId">
+          <option value="">Tous</option>
+          @for (u of users(); track u._id) {
+            @if (u.role === 'TECHNICIEN') {
+              <option [value]="u._id">{{ u.firstName }} {{ u.lastName }}</option>
+            }
+          }
+        </select>
+      </label>
+
+      @if (!isDepotManager()) {
+        <label>
+          Dépôt
+          <select formControlName="depot">
+            <option value="">Tous</option>
+            @for (d of depots(); track d._id) {
+              <option [value]="d._id">{{ d.name }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      <label>
+        Du
+        <input type="date" formControlName="fromDate" />
+      </label>
+
+      <label>
+        Au
+        <input type="date" formControlName="toDate" />
+      </label>
+
+      <div class="actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Filtrer</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
+    </form>
+  </section>
+
+  @if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  }
+
+  <section class="grid">
+    <article class="card list-card full">
+      <div class="list-header">
+        <h2>Interventions saisies</h2>
+        <div class="meta">Page {{ interventionPage() }} / {{ interventionPageCount() }}</div>
+      </div>
+
+      @if (interventionsLoading()) {
+        <div class="state loading">Chargement…</div>
+      } @else if (interventions().length === 0) {
+        <div class="state empty">Aucune intervention saisie.</div>
+      } @else {
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Technicien</th>
+                <th>Dépôt</th>
+                <th>Prestations</th>
+                <th>Commentaire</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (it of interventions(); track it._id) {
+                <tr>
+                  <td>{{ interventionDateLabel(it) }}</td>
+                  <td>{{ technicianName(it) }}</td>
+                  <td>{{ depotName(it) }}</td>
+                  <td class="prestations-cell">
+                    @if (prestationsSummary(it).length) {
+                      <div class="prestations-summary">
+                        @for (item of prestationsSummary(it); track item.label) {
+                          <span class="prestations-pill">
+                            <span class="qty">{{ item.value }}</span>
+                            <span>{{ item.label }}</span>
+                          </span>
+                        }
+                      </div>
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td class="note">{{ it.comment || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="pager">
+          <button class="btn-outline" type="button" (click)="prevInterventions()" [disabled]="!canPrevInterventions()">← Précédent</button>
+          <button class="btn-outline" type="button" (click)="nextInterventions()" [disabled]="!canNextInterventions()">Suivant →</button>
+        </footer>
+      }
+    </article>
+  </section>
+</section>

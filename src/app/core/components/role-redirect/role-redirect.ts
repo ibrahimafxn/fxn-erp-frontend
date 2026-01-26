@@ -25,7 +25,7 @@ export class RoleRedirect {
         break;
 
       case Role.TECHNICIEN:
-        this.router.navigate(['/unauthorized']);
+        this.router.navigate(['/technician']);
         break;
 
       default:

@@ -40,16 +40,36 @@
   border: 1px solid var(--fxn-border);
   background: rgba(10, 16, 24, 0.45);
   border-radius: var(--fxn-radius-md);
-  padding: .75rem;
+  padding: .75rem .75rem .75rem 1rem;
   color: inherit;
   display: grid;
   gap: .25rem;
   cursor: pointer;
+  position: relative;
   transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease, background .2s ease;
 }
 
+.step::before {
+  content: '';
+  position: absolute;
+  left: .4rem;
+  top: .5rem;
+  bottom: .5rem;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--step-own, var(--fxn-border));
+  opacity: .75;
+}
+
+.step[data-step="depots"] { --step-own: #3b82f6; }
+.step[data-step="users"] { --step-own: #22c55e; }
+.step[data-step="materials"] { --step-own: #f59e0b; }
+.step[data-step="consumables"] { --step-own: #e11d48; }
+.step[data-step="vehicles"] { --step-own: #8b5cf6; }
+.step[data-step="orders"] { --step-own: #14b8a6; }
+
 .step.active {
-  border-color: var(--fxn-primary);
+  border-color: var(--step-own, var(--fxn-primary));
   transform: translateY(-1px);
   background: linear-gradient(135deg, rgba(8, 14, 22, 0.85), rgba(18, 26, 40, 0.65));
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
@@ -106,6 +126,23 @@
   border-color: var(--fxn-primary);
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
   transform: translateY(-1px);
+}
+
+.onboarding[data-step="depots"] { --step-accent: #3b82f6; --step-accent-soft: rgba(59, 130, 246, 0.12); }
+.onboarding[data-step="users"] { --step-accent: #22c55e; --step-accent-soft: rgba(34, 197, 94, 0.12); }
+.onboarding[data-step="materials"] { --step-accent: #f59e0b; --step-accent-soft: rgba(245, 158, 11, 0.12); }
+.onboarding[data-step="consumables"] { --step-accent: #e11d48; --step-accent-soft: rgba(225, 29, 72, 0.12); }
+.onboarding[data-step="vehicles"] { --step-accent: #8b5cf6; --step-accent-soft: rgba(139, 92, 246, 0.12); }
+.onboarding[data-step="orders"] { --step-accent: #14b8a6; --step-accent-soft: rgba(20, 184, 166, 0.12); }
+
+.onboarding[data-step] .upload-card {
+  border-color: var(--step-accent, var(--fxn-border-strong));
+  box-shadow: 0 0 0 1px var(--step-accent-soft);
+}
+
+.onboarding[data-step] .upload-card:hover {
+  border-color: var(--step-accent, var(--fxn-primary));
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
 }
 
 .file-label {

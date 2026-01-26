@@ -54,6 +54,7 @@ export class MaterialDetail extends DetailBack {
   readonly canPrevHistory = computed(() => this.historyPage() > 1);
   readonly canNextHistory = computed(() => this.historyPage() < this.historyPageCount());
   readonly isDepotManager = computed(() => this.authSvc.getUserRole() === Role.GESTION_DEPOT);
+  readonly isReadOnly = computed(() => this.authSvc.getUserRole() === Role.TECHNICIEN);
 
   readonly deleteModalOpen = signal(false);
   readonly pendingDeleteId = signal<string | null>(null);
@@ -111,7 +112,9 @@ export class MaterialDetail extends DetailBack {
             error: () => this.depot.set(null)
           });
         }
-        this.loadTechnicians(this.depotIdValue(m));
+        if (this.canReserve()) {
+          this.loadTechnicians(this.depotIdValue(m));
+        }
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -176,7 +179,11 @@ export class MaterialDetail extends DetailBack {
     this.svc.remove(id).subscribe({
       next: () => {
         this.deleting.set(false);
-        const fallback = this.isDepotManager() ? '/depot/resources/materials' : '/admin/resources/materials';
+        const fallback = this.isDepotManager()
+          ? '/depot/resources/materials'
+          : this.isReadOnly()
+            ? '/technician/resources/materials'
+            : '/admin/resources/materials';
         this.back(fallback);
       },
       error: () => {
@@ -285,6 +292,7 @@ export class MaterialDetail extends DetailBack {
     return formatResourceName(this.material()?.name ?? '') || '—';
   }
 
+
   categoryLabel(): string {
     const c = this.material()?.category;
     if (!c) return '—';
@@ -320,7 +328,7 @@ export class MaterialDetail extends DetailBack {
       return;
     }
     if (available <= 0 || qty > available) {
-      this.reserveError.set('Stock insuffisant pour cette réservation.');
+      this.reserveError.set('Stock insuffisant pour cette attribution.');
       return;
     }
 
@@ -344,14 +352,14 @@ export class MaterialDetail extends DetailBack {
     this.svc.reserve(payload).subscribe({
       next: () => {
         this.reserveLoading.set(false);
-        this.reserveSuccess.set('Réservation effectuée.');
+        this.reserveSuccess.set('Attribution effectuée.');
         this.reserveForm.reset({ toUser: '', qty: 1, note: '' });
         this.load();
         this.loadHistory(true);
       },
       error: (err: HttpErrorResponse) => {
         this.reserveLoading.set(false);
-        this.reserveError.set(this.apiError(err, 'Erreur réservation matériel'));
+        this.reserveError.set(this.apiError(err, 'Erreur attribution matériel'));
       }
     });
   }

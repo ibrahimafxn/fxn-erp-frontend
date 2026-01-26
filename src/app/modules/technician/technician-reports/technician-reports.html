@@ -1,0 +1,109 @@
+<section class="technician-reports">
+  <header class="page-header">
+    <div>
+      <h1>Rapport quotidien</h1>
+      <p class="subtitle">Saisir le nombre d'interventions et un commentaire de fin de journée.</p>
+    </div>
+  </header>
+
+  <section class="card form-card">
+    <form class="report-form" [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Date
+        <input type="date" formControlName="date" />
+      </label>
+
+      <div class="full prestations" formGroupName="prestations">
+        <div class="prestations-title">Prestations</div>
+        <div class="prestations-list">
+          @for (item of prestationOptions; track item.key) {
+            <label class="prestation-item">
+              <input type="number" min="0" [formControlName]="item.key" />
+              <span class="prestation-pill" [ngClass]="item.className">{{ item.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <label class="full">
+        Commentaire
+        <textarea rows="3" formControlName="comment" placeholder="Ex: 12 interventions, 2 pannes, zone nord."></textarea>
+      </label>
+
+      <div class="actions">
+        <button class="btn-primary" type="submit" [disabled]="loading()">Enregistrer</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card list-card">
+    <div class="list-header">
+      <h2>Historique</h2>
+      <div class="meta">Page {{ page() }} / {{ pageCount() }}</div>
+    </div>
+
+    @if (loading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (error()) {
+      <div class="state error">Erreur : {{ error() }}</div>
+    } @else if (items().length === 0) {
+      <div class="state empty">Aucun rapport disponible.</div>
+    } @else {
+      <div class="table">
+        <table>
+          <thead>
+          <tr>
+            <th>Date</th>
+            <th>Prestations</th>
+            <th>Commentaire</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (report of items(); track report._id) {
+              <tr>
+                <td data-label="Date">{{ report.reportDate | date:'shortDate' }}</td>
+                <td class="prestations-cell" data-label="Prestations">
+                  @if (prestationsSummary(report).length) {
+                    <div class="prestations-summary">
+                      @for (item of prestationsSummary(report); track item.label) {
+                        <div class="prestations-pill" [ngClass]="item.className" [ngStyle]="prestationStyle(item.key)">
+                          <span class="qty">{{ item.value }}</span>
+                          <span>{{ item.label }}</span>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="note" data-label="Commentaire" [class.is-empty]="!report.comment">
+                  @if (report.comment) { {{ report.comment }} }
+                </td>
+                <td class="actions" data-label="Actions">
+                  @if (isToday(report)) {
+                    <button class="btn-outline primary-outline" type="button" (click)="editToday(report)"><i class="bi bi-pencil"></i> Modifier</button>
+                  }
+                  <button class="btn-outline delete" type="button" (click)="openDeleteModal(report)"><i class="fa-solid fa-trash"></i> Supprimer</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <footer class="pager">
+        <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">← Précédent</button>
+        <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">Suivant →</button>
+      </footer>
+    }
+  </section>
+</section>
+
+<app-confirm-delete-modal
+  [open]="deleteModalOpen()"
+  entityLabel="rapport"
+  [entityName]="pendingDelete()?.reportDate || ''"
+  [confirming]="!!deletingId()"
+  (cancel)="closeDeleteModal()"
+  (confirm)="confirmDelete()"
+></app-confirm-delete-modal>

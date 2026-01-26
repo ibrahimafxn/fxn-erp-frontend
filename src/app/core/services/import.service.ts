@@ -44,4 +44,8 @@ export class ImportService {
   importVehicles(csv: string) {
     return this.postCsv('vehicles', csv);
   }
+
+  importOrders(csv: string) {
+    return this.postCsv('orders', csv);
+  }
 }

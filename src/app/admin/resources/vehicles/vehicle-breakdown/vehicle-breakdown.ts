@@ -135,7 +135,11 @@ export class VehicleBreakdown extends DetailBack {
 
   private navigateAfterSave(): void {
     const role = this.auth.getUserRole();
-    const base = role === Role.GESTION_DEPOT ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    const base = role === Role.GESTION_DEPOT
+      ? '/depot/resources/vehicles'
+      : role === Role.TECHNICIEN
+        ? '/technician/resources/vehicles'
+        : '/admin/resources/vehicles';
     this.router.navigate([base, this.id, 'detail']).then();
   }
 

@@ -37,6 +37,8 @@ export class Login {
   success = signal<string | null>(null);
   step = signal<'login' | 'password'>('login');
   mfaRequired = signal(false);
+  showPassword = signal(false);
+  showRememberDevice = signal(false);
   private pendingEmail = signal<string | null>(null);
   private pendingPassword = signal<string | null>(null);
 
@@ -150,18 +152,32 @@ export class Login {
     this.form.patchValue({ mfaCode: '' });
   }
 
+  togglePassword(): void {
+    this.showPassword.update((v) => !v);
+  }
+
   private redirectAfterLogin(): void {
     const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
     const role = this.auth.getUserRole();
 
-    if (role === 'GESTION_DEPOT') {
-      this.router.navigate(['/depot']);
-    } else if (role === 'TECHNICIEN') {
-      this.router.navigate(['/unauthorized']);
-    } else if (role === 'ADMIN' || role === 'DIRIGEANT') {
-      this.router.navigate(['/admin/dashboard']);
-    } else {
-      this.router.navigateByUrl(returnUrl);
-    }
+    const defaults: Record<string, string> = {
+      GESTION_DEPOT: '/depot',
+      TECHNICIEN: '/technician',
+      ADMIN: '/admin/dashboard',
+      DIRIGEANT: '/admin/dashboard'
+    };
+
+    const allowedPrefixes: Record<string, string[]> = {
+      GESTION_DEPOT: ['/depot'],
+      TECHNICIEN: ['/technician'],
+      ADMIN: ['/admin'],
+      DIRIGEANT: ['/admin']
+    };
+
+    const safeDefault = defaults[role || ''] || '/';
+    const prefixes = allowedPrefixes[role || ''] || [];
+    const isReturnAllowed = prefixes.some((prefix) => returnUrl.startsWith(prefix));
+
+    this.router.navigateByUrl(isReturnAllowed ? returnUrl : safeDefault);
   }
 }

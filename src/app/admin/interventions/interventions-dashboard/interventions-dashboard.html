@@ -122,9 +122,9 @@
           <span class="value">{{ (compareTotals()?.delta || 0) | number:'1.0-0' }} €</span>
         </div>
         <div class="invoice-tags invoice-tags-grid">
-          @for (inv of displayedInvoices(); track inv.attachmentRef || inv.filename) {
+          @for (inv of displayedInvoices(); track inv.attachmentRef || inv.filename; let i = $index) {
             <span class="pill invoice-pill">
-              <span class="code">{{ inv.attachmentRef || inv.filename }}</span>
+              <span class="code" [attr.title]="inv.attachmentRef || inv.filename">Facture {{ i + 1 }}</span>
               <span class="amount">{{ inv.totalHt | number:'1.0-0' }} €</span>
             </span>
           }
@@ -400,22 +400,22 @@
         <h2><span class="material-icons notranslate">table_chart</span>Détail par technicien</h2>
         <p>Indicateurs et chiffre d’affaires par intervenant. Clique sur un technicien pour afficher ses interventions.</p>
       </div>
-      <table>
+      <table class="tech-summary-table">
         <thead>
         <tr>
-          <th>Technicien</th>
-          <th>Total</th>
-          <th>Rac pavillon</th>
-          <th>Rac immeuble</th>
-          <th>Reconnexion</th>
-          <th>Rac F8</th>
-          <th>Rac PRO S</th>
-          <th>Rac PRO C</th>
-          <th>SAV</th>
-          <th>CLEM</th>
-          <th>Autres</th>
-          <th>CA FXN</th>
-          <th>CA Tech</th>
+          <th><span class="th-label" title="Technicien">Technicien</span></th>
+          <th><span class="th-label" title="Total">Tot.</span></th>
+          <th><span class="th-label" title="Rac pavillon">Rac pav.</span></th>
+          <th><span class="th-label" title="Rac immeuble">Rac imm.</span></th>
+          <th><span class="th-label" title="Reconnexion">Reconn.</span></th>
+          <th><span class="th-label" title="Rac F8">Rac F8</span></th>
+          <th><span class="th-label" title="Rac PRO S">PRO S</span></th>
+          <th><span class="th-label" title="Rac PRO C">PRO C</span></th>
+          <th><span class="th-label" title="SAV">SAV</span></th>
+          <th><span class="th-label" title="CLEM">CLEM</span></th>
+          <th><span class="th-label" title="Autres">Autres</span></th>
+          <th><span class="th-label" title="CA FXN">CA FXN</span></th>
+          <th><span class="th-label" title="CA Tech">CA Tech</span></th>
         </tr>
         </thead>
         <tbody>
@@ -447,8 +447,8 @@
               <td data-label="SAV">{{ it.sav }}</td>
               <td data-label="CLEM">{{ it.clem }}</td>
               <td data-label="Autres">{{ it.other + it.racAutre }}</td>
-              <td data-label="CA FXN">{{ fxnRevenue(it) | number:'1.0-0' }}</td>
-              <td data-label="CA Tech">{{ techRevenue(it) | number:'1.0-0' }}</td>
+              <td data-label="CA FXN">{{ fxnRevenue(it) | number:'1.0-0' }} €</td>
+              <td data-label="CA Tech">{{ techRevenue(it) | number:'1.0-0' }} €</td>
             </tr>
           }
         </tbody>

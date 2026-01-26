@@ -62,13 +62,14 @@
               @if (createdAtValue()) { {{ createdAtValue() | date:'fullDate' }} } @else { — }
             </div>
           </div>
-          @if (!isDepotManager()) {
+          @if (!isDepotManager() && !isReadOnly()) {
             <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!hasVehicle()"><i class="bi bi-pencil"></i> Modifier</button>
           }
         </div>
       </article>
 
       <!-- ACTIONS -->
+      @if (!isReadOnly()) {
       <article class="card">
         <div class="card-title-row">
           <h2>Actions rapides</h2>
@@ -177,6 +178,7 @@
           </div>
         }
       </article>
+      }
 
       <!-- PANNE / REPARATION -->
       <article class="card">

@@ -30,7 +30,7 @@ export type ConsumableFilter = {
 };
 
 /**
- * Payload transactionnel backend /consumables/reserve
+ * Payload transactionnel backend /consumables/assign
  */
 export interface ReserveConsumablePayload {
   consumableId: string;
@@ -204,18 +204,18 @@ export class ConsumableService {
   }
 
   // -----------------------------
-  // TRANSACTION : réserve un consommable
+  // TRANSACTION : attribue un consommable
   // -----------------------------
 
   reserve(payload: ReserveConsumablePayload): Observable<ReserveConsumableResult> {
     return this.http
-      .post<ReserveConsumableResult>(`${this.baseUrl}/reserve`, payload)
+      .post<ReserveConsumableResult>(`${this.baseUrl}/assign`, payload)
       .pipe(catchError((err: HttpErrorResponse) => this.handleHttpError(err)));
   }
 
   releaseReservation(payload: ReserveConsumablePayload): Observable<ReserveConsumableResult> {
     return this.http
-      .post<ReserveConsumableResult>(`${this.baseUrl}/reserve/release`, payload)
+      .post<ReserveConsumableResult>(`${this.baseUrl}/assign/release`, payload)
       .pipe(catchError((err: HttpErrorResponse) => this.handleHttpError(err)));
   }
 

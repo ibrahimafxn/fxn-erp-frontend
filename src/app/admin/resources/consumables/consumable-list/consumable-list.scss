@@ -2,9 +2,9 @@
    Page
 ------------------------------------------------- */
 .consumables-list {
-  padding: 1.5rem 0 2rem;
+  padding: 1.25rem;
   display: grid;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 /* -------------------------------------------------
@@ -18,13 +18,13 @@
 
   h1 {
     margin: 0;
-    font-size: 1.6rem;
-    font-weight: 700;
+    font-size: 1.35rem;
+    font-weight: 750;
   }
 
   .subtitle {
     margin: .25rem 0 0;
-    color: var(--fxn-text-muted);
+    opacity: .75;
     font-size: .9rem;
   }
 
@@ -39,11 +39,10 @@
    Card
 ------------------------------------------------- */
 .card {
-  background: var(--fxn-surface-glass);
-  border: 1px solid var(--fxn-border);
-  border-radius: var(--fxn-radius-lg);
+  background: rgba(0, 0, 0, .05);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: 1rem;
   padding: 1rem;
-  box-shadow: var(--fxn-shadow-sm);
 }
 
 /* -------------------------------------------------
@@ -65,12 +64,17 @@
 
   input,
   select {
-    padding: .6rem .75rem;
-    border-radius: var(--fxn-radius-md);
-    border: 1px solid var(--fxn-border-strong);
-    background: rgba(8, 14, 22, 0.6);
+    padding: .55rem .65rem;
+    border-radius: .7rem;
+    border: 1px solid rgba(255, 255, 255, .15);
+    background: rgba(255, 255, 255, .06);
     color: inherit;
     outline: none;
+  }
+
+  input:focus,
+  select:focus {
+    border-color: rgba(0, 120, 255, .6);
   }
 
   .meta {
@@ -80,31 +84,15 @@
     justify-content: space-between;
     flex-wrap: wrap;
   }
+}
 
-  .pill {
-    padding: .25rem .6rem;
-    border-radius: 999px;
-    font-size: .8rem;
-    font-weight: 700;
-    background: rgba(255, 255, 255, .06);
-    border: 1px solid var(--fxn-border);
-  }
-
-  .limit {
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
-
-    span {
-      font-size: .85rem;
-      opacity: .75;
-    }
-
-    select {
-      padding: .35rem .5rem;
-      border-radius: .65rem;
-    }
-  }
+.pill {
+  padding: .25rem .55rem;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .12);
 }
 
 /* -------------------------------------------------
@@ -112,15 +100,10 @@
 ------------------------------------------------- */
 .state {
   padding: 1rem;
-  border-radius: .9rem;
-  background: rgba(0, 0, 0, .06);
-  border: 1px solid rgba(255, 255, 255, .06);
 
-  &.loading { opacity: .85; }
+  &.loading { opacity: .9; }
+  &.error { background: rgba(255,0,60,.10); }
   &.empty { opacity: .8; }
-  &.error {
-    background: rgba(255, 0, 0, .08);
-  }
 }
 
 /* -------------------------------------------------
@@ -145,6 +128,28 @@
     white-space: nowrap;
   }
 
+  .sort-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-transform: inherit;
+  }
+
+  .sort-btn:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .sort-indicator {
+    font-size: .7rem;
+    opacity: .7;
+  }
+
   tbody td {
     padding: .85rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, .06);
@@ -162,12 +167,18 @@
   }
 
   .row:hover {
-    background: rgba(33, 182, 182, 0.08);
+    background: rgba(255, 255, 255, .03);
   }
 
   .main {
     .name {
       font-weight: 750;
+      background: #0b1f3a;
+      color: #e2f0ff;
+      padding: .25rem .55rem;
+      border-radius: .6rem;
+      display: inline-flex;
+      align-items: center;
     }
   }
 }
@@ -211,4 +222,77 @@
   display: flex;
   gap: .5rem; // ✅ espace entre Modifier & Supprimer
   white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .consumables-list {
+    padding: 1rem;
+  }
+
+  .toolbar .search input,
+  .toolbar .search select,
+  .toolbar .search button {
+    min-width: 100%;
+  }
+
+  .toolbar .search button {
+    width: 100%;
+  }
+
+  .table table {
+    min-width: 0;
+  }
+
+  .table th,
+  .table td {
+    padding: .7rem .6rem;
+  }
+
+  .table table,
+  .table thead,
+  .table tbody,
+  .table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: grid;
+    gap: .75rem;
+  }
+
+  .table .row {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: .6rem .7rem;
+    background: rgba(10, 16, 28, 0.6);
+  }
+
+  .table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .4rem 0;
+    border-bottom: none;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--fxn-text-muted);
+    font-size: .8rem;
+  }
+
+  .table td.main {
+    display: block;
+  }
+
+  .table td.main::before {
+    display: none;
+  }
 }

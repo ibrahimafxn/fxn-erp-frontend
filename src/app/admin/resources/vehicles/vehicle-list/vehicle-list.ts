@@ -70,6 +70,7 @@ export class VehicleList extends DetailBack {
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
+  readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
   readonly canDeclareBreakdown = computed(() => {
     const role = this.auth.getUserRole();
     return role === Role.ADMIN || role === Role.DIRIGEANT || role === Role.GESTION_DEPOT;
@@ -165,18 +166,26 @@ export class VehicleList extends DetailBack {
   }
 
   openDetail(v: Vehicle): void {
-    const base = this.isDepotManager() ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    const base = this.isDepotManager()
+      ? '/depot/resources/vehicles'
+      : this.isReadOnly()
+        ? '/technician/resources/vehicles'
+        : '/admin/resources/vehicles';
     this.router.navigate([base, v._id, 'detail']).then();
   }
 
   edit(v: Vehicle): void {
-    if (this.isDepotManager()) return;
+    if (this.isDepotManager() || this.isReadOnly()) return;
     this.router.navigate(['/admin/resources/vehicles', v._id, 'edit']).then();
   }
 
   declareBreakdown(v: Vehicle): void {
     if (!this.canDeclareBreakdown()) return;
-    const base = this.isDepotManager() ? '/depot/resources/vehicles' : '/admin/resources/vehicles';
+    const base = this.isDepotManager()
+      ? '/depot/resources/vehicles'
+      : this.isReadOnly()
+        ? '/technician/resources/vehicles'
+        : '/admin/resources/vehicles';
     this.router.navigate([base, v._id, 'breakdown']).then();
   }
 
@@ -184,7 +193,7 @@ export class VehicleList extends DetailBack {
   // Confirm Delete Modal (fix)
   // -----------------------------
   openDeleteModal(v: Vehicle): void {
-    if (this.isDepotManager()) return;
+    if (this.isDepotManager() || this.isReadOnly()) return;
     this.pendingDeleteId.set(v._id);
     this.pendingDeleteLabel.set('véhicule');
     this.pendingDeleteName.set(this.title(v));
@@ -202,7 +211,7 @@ export class VehicleList extends DetailBack {
   }
 
   confirmDelete(): void {
-    if (this.isDepotManager()) return;
+    if (this.isDepotManager() || this.isReadOnly()) return;
     const id = this.pendingDeleteId();
     if (!id) return;
 
@@ -259,7 +268,7 @@ export class VehicleList extends DetailBack {
   }
 
   private loadDepots(): void {
-    if (this.isDepotManager()) return;
+    if (this.isDepotManager() || this.isReadOnly()) return;
     this.depotsLoading.set(true);
     this.depotSvc.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
       next: (res) => {

@@ -59,20 +59,20 @@ export class Profile {
     if (role === Role.ADMIN || role === Role.DIRIGEANT) {
       return [
         { icon: 'key', label: 'Accès utilisateurs', desc: 'Gestion des comptes et droits' },
-        { icon: 'swap_horiz', label: 'Mouvements', desc: 'Historique des flux et réservations' },
+        { icon: 'swap_horiz', label: 'Mouvements', desc: 'Historique des flux et attributions' },
         { icon: 'report', label: 'Alertes', desc: 'Suivi des stocks et anomalies' }
       ];
     }
     if (role === Role.GESTION_DEPOT) {
       return [
         { icon: 'inventory_2', label: 'Stock dépôt', desc: 'Suivi quotidien du stock' },
-        { icon: 'widgets', label: 'Réservations', desc: 'Attribution des consommables' },
+        { icon: 'widgets', label: 'Attributions', desc: 'Attribution des consommables' },
         { icon: 'handyman', label: 'Matériels', desc: 'Gestion des outils et EPI' }
       ];
     }
     if (role === Role.TECHNICIEN) {
       return [
-        { icon: 'assignment', label: 'Réservations', desc: 'Consommables attribués' },
+        { icon: 'assignment', label: 'Attributions', desc: 'Consommables attribués' },
         { icon: 'car_repair', label: 'Véhicule', desc: 'Suivi de l’affectation' },
         { icon: 'support_agent', label: 'Support', desc: 'Contact administrateur' }
       ];

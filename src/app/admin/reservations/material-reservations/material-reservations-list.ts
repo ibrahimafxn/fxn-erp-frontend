@@ -134,7 +134,7 @@ export class MaterialReservationsList {
       fromDate: dates.fromDate,
       toDate: dates.toDate
     }).subscribe({
-      next: (blob) => downloadBlob(blob, `reservations-materials-${new Date().toISOString().slice(0, 10)}.csv`),
+      next: (blob) => downloadBlob(blob, `attributions-materiels-${new Date().toISOString().slice(0, 10)}.csv`),
       error: () => {}
     });
   }
@@ -153,7 +153,7 @@ export class MaterialReservationsList {
       fromDate: dates.fromDate,
       toDate: dates.toDate
     }).subscribe({
-      next: (blob) => downloadBlob(blob, `reservations-materials-${new Date().toISOString().slice(0, 10)}.pdf`),
+      next: (blob) => downloadBlob(blob, `attributions-materiels-${new Date().toISOString().slice(0, 10)}.pdf`),
       error: () => {}
     });
   }
@@ -268,7 +268,7 @@ export class MaterialReservationsList {
     if (!this.canRelease(m)) return;
     const toUser = m.to?.id;
     if (!toUser) return;
-    const ok = window.confirm('Confirmer la reprise de cette réservation ?');
+    const ok = window.confirm("Confirmer la reprise de cette attribution ?");
     if (!ok) return;
 
     this.setRowActionLoading(m._id, true);

@@ -1,0 +1,31 @@
+<section class="bpu-type-form">
+  <header class="page-header card">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p class="subtitle">{{ subtitle() }}</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="cancel()"><i class="bi bi-arrow-left"></i> Annuler</button>
+      <button class="btn-primary" type="button" (click)="submit()" [disabled]="!canSubmit()">
+        <i class="bi bi-check"></i> @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  }
+
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <label>
+        Type BPU
+        <input type="text" formControlName="type" placeholder="Ex: Auto-entrepreneur" />
+        @if (isInvalid('type')) {
+          <small class="hint error">Type requis (min 2 caractères).</small>
+        }
+      </label>
+    </div>
+  </form>
+</section>
