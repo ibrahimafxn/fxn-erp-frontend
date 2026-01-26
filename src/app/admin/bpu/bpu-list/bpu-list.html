@@ -5,9 +5,6 @@
       <p class="subtitle">Bordereau des prix unitaires (global).</p>
     </div>
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
-      <button class="btn-outline" type="button" (click)="exportPdf()"><i class="bi bi-filetype-pdf"></i> Exporter PDF</button>
-      <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-plus"></i> Nouveau BPU</button>
     </div>
   </header>
 
@@ -80,5 +77,8 @@
         </tbody>
       </table>
     </div>
+    <footer class="actions-footer">
+      <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-check"></i> Enregistrer BPU</button>
+    </footer>
   }
 </section>

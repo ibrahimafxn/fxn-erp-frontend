@@ -76,6 +76,11 @@
   overflow-x: auto;
 }
 
+.actions-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .table-title {
   padding: 0.85rem 0.9rem 0.2rem;
   font-weight: 700;

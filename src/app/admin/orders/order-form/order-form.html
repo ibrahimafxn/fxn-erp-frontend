@@ -83,22 +83,20 @@
                   Prix unitaire
                   <input type="number" min="0" formControlName="unitPrice" />
                 </label>
-                <label class="line-field tva-toggle">
-                  TVA
-                  <label class="toggle">
-                    <input type="checkbox" formControlName="applyTva" />
-                    <span>Appliquer la TVA</span>
-                  </label>
-                </label>
                 <div class="line-total">
                   <div class="label">Total de la ligne</div>
                   <div class="value">{{ formatCurrency(lineTotal($index)) }}</div>
                 </div>
-              </div>
-              <div class="line-actions">
-                <button class="btn-outline" type="button" (click)="removeLine($index)" [disabled]="lines.length <= 1">
-                  Retirer
-                </button>
+                <div class="line-field tva-row">
+                  <label class="toggle">
+                    <input type="checkbox" formControlName="applyTva" />
+                    <span>TVA</span>
+                  </label>
+                  <button class="btn-outline danger btn-remove" type="button" (click)="removeLine($index)" [disabled]="lines.length <= 1">
+                    <i class="bi bi-x"></i>
+                    Retirer
+                  </button>
+                </div>
               </div>
             </div>
           }

@@ -103,11 +103,15 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'bpu/new',
-    loadComponent: () => import('./bpu/bpu-type-form/bpu-type-form').then(m => m.BpuTypeForm)
+    loadComponent: () => import('./bpu/bpu-list/bpu-list').then(m => m.BpuList)
   },
   {
     path: 'bpu/:id/edit',
     loadComponent: () => import('./bpu/bpu-type-form/bpu-type-form').then(m => m.BpuTypeForm)
+  },
+  {
+    path: 'bpu/prestations/new',
+    loadComponent: () => import('./bpu/bpu-form/bpu-form').then(m => m.BpuForm)
   },
   {
     path: 'revenue',

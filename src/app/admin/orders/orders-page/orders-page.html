@@ -8,11 +8,12 @@
       <label class="import-client">
         Fournisseur
         <input
+          #importClientInput
           type="text"
           placeholder="Nom du fournisseur"
           [disabled]="importLoading()"
           [value]="importClient()"
-          (input)="importClient.set(($event.target as HTMLInputElement).value)"
+          (input)="importClient.set(importClientInput.value)"
         />
       </label>
       <label class="btn-outline file-upload" [class.disabled]="importLoading() || !importClient().trim()">

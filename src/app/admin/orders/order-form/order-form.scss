@@ -125,6 +125,7 @@
   gap: 14px;
   grid-template-columns: minmax(0, 2fr) minmax(0, 0.8fr);
   align-items: end;
+  --line-control-height: 40px;
 }
 
 .line-grid .designation {
@@ -134,6 +135,7 @@
 .line-grid .designation select {
   width: 100%;
   max-width: 100%;
+  height: var(--line-control-height);
 }
 
 .line-grid .quantity {
@@ -143,50 +145,85 @@
 .line-grid .quantity input {
   width: 100%;
   max-width: 100%;
+  height: var(--line-control-height);
 }
 
 .line-grid .description {
-  grid-column: 1 / -1;
-}
-
-.line-grid .unit-price {
   grid-column: 1 / 2;
 }
 
-.line-grid .tva-toggle {
+.line-grid .unit-price {
   grid-column: 2 / 3;
 }
 
-.line-grid .tva-toggle .toggle {
+.line-grid .unit-price input {
+  width: 100%;
+  max-width: 100%;
+  height: var(--line-control-height);
+}
+
+.line-grid .tva-row {
+  grid-column: 2 / 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.line-grid .tva-row .toggle {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
   border-radius: var(--fxn-radius-sm);
   border: 1px solid var(--fxn-border-strong);
   background: var(--fxn-surface-soft);
+  height: var(--line-control-height);
+  width: 100%;
 }
 
-.line-grid .tva-toggle input[type='checkbox'] {
+.line-grid .tva-row input[type='checkbox'] {
   width: 16px;
   height: 16px;
+}
+
+.line-grid .tva-row .toggle span {
+  font-size: 0.85rem;
+  line-height: 1.1;
+}
+
+.line-grid .tva-row .btn-remove {
+  height: var(--line-control-height);
+  padding: 0 10px;
+  white-space: nowrap;
+  font-size: 0.85rem;
 }
 
 .line-total {
   display: grid;
   gap: 6px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: var(--fxn-radius-sm);
   background: var(--fxn-surface-soft);
   border: 1px solid var(--fxn-border-strong);
-  grid-column: 2 / 3;
+  grid-column: 1 / 2;
+  height: var(--line-control-height);
+  align-content: center;
 }
 
-.line-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+.line-total .label,
+.line-total .value {
+  line-height: 1;
 }
+
+.line-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
 
 .totals {
   display: grid;

@@ -48,7 +48,8 @@
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 8px;
 }
 
 th,
@@ -67,6 +68,23 @@ th {
 
 td {
   font-size: 0.95rem;
+}
+
+tbody tr {
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
+}
+
+tbody td:first-child {
+  border-left: 1px solid var(--fxn-border-strong);
+  border-top-left-radius: var(--fxn-radius-sm);
+  border-bottom-left-radius: var(--fxn-radius-sm);
+}
+
+tbody td:last-child {
+  border-right: 1px solid var(--fxn-border-strong);
+  border-top-right-radius: var(--fxn-radius-sm);
+  border-bottom-right-radius: var(--fxn-radius-sm);
 }
 
 .lines-total {

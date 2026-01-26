@@ -71,7 +71,7 @@ export class BpuList {
   }
 
   createNew(): void {
-    this.router.navigate(['/admin/bpu/prestations/create']).then();
+    this.router.navigate(['/admin/bpu/prestations/new']).then();
   }
 
   exportCsv(): void {

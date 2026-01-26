@@ -25,6 +25,18 @@
 
   input {
     min-width: 220px;
+    background: #000;
+    color: #fff;
+    border: 1px solid var(--fxn-border-strong);
+  }
+
+  input::placeholder {
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  input:focus {
+    border-color: var(--fxn-primary-border);
+    box-shadow: var(--fxn-ring);
   }
 }
 
@@ -108,6 +120,17 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.limit select {
+  background: #000;
+  color: #fff;
+  border: 1px solid var(--fxn-border-strong);
+}
+
+.limit select:focus {
+  border-color: var(--fxn-primary-border);
+  box-shadow: var(--fxn-ring);
 }
 
 .table {

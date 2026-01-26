@@ -47,7 +47,7 @@ export class BpuForm {
     }).subscribe({
       next: () => {
         this.saving.set(false);
-        this.router.navigate(['/admin/bpu/prestations/new']);
+        this.router.navigate(['/admin/bpu/new']);
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
@@ -57,7 +57,7 @@ export class BpuForm {
   }
 
   cancel(): void {
-    this.router.navigate(['/admin/bpu/prestations/new']);
+    this.router.navigate(['/admin/bpu/new']);
   }
 
   isInvalid(name: 'segment' | 'prestation' | 'code' | 'unitPrice'): boolean {
