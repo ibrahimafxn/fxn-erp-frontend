@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { AlertsService } from '../../core/services/alerts.service';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-header',
   imports: [CommonModule, RouterModule, MatButtonModule],
   templateUrl: './app-header.html',

@@ -1,10 +1,11 @@
-import {Component, inject} from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import {Router} from '@angular/router';
 import {AuthService} from '../../services/auth.service';
 import {Role} from '../../models/roles.model';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: ''
 })
 export class RoleRedirect {

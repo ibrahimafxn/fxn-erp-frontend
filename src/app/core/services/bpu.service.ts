@@ -22,7 +22,7 @@ export class BpuService {
 
   constructor(private http: HttpClient) {}
 
-  list(segment?: 'AUTO' | 'SALARIE'): Observable<BpuEntry[]> {
+  list(segment?: 'AUTO' | 'SALARIE' | 'ASSOCIE'): Observable<BpuEntry[]> {
     this._loading.set(true);
     this._error.set(null);
     const url = segment ? `${this.baseUrl}?segment=${segment}` : this.baseUrl;
@@ -40,8 +40,8 @@ export class BpuService {
     );
   }
 
-  getMeta(segment: 'AUTO' | 'SALARIE'): Observable<{ segment: 'AUTO' | 'SALARIE'; title: string }> {
-    return this.http.get<ApiResponse<{ segment: 'AUTO' | 'SALARIE'; title: string }>>(
+  getMeta(segment: 'AUTO' | 'SALARIE' | 'ASSOCIE'): Observable<{ segment: 'AUTO' | 'SALARIE' | 'ASSOCIE'; title: string }> {
+    return this.http.get<ApiResponse<{ segment: 'AUTO' | 'SALARIE' | 'ASSOCIE'; title: string }>>(
       `${this.baseUrl}/meta?segment=${segment}`
     ).pipe(
       map((resp) => resp.data),
@@ -49,8 +49,8 @@ export class BpuService {
     );
   }
 
-  saveMeta(segment: 'AUTO' | 'SALARIE', title: string): Observable<{ segment: 'AUTO' | 'SALARIE'; title: string }> {
-    return this.http.put<ApiResponse<{ segment: 'AUTO' | 'SALARIE'; title: string }>>(
+  saveMeta(segment: 'AUTO' | 'SALARIE' | 'ASSOCIE', title: string): Observable<{ segment: 'AUTO' | 'SALARIE' | 'ASSOCIE'; title: string }> {
+    return this.http.put<ApiResponse<{ segment: 'AUTO' | 'SALARIE' | 'ASSOCIE'; title: string }>>(
       `${this.baseUrl}/meta`,
       { segment, title }
     ).pipe(
@@ -59,7 +59,7 @@ export class BpuService {
     );
   }
 
-  bulkUpsert(segment: 'AUTO' | 'SALARIE', items: { prestation: string; code: string; unitPrice: number }[]): Observable<{
+  bulkUpsert(segment: 'AUTO' | 'SALARIE' | 'ASSOCIE', items: { prestation: string; code: string; unitPrice: number }[]): Observable<{
     imported: number;
     created?: number;
     updated?: number;
@@ -74,14 +74,14 @@ export class BpuService {
     );
   }
 
-  upsert(payload: { prestation: string; code: string; unitPrice: number; segment: 'AUTO' | 'SALARIE' }): Observable<BpuEntry> {
+  upsert(payload: { prestation: string; code: string; unitPrice: number; segment: 'AUTO' | 'SALARIE' | 'ASSOCIE' }): Observable<BpuEntry> {
     return this.http.post<ApiResponse<BpuEntry>>(this.baseUrl, payload).pipe(
       map((resp) => resp.data),
       catchError((err: HttpErrorResponse) => throwError(() => err))
     );
   }
 
-  importCsv(file: File, segment: 'AUTO' | 'SALARIE'): Observable<{ imported: number; created?: number; updated?: number; skipped?: number }> {
+  importCsv(file: File, segment: 'AUTO' | 'SALARIE' | 'ASSOCIE'): Observable<{ imported: number; created?: number; updated?: number; skipped?: number }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('segment', segment);

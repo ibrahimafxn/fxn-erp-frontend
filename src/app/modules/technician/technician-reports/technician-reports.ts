@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
@@ -7,6 +7,7 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 
 @Component({
   selector: 'app-technician-reports',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
   providers: [DatePipe],
@@ -28,6 +29,12 @@ export class TechnicianReports {
   readonly deleteModalOpen = signal(false);
   readonly pendingDelete = signal<TechnicianReport | null>(null);
   readonly deletingId = signal<string | null>(null);
+
+  readonly filterForm = this.fb.nonNullable.group({
+    year: this.fb.nonNullable.control(''),
+    fromDate: this.fb.nonNullable.control(''),
+    toDate: this.fb.nonNullable.control('')
+  });
 
   readonly form = this.fb.nonNullable.group({
     date: this.fb.nonNullable.control(this.todayInput(), [Validators.required]),
@@ -157,7 +164,14 @@ export class TechnicianReports {
   refresh(force = false): void {
     this.loading.set(true);
     this.error.set(null);
-    this.reportService.list({ page: this.page(), limit: this.limit() }).subscribe({
+    const filters = this.filterForm.getRawValue();
+    const range = this.normalizeDateRange(filters.year, filters.fromDate, filters.toDate);
+    this.reportService.list({
+      page: this.page(),
+      limit: this.limit(),
+      fromDate: range.fromDate || undefined,
+      toDate: range.toDate || undefined
+    }).subscribe({
       next: (res) => {
         this.items.set(res.data.items || []);
         this.total.set(res.data.total || 0);
@@ -168,6 +182,27 @@ export class TechnicianReports {
         this.error.set(this.apiError(err, 'Erreur chargement'));
       }
     });
+  }
+
+  applyFilters(): void {
+    this.page.set(1);
+    this.refresh(true);
+  }
+
+  clearFilters(): void {
+    this.filterForm.reset({ year: '', fromDate: '', toDate: '' });
+    this.page.set(1);
+    this.refresh(true);
+  }
+
+  setLimit(event: Event): void {
+    const el = event.target as HTMLSelectElement | null;
+    if (!el) return;
+    const value = Number(el.value);
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
+    this.page.set(1);
+    this.refresh(true);
   }
 
   prevPage(): void {
@@ -200,6 +235,16 @@ export class TechnicianReports {
       },
       comment: ''
     });
+  }
+
+  private normalizeDateRange(yearInput: string, fromInput: string, toInput: string): { fromDate: string; toDate: string } {
+    const year = Number(yearInput);
+    if (Number.isFinite(year) && year >= 2000) {
+      const fromDate = fromInput || `${year}-01-01`;
+      const toDate = toInput || `${year}-12-31`;
+      return { fromDate, toDate };
+    }
+    return { fromDate: fromInput || '', toDate: toInput || '' };
   }
 
   prestationStyle(key: string): Record<string, string> {
@@ -257,5 +302,16 @@ export class TechnicianReports {
         ? String(err.error.message ?? '')
         : '';
     return apiMsg || err?.message || fallback;
+  }
+
+  formatAmount(value?: number | null): string {
+    const amount = Number(value ?? 0);
+    if (!Number.isFinite(amount)) return '0,00 €';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
   }
 }

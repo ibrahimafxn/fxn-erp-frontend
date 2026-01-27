@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { AttributionService } from '../../../core/services/attribution.service';
@@ -30,6 +30,7 @@ type AttributionHistoryItem = {
 
 @Component({
   selector: 'app-technician-history',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, DatePipe, ReactiveFormsModule],
   templateUrl: './technician-history.html',

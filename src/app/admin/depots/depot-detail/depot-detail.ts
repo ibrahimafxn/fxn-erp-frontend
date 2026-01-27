@@ -1,7 +1,7 @@
 // admin/depots/depot-detail/depot-detail.ts
 // Drop-in complet et commenté (Angular Signals + services paginés)
 
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -24,6 +24,7 @@ import { formatResourceName } from '../../../core/utils/text-format';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-depot-detail',
   providers: [DatePipe],
   imports: [CommonModule, RouterModule, FrDatePipe, ReactiveFormsModule],

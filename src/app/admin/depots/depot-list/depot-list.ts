@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, Signal, computed, inject, signal } from '@angular/core';
+import { Component, Signal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -13,6 +13,7 @@ import { formatDepotName, formatPersonName } from '../../../core/utils/text-form
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-depot-list',
   providers: [DatePipe],
   imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],

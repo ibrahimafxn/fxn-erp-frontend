@@ -1,7 +1,7 @@
 // admin/resources/consumables/consumable-list
 
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, Signal, computed, inject, signal } from '@angular/core';
+import { Component, Signal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -22,6 +22,7 @@ type SortKey = 'name' | 'available' | 'depot' | 'updatedAt' | 'unit';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-consumable-list',
   providers: [DatePipe],
   imports: [CommonModule, RouterModule, ReactiveFormsModule, DatePipe, ConfirmDeleteModal],

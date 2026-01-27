@@ -149,6 +149,52 @@
   margin-bottom: 12px;
 }
 
+.technician-reports .history-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  background: linear-gradient(135deg, rgba(10, 16, 28, 0.75), rgba(12, 20, 34, 0.5));
+}
+
+.technician-reports .history-filters .limit select {
+  width: 100%;
+  color: #ffffff;
+  background: #0b0f16;
+  border-color: rgba(148, 163, 184, 0.7);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border-width: 1px;
+}
+
+.technician-reports .history-filters .limit select:hover,
+.technician-reports .history-filters .limit select:focus {
+  background: #05070c;
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.technician-reports .history-filters .limit select option {
+  color: #ffffff;
+  background: #0b0f16;
+}
+
+.technician-reports .history-filters .actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.technician-reports .history-filters label {
+  font-size: 12px;
+  color: rgba(226, 232, 240, 0.7);
+}
+
 .technician-reports .table table {
   width: 100%;
   border-collapse: collapse;
@@ -207,6 +253,10 @@
   }
 
   .technician-reports .prestations-list {
+    grid-template-columns: 1fr;
+  }
+
+  .technician-reports .history-filters {
     grid-template-columns: 1fr;
   }
 

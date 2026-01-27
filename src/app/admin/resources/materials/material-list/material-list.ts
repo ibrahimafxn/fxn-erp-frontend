@@ -1,6 +1,6 @@
 // material-list
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -19,6 +19,7 @@ type SortKey = 'name' | 'available' | 'category' | 'depot' | 'updatedAt';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-material-list',
   providers: [DatePipe],
   imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],

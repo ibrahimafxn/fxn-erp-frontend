@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
+import { Component, EventEmitter, Output, computed, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-confirm-cancel-modal',
   imports: [CommonModule],
   templateUrl: './confirm-cancel-modal.html',

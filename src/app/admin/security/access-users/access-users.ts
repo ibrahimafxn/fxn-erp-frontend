@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, Signal, computed, inject, signal } from '@angular/core';
+import { Component, Signal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -23,6 +23,7 @@ import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-dele
  */
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-access-users',
   providers: [DatePipe],
   imports: [

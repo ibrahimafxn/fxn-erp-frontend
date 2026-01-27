@@ -28,6 +28,11 @@
   }
 }
 
+.page-header .header-actions .btn-outline {
+  padding: .35rem .65rem;
+  font-size: .85rem;
+}
+
 .card {
   border-radius: 1rem;
   border: 1px solid var(--fxn-border);
@@ -102,6 +107,23 @@ thead th {
   white-space: nowrap;
 }
 
+.select-col {
+  width: 80px;
+}
+
+.select-all {
+  width: 110px;
+}
+
+.select-all-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
 .sort-btn {
   display: inline-flex;
   align-items: center;
@@ -128,6 +150,12 @@ tbody td {
   padding: .85rem .9rem;
   border-bottom: 1px solid var(--fxn-border);
   vertical-align: middle;
+}
+
+.select-box {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--fxn-primary);
 }
 
 tbody td input {

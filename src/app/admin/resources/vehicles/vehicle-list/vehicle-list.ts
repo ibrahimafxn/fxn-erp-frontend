@@ -1,6 +1,6 @@
 // admin/resources/vehicles/vehicle-list/vehicle-list.ts
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, Signal, computed, inject, signal } from '@angular/core';
+import { Component, Signal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -18,6 +18,7 @@ import { downloadBlob } from '../../../../core/utils/download';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-list',
   providers: [DatePipe],
   imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],

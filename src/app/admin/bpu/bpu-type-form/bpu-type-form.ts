@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BpuTypeService } from '../../../core/services/bpu-type.service';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-bpu-type-form',
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './bpu-type-form.html',
@@ -27,7 +28,7 @@ export class BpuTypeForm {
     type: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)])
   });
 
-  readonly canSubmit = computed(() => !this.saving() && this.form.valid);
+  readonly canSubmit = computed(() => !this.saving() && !this.loading() && this.form.valid);
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id');

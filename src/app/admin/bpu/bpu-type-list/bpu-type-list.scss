@@ -41,6 +41,7 @@
   border: 1px solid var(--fxn-border);
   background: var(--fxn-surface-glass);
   &.error { background: var(--fxn-danger-soft); }
+  &.ok { background: rgba(0,255,120,.10); }
 }
 
 .table.card {
@@ -51,7 +52,8 @@
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 520px;
+  min-width: 0;
+  table-layout: fixed;
 }
 
 thead th {
@@ -69,6 +71,15 @@ tbody td {
   vertical-align: middle;
 }
 
+.type-cell {
+  word-break: break-word;
+}
+
+th.actions,
+td.actions {
+  width: 160px;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -77,6 +88,18 @@ tbody td {
   border: 1px solid var(--fxn-border);
   background: var(--fxn-surface);
   font-weight: 600;
+}
+
+.pill-green {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.2);
+  color: #dcfce7;
+}
+
+.pill-gold {
+  border-color: rgba(234, 179, 8, 0.6);
+  background: rgba(234, 179, 8, 0.22);
+  color: #fef9c3;
 }
 
 .actions-group {
@@ -88,6 +111,18 @@ tbody td {
 @media (max-width: 980px) {
   .page-header {
     flex-direction: column;
+  }
+
+  .table.card {
+    overflow-x: hidden;
+  }
+
+  thead th {
+    white-space: normal;
+  }
+
+  .actions-group {
+    width: 100%;
   }
 }
 

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Signal, computed, inject, signal } from '@angular/core';
+import { Component, Signal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -17,6 +17,7 @@ import { formatDepotName, formatResourceName } from '../../../core/utils/text-fo
 
 @Component({
   selector: 'app-stock-alerts',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './stock-alerts.html',

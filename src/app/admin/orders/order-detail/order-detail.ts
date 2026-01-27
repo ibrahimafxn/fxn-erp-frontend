@@ -1,5 +1,5 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -11,6 +11,7 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-order-detail',
   imports: [CommonModule, ConfirmDeleteModal],
   templateUrl: './order-detail.html',

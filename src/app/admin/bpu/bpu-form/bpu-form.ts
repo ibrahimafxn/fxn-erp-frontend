@@ -1,14 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BpuService } from '../../../core/services/bpu.service';
 
-type Segment = 'AUTO' | 'SALARIE';
+type Segment = 'AUTO' | 'SALARIE' | 'ASSOCIE';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-bpu-form',
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './bpu-form.html',

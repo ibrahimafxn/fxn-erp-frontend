@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Output, computed, inject, input } from '@angular/core';
+import { Component, EventEmitter, Output, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { User } from '../../../core/models';
 
@@ -10,6 +10,7 @@ import { User } from '../../../core/models';
  */
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-access-credentials-modal',
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './access-credentials-modal.html',

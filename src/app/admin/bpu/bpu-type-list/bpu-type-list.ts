@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BpuType } from '../../../core/models';
 import { BpuTypeService } from '../../../core/services/bpu-type.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-bpu-type-list',
   imports: [CommonModule, RouterModule, ConfirmDeleteModal],
   templateUrl: './bpu-type-list.html',
@@ -15,11 +16,13 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 })
 export class BpuTypeList {
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private svc = inject(BpuTypeService);
 
   readonly items = signal<BpuType[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly success = signal<string | null>(null);
 
   readonly deleteModalOpen = signal(false);
   readonly pendingDeleteId = signal<string | null>(null);
@@ -33,6 +36,10 @@ export class BpuTypeList {
   });
 
   constructor() {
+    const saved = this.route.snapshot.queryParamMap.get('saved');
+    if (saved) {
+      this.success.set('BPU enregistré avec succès.');
+    }
     this.load();
   }
 
@@ -56,6 +63,11 @@ export class BpuTypeList {
   }
 
   edit(item: BpuType): void {
+    const segment = String(item.type || '').trim().toUpperCase();
+    if (segment === 'AUTO' || segment === 'SALARIE') {
+      this.router.navigate(['/admin/bpu/new'], { queryParams: { segment } }).then();
+      return;
+    }
     if (!item._id) return;
     this.router.navigate(['/admin/bpu', item._id, 'edit']);
   }

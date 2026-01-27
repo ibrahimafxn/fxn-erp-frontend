@@ -76,6 +76,7 @@
                 <th>Technicien</th>
                 <th>Dépôt</th>
                 <th>Prestations</th>
+                <th>Montant</th>
                 <th>Commentaire</th>
               </tr>
             </thead>
@@ -99,6 +100,7 @@
                       —
                     }
                   </td>
+                  <td>{{ formatAmount(it.amount) }}</td>
                   <td class="note">{{ it.comment || '—' }}</td>
                 </tr>
               }

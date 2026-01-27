@@ -1,11 +1,12 @@
 // app/modules/auth/login/login.ts
-import {Component, inject, signal} from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthService} from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './login.html',
   imports: [
     ReactiveFormsModule

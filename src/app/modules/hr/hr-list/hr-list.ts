@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
@@ -22,6 +22,7 @@ import { formatDepotName, formatPersonName } from '../../../core/utils/text-form
 
 @Component({
   selector: 'app-hr-list',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
   providers: [DatePipe],
@@ -80,7 +81,7 @@ export class HrList {
     { value: 'HABILITATION', label: 'Habilitation' }
   ];
   readonly leaveTypes = ['CONGE', 'MALADIE', 'PERMISSION', 'AUTRE'];
-  readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'AUTRE'];
+  readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'ASSOCIE', 'AUTRE'];
   readonly employeeRoles = [
     { value: '', label: 'Tous les rôles' },
     { value: 'ADMIN', label: 'ADMIN' },

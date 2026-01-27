@@ -132,7 +132,7 @@
 }
 
 .table.card { padding: 0; overflow: hidden; }
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 thead th {
   text-align: left;
   font-size: .8rem;
@@ -143,11 +143,13 @@ thead th {
   position: sticky;
   top: 0;
   z-index: 1;
+  overflow-wrap: anywhere;
 }
 tbody td {
   padding: .65rem .75rem;
   border-bottom: 1px solid rgba(100, 145, 255, 0.08);
   vertical-align: middle;
+  overflow-wrap: anywhere;
 }
 td.main .name { font-weight: 900; }
 td.main .sub { opacity: .75; font-size: .8rem; margin-top: .1rem; }
@@ -179,13 +181,12 @@ td.main .sub { opacity: .75; font-size: .8rem; margin-top: .1rem; }
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
 }
 
-td.actions { width: 280px; }
+td.actions { width: 220px; }
 .actions-row {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 110px;
+  display: flex;
+  flex-wrap: wrap;
   gap: .4rem;
-  justify-content: end;
+  justify-content: flex-end;
   align-items: center;
 }
 
@@ -213,11 +214,13 @@ tbody tr:hover {
 }
 
 .actions-row button {
-  width: 110px;
+  min-width: 96px;
+  width: auto;
   text-align: center;
   display: inline-flex;
   justify-content: center;
   align-items: center;
+  white-space: nowrap;
 }
 .actions-row .btn-outline {
   border-color: rgba(150, 165, 190, 0.35);
@@ -232,10 +235,11 @@ tbody tr:hover {
 
 .pager { display:flex; justify-content: space-between; gap:.75rem; flex-wrap: wrap; }
 
-@media (max-width: 900px) {
+@media (max-width: 1400px) {
   .table.card {
     overflow: hidden;
     max-height: none;
+    padding: .6rem;
   }
 
   table,
@@ -255,6 +259,7 @@ tbody tr:hover {
   tbody {
     display: grid;
     gap: 12px;
+    justify-items: center;
   }
 
   tbody tr {
@@ -264,6 +269,8 @@ tbody tr:hover {
     border-radius: 1rem;
     border: 1px solid var(--access-border);
     background: rgba(6, 10, 18, 0.85);
+    width: 100%;
+    max-width: 860px;
   }
 
   tbody td {
@@ -297,8 +304,6 @@ tbody tr:hover {
   }
 
   .actions-row {
-    grid-auto-flow: row;
-    grid-auto-columns: auto;
     justify-content: flex-start;
   }
 

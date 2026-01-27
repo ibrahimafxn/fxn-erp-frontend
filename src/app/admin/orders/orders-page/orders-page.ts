@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -9,6 +9,7 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-orders-page',
   imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './orders-page.html',

@@ -5,18 +5,27 @@
       <p class="subtitle">Bordereau des prix unitaires (global).</p>
     </div>
     <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i>
+        Retour
+      </button>
     </div>
   </header>
 
   <section class="toolbar card">
     <label>
       Type BPU
-      <select [value]="currentSegment()" (change)="onSegmentChange($event)">
-        <option value="AUTO">Auto-entrepreneur</option>
-        <option value="SALARIE">Salarié</option>
+      <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
+        <option value="AUTO">AUTO-ENTREPRENEUR</option>
+        <option value="SALARIE">SALARIE</option>
+        <option value="ASSOCIE">ASSOCIE</option>
       </select>
     </label>
   </section>
+
+  @if (success()) {
+    <div class="state ok card">{{ success() }}</div>
+  }
 
   @if (loading()) {
     <div class="state loading card">Chargement…</div>
@@ -29,6 +38,19 @@
       <table>
         <thead>
         <tr>
+          <th class="select-col select-all">
+            <label class="select-all-label">
+              <input
+                class="select-box"
+                type="checkbox"
+                [checked]="allSelected()"
+                [disabled]="loading() || saving()"
+                (change)="toggleSelectAll()"
+                aria-label="Tout sélectionner"
+              />
+              <span>Tout</span>
+            </label>
+          </th>
           <th>
             <button class="sort-btn" type="button" (click)="toggleSortPrestation()">
               Prestation <span class="sort-indicator">{{ sortIndicator() }}</span>
@@ -41,19 +63,17 @@
         <tbody>
           @for (item of sortedItems(); track item._id || item.code) {
             <tr>
+              <td data-label="Sélection" class="select-col">
+                <input
+                  class="select-box"
+                  type="checkbox"
+                  [checked]="isSelected(item)"
+                  [disabled]="loading() || saving()"
+                  (change)="toggleSelection(item)"
+                />
+              </td>
               <td data-label="Prestation">
-                <span
-                  [class.pill-blue]="isBluePill(item.code)"
-                  [class.pill-orange]="isOrangePill(item.code)"
-                  [class.pill-green]="isGreenPill(item.code)"
-                  [class.pill-yellow]="isYellowPill(item.code)"
-                  [class.pill-aqua]="isAquaPill(item.code)"
-                  [class.pill-turquoise]="isTurquoisePill(item.code)"
-                  [class.pill-violet]="isVioletPill(item.code)"
-                  [class.text-red]="isRedText(item.code)"
-                >
-                  {{ item.prestation || '—' }}
-                </span>
+                {{ item.prestation || '—' }}
               </td>
               <td data-label="Code" class="mono">
                 <span
@@ -70,7 +90,14 @@
                 </span>
               </td>
               <td data-label="Prix unitaire">
-                {{ item.unitPrice | number:'1.0-0' }}
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  [value]="priceValue(item)"
+                  [disabled]="loading() || saving()"
+                  (input)="onPriceChange(item, $event)"
+                />
               </td>
             </tr>
           }
@@ -78,7 +105,14 @@
       </table>
     </div>
     <footer class="actions-footer">
-      <button class="btn-primary" type="button" (click)="createNew()"><i class="bi bi-check"></i> Enregistrer BPU</button>
+      <button class="btn-primary" type="button" (click)="saveSelection()" [disabled]="saving() || loading() || !hasSelection()">
+        <i class="bi bi-check"></i>
+        @if (saving()) {
+          Enregistrement…
+        } @else {
+          @if (isEditing()) { Modifier BPU } @else { Enregistrer BPU }
+        }
+      </button>
     </footer>
   }
 </section>

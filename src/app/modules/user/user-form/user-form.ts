@@ -1,10 +1,11 @@
-import {Component, inject, signal} from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {FormBuilder, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {UserService} from '../../../core/services/user.service';
 import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-user-form',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './user-form.html',
   imports: [
     ReactiveFormsModule

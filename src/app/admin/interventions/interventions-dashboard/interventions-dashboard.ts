@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -19,6 +19,7 @@ import { Role } from '../../../core/models/roles.model';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-interventions-dashboard',
   imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './interventions-dashboard.html',

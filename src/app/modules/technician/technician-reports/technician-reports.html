@@ -42,6 +42,33 @@
       <div class="meta">Page {{ page() }} / {{ pageCount() }}</div>
     </div>
 
+    <form class="history-filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+      <label>
+        Année
+        <input type="number" min="2000" max="2100" placeholder="2026" formControlName="year" />
+      </label>
+      <label>
+        Période (du)
+        <input type="date" formControlName="fromDate" />
+      </label>
+      <label>
+        Période (au)
+        <input type="date" formControlName="toDate" />
+      </label>
+      <label class="limit">
+        Par page
+        <select [value]="limit()" (change)="setLimit($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn-outline" type="submit">Filtrer</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()">Réinitialiser</button>
+      </div>
+    </form>
+
     @if (loading()) {
       <div class="state loading">Chargement…</div>
     } @else if (error()) {
@@ -55,6 +82,7 @@
           <tr>
             <th>Date</th>
             <th>Prestations</th>
+            <th>Montant</th>
             <th>Commentaire</th>
             <th></th>
           </tr>
@@ -77,6 +105,7 @@
                     —
                   }
                 </td>
+                <td data-label="Montant">{{ formatAmount(report.amount) }}</td>
                 <td class="note" data-label="Commentaire" [class.is-empty]="!report.comment">
                   @if (report.comment) { {{ report.comment }} }
                 </td>

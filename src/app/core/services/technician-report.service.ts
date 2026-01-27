@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 export type TechnicianReport = {
   _id: string;
   reportDate: string;
+  amount?: number;
   interventionsCount?: number;
   prestations?: {
     professionnel?: number;
@@ -49,10 +50,10 @@ export class TechnicianReportService {
     if (params?.page) httpParams = httpParams.set('page', String(params.page));
     if (params?.limit) httpParams = httpParams.set('limit', String(params.limit));
     if (params?.month) httpParams = httpParams.set('month', params.month);
-    if (params?.fromDate) httpParams = httpParams.set('fromDate', params.fromDate);
-    if (params?.toDate) httpParams = httpParams.set('toDate', params.toDate);
-    if (params?.technicianId) httpParams = httpParams.set('technicianId', params.technicianId);
-    if (params?.depotId) httpParams = httpParams.set('depotId', params.depotId);
+    if (params?.fromDate) httpParams = httpParams.set('from', params.fromDate);
+    if (params?.toDate) httpParams = httpParams.set('to', params.toDate);
+    if (params?.technicianId) httpParams = httpParams.set('technician', params.technicianId);
+    if (params?.depotId) httpParams = httpParams.set('depot', params.depotId);
     return this.http.get<{ success: boolean; data: TechnicianReportList }>(this.baseUrl, { params: httpParams });
   }
 
@@ -66,5 +67,20 @@ export class TechnicianReportService {
 
   remove(id: string): Observable<{ success: boolean }> {
     return this.http.delete<{ success: boolean }>(`${this.baseUrl}/${id}`);
+  }
+
+  summary(params?: { fromDate?: string; toDate?: string; technicianId?: string; depotId?: string }): Observable<{
+    success: boolean;
+    data: { totalAmount: number; count: number };
+  }> {
+    let httpParams = new HttpParams();
+    if (params?.fromDate) httpParams = httpParams.set('from', params.fromDate);
+    if (params?.toDate) httpParams = httpParams.set('to', params.toDate);
+    if (params?.technicianId) httpParams = httpParams.set('technician', params.technicianId);
+    if (params?.depotId) httpParams = httpParams.set('depot', params.depotId);
+    return this.http.get<{ success: boolean; data: { totalAmount: number; count: number } }>(
+      `${this.baseUrl}/summary`,
+      { params: httpParams }
+    );
   }
 }

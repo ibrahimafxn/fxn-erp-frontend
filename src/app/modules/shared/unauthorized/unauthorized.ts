@@ -1,4 +1,4 @@
-import {Component, computed, inject} from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {Router, RouterModule} from '@angular/router';
 
@@ -7,6 +7,7 @@ import {Role} from '../../../core/models/roles.model';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-unauthorized',
   templateUrl: './unauthorized.html',
   styleUrls: ['./unauthorized.scss'],

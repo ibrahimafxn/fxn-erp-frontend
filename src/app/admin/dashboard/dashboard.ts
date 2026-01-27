@@ -1,6 +1,6 @@
 // dashboard.ts
 
-import {Component, computed, inject, OnInit} from '@angular/core';
+import { Component, computed, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {CommonModule, DatePipe} from '@angular/common';
 import {Router, RouterModule} from '@angular/router';
 import {AdminService} from '../../core/services/admin.service';
@@ -10,6 +10,7 @@ import {HistoryItem} from '../../core/models/historyItem.model';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-admin-dashboard',
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],

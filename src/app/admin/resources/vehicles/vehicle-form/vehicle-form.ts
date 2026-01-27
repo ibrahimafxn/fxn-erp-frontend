@@ -1,6 +1,6 @@
 // vehicle-form
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -16,6 +16,7 @@ type Mode = 'create' | 'edit';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-form',
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './vehicle-form.html',

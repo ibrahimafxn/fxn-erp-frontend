@@ -6,6 +6,42 @@
     </div>
   </header>
 
+  <section class="kpi-section">
+    <div class="kpi-header">
+      <h2>CA technicien</h2>
+      <span class="kpi-meta">{{ todayLabel() }}</span>
+    </div>
+    @if (caLoading()) {
+      <div class="state loading">Chargement…</div>
+    }
+    @if (caError()) {
+      <div class="state error">Erreur : {{ caError() }}</div>
+    }
+    <div class="kpi-grid">
+      <article class="kpi-card kpi-daily">
+        <div class="kpi-info">
+          <div class="kpi-title">Journalier</div>
+          <div class="kpi-sub">Aujourd'hui</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(dailyAmount()) }}</div>
+      </article>
+      <article class="kpi-card kpi-monthly">
+        <div class="kpi-info">
+          <div class="kpi-title">Mensuel</div>
+          <div class="kpi-sub">Mois en cours</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(monthlyAmount()) }}</div>
+      </article>
+      <article class="kpi-card kpi-semi">
+        <div class="kpi-info">
+          <div class="kpi-title">Semestriel</div>
+          <div class="kpi-sub">6 derniers mois</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(semiAnnualAmount()) }}</div>
+      </article>
+    </div>
+  </section>
+
   <div class="action-grid">
     <article class="action-card" (click)="goReports()">
       <div class="action-head">

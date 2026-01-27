@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, ValidatorFn } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -12,6 +12,7 @@ import { Role } from '../../../../core/models/roles.model';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-breakdown',
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './vehicle-breakdown.html',

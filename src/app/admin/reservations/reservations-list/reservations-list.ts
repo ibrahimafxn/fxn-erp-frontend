@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, Signal, computed, inject, signal } from '@angular/core';
+import { Component, Signal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -16,6 +16,7 @@ import { ConfirmCancelModal } from '../../../shared/components/dialog/confirm-ca
 
 @Component({
   selector: 'app-reservations-list',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   providers: [DatePipe],
   imports: [CommonModule, ReactiveFormsModule, ConfirmCancelModal],

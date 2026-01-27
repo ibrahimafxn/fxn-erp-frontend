@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -23,6 +23,7 @@ type LineForm = {
 
 @Component({
   selector: 'app-receipt-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   providers: [DatePipe],
   imports: [CommonModule, ReactiveFormsModule],

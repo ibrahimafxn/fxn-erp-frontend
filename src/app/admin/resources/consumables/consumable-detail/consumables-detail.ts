@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -18,6 +18,7 @@ import { ConfirmDeleteModal } from '../../../../shared/components/dialog/confirm
 
 @Component({
   selector: 'app-consumable-detail',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, DatePipe, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './consumables-detail.html',

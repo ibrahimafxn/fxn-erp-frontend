@@ -1,11 +1,12 @@
 // confirm-delete-modal.ts
-import { Component, EventEmitter, Output, computed, input, inject } from '@angular/core';
+import { Component, EventEmitter, Output, computed, input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../../core/services/auth.service';
 import { formatPersonName } from '../../../../core/utils/text-format';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-confirm-delete-modal',
   imports: [CommonModule],
   templateUrl: './confirm-delete-modal.html',

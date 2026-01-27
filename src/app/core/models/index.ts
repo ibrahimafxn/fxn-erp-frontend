@@ -4,6 +4,7 @@ export * from './attribution-history.model';
 
 export * from './bpu.model';
 export * from './bpu-type.model';
+export * from './bpu-selection.model';
 
 export * from './consumable.model';
 export * from './consumable-list-result.model';

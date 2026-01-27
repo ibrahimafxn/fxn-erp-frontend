@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -34,6 +34,7 @@ type AttributionItem = {
 
 @Component({
   selector: 'app-depot-dashboard',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   templateUrl: './depot-dashboard.html',
   styleUrls: ['./depot-dashboard.scss'],

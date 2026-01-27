@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, ValidatorFn } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ConsumableService } from "../../../../core/services/consumable.service";
@@ -13,6 +13,7 @@ type Mode = 'create' | 'edit';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-consumable-form',
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './consumables-form.html',

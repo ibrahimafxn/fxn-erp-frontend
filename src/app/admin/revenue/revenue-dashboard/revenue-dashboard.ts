@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RevenueService, RevenueAttachment, RevenueItem, RevenueSummaryPoint, RevenueUser } from '../../../core/services/revenue.service';
 import { environment } from '../../../environments/environment';
@@ -7,6 +7,7 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-revenue-dashboard',
   imports: [CommonModule, ReactiveFormsModule, DatePipe, ConfirmDeleteModal],
   templateUrl: './revenue-dashboard.html',
@@ -434,8 +435,8 @@ export class RevenueDashboard {
     }
     const filtered = files.slice(0, this.maxAttachmentCount).filter((file) => {
       if (!this.isAllowedAttachment(file)) return false;
-      if (file.size > this.maxAttachmentSize) return false;
-      return true;
+      return file.size <= this.maxAttachmentSize;
+
     });
     const oversized = files.find((file) => file.size > this.maxAttachmentSize);
     if (oversized) {

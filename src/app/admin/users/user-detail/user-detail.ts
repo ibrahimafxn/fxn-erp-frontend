@@ -1,5 +1,5 @@
 // admin/users/user-detail/user-detail.ts
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -17,6 +17,7 @@ import { formatDepotName, formatPersonName } from '../../../core/utils/text-form
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-user-detail',
   templateUrl: './user-detail.html',
   styleUrls: ['./user-detail.scss'],

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ImportService, ImportResult } from '../../core/services/import.service';
 
 type StepId = 'depots' | 'users' | 'materials' | 'consumables' | 'vehicles' | 'orders';
@@ -14,6 +14,7 @@ type StepConfig = {
 
 @Component({
   selector: 'app-onboarding',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule],
   templateUrl: './onboarding.html',

@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 
@@ -14,6 +14,7 @@ import { formatDepotName, formatPersonName } from '../../../core/utils/text-form
 
 @Component({
   selector: 'app-technician-activity',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   providers: [DatePipe],
@@ -241,6 +242,17 @@ export class TechnicianActivity {
         value: Number(p[option.key] || 0)
       }))
       .filter((item) => item.value > 0);
+  }
+
+  formatAmount(value?: number | null): string {
+    const amount = Number(value ?? 0);
+    if (!Number.isFinite(amount)) return '0,00 €';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
   }
 
   private loadUsers(): void {

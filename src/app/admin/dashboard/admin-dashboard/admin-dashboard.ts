@@ -1,9 +1,10 @@
 // admin-dashboard.component.ts
-import {Component, inject} from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import {AdminService} from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-admin-dashboard',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './admin-dashboard.html',
   styleUrls: ['./admin-dashboard.scss']
 })

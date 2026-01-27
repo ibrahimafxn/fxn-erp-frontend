@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnDestroy, effect, inject, signal} from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {DOCUMENT} from '@angular/common';
 import {RouterOutlet} from '@angular/router';
 import {AppHeader} from './layout/app-header/app-header';
@@ -7,6 +7,7 @@ import {Role} from './core/models/roles.model';
 
 @Component({
   selector: 'app-root',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterOutlet, AppHeader],
   templateUrl: './app.html',
   styleUrl: './app.scss'

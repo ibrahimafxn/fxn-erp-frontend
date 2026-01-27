@@ -1,6 +1,6 @@
 // src/app/admin/resources/vehicles/vehicle-detail/vehicle-detail.ts
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -19,6 +19,7 @@ type AssignMode = 'idle' | 'assign' | 'release';
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-detail',
   providers: [DatePipe],
   imports: [CommonModule, RouterModule],
