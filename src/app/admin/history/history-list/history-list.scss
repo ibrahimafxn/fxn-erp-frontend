@@ -81,6 +81,8 @@
 }
 
 .table.card { padding: 0; overflow: hidden; }
+.table.card.table-scroll { overflow-x: auto; }
+.table.card.table-scroll table { min-width: 980px; }
 table { width: 100%; border-collapse: collapse; }
 thead th {
   text-align: left;
@@ -90,6 +92,11 @@ thead th {
   text-transform: uppercase;
   padding: 1rem 1.05rem;
   border-bottom: 1px solid var(--fxn-border-strong);
+}
+
+thead th:last-child,
+tbody td:last-child {
+  padding-right: 1.8rem;
 }
 tbody td {
   padding: 1rem 1.05rem;

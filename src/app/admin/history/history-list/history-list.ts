@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
 import { Consumable, Depot, Material, Movement, MovementListResult, User, Vehicle } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { formatPageRange } from '../../../core/utils/pagination';
 import { downloadBlob } from '../../../core/utils/download';
 import { ConfirmCancelModal } from '../../../shared/components/dialog/confirm-cancel-modal/confirm-cancel-modal';
 
@@ -41,7 +42,8 @@ export class HistoryList {
   readonly result: Signal<MovementListResult | null> = this.movementService.result;
 
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   readonly depots = signal<Depot[]>([]);
   readonly users = signal<User[]>([]);
@@ -186,7 +188,12 @@ export class HistoryList {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh(true);
   }

@@ -1,5 +1,5 @@
 .revenue-page {
-  padding: 1.25rem;
+  padding: 1rem;
   display: grid;
   gap: 1rem;
   position: relative;
@@ -59,12 +59,12 @@
 }
 
 .toolbar.card {
-  padding: 1rem;
+  padding: .75rem;
 }
 
 .filters {
   display: flex;
-  gap: .75rem;
+  gap: .6rem;
   flex-wrap: wrap;
   align-items: flex-end;
 
@@ -76,8 +76,8 @@
 
   input,
   select {
-    min-width: 160px;
-    padding: .6rem .75rem;
+    min-width: 140px;
+    padding: .5rem .6rem;
     border-radius: .75rem;
     border: 1px solid var(--fxn-border);
     background: rgba(10, 16, 28, 0.6);
@@ -98,7 +98,7 @@
   }
 
   .actions .btn-outline {
-    height: 40px;
+    height: 36px;
   }
 }
 
@@ -146,8 +146,8 @@
 
 .grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr 1.4fr;
-  gap: 1rem;
+  grid-template-columns: 1.1fr 0.8fr 1.2fr;
+  gap: .85rem;
 
   @media (max-width: 1100px) {
     grid-template-columns: 1fr;
@@ -155,12 +155,12 @@
 }
 
 .form-card {
-  padding: 1rem;
+  padding: .85rem;
 }
 
 .form {
   display: grid;
-  gap: .75rem;
+  gap: .6rem;
 
   label {
     display: grid;
@@ -170,7 +170,7 @@
 
   input,
   select {
-    padding: .6rem .75rem;
+    padding: .5rem .65rem;
     border-radius: .75rem;
     border: 1px solid var(--fxn-border);
     background: rgba(10, 16, 28, 0.6);
@@ -185,7 +185,7 @@
 .form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: .75rem;
+  gap: .6rem;
 
   label {
     min-width: 0;
@@ -211,7 +211,7 @@
 }
 
 .kpi-card {
-  padding: 1rem;
+  padding: .85rem;
   display: grid;
   align-content: start;
   gap: .3rem;
@@ -227,7 +227,7 @@
 }
 
 .kpi-value {
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 800;
   text-shadow: 0 0 18px rgba(59, 130, 246, 0.25);
 }
@@ -269,7 +269,7 @@
 }
 
 .chart-card {
-  padding: 1rem;
+  padding: .85rem;
   display: grid;
   gap: .75rem;
 }
@@ -312,7 +312,7 @@
 
 .chart-canvas {
   position: relative;
-  height: 240px;
+  height: 200px;
   border-radius: 1rem;
   border: 1px solid var(--fxn-border);
   background: linear-gradient(180deg, rgba(10, 16, 28, 0.7), rgba(8, 12, 20, 0.85));
@@ -457,7 +457,7 @@
 
 table {
   width: 100%;
-  min-width: 820px;
+  min-width: 720px;
   border-collapse: collapse;
 }
 
@@ -465,13 +465,13 @@ thead th {
   text-align: left;
   font-size: .8rem;
   opacity: .8;
-  padding: .65rem .75rem;
+  padding: .55rem .6rem;
   border-bottom: 1px solid var(--fxn-border);
   background: rgba(12, 18, 30, 0.8);
 }
 
 tbody td {
-  padding: .65rem .75rem;
+  padding: .55rem .6rem;
   border-bottom: 1px solid var(--fxn-border);
 }
 
@@ -518,7 +518,7 @@ tbody tr:hover {
 }
 
 .note {
-  max-width: 240px;
+  max-width: 200px;
   color: var(--fxn-text-muted);
 }
 
@@ -643,7 +643,7 @@ tbody tr:hover {
 }
 
 .attachments {
-  max-width: 200px;
+  max-width: 160px;
 }
 
 .attachment-list {
@@ -719,7 +719,7 @@ tbody tr:hover {
   border-color: rgba(255, 92, 124, 0.7);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .table.card {
     overflow: hidden;
   }

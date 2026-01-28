@@ -111,8 +111,10 @@ export class RevenueService {
     return this.http.post<ApiResponse<RevenueItem>>(`${this.baseUrl}/attachments`, formData);
   }
 
-  previewPenalty(files: File[]) {
+  previewPenalty(files: File[], period?: { month?: number | string; year?: number | string }) {
     const formData = new FormData();
+    if (period?.month) formData.append('month', String(period.month));
+    if (period?.year) formData.append('year', String(period.year));
     for (const file of files) {
       formData.append('files', file);
     }

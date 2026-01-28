@@ -2,6 +2,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ElementRef, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RevenueService, RevenueAttachment, RevenueItem, RevenueSummaryPoint, RevenueUser } from '../../../core/services/revenue.service';
+import { formatPageRange } from '../../../core/utils/pagination';
 import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
@@ -29,6 +30,7 @@ export class RevenueDashboard {
   readonly selectedPeriodLabel = signal('Toutes périodes');
   readonly page = signal(1);
   readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
   readonly totalCount = signal(0);
   readonly pageCount = computed(() => {
     const t = this.totalCount();
@@ -388,7 +390,12 @@ export class RevenueDashboard {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.loadAll();
   }
@@ -648,7 +655,8 @@ export class RevenueDashboard {
 
   private previewPenaltyFromFiles(files: File[]): void {
     if (!files.length) return;
-    this.revenue.previewPenalty(files).subscribe({
+    const raw = this.createForm.getRawValue();
+    this.revenue.previewPenalty(files, { month: raw.month, year: raw.year }).subscribe({
       next: (res) => {
         if (!res?.success) return;
         const value = Number(res.data?.penalty ?? 0);

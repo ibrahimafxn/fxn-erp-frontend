@@ -3,6 +3,7 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
+import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
@@ -25,6 +26,7 @@ export class TechnicianReports {
   readonly page = signal(1);
   readonly limit = signal(10);
   readonly total = signal(0);
+  readonly pageRange = formatPageRange;
   readonly editing = signal<TechnicianReport | null>(null);
   readonly deleteModalOpen = signal(false);
   readonly pendingDelete = signal<TechnicianReport | null>(null);
@@ -42,6 +44,7 @@ export class TechnicianReports {
       professionnel: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       pavillon: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       immeuble: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+      racProC: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       prestaComplementaire: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       reconnexion: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       sav: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
@@ -58,10 +61,16 @@ export class TechnicianReports {
 
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly initialFormValue = signal('');
+  readonly formSnapshot = signal('');
+  readonly isDefaultForm = computed(
+    () => this.formSnapshot() === this.initialFormValue()
+  );
   readonly prestationOptions = [
     { key: 'professionnel', label: 'Professionnel', className: 'pill-professionnel' },
-    { key: 'pavillon', label: 'Pavillon', className: 'pill-pavillon' },
     { key: 'immeuble', label: 'Immeuble', className: 'pill-immeuble' },
+    { key: 'racProC', label: 'Professionnel complexe', className: 'pill-pro-c' },
+    { key: 'pavillon', label: 'Pavillon', className: 'pill-pavillon' },
     { key: 'prestaComplementaire', label: 'Presta Complémentaire', className: 'pill-complementaire' },
     { key: 'reconnexion', label: 'Reconnexion', className: 'pill-reconnexion' },
     { key: 'sav', label: 'SAV', className: 'pill-sav' },
@@ -70,6 +79,11 @@ export class TechnicianReports {
 
   constructor() {
     this.refresh(true);
+    this.initialFormValue.set(this.serializeForm(this.form.getRawValue()));
+    this.formSnapshot.set(this.serializeForm(this.form.getRawValue()));
+    this.form.valueChanges.subscribe(() => {
+      this.formSnapshot.set(this.serializeForm(this.form.getRawValue()));
+    });
   }
 
   submit(): void {
@@ -107,6 +121,7 @@ export class TechnicianReports {
         professionnel: report.prestations?.professionnel ?? 0,
         pavillon: report.prestations?.pavillon ?? 0,
         immeuble: report.prestations?.immeuble ?? 0,
+        racProC: report.prestations?.racProC ?? 0,
         prestaComplementaire: report.prestations?.prestaComplementaire ?? 0,
         reconnexion: report.prestations?.reconnexion ?? 0,
         sav: report.prestations?.sav ?? 0,
@@ -114,6 +129,9 @@ export class TechnicianReports {
       },
       comment: report.comment || ''
     });
+    this.initialFormValue.set(this.serializeForm(this.form.getRawValue()));
+    this.formSnapshot.set(this.serializeForm(this.form.getRawValue()));
+    this.form.markAsPristine();
   }
 
   openDeleteModal(report: TechnicianReport): void {
@@ -200,6 +218,11 @@ export class TechnicianReports {
     if (!el) return;
     const value = Number(el.value);
     if (!Number.isFinite(value) || value <= 0) return;
+    this.setLimitValue(value);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
     this.limit.set(value);
     this.page.set(1);
     this.refresh(true);
@@ -228,6 +251,7 @@ export class TechnicianReports {
         professionnel: 0,
         pavillon: 0,
         immeuble: 0,
+        racProC: 0,
         prestaComplementaire: 0,
         reconnexion: 0,
         sav: 0,
@@ -235,6 +259,9 @@ export class TechnicianReports {
       },
       comment: ''
     });
+    this.initialFormValue.set(this.serializeForm(this.form.getRawValue()));
+    this.formSnapshot.set(this.serializeForm(this.form.getRawValue()));
+    this.form.markAsPristine();
   }
 
   private normalizeDateRange(yearInput: string, fromInput: string, toInput: string): { fromDate: string; toDate: string } {
@@ -260,6 +287,12 @@ export class TechnicianReports {
           borderColor: 'rgba(239, 68, 68, 0.9)',
           background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.8), rgba(239, 68, 68, 0.7))',
           color: '#fff1f2'
+        };
+      case 'racProC':
+        return {
+          borderColor: 'rgba(59, 130, 246, 0.9)',
+          background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.85), rgba(59, 130, 246, 0.7))',
+          color: '#eff6ff'
         };
       case 'prestaComplementaire':
         return {
@@ -302,6 +335,10 @@ export class TechnicianReports {
         ? String(err.error.message ?? '')
         : '';
     return apiMsg || err?.message || fallback;
+  }
+
+  private serializeForm(value: unknown): string {
+    return JSON.stringify(value ?? {});
   }
 
   formatAmount(value?: number | null): string {

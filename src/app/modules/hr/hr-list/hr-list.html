@@ -19,60 +19,21 @@
   }
 
   @if (tab() === 'employees') {
-    <div class="hr-grid">
+    <div class="section-tabs">
+      <button class="btn-outline" type="button" [class.active]="employeeSection() === 'employees'" (click)="setEmployeeSection('employees')">
+        Employés
+      </button>
+      <button class="btn-outline" type="button" [class.active]="employeeSection() === 'profile'" (click)="setEmployeeSection('profile')">
+        Dossier employé
+      </button>
+      <button class="btn-outline" type="button" [class.active]="employeeSection() === 'documents'" (click)="setEmployeeSection('documents')">
+        Documents
+      </button>
+    </div>
+
+    @if (employeeSection() === 'employees') {
       <div class="panel">
         <h2 class="section-title"><span class="material-icons notranslate">badge</span>Employés</h2>
-        @if (docAlerts()) {
-          <div class="doc-alerts">
-            <button class="pill danger link-pill" type="button" (click)="openDocOverlay('EXPIRED')">
-              Expirés : {{ docAlerts()?.expired }}
-            </button>
-            <button class="pill warn link-pill" type="button" (click)="openDocOverlay('EXPIRING')">
-              Expirent bientôt : {{ docAlerts()?.expiring }}
-            </button>
-            <button class="pill link-pill" type="button" (click)="setDocFilter('ALL')">
-              Tous
-            </button>
-          </div>
-          @if (overlayOpen()) {
-            <div class="doc-alerts-panel card" id="doc-alerts-panel">
-              <div class="overlay-header">
-                <h3 class="section-title"><span class="material-icons notranslate">warning</span>{{ overlayTitle() }}</h3>
-                <button class="btn-outline" type="button" (click)="closeDocOverlay()"><i class="bi bi-x-lg"></i> Fermer</button>
-              </div>
-              @if (overlayLoading()) {
-                <div class="state">Chargement…</div>
-              } @else if (overlayItems().length === 0) {
-                <div class="state">Aucun document.</div>
-              } @else {
-                <div class="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Employé</th>
-                        <th>Type</th>
-                        <th>Expiration</th>
-                        <th>Document</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (d of overlayItems(); track d._id) {
-                        <tr [class.doc-valid]="isDocValid(d)" [class.doc-expired]="isDocExpired(d)">
-                          <td>{{ formatUserName(d.user) }}</td>
-                          <td>{{ docTypeLabel(d.type) }}</td>
-                          <td>{{ formatDate(d.expiryDate) }}</td>
-                          <td>
-                            <button type="button" class="doc-link" (click)="openDoc(d)">Ouvrir PDF</button>
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              }
-            </div>
-          }
-        }
         <div class="filters">
           <input
             #employeeSearch
@@ -96,11 +57,6 @@
             @for (c of complianceFilters; track c.value) {
               <option [value]="c.value">{{ c.label }}</option>
             }
-          </select>
-          <select #pageSizeSelect [value]="employeeLimit()" (change)="employeeLimit.set(+pageSizeSelect.value); applyEmployeeFilters()">
-            <option [value]="10">10 / page</option>
-            <option [value]="25">25 / page</option>
-            <option [value]="50">50 / page</option>
           </select>
           <button class="btn-outline" (click)="resetEmployeeFilters()">Réinitialiser</button>
         </div>
@@ -132,18 +88,26 @@
             </tbody>
           </table>
         </div>
-        <div class="pagination">
-          <button class="btn-outline" (click)="prevEmployeePage()" [disabled]="employeePage() <= 1"><i class="bi bi-chevron-left"></i> Précédent</button>
-          <span>Page {{ employeePage() }} / {{ employeePageCount() }}</span>
-          <button
-            class="btn-outline"
-            (click)="nextEmployeePage()"
-            [disabled]="employeePage() >= employeePageCount()"
-          ><i class="bi bi-chevron-right"></i> Suivant
-          </button>
-        </div>
+        <footer class="pager pager-fixed">
+          <div class="pager-left">
+            <div class="page-size">
+              <button type="button" [class.active]="employeeLimit() === 10" (click)="setEmployeeLimitValue(10)">10</button>
+              <button type="button" [class.active]="employeeLimit() === 20" (click)="setEmployeeLimitValue(20)">20</button>
+              <button type="button" [class.active]="employeeLimit() === 50" (click)="setEmployeeLimitValue(50)">50</button>
+              <button type="button" [class.active]="employeeLimit() === 100" (click)="setEmployeeLimitValue(100)">100</button>
+            </div>
+            <span class="pager-label">Éléments par page</span>
+          </div>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(employeePage(), employeeLimit(), employeeTotal()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline" type="button" (click)="prevEmployeePage()" [disabled]="employeePage() <= 1"><i class="bi bi-chevron-left"></i></button>
+              <button class="btn-outline" type="button" (click)="nextEmployeePage()" [disabled]="employeePage() >= employeePageCount()"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
+        </footer>
       </div>
-
+    } @else if (employeeSection() === 'profile') {
       <div class="panel detail" id="hr-employee-profile">
         @if (selected(); as s) {
           <h2 class="section-title"><span class="material-icons notranslate">assignment_ind</span>Dossier employé</h2>
@@ -208,7 +172,107 @@
             <button class="btn-save" (click)="saveProfile()"><i class="fa-solid fa-check"></i> Enregistrer</button>
           </div>
 
-          <h3 class="section-title"><span class="material-icons notranslate">description</span>Documents</h3>
+          <h3 class="section-title"><span class="material-icons notranslate">history</span>Historique RH</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Action</th>
+                  <th>Auteur</th>
+                  <th>Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (h of history(); track h._id) {
+                  <tr>
+                    <td>{{ formatDate(h.createdAt || '') }}</td>
+                    <td>{{ historyActionLabel(h.action) }}</td>
+                    <td>{{ formatUserName(h.actor) }}</td>
+                    <td>{{ historyDetail(h) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <footer class="pager pager-fixed">
+            <div class="pager-left">
+              <div class="page-size">
+                <button type="button" [class.active]="historyLimit() === 10" (click)="setHistoryLimitValue(10)">10</button>
+                <button type="button" [class.active]="historyLimit() === 20" (click)="setHistoryLimitValue(20)">20</button>
+                <button type="button" [class.active]="historyLimit() === 50" (click)="setHistoryLimitValue(50)">50</button>
+                <button type="button" [class.active]="historyLimit() === 100" (click)="setHistoryLimitValue(100)">100</button>
+              </div>
+              <span class="pager-label">Éléments par page</span>
+            </div>
+            <div class="pager-right">
+              <span class="pager-range">{{ pageRange(historyPage(), historyLimit(), historyTotal()) }}</span>
+              <div class="pager-nav">
+                <button class="btn-outline" type="button" (click)="prevHistoryPage()" [disabled]="historyPage() <= 1"><i class="bi bi-chevron-left"></i></button>
+                <button class="btn-outline" type="button" (click)="nextHistoryPage()" [disabled]="historyPage() >= historyPageCount()"><i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
+          </footer>
+        } @else {
+          <div class="state">Sélectionner un employé.</div>
+        }
+      </div>
+    } @else {
+      <div class="panel detail">
+        <h2 class="section-title"><span class="material-icons notranslate">description</span>Documents</h2>
+        @if (docAlerts()) {
+          <div class="doc-alerts">
+            <button class="pill danger link-pill" type="button" (click)="openDocOverlay('EXPIRED')">
+              Expirés : {{ docAlerts()?.expired }}
+            </button>
+            <button class="pill warn link-pill" type="button" (click)="openDocOverlay('EXPIRING')">
+              Expirent bientôt : {{ docAlerts()?.expiring }}
+            </button>
+            <button class="pill link-pill" type="button" (click)="setDocFilter('ALL')">
+              Tous
+            </button>
+          </div>
+          @if (overlayOpen()) {
+            <div class="doc-alerts-panel card" id="doc-alerts-panel">
+              <div class="overlay-header">
+                <h3 class="section-title"><span class="material-icons notranslate">warning</span>{{ overlayTitle() }}</h3>
+                <button class="btn-outline" type="button" (click)="closeDocOverlay()"><i class="bi bi-x-lg"></i> Fermer</button>
+              </div>
+              @if (overlayLoading()) {
+                <div class="state">Chargement…</div>
+              } @else if (overlayItems().length === 0) {
+                <div class="state">Aucun document.</div>
+              } @else {
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Employé</th>
+                        <th>Type</th>
+                        <th>Expiration</th>
+                        <th>Document</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (d of overlayItems(); track d._id) {
+                        <tr [class.doc-valid]="isDocValid(d)" [class.doc-expired]="isDocExpired(d)">
+                          <td>{{ formatUserName(d.user) }}</td>
+                          <td>{{ docTypeLabel(d.type) }}</td>
+                          <td>{{ formatDate(d.expiryDate) }}</td>
+                          <td>
+                            <button type="button" class="doc-link" (click)="openDoc(d)">Ouvrir PDF</button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        @if (selected(); as s) {
           <form class="doc-form" [formGroup]="docForm">
             <select formControlName="type">
               @for (t of docTypes; track t.value) {
@@ -277,45 +341,11 @@
             (cancel)="closeDeleteDocModal()"
             (confirm)="confirmDeleteDoc()">
           </app-confirm-delete-modal>
-
-          <h3 class="section-title"><span class="material-icons notranslate">history</span>Historique RH</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Action</th>
-                  <th>Auteur</th>
-                  <th>Détail</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (h of history(); track h._id) {
-                  <tr>
-                    <td>{{ formatDate(h.createdAt || '') }}</td>
-                    <td>{{ historyActionLabel(h.action) }}</td>
-                    <td>{{ formatUserName(h.actor) }}</td>
-                    <td>{{ historyDetail(h) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          <div class="pagination">
-            <button class="btn-outline" (click)="prevHistoryPage()" [disabled]="historyPage() <= 1"><i class="bi bi-chevron-left"></i> Précédent</button>
-            <span>Page {{ historyPage() }} / {{ historyPageCount() }}</span>
-            <button
-              class="btn-outline"
-              (click)="nextHistoryPage()"
-              [disabled]="historyPage() >= historyPageCount()"
-            ><i class="bi bi-chevron-right"></i> Suivant
-            </button>
-          </div>
         } @else {
           <div class="state">Sélectionner un employé.</div>
         }
       </div>
-    </div>
+    }
   } @else {
     <div class="panel">
       <div class="leaves-header">

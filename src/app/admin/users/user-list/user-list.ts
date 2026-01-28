@@ -13,6 +13,8 @@ import {DATE_FORMAT_FR} from '../../../core/constant/date-format';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { downloadBlob } from '../../../core/utils/download';
+import { formatPageRange } from '../../../core/utils/pagination';
+import { environment } from '../../../environments/environment';
 
 @Component({
   standalone: true,
@@ -34,6 +36,7 @@ export class UserList extends DetailBack {
   private depotSvc = inject(DepotService);
   private fb = inject(FormBuilder);
   private datePipe = inject(DatePipe);
+  private readonly uploadsBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
 
   // service signals
   readonly loading = this.userService.loading;
@@ -47,7 +50,8 @@ export class UserList extends DetailBack {
 
   // Pagination state
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   // Depots (filtre)
   readonly depots = signal<Depot[]>([]);
@@ -90,6 +94,14 @@ export class UserList extends DetailBack {
     const last = u.lastName?.[0] ?? '';
     const value = `${first}${last}`.toUpperCase();
     return value || (u.email?.[0] ?? '').toUpperCase();
+  }
+
+  avatarSrc(u: User): string {
+    const raw = String(u.photoUrl || u.avatarUrl || '').trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (raw.startsWith('/')) return `${this.uploadsBaseUrl}${raw}`;
+    return `${this.uploadsBaseUrl}/${raw}`;
   }
 
   refresh(force = false): void {

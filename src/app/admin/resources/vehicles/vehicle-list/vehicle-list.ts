@@ -13,6 +13,7 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
+import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 
 
@@ -38,6 +39,9 @@ export class VehicleList extends DetailBack {
 
   // UI state
   readonly deletingId = signal<string | null>(null);
+  readonly assignedVehicle = signal<Vehicle | null>(null);
+  readonly assignedLoading = signal(false);
+  readonly assignedError = signal<string | null>(null);
 
   // Modal state
   readonly deleteModalOpen = signal(false);
@@ -47,7 +51,8 @@ export class VehicleList extends DetailBack {
 
   // Pagination
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   // Depots (select)
   readonly depots = signal<Depot[]>([]);
@@ -85,6 +90,10 @@ export class VehicleList extends DetailBack {
 
   constructor() {
     super();
+    if (this.isReadOnly()) {
+      this.loadAssignedVehicle();
+      return;
+    }
     if (!this.isDepotManager()) {
       this.loadDepots();
     }
@@ -134,7 +143,12 @@ export class VehicleList extends DetailBack {
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
 
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh(true);
   }
@@ -284,5 +298,31 @@ export class VehicleList extends DetailBack {
 
   depotOptionLabel(d: Depot): string {
     return formatDepotName(d.name ?? '') || '—';
+  }
+
+  private loadAssignedVehicle(): void {
+    const user = this.auth.getCurrentUser();
+    const vehicleId = user?.assignedVehicle ? String(user.assignedVehicle) : '';
+    if (!vehicleId) {
+      this.assignedVehicle.set(null);
+      this.assignedError.set(null);
+      return;
+    }
+    this.assignedLoading.set(true);
+    this.assignedError.set(null);
+    this.svc.getById(vehicleId).subscribe({
+      next: (vehicle) => {
+        this.assignedVehicle.set(vehicle);
+        this.assignedLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        const apiMsg =
+          typeof err.error === 'object' && err.error !== null && 'message' in err.error
+            ? String((err.error as { message?: unknown }).message ?? '')
+            : '';
+        this.assignedError.set(apiMsg || err.message || 'Erreur chargement véhicule');
+        this.assignedLoading.set(false);
+      }
+    });
   }
 }

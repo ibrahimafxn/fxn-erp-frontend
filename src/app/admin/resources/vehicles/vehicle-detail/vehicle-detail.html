@@ -237,19 +237,6 @@
       <article class="card history-card">
         <div class="card-title-row">
           <h2>Historique</h2>
-
-          <div class="history-meta">
-            <span class="pill">Total : {{ historyTotal() }}</span>
-
-            <label class="limit">
-              <span>Par page</span>
-              <select [value]="historyLimit()" (change)="setHistoryLimit($event)">
-                <option [value]="10">10</option>
-                <option [value]="25">25</option>
-                <option [value]="50">50</option>
-              </select>
-            </label>
-          </div>
         </div>
 
         @if (historyLoading()) {
@@ -300,12 +287,23 @@
             }
           </div>
 
-          <footer class="pager">
-            <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
-
-            <span class="pill">Page {{ historyPage() }} / {{ historyPageCount() }}</span>
-
-            <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+          <footer class="pager pager-fixed">
+            <div class="pager-left">
+              <div class="page-size">
+                <button type="button" [class.active]="historyLimit() === 10" (click)="setHistoryLimitValue(10)">10</button>
+                <button type="button" [class.active]="historyLimit() === 20" (click)="setHistoryLimitValue(20)">20</button>
+                <button type="button" [class.active]="historyLimit() === 50" (click)="setHistoryLimitValue(50)">50</button>
+                <button type="button" [class.active]="historyLimit() === 100" (click)="setHistoryLimitValue(100)">100</button>
+              </div>
+              <span class="pager-label">Éléments par page</span>
+            </div>
+            <div class="pager-right">
+              <span class="pager-range">{{ pageRange(historyPage(), historyLimit(), historyTotal()) }}</span>
+              <div class="pager-nav">
+                <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()"><i class="bi bi-chevron-left"></i></button>
+                <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()"><i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
           </footer>
         }
       </article>

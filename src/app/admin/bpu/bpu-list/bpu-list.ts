@@ -2,7 +2,8 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { BpuService } from '../../../core/services/bpu.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { BpuEntry } from '../../../core/models';
@@ -57,14 +58,20 @@ export class BpuList {
     this.error.set(null);
     this.success.set(null);
     const segment = this.currentSegment();
+    const items$ = segment === 'ASSOCIE'
+      ? this.bpuService.list(segment).pipe(
+          switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
+        )
+      : this.bpuService.list(segment);
     forkJoin({
-      items: this.bpuService.list(segment),
+      items: items$,
       selections: this.bpuSelectionService.list()
     }).subscribe({
       next: ({ items, selections }) => {
-        this.items.set(items);
+        const uniqueItems = this.uniqueItems(items);
+        this.items.set(uniqueItems);
         const selection = selections.find((item) => item.type === segment);
-        const availableCodes = new Set(items.map((item) => item.code).filter(Boolean) as string[]);
+        const availableCodes = new Set(uniqueItems.map((item) => item.code).filter(Boolean) as string[]);
         const selected = new Set<string>();
         const edited = new Map<string, number>();
         for (const entry of selection?.prestations || []) {
@@ -270,5 +277,18 @@ export class BpuList {
         ? String((err.error as { message?: unknown }).message ?? '')
         : '';
     return apiMsg || err.message || fallback;
+  }
+
+  private uniqueItems(items: BpuEntry[]): BpuEntry[] {
+    const seen = new Set<string>();
+    const result: BpuEntry[] = [];
+    for (const item of items) {
+      const rawKey = item.code || item.prestation || '';
+      const key = rawKey.trim().toUpperCase();
+      if (key && seen.has(key)) continue;
+      if (key) seen.add(key);
+      result.push(item);
+    }
+    return result;
   }
 }

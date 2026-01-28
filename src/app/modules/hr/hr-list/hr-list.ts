@@ -19,6 +19,7 @@ import {
   LeaveRequest
 } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { formatPageRange } from '../../../core/utils/pagination';
 
 @Component({
   selector: 'app-hr-list',
@@ -37,6 +38,7 @@ export class HrList {
   private datePipe = inject(DatePipe);
 
   readonly tab = signal<'employees' | 'leaves'>('employees');
+  readonly employeeSection = signal<'employees' | 'profile' | 'documents'>('employees');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -46,6 +48,7 @@ export class HrList {
   readonly employeeTotal = signal(0);
   readonly employeePage = signal(1);
   readonly employeeLimit = signal(10);
+  readonly pageRange = formatPageRange;
   readonly employeeQuery = signal('');
   readonly employeeRole = signal('');
   readonly employeeDepot = signal('');
@@ -185,6 +188,10 @@ export class HrList {
     this.tab.set(next);
   }
 
+  setEmployeeSection(section: 'employees' | 'profile' | 'documents'): void {
+    this.employeeSection.set(section);
+  }
+
   loadEmployees(): void {
     this.loading.set(true);
     this.error.set(null);
@@ -220,6 +227,13 @@ export class HrList {
   }
 
   applyEmployeeFilters(): void {
+    this.employeePage.set(1);
+    this.loadEmployees();
+  }
+
+  setEmployeeLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.employeeLimit.set(value);
     this.employeePage.set(1);
     this.loadEmployees();
   }
@@ -262,6 +276,8 @@ export class HrList {
 
   selectEmployee(item: EmployeeSummary): void {
     this.selected.set(item);
+    this.employeeSection.set('profile');
+    this.overlayOpen.set(false);
     this.patchProfile(item.profile || null);
     this.scrollToProfile();
     const userId = item.user?._id || '';
@@ -287,8 +303,14 @@ export class HrList {
     this.employeeTotal.set(total);
     this.employees.set(items);
     if (items.length) {
-      if (!this.selected() || !items.some((e) => e.user._id === this.selected()?.user._id)) {
+      const hasSelected = this.selected() && items.some((e) => e.user._id === this.selected()?.user._id);
+      if (this.employeeSection() !== 'employees' && !hasSelected) {
         this.selectEmployee(items[0]);
+        return;
+      }
+      if (!hasSelected) {
+        this.selected.set(null);
+        this.docs.set([]);
       }
     } else {
       this.selected.set(null);
@@ -441,6 +463,7 @@ export class HrList {
   }
 
   setDocFilter(filter: 'ALL' | 'EXPIRED' | 'EXPIRING'): void {
+    this.employeeSection.set('documents');
     this.docFilter.set(filter);
     const el = document.getElementById('hr-documents');
     if (el) {
@@ -451,6 +474,7 @@ export class HrList {
   }
 
   openDocOverlay(filter: 'EXPIRED' | 'EXPIRING'): void {
+    this.employeeSection.set('documents');
     this.overlayFilter.set(filter);
     this.overlayOpen.set(true);
     this.overlayLoading.set(true);
@@ -511,6 +535,14 @@ export class HrList {
     const totalPages = Math.max(1, Math.ceil(this.historyTotal() / this.historyLimit()));
     const next = Math.min(totalPages, this.historyPage() + 1);
     this.historyPage.set(next);
+    const userId = this.selected()?.user?._id;
+    if (userId) this.loadHistory(userId);
+  }
+
+  setHistoryLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.historyLimit.set(value);
+    this.historyPage.set(1);
     const userId = this.selected()?.user?._id;
     if (userId) this.loadHistory(userId);
   }

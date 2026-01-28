@@ -12,6 +12,7 @@ import {AuthService} from '../../../../core/services/auth.service';
 import {AttributionHistoryItem, AttributionHistoryResult, Depot, Material, Role, User} from '../../../../core/models';
 import {DetailBack} from '../../../../core/utils/detail-back';
 import {formatDepotName, formatPersonName, formatResourceName} from '../../../../core/utils/text-format';
+import { formatPageRange } from '../../../../core/utils/pagination';
 import {downloadBlob} from '../../../../core/utils/download';
 import {ConfirmDeleteModal} from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
@@ -45,6 +46,7 @@ export class MaterialDetail extends DetailBack {
 
   readonly historyPage = signal(1);
   readonly historyLimit = signal(10);
+  readonly pageRange = formatPageRange;
   readonly historyItems = computed<AttributionHistoryItem[]>(() => this.history()?.items ?? []);
   readonly historyTotal = computed(() => this.history()?.total ?? 0);
   readonly historyPageCount = computed(() => {
@@ -233,7 +235,12 @@ export class MaterialDetail extends DetailBack {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.historyLimit.set(v);
+    this.setHistoryLimitValue(v);
+  }
+
+  setHistoryLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.historyLimit.set(value);
     this.loadHistory(true);
   }
 

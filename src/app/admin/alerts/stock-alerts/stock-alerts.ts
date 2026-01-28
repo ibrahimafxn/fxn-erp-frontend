@@ -14,6 +14,7 @@ import { Consumable, ConsumableListResult, Depot, Material, Vehicle } from '../.
 import { downloadBlob } from '../../../core/utils/download';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../core/utils/text-format';
+import { formatPageRange } from '../../../core/utils/pagination';
 
 @Component({
   selector: 'app-stock-alerts',
@@ -39,7 +40,8 @@ export class StockAlerts {
   readonly vehicleResult = signal<{ total: number; page: number; limit: number; items: Vehicle[] } | null>(null);
 
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   readonly depots = signal<Depot[]>([]);
   readonly depotsLoading = signal(false);
@@ -228,7 +230,12 @@ export class StockAlerts {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh(true);
   }

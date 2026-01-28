@@ -14,6 +14,7 @@ import { Vehicle, Depot, User, VehicleBreakdown } from '../../../../core/models'
 import { VehicleHistoryItem, VehicleHistoryResult } from '../../../../core/models/vehicle-history.model';
 import {DetailBack} from '../../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
+import { formatPageRange } from '../../../../core/utils/pagination';
 
 type AssignMode = 'idle' | 'assign' | 'release';
 
@@ -80,6 +81,7 @@ export class VehicleDetail extends DetailBack {
 
   readonly historyPage = signal(1);
   readonly historyLimit = signal(10);
+  readonly pageRange = formatPageRange;
 
   readonly historyItems = computed<VehicleHistoryItem[]>(() => this.history()?.items ?? []);
   readonly historyTotal = computed(() => this.history()?.total ?? 0);
@@ -331,7 +333,12 @@ export class VehicleDetail extends DetailBack {
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
 
-    this.historyLimit.set(v);
+    this.setHistoryLimitValue(v);
+  }
+
+  setHistoryLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.historyLimit.set(value);
     this.loadHistory(true);
   }
 

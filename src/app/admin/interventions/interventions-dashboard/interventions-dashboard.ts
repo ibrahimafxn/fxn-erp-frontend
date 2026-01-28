@@ -16,6 +16,7 @@ import { InterventionRatesService, InterventionRates } from '../../../core/servi
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
+import { formatPageRange } from '../../../core/utils/pagination';
 
 @Component({
   standalone: true,
@@ -62,7 +63,8 @@ export class InterventionsDashboard {
   readonly totals = signal<InterventionTotals | null>(null);
   readonly totalItems = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
   readonly detailOpen = signal(false);
   readonly detailLoading = signal(false);
   readonly detailError = signal<string | null>(null);
@@ -415,7 +417,12 @@ export class InterventionsDashboard {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.detailLimit.set(v);
+    this.setDetailLimitValue(v);
+  }
+
+  setDetailLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.detailLimit.set(value);
     this.detailPage.set(1);
     this.loadDetail();
   }
@@ -788,7 +795,12 @@ export class InterventionsDashboard {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh();
   }

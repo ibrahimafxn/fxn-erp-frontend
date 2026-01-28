@@ -3,6 +3,7 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { AttributionService } from '../../../core/services/attribution.service';
+import { formatPageRange } from '../../../core/utils/pagination';
 
 type AttributionHistoryItem = {
   _id: string;
@@ -46,6 +47,7 @@ export class TechnicianHistory {
   readonly page = signal(1);
   readonly limit = signal(20);
   readonly total = signal(0);
+  readonly pageRange = formatPageRange;
 
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control(''),
@@ -151,7 +153,12 @@ export class TechnicianHistory {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh();
   }

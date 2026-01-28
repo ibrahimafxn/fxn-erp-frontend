@@ -46,6 +46,7 @@
                       <button mat-button (click)="goTechConsumables()"><span class="material-icons notranslate">inventory_2</span>Consommables</button>
                       <button mat-button (click)="goTechVehicles()"><span class="material-icons notranslate">directions_car</span>Véhicules</button>
                       <button mat-button (click)="goTechReports()"><span class="material-icons notranslate">event_note</span>Rapport quotidien</button>
+                      <button mat-button (click)="goTechRevenue()"><span class="material-icons notranslate">insights</span>Chiffre d'affaires</button>
                       <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span>Historique</button>
                     </div>
                   </div>
@@ -81,10 +82,10 @@
               }
             </div>
 
-            <div class="menu-col">
-              @if (!isTechnician()) {
-                <div class="menu-group stock-group">
-                  <div class="section-label">Stock</div>
+              <div class="menu-col">
+                @if (!isTechnician()) {
+                  <div class="menu-group stock-group">
+                    <div class="section-label">Stock</div>
                   <div class="section-items">
                     @if (canViewMovements()) {
                       <button mat-button (click)="goReceipts()"><span class="material-icons notranslate">inventory_2</span>Réceptions stock</button>
@@ -125,13 +126,15 @@
                   </div>
                 </div>
               }
+              </div>
+            </div>
 
-                <div class="menu-group account-group">
-                  <div class="section-label">Compte</div>
-                  <div class="section-items">
-                    <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span>Mon profil</button>
-                    <button mat-button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
-                  </div>
+            <div class="menu-footer">
+              <div class="menu-group account-group">
+                <div class="section-label">Compte</div>
+                <div class="section-items">
+                  <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span>Mon profil</button>
+                  <button mat-button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
                 </div>
               </div>
             </div>

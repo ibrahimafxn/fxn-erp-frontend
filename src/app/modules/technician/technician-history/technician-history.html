@@ -35,23 +35,12 @@
       <input type="date" formControlName="from" />
       <input type="date" formControlName="to" />
 
-      <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
-      <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+      <div class="actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
     </form>
 
-    <div class="meta">
-      <span class="pill">Total : {{ total() }}</span>
-      <span class="pill">Page : {{ page() }} / {{ pageCount() }}</span>
-      <label class="limit">
-        <span>Par page</span>
-        <select [value]="limit()" (change)="onLimitChange($event)">
-          <option [value]="10">10</option>
-          <option [value]="20">20</option>
-          <option [value]="50">50</option>
-          <option [value]="100">100</option>
-        </select>
-      </label>
-    </div>
   </section>
 
   @if (loading()) {
@@ -88,9 +77,23 @@
       </table>
     </div>
 
-    <footer class="pager">
-      <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">← Précédent</button>
-      <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">Suivant →</button>
+    <footer class="pager pager-fixed">
+      <div class="pager-left">
+        <div class="page-size">
+          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+        </div>
+        <span class="pager-label">Éléments par page</span>
+      </div>
+      <div class="pager-right">
+        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+        <div class="pager-nav">
+          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
     </footer>
   }
 </section>

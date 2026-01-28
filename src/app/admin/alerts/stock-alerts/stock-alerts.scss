@@ -87,12 +87,12 @@
 }
 
 .table.card { padding: 0; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 860px; }
+table { width: 100%; border-collapse: collapse; min-width: 760px; }
 thead th {
   text-align: left;
-  font-size: .9rem;
+  font-size: .85rem;
   opacity: .8;
-  padding: .85rem .9rem;
+  padding: .55rem .75rem;
   border-bottom: 1px solid var(--fxn-border);
   position: sticky;
   top: 0;
@@ -117,7 +117,7 @@ thead th {
   background: transparent;
 }
 tbody td {
-  padding: .85rem .9rem;
+  padding: .55rem .75rem;
   border-bottom: 1px solid var(--fxn-border);
   vertical-align: middle;
 }

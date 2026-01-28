@@ -19,8 +19,6 @@ export class TechnicianDashboard {
   readonly caLoading = signal(false);
   readonly caError = signal<string | null>(null);
   readonly dailyAmount = signal(0);
-  readonly monthlyAmount = signal(0);
-  readonly semiAnnualAmount = signal(0);
   readonly todayLabel = computed(() => new Date().toLocaleDateString('fr-FR'));
 
   constructor() {
@@ -52,8 +50,6 @@ export class TechnicianDashboard {
     this.caError.set(null);
     const today = new Date();
     const day = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const semesterStart = new Date(today.getFullYear(), today.getMonth() - 5, 1);
     const fmt = (d: Date) => {
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -62,14 +58,10 @@ export class TechnicianDashboard {
     };
 
     forkJoin({
-      daily: this.reports.summary({ fromDate: fmt(day), toDate: fmt(day) }),
-      monthly: this.reports.summary({ fromDate: fmt(monthStart), toDate: fmt(day) }),
-      semi: this.reports.summary({ fromDate: fmt(semesterStart), toDate: fmt(day) })
+      daily: this.reports.summary({ fromDate: fmt(day), toDate: fmt(day) })
     }).subscribe({
       next: (res) => {
         this.dailyAmount.set(res.daily.data.totalAmount || 0);
-        this.monthlyAmount.set(res.monthly.data.totalAmount || 0);
-        this.semiAnnualAmount.set(res.semi.data.totalAmount || 0);
         this.caLoading.set(false);
       },
       error: (err) => {

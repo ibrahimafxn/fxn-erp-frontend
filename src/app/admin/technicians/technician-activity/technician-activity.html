@@ -13,7 +13,7 @@
     <form class="filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
       <label>
         Technicien
-        <select formControlName="technicianId">
+        <select formControlName="technicianId" (change)="applyFilters()">
           <option value="">Tous</option>
           @for (u of users(); track u._id) {
             @if (u.role === 'TECHNICIEN') {
@@ -26,7 +26,7 @@
       @if (!isDepotManager()) {
         <label>
           Dépôt
-          <select formControlName="depot">
+          <select formControlName="depot" (change)="applyFilters()">
             <option value="">Tous</option>
             @for (d of depots(); track d._id) {
               <option [value]="d._id">{{ d.name }}</option>
@@ -108,9 +108,23 @@
           </table>
         </div>
 
-        <footer class="pager">
-          <button class="btn-outline" type="button" (click)="prevInterventions()" [disabled]="!canPrevInterventions()">← Précédent</button>
-          <button class="btn-outline" type="button" (click)="nextInterventions()" [disabled]="!canNextInterventions()">Suivant →</button>
+        <footer class="pager pager-fixed">
+          <div class="pager-left">
+            <div class="page-size">
+              <button type="button" [class.active]="interventionLimit() === 10" (click)="setInterventionLimitValue(10)">10</button>
+              <button type="button" [class.active]="interventionLimit() === 20" (click)="setInterventionLimitValue(20)">20</button>
+              <button type="button" [class.active]="interventionLimit() === 50" (click)="setInterventionLimitValue(50)">50</button>
+              <button type="button" [class.active]="interventionLimit() === 100" (click)="setInterventionLimitValue(100)">100</button>
+            </div>
+            <span class="pager-label">Éléments par page</span>
+          </div>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(interventionPage(), interventionLimit(), interventionTotal()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline" type="button" (click)="prevInterventions()" [disabled]="!canPrevInterventions()"><i class="bi bi-chevron-left"></i></button>
+              <button class="btn-outline" type="button" (click)="nextInterventions()" [disabled]="!canNextInterventions()"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
         </footer>
       }
     </article>

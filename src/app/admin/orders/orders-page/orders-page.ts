@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { Order, OrderService } from '../../../core/services/order.service';
+import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
@@ -25,7 +26,7 @@ export class OrdersPage {
   readonly items = signal<Order[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
   readonly deleteModalOpen = signal(false);
   readonly deletingId = signal<string | null>(null);
   readonly pendingDeleteId = signal<string | null>(null);
@@ -57,6 +58,7 @@ export class OrdersPage {
     errors: Array<{ row: number; message: string }>;
   } | null>(null);
   readonly importModalOpen = signal(false);
+  readonly pageRange = formatPageRange;
   readonly importTotalTva = computed(() => {
     const preview = this.importPreview();
     if (!preview) return 0;
@@ -255,7 +257,12 @@ export class OrdersPage {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh();
   }

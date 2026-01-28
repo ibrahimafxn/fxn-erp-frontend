@@ -11,6 +11,7 @@ import { MaterialService } from '../../../core/services/material.service';
 import { ConsumableService } from '../../../core/services/consumable.service';
 import { AttributionService } from '../../../core/services/attribution.service';
 import { formatPersonName, formatResourceName } from '../../../core/utils/text-format';
+import { formatPageRange } from '../../../core/utils/pagination';
 
 import { DepotStats, Material, Consumable, User } from '../../../core/models';
 
@@ -70,6 +71,7 @@ export class DepotDashboard {
   readonly techAttributionsPage = signal(1);
   readonly techAttributionsLimit = signal(10);
   readonly techAttributionsTotal = signal(0);
+  readonly pageRange = formatPageRange;
   readonly techAttributionsPageCount = computed(() => {
     const t = this.techAttributionsTotal();
     const l = this.techAttributionsLimit();
@@ -331,7 +333,12 @@ export class DepotDashboard {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.techAttributionsLimit.set(v);
+    this.setTechAttributionsLimitValue(v);
+  }
+
+  setTechAttributionsLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.techAttributionsLimit.set(value);
     this.techAttributionsPage.set(1);
     const techId = this.selectedTechViewId();
     if (techId) this.loadTechAttributions(techId);

@@ -43,12 +43,20 @@
 
 .search {
   display: grid;
-  grid-template-columns: 1.3fr .9fr .8fr .7fr .7fr .7fr auto auto;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: .6rem;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
+}
+
+.search .actions {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
 }
 
 .search input,

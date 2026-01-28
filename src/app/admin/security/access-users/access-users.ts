@@ -9,6 +9,7 @@ import { DepotService } from '../../../core/services/depot.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { Depot, User, Vehicle } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { formatPageRange } from '../../../core/utils/pagination';
 
 import { AccessCredentialsModal } from '../../../shared/ui/access-credentials-modal/access-credentials-modal';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
@@ -50,7 +51,8 @@ export class AccessUsers {
 
   // pagination
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   readonly items = computed<User[]>(() => this.result()?.items ?? []);
   readonly noAccessCount = computed(() => this.items().filter(u => !u.authEnabled).length);
@@ -135,7 +137,12 @@ export class AccessUsers {
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
 
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh(true);
   }

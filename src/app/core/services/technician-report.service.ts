@@ -12,6 +12,7 @@ export type TechnicianReport = {
     professionnel?: number;
     pavillon?: number;
     immeuble?: number;
+    racProC?: number;
     prestaComplementaire?: number;
     reconnexion?: number;
     sav?: number;

@@ -112,4 +112,23 @@ button .fa-regular,
 button .fa-brands {
   margin-right: .4rem;
 }
+
+.limit select {
+  color: #ffffff;
+  background: #0b0f16;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+}
+
+.limit select:hover,
+.limit select:focus {
+  background: #05070c;
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.limit select option {
+  color: #ffffff;
+  background: #0b0f16;
+}
 /* You can add global styles to this file, and also import other style files */

@@ -12,6 +12,7 @@ import { User, Depot, Vehicle } from '../../../core/models';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { environment } from '../../../environments/environment';
 
 // ✅ Modal suppression (ne change pas ton modal)
 
@@ -30,6 +31,7 @@ export class UserDetail extends DetailBack {
   private depotService = inject(DepotService);
   private vehicleService = inject(VehicleService);
   private datePipe = inject(DatePipe);
+  private readonly uploadsBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -274,5 +276,13 @@ export class UserDetail extends DetailBack {
   userName(u: User): string {
     const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
     return name || u.email || u._id;
+  }
+
+  avatarSrc(u: User): string {
+    const raw = String(u.photoUrl || u.avatarUrl || '').trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (raw.startsWith('/')) return `${this.uploadsBaseUrl}${raw}`;
+    return `${this.uploadsBaseUrl}/${raw}`;
   }
 }

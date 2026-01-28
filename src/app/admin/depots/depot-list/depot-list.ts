@@ -10,6 +10,7 @@ import { DepotListResult } from '../../../core/models';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { formatPageRange } from '../../../core/utils/pagination';
 
 @Component({
   standalone: true,
@@ -34,7 +35,8 @@ export class DepotList extends DetailBack {
 
   // Pagination state
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   // Filters
   readonly filterForm = this.fb.nonNullable.group({

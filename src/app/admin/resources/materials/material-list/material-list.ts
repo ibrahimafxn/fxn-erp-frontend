@@ -13,6 +13,7 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
 import { formatResourceName, formatDepotName } from '../../../../core/utils/text-format';
+import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 
 type SortKey = 'name' | 'available' | 'category' | 'depot' | 'updatedAt';
@@ -52,7 +53,8 @@ export class MaterialList extends DetailBack {
 
   // Pagination
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   // Depots (filtre)
   readonly depots = signal<Depot[]>([]);
@@ -205,7 +207,12 @@ export class MaterialList extends DetailBack {
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
 
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh(true);
   }

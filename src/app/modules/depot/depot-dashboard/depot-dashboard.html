@@ -163,18 +163,7 @@
 
     @if (selectedTechViewId() && techAttributions().length > 0) {
       <div class="tech-history">
-        <div class="tech-history-header">
-          <span class="pill">Total : {{ techAttributionsTotal() }}</span>
-
-          <label class="limit">
-            <span>Par page</span>
-            <select [value]="techAttributionsLimit()" (change)="setTechAttributionsLimit($event)">
-              <option [value]="5">5</option>
-              <option [value]="10">10</option>
-              <option [value]="25">25</option>
-            </select>
-          </label>
-        </div>
+        <div class="tech-history-header"></div>
 
         <div class="table card">
           <table>
@@ -203,10 +192,23 @@
           </table>
         </div>
 
-        <footer class="pager">
-          <button class="btn-outline" type="button" (click)="prevTechAttributions()" [disabled]="!canPrevTechAttributions()"><i class="bi bi-chevron-left"></i> ← Précédent</button>
-          <span class="pill">Page {{ techAttributionsPage() }} / {{ techAttributionsPageCount() }}</span>
-          <button class="btn-outline" type="button" (click)="nextTechAttributions()" [disabled]="!canNextTechAttributions()"><i class="bi bi-chevron-right"></i> Suivant →</button>
+        <footer class="pager pager-fixed">
+          <div class="pager-left">
+            <div class="page-size">
+              <button type="button" [class.active]="techAttributionsLimit() === 10" (click)="setTechAttributionsLimitValue(10)">10</button>
+              <button type="button" [class.active]="techAttributionsLimit() === 20" (click)="setTechAttributionsLimitValue(20)">20</button>
+              <button type="button" [class.active]="techAttributionsLimit() === 50" (click)="setTechAttributionsLimitValue(50)">50</button>
+              <button type="button" [class.active]="techAttributionsLimit() === 100" (click)="setTechAttributionsLimitValue(100)">100</button>
+            </div>
+            <span class="pager-label">Éléments par page</span>
+          </div>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(techAttributionsPage(), techAttributionsLimit(), techAttributionsTotal()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline" type="button" (click)="prevTechAttributions()" [disabled]="!canPrevTechAttributions()"><i class="bi bi-chevron-left"></i></button>
+              <button class="btn-outline" type="button" (click)="nextTechAttributions()" [disabled]="!canNextTechAttributions()"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
         </footer>
       </div>
     }

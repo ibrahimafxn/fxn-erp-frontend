@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Movement, Depot, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { formatPageRange } from '../../../core/utils/pagination';
 
 @Component({
   selector: 'app-technician-activity',
@@ -41,8 +42,9 @@ export class TechnicianActivity {
   readonly error = signal<string | null>(null);
 
   readonly interventionPage = signal(1);
-  readonly interventionLimit = signal(25);
+  readonly interventionLimit = signal(20);
   readonly interventionTotal = signal(0);
+  readonly pageRange = formatPageRange;
   readonly interventionPageCount = computed(() => {
     const total = this.interventionTotal();
     const limit = this.interventionLimit();
@@ -191,6 +193,13 @@ export class TechnicianActivity {
   nextInterventions(): void {
     if (!this.canNextInterventions()) return;
     this.interventionPage.set(this.interventionPage() + 1);
+    this.refreshInterventions();
+  }
+
+  setInterventionLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.interventionLimit.set(value);
+    this.interventionPage.set(1);
     this.refreshInterventions();
   }
 

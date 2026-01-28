@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Consumable, Depot, Material, Movement, MovementListResult } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../core/utils/text-format';
+import { formatPageRange } from '../../../core/utils/pagination';
 import { downloadBlob } from '../../../core/utils/download';
 
 type LineForm = {
@@ -55,7 +56,9 @@ export class ReceiptPage {
   readonly historyError = this.movementService.error;
   readonly historyResult = this.movementService.result;
   readonly historyPage = signal(1);
-  readonly historyLimit = signal(25);
+  readonly historyLimit = signal(20);
+  readonly pageRange = formatPageRange;
+  readonly activeSection = signal<'new' | 'history'>('new');
 
   readonly historyItems = computed<Movement[]>(() => this.historyResult()?.items ?? []);
   readonly historyTotal = computed(() => this.historyResult()?.total ?? 0);
@@ -108,6 +111,10 @@ export class ReceiptPage {
       this.loadResources(depotId || null);
     });
     this.refreshHistory(true);
+  }
+
+  setSection(section: 'new' | 'history'): void {
+    this.activeSection.set(section);
   }
 
   originLabel(m: Movement): string {
@@ -299,7 +306,12 @@ export class ReceiptPage {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.historyLimit.set(v);
+    this.setHistoryLimitValue(v);
+  }
+
+  setHistoryLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.historyLimit.set(value);
     this.historyPage.set(1);
     this.refreshHistory(true);
   }

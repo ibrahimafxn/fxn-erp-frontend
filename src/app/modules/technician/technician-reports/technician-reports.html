@@ -31,7 +31,7 @@
       </label>
 
       <div class="actions">
-        <button class="btn-primary" type="submit" [disabled]="loading()">Enregistrer</button>
+        <button class="btn-primary" type="submit" [disabled]="loading() || form.invalid || isDefaultForm()">Enregistrer</button>
       </div>
     </form>
   </section>
@@ -54,14 +54,6 @@
       <label>
         Période (au)
         <input type="date" formControlName="toDate" />
-      </label>
-      <label class="limit">
-        Par page
-        <select [value]="limit()" (change)="setLimit($event)">
-          <option [value]="10">10</option>
-          <option [value]="25">25</option>
-          <option [value]="50">50</option>
-        </select>
       </label>
       <div class="actions">
         <button class="btn-outline" type="submit">Filtrer</button>
@@ -120,9 +112,23 @@
           </tbody>
         </table>
       </div>
-      <footer class="pager">
-        <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">← Précédent</button>
-        <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">Suivant →</button>
+      <footer class="pager pager-fixed">
+        <div class="pager-left">
+          <div class="page-size">
+            <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+            <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+            <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+            <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+          </div>
+          <span class="pager-label">Éléments par page</span>
+        </div>
+        <div class="pager-right">
+          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+          <div class="pager-nav">
+            <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+            <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
       </footer>
     }
   </section>

@@ -21,6 +21,18 @@
   }
 }
 
+.section-tabs {
+  display: flex;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+
+.section-tabs .btn-outline.active {
+  border-color: var(--fxn-primary);
+  color: var(--fxn-text);
+  background: var(--fxn-primary-soft);
+}
+
 .card {
   background: var(--fxn-surface-glass);
   border: 1px solid var(--fxn-border);
@@ -210,13 +222,13 @@ table {
 
 th,
 td {
-  padding: .75rem .85rem;
+  padding: .5rem .6rem;
   text-align: left;
   border-bottom: 1px solid var(--fxn-border);
 }
 
 th {
-  font-size: .8rem;
+  font-size: .72rem;
   text-transform: uppercase;
   letter-spacing: .08em;
   color: var(--fxn-text-muted);
@@ -224,6 +236,11 @@ th {
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+td {
+  font-size: .85rem;
+  line-height: 1.2;
 }
 
 tbody tr {

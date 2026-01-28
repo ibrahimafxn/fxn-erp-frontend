@@ -16,6 +16,7 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../../core/utils/text-format';
+import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 
 type SortKey = 'name' | 'available' | 'depot' | 'updatedAt' | 'unit';
@@ -50,7 +51,8 @@ export class ConsumableList extends DetailBack {
 
   // Pagination state
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   // Depots (select)
   readonly depots = signal<Depot[]>([]);

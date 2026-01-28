@@ -34,10 +34,10 @@ export class OrderDetail {
   readonly importResult = signal<string | null>(null);
   readonly importConfirmOpen = signal(false);
   readonly isImportable = computed(() => {
-    const status = String(this.order()?.status || '').toUpperCase();
+    const status = this.normalizeStatus(this.order()?.status);
     if (!status) return false;
     if (status.includes('ANNULE') || status.includes('ECHEC') || status.includes('REFUSE')) return false;
-    return true;
+    return status.includes('ENCOURS') || status.startsWith('VALID');
   });
 
   constructor() {
@@ -72,6 +72,14 @@ export class OrderDetail {
 
   depotOptionLabel(d: Depot): string {
     return formatDepotName(d.name ?? '') || d.name || '—';
+  }
+
+  private normalizeStatus(value?: string | null): string {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toUpperCase()
+      .replace(/\s+/g, '');
   }
 
   depotNameById(id?: string | null): string {

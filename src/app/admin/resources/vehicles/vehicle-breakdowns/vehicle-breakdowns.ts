@@ -10,6 +10,7 @@ import { Role } from '../../../../core/models/roles.model';
 import { Vehicle, VehicleBreakdown, VehicleBreakdownListResult } from '../../../../core/models';
 import { DetailBack } from '../../../../core/utils/detail-back';
 import { formatPersonName } from '../../../../core/utils/text-format';
+import { formatPageRange } from '../../../../core/utils/pagination';
 
 @Component({
   standalone: true,
@@ -45,7 +46,8 @@ export class VehicleBreakdowns extends DetailBack {
   });
 
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(20);
+  readonly pageRange = formatPageRange;
 
   readonly items = computed<VehicleBreakdown[]>(() => this.result()?.items ?? []);
   readonly total = computed(() => this.result()?.total ?? 0);
@@ -115,7 +117,12 @@ export class VehicleBreakdowns extends DetailBack {
     if (!el) return;
     const v = Number(el.value);
     if (!Number.isFinite(v) || v <= 0) return;
-    this.limit.set(v);
+    this.setLimitValue(v);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
     this.page.set(1);
     this.refresh(false);
   }

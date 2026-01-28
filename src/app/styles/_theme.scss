@@ -27,6 +27,7 @@ body {
 
 main.app-content {
   padding: var(--fxn-space-xl);
+  padding-bottom: var(--fxn-space-xl);
   min-height: calc(100vh - 64px);
   animation: fxn-fade-up .35s ease;
 }
@@ -34,6 +35,7 @@ main.app-content {
 @media (max-width: 900px) {
   main.app-content {
     padding: var(--fxn-space-lg);
+    padding-bottom: var(--fxn-space-lg);
   }
 }
 

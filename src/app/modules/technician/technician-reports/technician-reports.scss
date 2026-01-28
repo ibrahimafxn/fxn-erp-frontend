@@ -118,6 +118,13 @@
   color: #ecfeff !important;
 }
 
+.technician-reports .prestation-item .prestation-pill.pill-pro-c,
+.technician-reports .prestations-pill.pill-pro-c {
+  border-color: rgba(59, 130, 246, 0.95) !important;
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(59, 130, 246, 0.75)) !important;
+  color: #eff6ff !important;
+}
+
 .technician-reports .prestation-item .prestation-pill.pill-sav,
 .technician-reports .prestations-pill.pill-sav {
   border-color: rgba(148, 163, 184, 0.95) !important;
@@ -162,25 +169,9 @@
 
 .technician-reports .history-filters .limit select {
   width: 100%;
-  color: #ffffff;
-  background: #0b0f16;
-  border-color: rgba(148, 163, 184, 0.7);
   padding: 10px 12px;
   border-radius: 12px;
   border-width: 1px;
-}
-
-.technician-reports .history-filters .limit select:hover,
-.technician-reports .history-filters .limit select:focus {
-  background: #05070c;
-  border-color: #3b82f6;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-}
-
-.technician-reports .history-filters .limit select option {
-  color: #ffffff;
-  background: #0b0f16;
 }
 
 .technician-reports .history-filters .actions {
