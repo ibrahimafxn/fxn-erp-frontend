@@ -534,7 +534,7 @@ export class TechnicianInterventions {
     statusNormalized: string,
     operationNormalized: string,
     articlesNormalized: string
-  ): 'RECO' | 'PLP' | null {
+  ): 'RECO' | null {
     if (articlesNormalized.includes('RECOIP')) {
       return 'RECO';
     }
@@ -544,7 +544,7 @@ export class TechnicianInterventions {
       return null;
     }
     if (this.isPlpIndicator(typeNormalized, operationNormalized, articlesNormalized)) {
-      return 'PLP';
+      return 'RECO';
     }
     if (typeNormalized === 'RECO' || operationNormalized.includes('RECONNEX')) {
       return 'RECO';
