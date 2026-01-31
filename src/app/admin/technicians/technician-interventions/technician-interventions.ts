@@ -155,7 +155,7 @@ export class TechnicianInterventions {
   }
 
   refresh(): void {
-    this.loadInterventions();
+    this.clearFilters();
   }
 
   exportCsv(): void {
