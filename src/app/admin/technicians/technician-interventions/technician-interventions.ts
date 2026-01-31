@@ -37,6 +37,26 @@ const EMPTY_STATS: TechnicianInterventionStats = {
 
 type SortField = 'date' | 'type' | 'statut' | 'duree';
 
+const TYPE_CANONICAL_ALIASES = new Map([
+  ['RACC PRO S', 'RACPRO_S'],
+  ['RACC PRO_S', 'RACPRO_S'],
+  ['RACC PRO-S', 'RACPRO_S'],
+  ['RACPRO S', 'RACPRO_S'],
+  ['RACPRO_S', 'RACPRO_S'],
+  ['RACPRO-S', 'RACPRO_S'],
+  ['RACC PRO C', 'RACPRO_C'],
+  ['RACC PRO_C', 'RACPRO_C'],
+  ['RACC PRO-C', 'RACPRO_C'],
+  ['RACPRO C', 'RACPRO_C'],
+  ['RACPRO_C', 'RACPRO_C'],
+  ['RACPRO-C', 'RACPRO_C'],
+  ['RECOIP', 'RECO'],
+  ['RECO IP', 'RECO'],
+  ['RECO-IP', 'RECO'],
+  ['RECO', 'RECO']
+]);
+const REQUIRED_TYPE_LABELS = ['RACPRO_S', 'RACPRO_C', 'RECO'];
+
 @Component({
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
@@ -84,6 +104,9 @@ export class TechnicianInterventions {
 
   readonly statsDataset = signal<InterventionItem[]>([]);
   readonly stats = computed(() => this.computeStats(this.statsDataset(), this.total()));
+  readonly failurePercent = computed(() => this.computeFailurePercent(this.stats()));
+  readonly successRateBg = computed(() => this.computeSuccessRateBg(this.stats().successRate));
+  readonly reconnectionCount = computed(() => this.countMatchingType('RECO'));
   readonly sortField = signal<SortField>('date');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly sortedInterventions = computed(() => this.sortedItems());
@@ -266,8 +289,10 @@ export class TechnicianInterventions {
       } else if (statut.includes('termine') || statut.includes('cloture')) {
         success++;
       }
-      const value = Number(item.duree ?? 0);
       const isCancelled = statut.includes('annul');
+      const isEchecTermine = statut.includes('echec') && statut.includes('termine');
+      const isCompleted = statut.includes('termine') || statut.includes('cloture') || isEchecTermine;
+      const value = isCompleted ? this.computeDuration(item) : 0;
       if (Number.isFinite(value) && value > 0 && !isCancelled) {
         durationSum += value;
         durationCount++;
@@ -280,7 +305,7 @@ export class TechnicianInterventions {
         techStats.success = (techStats.success || 0) + 1;
       }
       technicians.set(techLabel, techStats);
-      const typeLabel = item.type?.trim() || 'Autre';
+      const typeLabel = this.canonicalType(item.type, item);
       types.set(typeLabel, (types.get(typeLabel) ?? 0) + 1);
       const statusLabel = item.statut?.trim() || 'Autre';
       statuses.set(statusLabel, (statuses.get(statusLabel) ?? 0) + 1);
@@ -296,10 +321,20 @@ export class TechnicianInterventions {
       .sort((a, b) => b.ratio - a.ratio)
       .slice(0, 3)
       .map(({ label, success, failure }) => ({ label, success, failure }));
-    const topTypes = Array.from(types.entries())
+    const requiredTypes = ['RACC PRO_S', 'RACC PRO_C'];
+    for (const required of requiredTypes) {
+      if (!types.has(required)) {
+        types.set(required, 0);
+      }
+    }
+    const baseTopTypes = Array.from(types.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([label, count]) => ({ label, count }));
+    const enforcedTypes = REQUIRED_TYPE_LABELS
+      .filter((label) => !baseTopTypes.some((type) => type.label === label))
+      .map((label) => ({ label, count: types.get(label) ?? 0 }));
+    const topTypes = [...baseTopTypes, ...enforcedTypes];
     const topStatuses = Array.from(statuses.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
@@ -317,6 +352,24 @@ export class TechnicianInterventions {
       topTypes,
       topStatuses
     };
+  }
+
+  private computeDuration(item: InterventionItem): number {
+    const start = item.debutIntervention || item.debut;
+    const end = item.clotureHotline || item.clotureTech;
+    if (!start || !end) return 0;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime())) {
+      return 0;
+    }
+    const diffMs = endDate.getTime() - startDate.getTime();
+    return diffMs > 0 ? Math.round(diffMs / 60000) : 0;
+  }
+
+  formatDuration(item: InterventionItem): string {
+    const minutes = this.computeDuration(item);
+    return minutes > 0 ? `${minutes} min` : '';
   }
 
   private updateStatsDataset(items: InterventionItem[], totalCount: number, lastQuery: InterventionSummaryQuery): void {
@@ -371,8 +424,15 @@ export class TechnicianInterventions {
           return direction * compare(a.type, b.type);
         case 'statut':
           return direction * compare(a.statut, b.statut);
-        case 'duree':
-          return direction * (Number(a.duree ?? 0) - Number(b.duree ?? 0));
+        case 'duree': {
+          const durationA = this.computeDuration(a);
+          const durationB = this.computeDuration(b);
+          const cancelledA = this.isCancelledStatus(a.statut);
+          const cancelledB = this.isCancelledStatus(b.statut);
+          const valueA = cancelledA ? Number.POSITIVE_INFINITY : durationA;
+          const valueB = cancelledB ? Number.POSITIVE_INFINITY : durationB;
+          return direction * (valueA - valueB);
+        }
       }
     });
   }
@@ -393,7 +453,7 @@ export class TechnicianInterventions {
       type: ''
     });
     if (view === 'failures') {
-      this.filterForm.controls.status.setValue('Échec');
+      this.filterForm.controls.status.setValue(this.chooseFailureStatus());
     } else if (view === 'reconnections') {
       this.filterForm.controls.type.setValue('Recon');
     }
@@ -405,6 +465,75 @@ export class TechnicianInterventions {
     this.loadInterventions();
   }
 
+  private chooseFailureStatus(): string {
+    const statuses = this.filters()?.statuses ?? [];
+    const preferred = statuses.find((status) => this.isTerminatedFailure(status));
+    return preferred ?? 'Échec';
+  }
+
+  private isTerminatedFailure(status?: string): boolean {
+    if (!status) return false;
+    const normalized = status.toLowerCase();
+    return normalized.includes('termin') || normalized.includes('cloture');
+  }
+
+  private isCancelledStatus(status?: string): boolean {
+    if (!status) return false;
+    return status.toLowerCase().includes('annul');
+  }
+
+  private canonicalType(value?: string, item?: InterventionItem): string {
+    const articles = (item?.articlesRaw ?? '').toUpperCase().replace(/\s+/g, '');
+    if (articles.includes('RECOIP')) {
+      return 'RECO';
+    }
+    if (articles.includes('RACPRO_C')) {
+      return 'RACPRO_C';
+    }
+    if (articles.includes('RACPRO_S')) {
+      return 'RACPRO_S';
+    }
+    const normalizedStatus = (item?.statut ?? '').toLowerCase();
+    const typeOperation = (item?.typeOperation ?? '').toLowerCase();
+    const raw = (value ?? '').trim();
+    const isTypeReco = raw.toUpperCase() === 'RECO';
+    const isTypeOperationReco = typeOperation.includes('reconnex');
+    const isClosedTerminated = normalizedStatus.includes('cloture') && normalizedStatus.includes('termine');
+    if (isClosedTerminated && (isTypeReco || isTypeOperationReco)) {
+      return 'RECO';
+    }
+    if (!raw) return 'Autre';
+    const normalized = raw.toUpperCase().replace(/\s+/g, ' ').replace(/-/g, ' ');
+    return TYPE_CANONICAL_ALIASES.get(normalized) ?? raw;
+  }
+
+  private computeFailurePercent(stats: TechnicianInterventionStats): number {
+    const denominator = stats.success + stats.failure;
+    if (!denominator) return 0;
+    return Math.round((stats.failure / denominator) * 100);
+  }
+
+  private computeSuccessRateBg(rate: number): string {
+    const clamped = Math.max(0, Math.min(100, rate));
+    const step = 4;
+    const quantized = Math.min(100, Math.max(0, Math.round(clamped / step) * step));
+    const t = quantized / 100;
+    const start = { r: 239, g: 68, b: 68 };
+    const end = { r: 16, g: 185, b: 129 };
+    const lerp = (startValue: number, endValue: number) =>
+      Math.round(startValue + (endValue - startValue) * t);
+    return `rgb(${lerp(start.r, end.r)}, ${lerp(start.g, end.g)}, ${lerp(start.b, end.b)})`;
+  }
+
+  private countMatchingType(target: string): number {
+    if (!target) return 0;
+    const normalizedTarget = target.toLowerCase();
+    return this.statsDataset().reduce((acc, item) => {
+      const typeLabel = this.canonicalType(item.type, item).toLowerCase();
+      return typeLabel === normalizedTarget ? acc + 1 : acc;
+    }, 0);
+  }
+
   statusClass(item: InterventionItem): string {
     const stat = (item.statut ?? '').toLowerCase();
     if (stat.includes('echec') || stat.includes('fail')) return 'status-error';
@@ -414,7 +543,11 @@ export class TechnicianInterventions {
 
   formatTechnicianName(item: InterventionItem): string {
     const formatted = formatPersonName(item.techFirstName ?? '', item.techLastName ?? '');
-    return formatted || item.techFull || '–';
+    return formatted || '–';
+  }
+
+  technicianLabel(tech: User): string {
+    return this.formatTechnicianName({ techFirstName: tech.firstName, techLastName: tech.lastName } as any);
   }
 
   topStatusCount(keyword: string): number {

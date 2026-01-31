@@ -13,24 +13,10 @@
   </header>
 
   <section class="card stats-summary">
-    <div class="summary-header">
+    <div class="summary-heading">
       <div>
         <h2>Résumé dirigeant</h2>
         <p>Un aperçu stratégique des interventions filtrées (métriques + tendances clés).</p>
-      </div>
-      <div class="summary-actions">
-        <button class="btn-outline" type="button" (click)="exportCsv()">
-          <i class="bi bi-file-earmark-spreadsheet"></i>
-          <span>Exporter CSV</span>
-        </button>
-        <button class="btn-outline" type="button" (click)="exportPdf()">
-          <i class="bi bi-file-earmark-pdf"></i>
-          <span>Exporter PDF</span>
-        </button>
-        <button class="btn-outline" type="button" (click)="saveView()">
-          <i class="bi bi-save"></i>
-          <span>Sauvegarder la vue</span>
-        </button>
       </div>
     </div>
 
@@ -40,14 +26,14 @@
         <span class="value">{{ stats().total }}</span>
         <p class="helper">Selon les filtres appliqués (pas la pagination).</p>
       </article>
-      <article class="stat-card">
+      <article class="stat-card success-rate-card" [style.background]="successRateBg()">
         <span class="label">Taux de réussite</span>
         <span class="value">{{ stats().successRate }}%</span>
         <p class="helper">{{ stats().success }} clôtures terminées.</p>
       </article>
       <article class="stat-card">
         <span class="label">Échecs détectés</span>
-        <span class="value">{{ stats().failure }}</span>
+        <span class="value">{{ stats().failure }} ({{ failurePercent() }}%)</span>
         <p class="helper">Statuts “Échec” ou similaires.</p>
       </article>
       <article class="stat-card">
@@ -59,14 +45,16 @@
 
     <div class="stat-breakdown summary-breakdown">
       <article>
-        <div class="section-label">Top techniciens (page)</div>
+        <div class="section-label">Top techniciens (filtre)</div>
         @if (stats().topTechnicians.length === 0) {
           <p class="helper">Aucune intervention affichée.</p>
         } @else {
           @for (tech of stats().topTechnicians; track tech.label) {
             <div class="stat-line">
               <span>{{ tech.label }}</span>
-              <span class="count">{{ tech.success }}/{{ tech.failure }}</span>
+              <span class="count">
+                <span class="count-success">{{ tech.success }}</span>/<span class="count-failure">{{ tech.failure }}</span>
+              </span>
             </div>
           }
         }
@@ -109,8 +97,8 @@
         <span>{{ topStatusCount('échec') }}</span>
       </button>
       <button class="view-pill info" type="button" (click)="applyView('reconnections')">
-        <strong>Reconnexions urgentes</strong>
-        <span>Filtre “Recon”</span>
+        <strong>Reconnexions</strong>
+        <span>{{ reconnectionCount() }} PLP</span>
       </button>
     </div>
 
@@ -140,7 +128,9 @@
           <select formControlName="technician" (change)="applyFilters()">
             <option value="">Tous</option>
             @for (tech of technicians(); track tech._id) {
-              <option [value]="tech._id">{{ tech.firstName || '' }} {{ tech.lastName || '' }}</option>
+            <option [value]="technicianLabel(tech)">
+              {{ technicianLabel(tech) }}
+            </option>
             }
           </select>
         </label>
@@ -206,6 +196,20 @@
     <div class="table-head">
       <h2>Interventions</h2>
       <p>Liste détaillée des interventions correspondant à la page actuelle.</p>
+      <div class="table-actions">
+        <button class="btn-outline" type="button" (click)="exportCsv()">
+          <i class="bi bi-file-earmark-spreadsheet"></i>
+          <span>Exporter CSV</span>
+        </button>
+        <button class="btn-outline" type="button" (click)="exportPdf()">
+          <i class="bi bi-file-earmark-pdf"></i>
+          <span>Exporter PDF</span>
+        </button>
+        <button class="btn-outline" type="button" (click)="saveView()">
+          <i class="bi bi-save"></i>
+          <span>Sauvegarder la vue</span>
+        </button>
+      </div>
     </div>
 
     @if (tableError()) {
@@ -260,7 +264,7 @@
                   </span>
                 </td>
                 <td>{{ item.client || '—' }}</td>
-                <td>{{ item.duree ? item.duree + ' min' : '—' }}</td>
+                <td>{{ formatDuration(item) }}</td>
                 <td class="commentaire">{{ item.commentairesTechnicien || '—' }}</td>
               </tr>
             }
