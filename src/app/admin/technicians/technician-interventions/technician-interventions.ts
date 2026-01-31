@@ -450,7 +450,8 @@ export class TechnicianInterventions {
     if (view === 'failures') {
       this.filterForm.controls.status.setValue(this.chooseFailureStatus());
     } else if (view === 'reconnections') {
-      this.filterForm.controls.type.setValue('Recon');
+      this.filterForm.controls.status.setValue(this.chooseClosedStatus());
+      this.filterForm.controls.type.setValue(this.chooseReconnectionType());
     }
     if (view === 'topTech') {
       this.sortField.set('duree');
@@ -466,13 +467,34 @@ export class TechnicianInterventions {
     return preferred ?? 'Échec terminée';
   }
 
+  private chooseClosedStatus(): string {
+    const statuses = this.filters()?.statuses ?? [];
+    const closed = statuses.find((status) => this.isClosedTerminated(status));
+    return closed ?? 'Clôture terminée';
+  }
+
+  private chooseReconnectionType(): string {
+    const types = this.filters()?.types ?? [];
+    const candidate = types.find((type) => this.isReconnectionType(type));
+    return candidate ?? 'RECO';
+  }
+
   private isFailureTerminated(status?: string): boolean {
     if (!status) return false;
-    const normalized = status
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-    return normalized.includes('echec') && normalized.includes('termin');
+    const normalized = this.normalizeToken(status);
+    return normalized.includes('ECHEC') && normalized.includes('TERMINE');
+  }
+
+  private isClosedTerminated(status?: string): boolean {
+    if (!status) return false;
+    const normalized = this.normalizeToken(status);
+    return normalized.includes('CLOTURE') && normalized.includes('TERMINE');
+  }
+
+  private isReconnectionType(type?: string): boolean {
+    if (!type) return false;
+    const normalized = this.normalizeToken(type);
+    return normalized.includes('RECO');
   }
 
   private isCancelledStatus(status?: string): boolean {
