@@ -55,7 +55,11 @@ const TYPE_CANONICAL_ALIASES = new Map([
   ['RECO-IP', 'RECO'],
   ['RECO', 'RECO']
 ]);
-const REQUIRED_TYPE_LABELS = ['RACPRO_S', 'RACPRO_C', 'RECO'];
+const ARTICLE_TYPE_LABELS = [
+  { label: 'PRO S', marker: 'RACPRO_S' },
+  { label: 'PRO C', marker: 'RACPRO_C' }
+];
+const REQUIRED_TYPE_LABELS = ['RECO'];
 
 @Component({
   standalone: true,
@@ -278,6 +282,9 @@ export class TechnicianInterventions {
     const technicians = new Map<string, { success: number; failure: number }>();
     const types = new Map<string, number>();
     const statuses = new Map<string, number>();
+    const articleTypeCounts = new Map<string, number>(
+      ARTICLE_TYPE_LABELS.map(({ label }) => [label, 0])
+    );
 
     for (const item of items) {
       const statut = (item.statut ?? '')
@@ -309,6 +316,12 @@ export class TechnicianInterventions {
       types.set(typeLabel, (types.get(typeLabel) ?? 0) + 1);
       const statusLabel = item.statut?.trim() || 'Autre';
       statuses.set(statusLabel, (statuses.get(statusLabel) ?? 0) + 1);
+      const articlesNormalized = this.normalizeToken(item.articlesRaw);
+      for (const { label, marker } of ARTICLE_TYPE_LABELS) {
+        if (articlesNormalized.includes(marker)) {
+          articleTypeCounts.set(label, (articleTypeCounts.get(label) ?? 0) + 1);
+        }
+      }
     }
 
     const topTechnicians = Array.from(technicians.entries())
@@ -340,7 +353,11 @@ export class TechnicianInterventions {
     const filteredEnforcedTypes = enforcedTypes.filter(
       (type) => type.label !== 'RACPRO_S' && type.label !== 'RACPRO_C'
     );
-    const topTypes = [...filteredBaseTopTypes, ...filteredEnforcedTypes];
+    const articleTypeEntries = ARTICLE_TYPE_LABELS.map(({ label }) => ({
+      label,
+      count: articleTypeCounts.get(label) ?? 0
+    }));
+    const topTypes = [...filteredBaseTopTypes, ...articleTypeEntries, ...filteredEnforcedTypes];
     const topStatuses = Array.from(statuses.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
