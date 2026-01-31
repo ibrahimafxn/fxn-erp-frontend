@@ -447,11 +447,6 @@ export class TechnicianInterventions {
   }
 
   applyView(view: 'topTech' | 'failures' | 'reconnections'): void {
-    this.filterForm.patchValue({
-      technician: '',
-      status: '',
-      type: ''
-    });
     if (view === 'failures') {
       this.filterForm.controls.status.setValue(this.chooseFailureStatus());
     } else if (view === 'reconnections') {
