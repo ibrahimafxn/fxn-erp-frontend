@@ -87,7 +87,7 @@
 }
 
 .table.card { padding: 0; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 760px; }
+table { width: 100%; border-collapse: collapse; min-width: 760px; table-layout: fixed; }
 thead th {
   text-align: left;
   font-size: .85rem;
@@ -116,6 +116,27 @@ thead th {
 .table-vehicles thead th {
   background: transparent;
 }
+  
+.table.card table th:nth-child(1),
+.table.card table td:nth-child(1) {
+  width: 35%;
+}
+.table.card table th:nth-child(2),
+.table.card table td:nth-child(2) {
+  width: 20%;
+}
+.table.card table th:nth-child(3),
+.table.card table td:nth-child(3) {
+  width: 15%;
+}
+.table.card table th:nth-child(4),
+.table.card table td:nth-child(4) {
+  width: 15%;
+}
+.table.card table th:nth-child(5),
+.table.card table td:nth-child(5) {
+  width: 15%;
+}
 tbody td {
   padding: .55rem .75rem;
   border-bottom: 1px solid var(--fxn-border);
@@ -128,6 +149,37 @@ tbody tr {
 
 tbody tr:hover {
   background: var(--fxn-primary-soft);
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:focus-visible {
+  outline: 2px solid var(--fxn-primary);
+  outline-offset: -2px;
+}
+
+.qty-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.qty-pill.success {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid rgba(74, 222, 128, 0.55);
+}
+
+.qty-pill.danger {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.5);
 }
 
 .pager { display:flex; justify-content: space-between; gap:.75rem; flex-wrap: wrap; }

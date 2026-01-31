@@ -60,24 +60,22 @@
             <thead>
             <tr>
               <th>Consommable</th>
-              <th>Dépôt</th>
               <th>Disponible</th>
+              <th>Dépôt</th>
               <th>Stock</th>
               <th>Seuil</th>
-              <th></th>
             </tr>
             </thead>
             <tbody>
               @for (c of items(); track c._id) {
-                <tr>
+                <tr class="clickable-row" (click)="goDetail(c)" tabindex="0" role="button" (keydown.enter)="goDetail(c)">
                   <td data-label="Consommable">{{ consumableName(c) }}</td>
+                  <td data-label="Disponible">
+                    <span class="qty-pill success">{{ availableQty(c) }} {{ c.unit || '' }}</span>
+                  </td>
                   <td data-label="Dépôt">{{ depotLabel(c) }}</td>
-                  <td data-label="Disponible">{{ availableQty(c) }} {{ c.unit || '' }}</td>
                   <td data-label="Stock">{{ c.quantity ?? 0 }}</td>
                   <td data-label="Seuil">{{ c.minQuantity ?? 0 }}</td>
-                  <td data-label="Action" class="actions">
-                    <button class="btn-outline" type="button" (click)="goDetail(c)"><i class="bi bi-eye"></i> Voir</button>
-                  </td>
                 </tr>
               }
             </tbody>
@@ -91,24 +89,24 @@
             <thead>
             <tr>
               <th>Matériel</th>
-              <th>Dépôt</th>
               <th>Disponible</th>
+              <th>Dépôt</th>
               <th>Stock</th>
               <th>Seuil</th>
-              <th></th>
             </tr>
             </thead>
             <tbody>
               @for (m of materialItems(); track m._id) {
-                <tr>
+                <tr class="clickable-row" (click)="goMaterialDetail(m)" tabindex="0" role="button" (keydown.enter)="goMaterialDetail(m)">
                   <td data-label="Matériel">{{ materialName(m) }}</td>
+                  <td data-label="Disponible">
+                    <span class="qty-pill success">
+                      {{ availableQtyMaterial(m) }} {{ materialUnit(m) }}
+                    </span>
+                  </td>
                   <td data-label="Dépôt">{{ depotLabelMaterial(m) }}</td>
-                  <td data-label="Disponible">{{ availableQtyMaterial(m) }}</td>
                   <td data-label="Stock">{{ m.quantity ?? 0 }}</td>
                   <td data-label="Seuil">{{ m.minQuantity ?? 0 }}</td>
-                  <td data-label="Action" class="actions">
-                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)"><i class="bi bi-eye"></i> Voir</button>
-                  </td>
                 </tr>
               }
             </tbody>
@@ -130,12 +128,11 @@
               <th>Adresse garage</th>
               <th>Adresse panne</th>
               <th>Date</th>
-              <th></th>
             </tr>
             </thead>
             <tbody>
               @for (v of vehicleItems(); track v._id) {
-                <tr>
+                <tr class="clickable-row" (click)="goVehicleDetail(v)" tabindex="0" role="button" (keydown.enter)="goVehicleDetail(v)">
                   <td data-label="Véhicule">{{ vehicleLabel(v) }}</td>
                   <td data-label="Dépôt">{{ depotLabelVehicle(v) }}</td>
                   <td data-label="Problème">{{ vehicleProblem(v) }}</td>
@@ -145,9 +142,6 @@
                   <td data-label="Adresse garage" class="note">{{ vehicleGarageAddress(v) }}</td>
                   <td data-label="Adresse panne" class="note">{{ vehicleBreakdownAddress(v) }}</td>
                   <td data-label="Date">{{ vehicleBreakdownDate(v) }}</td>
-                  <td data-label="Action" class="actions">
-                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)"><i class="bi bi-eye"></i> Voir</button>
-                  </td>
                 </tr>
               }
             </tbody>
@@ -169,43 +163,42 @@
             } @else {
               <th>Consommable</th>
             }
-            <th>Dépôt</th>
             <th>Disponible</th>
+            <th>Dépôt</th>
             <th>Stock</th>
             <th>Seuil</th>
-            <th></th>
           </tr>
           </thead>
           <tbody>
             @if (filterForm.controls.resourceType.value === 'CONSUMABLE') {
               @for (c of items(); track c._id) {
-                <tr>
+                <tr class="clickable-row" (click)="goDetail(c)" tabindex="0" role="button" (keydown.enter)="goDetail(c)">
                   <td data-label="Consommable">{{ consumableName(c) }}</td>
+                  <td data-label="Disponible">
+                    <span class="qty-pill success">{{ availableQty(c) }} {{ c.unit || '' }}</span>
+                  </td>
                   <td data-label="Dépôt">{{ depotLabel(c) }}</td>
-                  <td data-label="Disponible">{{ availableQty(c) }} {{ c.unit || '' }}</td>
                   <td data-label="Stock">{{ c.quantity ?? 0 }}</td>
                   <td data-label="Seuil">{{ c.minQuantity ?? 0 }}</td>
-                  <td data-label="Action" class="actions">
-                    <button class="btn-outline" type="button" (click)="goDetail(c)"><i class="bi bi-eye"></i> Voir</button>
-                  </td>
                 </tr>
               }
             } @else if (filterForm.controls.resourceType.value === 'MATERIAL') {
               @for (m of materialItems(); track m._id) {
-                <tr>
+                <tr class="clickable-row" (click)="goMaterialDetail(m)" tabindex="0" role="button" (keydown.enter)="goMaterialDetail(m)">
                   <td data-label="Matériel">{{ materialName(m) }}</td>
+                  <td data-label="Disponible">
+                    <span class="qty-pill success">
+                      {{ availableQtyMaterial(m) }} {{ materialUnit(m) }}
+                    </span>
+                  </td>
                   <td data-label="Dépôt">{{ depotLabelMaterial(m) }}</td>
-                  <td data-label="Disponible">{{ availableQtyMaterial(m) }}</td>
                   <td data-label="Stock">{{ m.quantity ?? 0 }}</td>
                   <td data-label="Seuil">{{ m.minQuantity ?? 0 }}</td>
-                  <td data-label="Action" class="actions">
-                    <button class="btn-outline" type="button" (click)="goMaterialDetail(m)"><i class="bi bi-eye"></i> Voir</button>
-                  </td>
                 </tr>
               }
             } @else {
               @for (v of vehicleItems(); track v._id) {
-                <tr>
+                <tr class="clickable-row" (click)="goVehicleDetail(v)" tabindex="0" role="button" (keydown.enter)="goVehicleDetail(v)">
                   <td data-label="Véhicule">{{ vehicleLabel(v) }}</td>
                   <td data-label="Dépôt">{{ depotLabelVehicle(v) }}</td>
                   <td data-label="Problème">{{ vehicleProblem(v) }}</td>
@@ -215,9 +208,6 @@
                   <td data-label="Adresse garage" class="note">{{ vehicleGarageAddress(v) }}</td>
                   <td data-label="Adresse panne" class="note">{{ vehicleBreakdownAddress(v) }}</td>
                   <td data-label="Date">{{ vehicleBreakdownDate(v) }}</td>
-                  <td data-label="Action" class="actions">
-                    <button class="btn-outline" type="button" (click)="goVehicleDetail(v)"><i class="bi bi-eye"></i> Voir</button>
-                  </td>
                 </tr>
               }
             }
