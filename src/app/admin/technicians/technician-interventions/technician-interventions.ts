@@ -55,7 +55,7 @@ const TYPE_CANONICAL_ALIASES = new Map([
   ['RECO-IP', 'RECO'],
   ['RECO', 'RECO']
 ]);
-const REQUIRED_TYPE_LABELS = ['RACPRO_S', 'RACPRO_C', 'RECO'];
+const REQUIRED_TYPE_LABELS = ['RECO'];
 
 @Component({
   standalone: true,
@@ -321,20 +321,17 @@ export class TechnicianInterventions {
       .sort((a, b) => b.ratio - a.ratio)
       .slice(0, 3)
       .map(({ label, success, failure }) => ({ label, success, failure }));
-    const requiredTypes = ['RACC PRO_S', 'RACC PRO_C'];
-    for (const required of requiredTypes) {
-      if (!types.has(required)) {
-        types.set(required, 0);
-      }
-    }
     const baseTopTypes = Array.from(types.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([label, count]) => ({ label, count }));
+    const filteredTopTypes = baseTopTypes.filter(
+      (type) => type.label !== 'RACPRO_S' && type.label !== 'RACPRO_C'
+    );
     const enforcedTypes = REQUIRED_TYPE_LABELS
       .filter((label) => !baseTopTypes.some((type) => type.label === label))
       .map((label) => ({ label, count: types.get(label) ?? 0 }));
-    const topTypes = [...baseTopTypes, ...enforcedTypes];
+    const topTypes = [...filteredTopTypes, ...enforcedTypes];
     const topStatuses = Array.from(statuses.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
