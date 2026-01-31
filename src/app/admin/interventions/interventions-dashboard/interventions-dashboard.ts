@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { Component, ElementRef, ViewChild, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,7 +11,9 @@ import {
   InterventionTotals,
   InterventionItem,
   InterventionInvoiceSummary,
-  InterventionCompare
+  InterventionCompare,
+  InterventionImportBatch,
+  InterventionImportTicket
 } from '../../../core/services/intervention.service';
 import { InterventionRatesService, InterventionRates } from '../../../core/services/intervention-rates.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
@@ -22,7 +25,7 @@ import { formatPageRange } from '../../../core/utils/pagination';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-interventions-dashboard',
-  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal, RouterModule],
   templateUrl: './interventions-dashboard.html',
   styleUrls: ['./interventions-dashboard.scss']
 })
@@ -41,6 +44,12 @@ export class InterventionsDashboard {
   readonly importLoading = signal(false);
   readonly importResult = signal<string | null>(null);
   readonly importError = signal<string | null>(null);
+  readonly importsLoading = signal(false);
+  readonly importsError = signal<string | null>(null);
+  readonly importBatches = signal<InterventionImportBatch[]>([]);
+  readonly ticketsLoading = signal(false);
+  readonly ticketsError = signal<string | null>(null);
+  readonly importTickets = signal<InterventionImportTicket[]>([]);
   readonly resetLoading = signal(false);
   readonly resetResult = signal<string | null>(null);
   readonly resetError = signal<string | null>(null);
@@ -73,6 +82,7 @@ export class InterventionsDashboard {
   readonly detailPage = signal(1);
   readonly detailLimit = signal(20);
   readonly detailTechnician = signal<string | null>(null);
+  readonly latestImport = computed(() => this.importBatches()[0] || null);
   readonly detailGroups = computed(() => {
     const items = this.detailItems();
     const order = [
@@ -134,12 +144,68 @@ export class InterventionsDashboard {
     return normalized.includes('RACPRO') || normalized.includes('RAC PRO');
   }
 
+  ticketTechLabel(ticket: InterventionImportTicket): string {
+    const first = ticket.techFirstName || '';
+    const last = ticket.techLastName || '';
+    const combined = `${first} ${last}`.trim();
+    return combined || ticket.techFull || '—';
+  }
+
+  downloadLatestImport(): void {
+    const batch = this.latestImport();
+    const id = batch?._id;
+    if (!id) return;
+    const filename = (batch?.originalName || batch?.storedName || 'import.csv').trim();
+    this.svc.downloadImport(id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.importsError.set(this.apiError(err, 'Erreur téléchargement CSV'));
+      }
+    });
+  }
+
   readonly filters = signal<InterventionFilters>({
     regions: [],
     clients: [],
     statuses: [],
     technicians: [],
     types: []
+  });
+
+  readonly averagePerTech = computed(() => {
+    const items = this.summaryItems();
+    const total = this.totals()?.total ?? items.reduce((acc, it) => acc + (it.total || 0), 0);
+    if (!items.length) return 0;
+    return Math.round(total / items.length);
+  });
+
+  readonly rejectRate = computed(() => {
+    const latest = this.latestImport();
+    const totalCreated = latest?.totals?.created ?? 0;
+    const rejected = latest?.totals?.rejected ?? 0;
+    return totalCreated ? Math.round((rejected / totalCreated) * 100) : 0;
+  });
+
+  readonly openTickets = computed(() => this.importTickets().length);
+
+  readonly reconnectionShare = computed(() => {
+    const totals = this.totals();
+    const reconnection = totals?.reconnexion ?? 0;
+    const total = totals?.total ?? 0;
+    return total ? Math.round((reconnection / total) * 100) : 0;
+  });
+
+  readonly revenueGap = computed(() => {
+    const compare = this.compareTotals();
+    if (!compare) return 0;
+    return Math.round(compare.delta);
   });
 
   readonly filterForm = this.fb.nonNullable.group({
@@ -345,6 +411,7 @@ export class InterventionsDashboard {
       this.showRates.set(stored !== 'false');
     }
     this.loadFilters();
+    this.loadImports();
     this.resetInvoicesOnLoad();
     this.ratesService.refresh().subscribe();
     this.refresh();
@@ -479,9 +546,30 @@ export class InterventionsDashboard {
       next: (res) => {
         this.importLoading.set(false);
         if (res.success) {
-          this.importResult.set('Import terminé.');
+          const data = res.data as {
+            total?: number;
+            created?: number;
+            updated?: number;
+            versioned?: number;
+            rejected?: number;
+            tickets?: number;
+          } | undefined;
+          const total = data?.total ?? 0;
+          const created = data?.created ?? 0;
+          const versioned = data?.versioned ?? (data?.updated ?? 0);
+          const rejected = data?.rejected ?? 0;
+          const tickets = data?.tickets ?? 0;
+          if (total > 0) {
+            this.importResult.set(
+              `Import terminé. Total: ${total}. Créées: ${created}. Versionnées: ${versioned}. Rejetées: ${rejected}. Tickets: ${tickets}.`
+            );
+          } else {
+            this.importResult.set('Import terminé.');
+          }
           this.resetFileInput();
           this.loadFilters();
+          this.loadImports();
+          this.loadTickets();
           this.refresh();
           return;
         }
@@ -492,6 +580,55 @@ export class InterventionsDashboard {
         this.importLoading.set(false);
         this.importError.set(this.apiError(err, 'Erreur import CSV'));
         this.resetFileInput();
+      }
+    });
+  }
+
+  loadImports(): void {
+    this.importsLoading.set(true);
+    this.importsError.set(null);
+    this.svc.listImports({ page: 1, limit: 5 }).subscribe({
+      next: (res) => {
+        if (!res?.success) {
+          this.importsError.set('Erreur chargement imports');
+          this.importsLoading.set(false);
+          return;
+        }
+        const items = res.data.items || [];
+        this.importBatches.set(items);
+        this.importsLoading.set(false);
+        const latestId = items[0]?._id;
+        this.loadTickets(latestId);
+      },
+      error: (err) => {
+        this.importsLoading.set(false);
+        this.importsError.set(this.apiError(err, 'Erreur chargement imports'));
+      }
+    });
+  }
+
+  loadTickets(importBatchId?: string): void {
+    this.ticketsLoading.set(true);
+    this.ticketsError.set(null);
+    const query: { page: number; limit: number; status: string; importBatchId?: string } = {
+      page: 1,
+      limit: 20,
+      status: 'OPEN'
+    };
+    if (importBatchId) query.importBatchId = importBatchId;
+    this.svc.listImportTickets(query).subscribe({
+      next: (res) => {
+        if (!res?.success) {
+          this.ticketsError.set('Erreur chargement tickets');
+          this.ticketsLoading.set(false);
+          return;
+        }
+        this.importTickets.set(res.data.items || []);
+        this.ticketsLoading.set(false);
+      },
+      error: (err) => {
+        this.ticketsLoading.set(false);
+        this.ticketsError.set(this.apiError(err, 'Erreur chargement tickets'));
       }
     });
   }

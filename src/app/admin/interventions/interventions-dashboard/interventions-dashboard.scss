@@ -1090,13 +1090,102 @@ tbody td:first-child {
     white-space: normal;
   }
 
-  .detail-table tbody td::before {
-    content: attr(data-label);
-    color: var(--fxn-text-muted);
-    font-size: 0.75rem;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+.detail-table tbody td::before {
+  content: attr(data-label);
+  color: var(--fxn-text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+}
+
+.executive-kpi {
+  border-radius: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: rgba(15, 23, 42, 0.55);
+  box-shadow: var(--fxn-shadow-sm);
+}
+
+.executive-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+  h2 {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
   }
+  p {
+    margin: 0;
+    color: var(--fxn-text-muted);
+  }
+}
+
+.executive-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.kpi-pill {
+  padding: 0.85rem 0.9rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 22, 36, 0.6);
+  display: grid;
+  gap: 0.3rem;
+}
+
+.kpi-pill .label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fxn-text-muted);
+}
+
+.kpi-pill .value {
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.kpi-pill .helper {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--fxn-text-soft);
+}
+
+.executive-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.6rem;
+}
+
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.7);
+  color: var(--fxn-text);
+  text-decoration: none;
+  font-weight: 500;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-link:hover {
+  border-color: rgba(59, 130, 246, 0.8);
+  transform: translateY(-1px);
+}
+
+.btn-link .material-icons {
+  font-size: 1rem;
 }
 
 .material-icons {
