@@ -57,7 +57,8 @@ const TYPE_CANONICAL_ALIASES = new Map([
 ]);
 const ARTICLE_TYPE_LABELS = [
   { label: 'PRO S', marker: 'RACPRO_S' },
-  { label: 'PRO C', marker: 'RACPRO_C' }
+  { label: 'PRO C', marker: 'RACPRO_C' },
+  { label: 'PRESTA COMP', marker: 'PRESTA_COMPL' }
 ];
 const REQUIRED_TYPE_LABELS = ['RECO'];
 
