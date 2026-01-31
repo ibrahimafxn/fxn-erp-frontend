@@ -590,4 +590,12 @@ export class TechnicianInterventions {
     }
     return err?.message || fallback;
   }
+
+  private normalizeToken(value?: string): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .trim();
+  }
 }
