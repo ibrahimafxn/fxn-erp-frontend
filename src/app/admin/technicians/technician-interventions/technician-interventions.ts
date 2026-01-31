@@ -495,7 +495,7 @@ export class TechnicianInterventions {
   private isReconnectionType(type?: string): boolean {
     if (!type) return false;
     const normalized = this.normalizeToken(type);
-    return normalized.includes('RECO');
+    return normalized.includes('RECO') || normalized.includes('PLP');
   }
 
   private isCancelledStatus(status?: string): boolean {
@@ -504,28 +504,64 @@ export class TechnicianInterventions {
   }
 
   private canonicalType(value?: string, item?: InterventionItem): string {
-    const articles = (item?.articlesRaw ?? '').toUpperCase().replace(/\s+/g, '');
-    if (articles.includes('RECOIP')) {
-      return 'RECO';
-    }
-    if (articles.includes('RACPRO_C')) {
-      return 'RACPRO_C';
-    }
-    if (articles.includes('RACPRO_S')) {
+    const raw = (value ?? '').trim();
+    const normalizedType = this.normalizeToken(raw);
+    const articlesNormalized = this.normalizeToken(item?.articlesRaw);
+    if (articlesNormalized.includes('RACPRO_S')) {
       return 'RACPRO_S';
     }
-    const normalizedStatus = (item?.statut ?? '').toLowerCase();
-    const typeOperation = (item?.typeOperation ?? '').toLowerCase();
-    const raw = (value ?? '').trim();
-    const isTypeReco = raw.toUpperCase() === 'RECO';
-    const isTypeOperationReco = typeOperation.includes('reconnex');
-    const isClosedTerminated = normalizedStatus.includes('cloture') && normalizedStatus.includes('termine');
-    if (isClosedTerminated && (isTypeReco || isTypeOperationReco)) {
-      return 'RECO';
+    if (articlesNormalized.includes('RACPRO_C')) {
+      return 'RACPRO_C';
+    }
+    const statusNormalized = this.normalizeToken(item?.statut);
+    const operationNormalized = this.normalizeToken(item?.typeOperation);
+    const reconLabel = this.classifyReconnectionLabel(
+      normalizedType,
+      statusNormalized,
+      operationNormalized,
+      articlesNormalized
+    );
+    if (reconLabel) {
+      return reconLabel;
     }
     if (!raw) return 'Autre';
     const normalized = raw.toUpperCase().replace(/\s+/g, ' ').replace(/-/g, ' ');
     return TYPE_CANONICAL_ALIASES.get(normalized) ?? raw;
+  }
+
+  private classifyReconnectionLabel(
+    typeNormalized: string,
+    statusNormalized: string,
+    operationNormalized: string,
+    articlesNormalized: string
+  ): 'RECO' | 'PLP' | null {
+    if (articlesNormalized.includes('RECOIP')) {
+      return 'RECO';
+    }
+    const isClosedTerminated =
+      statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINE');
+    if (!isClosedTerminated) {
+      return null;
+    }
+    if (this.isPlpIndicator(typeNormalized, operationNormalized, articlesNormalized)) {
+      return 'PLP';
+    }
+    if (typeNormalized === 'RECO' || operationNormalized.includes('RECONNEX')) {
+      return 'RECO';
+    }
+    return null;
+  }
+
+  private isPlpIndicator(
+    typeNormalized: string,
+    operationNormalized: string,
+    articlesNormalized: string
+  ): boolean {
+    return (
+      typeNormalized === 'PLP' ||
+      operationNormalized.includes('PLP') ||
+      articlesNormalized.includes('PLP')
+    );
   }
 
   private computeFailurePercent(stats: TechnicianInterventionStats): number {
