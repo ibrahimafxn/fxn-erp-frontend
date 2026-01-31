@@ -1,0 +1,290 @@
+<section class="technician-interventions">
+  <header class="page-header card hero">
+    <div>
+      <h1>Interventions techniciens</h1>
+      <p class="subtitle">Historique détaillé des interventions pour analyser la performance des techniciens et prioriser les actions.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="refresh()">
+        <i class="bi bi-arrow-clockwise"></i>
+        Rafraîchir
+      </button>
+    </div>
+  </header>
+
+  <section class="card stats-summary">
+    <div class="summary-header">
+      <div>
+        <h2>Résumé dirigeant</h2>
+        <p>Un aperçu stratégique des interventions filtrées (métriques + tendances clés).</p>
+      </div>
+      <div class="summary-actions">
+        <button class="btn-outline" type="button" (click)="exportCsv()">
+          <i class="bi bi-file-earmark-spreadsheet"></i>
+          <span>Exporter CSV</span>
+        </button>
+        <button class="btn-outline" type="button" (click)="exportPdf()">
+          <i class="bi bi-file-earmark-pdf"></i>
+          <span>Exporter PDF</span>
+        </button>
+        <button class="btn-outline" type="button" (click)="saveView()">
+          <i class="bi bi-save"></i>
+          <span>Sauvegarder la vue</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-metrics stat-grid">
+      <article class="stat-card">
+        <span class="label">Interventions visibles</span>
+        <span class="value">{{ stats().total }}</span>
+        <p class="helper">Selon les filtres appliqués (pas la pagination).</p>
+      </article>
+      <article class="stat-card">
+        <span class="label">Taux de réussite</span>
+        <span class="value">{{ stats().successRate }}%</span>
+        <p class="helper">{{ stats().success }} clôtures terminées.</p>
+      </article>
+      <article class="stat-card">
+        <span class="label">Échecs détectés</span>
+        <span class="value">{{ stats().failure }}</span>
+        <p class="helper">Statuts “Échec” ou similaires.</p>
+      </article>
+      <article class="stat-card">
+        <span class="label">Durée moyenne (min)</span>
+        <span class="value">{{ stats().avgDuration }}</span>
+        <p class="helper">Toutes interventions hors “annulé”.</p>
+      </article>
+    </div>
+
+    <div class="stat-breakdown summary-breakdown">
+      <article>
+        <div class="section-label">Top techniciens (page)</div>
+        @if (stats().topTechnicians.length === 0) {
+          <p class="helper">Aucune intervention affichée.</p>
+        } @else {
+          @for (tech of stats().topTechnicians; track tech.label) {
+            <div class="stat-line">
+              <span>{{ tech.label }}</span>
+              <span class="count">{{ tech.success }}/{{ tech.failure }}</span>
+            </div>
+          }
+        }
+      </article>
+      <article>
+        <div class="section-label">Types dominants</div>
+        @if (stats().topTypes.length === 0) {
+          <p class="helper">Pas de types.</p>
+        } @else {
+          @for (type of stats().topTypes; track type.label) {
+            <div class="stat-line">
+              <span>{{ type.label }}</span>
+              <span class="count">{{ type.count }}</span>
+            </div>
+          }
+        }
+      </article>
+      <article>
+        <div class="section-label">Statuts fréquents</div>
+        @if (stats().topStatuses.length === 0) {
+          <p class="helper">Pas de statuts.</p>
+        } @else {
+          @for (status of stats().topStatuses; track status.label) {
+            <div class="stat-line">
+              <span>{{ status.label }}</span>
+              <span class="count">{{ status.count }}</span>
+            </div>
+          }
+        }
+      </article>
+    </div>
+
+    <div class="summary-views">
+      <button class="view-pill" type="button" (click)="applyView('topTech')">
+        <strong>Top techniciens</strong>
+        <span>{{ stats().topTechnicians[0]?.success ?? 0 }}/{{ stats().topTechnicians[0]?.failure ?? 0 }}</span>
+      </button>
+      <button class="view-pill danger" type="button" (click)="applyView('failures')">
+        <strong>Échecs récents</strong>
+        <span>{{ topStatusCount('échec') }}</span>
+      </button>
+      <button class="view-pill info" type="button" (click)="applyView('reconnections')">
+        <strong>Reconnexions urgentes</strong>
+        <span>Filtre “Recon”</span>
+      </button>
+    </div>
+
+    <footer class="summary-footer">
+      <span>Top type : {{ stats().topTypes[0]?.label || '—' }}</span>
+      <span>Tops statuts : {{ topStatusSummary() }}</span>
+      <span>Sources : exports Osiris + rapports internes</span>
+    </footer>
+  </section>
+
+  <section class="card filters-card">
+    <div class="filters-head">
+      <div>
+        <h2>Filtres avancés</h2>
+        <p>Affiner la période, le technicien, la région, le client, le statut ou le type d’intervention.</p>
+      </div>
+    </div>
+
+    @if (filterLoading()) {
+      <div class="state">Chargement des filtres…</div>
+    } @else if (filtersError()) {
+      <div class="state error">{{ filtersError() }}</div>
+    } @else {
+      <form class="filters-grid" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+        <label>
+          Technicien
+          <select formControlName="technician" (change)="applyFilters()">
+            <option value="">Tous</option>
+            @for (tech of technicians(); track tech._id) {
+              <option [value]="tech._id">{{ tech.firstName || '' }} {{ tech.lastName || '' }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Région
+          <select formControlName="region" (change)="applyFilters()">
+            <option value="">Toutes</option>
+            @for (region of filters()?.regions ?? []; track region) {
+              <option [value]="region">{{ region }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Client
+          <select formControlName="client" (change)="applyFilters()">
+            <option value="">Tous</option>
+            @for (client of filters()?.clients ?? []; track client) {
+              <option [value]="client">{{ client }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Statut
+          <select formControlName="status" (change)="applyFilters()">
+            <option value="">Tous</option>
+            @for (status of filters()?.statuses ?? []; track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Type
+          <select formControlName="type" (change)="applyFilters()">
+            <option value="">Tous</option>
+            @for (type of filters()?.types ?? []; track type) {
+              <option [value]="type">{{ type }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Du
+          <input type="date" formControlName="fromDate" />
+        </label>
+        <label>
+          Au
+          <input type="date" formControlName="toDate" />
+        </label>
+        <div class="actions">
+          <button class="btn-primary compact" type="submit">
+            <i class="bi bi-funnel"></i>
+            <span>Filtrer</span>
+          </button>
+          <button class="btn-outline compact" type="button" (click)="clearFilters()">
+            <i class="bi bi-arrow-counterclockwise"></i>
+            <span>Réinitialiser</span>
+          </button>
+        </div>
+      </form>
+    }
+  </section>
+
+  <section class="card table-card">
+    <div class="table-head">
+      <h2>Interventions</h2>
+      <p>Liste détaillée des interventions correspondant à la page actuelle.</p>
+    </div>
+
+    @if (tableError()) {
+      <div class="state error"><strong>Erreur :</strong> {{ tableError() }}</div>
+    } @else if (tableLoading()) {
+      <div class="state">Chargement des interventions…</div>
+    } @else if (interventions().length === 0) {
+      <div class="state">Aucune intervention disponible.</div>
+    } @else {
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('date')">
+                  Date <span class="sort-arrow">{{ sortArrow('date') }}</span>
+                </button>
+              </th>
+              <th>Numéro</th>
+              <th>Technicien</th>
+              <th>Région</th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('type')">
+                  Type <span class="sort-arrow">{{ sortArrow('type') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('statut')">
+                  Statut <span class="sort-arrow">{{ sortArrow('statut') }}</span>
+                </button>
+              </th>
+              <th>Client</th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('duree')">
+                  Durée <span class="sort-arrow">{{ sortArrow('duree') }}</span>
+                </button>
+              </th>
+              <th>Commentaires</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of sortedInterventions(); track item._id) {
+              <tr>
+                <td>{{ item.dateRdv | date:'shortDate' }}</td>
+                <td>{{ item.numInter || '—' }}</td>
+                <td>{{ formatTechnicianName(item) }}</td>
+                <td>{{ item.region || '—' }}</td>
+                <td>{{ item.type || '—' }}</td>
+                <td>
+                  <span class="status-pill" [ngClass]="statusClass(item)">
+                    {{ item.statut || '—' }}
+                  </span>
+                </td>
+                <td>{{ item.client || '—' }}</td>
+                <td>{{ item.duree ? item.duree + ' min' : '—' }}</td>
+                <td class="commentaire">{{ item.commentairesTechnicien || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <footer class="pager pager-fixed">
+      <div class="pager-left">
+        <div class="page-size">
+          @for (size of limitOptions; track size) {
+            <button type="button" [class.active]="size === limit()" (click)="setLimit(size)">{{ size }}</button>
+          }
+        </div>
+        <span class="pager-label">Éléments par page</span>
+      </div>
+      <div class="pager-right">
+        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+        <div class="pager-nav">
+          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </footer>
+  </section>
+</section>
