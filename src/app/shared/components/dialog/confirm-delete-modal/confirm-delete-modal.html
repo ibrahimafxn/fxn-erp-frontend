@@ -8,7 +8,7 @@
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
-        <div class="modal-title">Confirmer la suppression</div>
+        <div class="modal-title">{{ title() }}</div>
 
         <button type="button" class="icon-btn" (click)="onCancel()" aria-label="Fermer">
           <i class="bi bi-x-lg"></i>
@@ -17,8 +17,12 @@
 
       <section class="modal-body">
         <p class="lead">
-          Voulez-vous vraiment supprimer {{ entityLabel() }}
-          <span class="strong">{{ displayName() }}</span> ?
+          @if (question()) {
+            {{ question() }}
+          } @else {
+            Voulez-vous vraiment supprimer {{ entityLabel() }}
+            <span class="strong">{{ displayName() }}</span> ?
+          }
         </p>
 
         <p class="hint">{{ dangerHint() }}</p>
@@ -38,8 +42,8 @@
         </button>
 
         <button type="button" class="btn-outline delete" (click)="onConfirm()" [disabled]="confirming()">
-          <i class="fa-solid fa-trash"></i>
-          @if (confirming()) { Suppression… } @else { {{ confirmText() }} }
+          @if (confirmIcon()) { <i [class]="confirmIcon()"></i> }
+          @if (confirming()) { {{ confirmLoadingText() }} } @else { {{ confirmText() }} }
         </button>
       </footer>
     </div>

@@ -4,17 +4,19 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.65);
   z-index: 1000;
 }
 
 .modal {
-  width: min(540px, 100%);
+  width: min(520px, 100%);
   border-radius: 1rem;
-  background: rgba(20, 20, 24, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  background: #0c0c11;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 25px 55px rgba(0, 0, 0, 0.65);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -22,13 +24,14 @@
   align-items: center;
   justify-content: space-between;
   gap: .75rem;
-  padding: 1rem 1rem .75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .modal-title {
   font-weight: 800;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
 
 .icon-btn {
@@ -36,15 +39,19 @@
   background: rgba(255, 255, 255, 0.06);
   color: inherit;
   border-radius: .75rem;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   cursor: pointer;
+  display: grid;
+  place-items: center;
 }
 
 .modal-body {
-  padding: 1rem;
+  padding: 1.2rem;
   display: grid;
-  gap: .6rem;
+  gap: .75rem;
+  background: #09090f;
+  flex: 1;
 }
 
 .lead {
@@ -59,18 +66,17 @@
 
 .hint {
   margin: 0;
-  opacity: .8;
-  font-size: .9rem;
+  opacity: .9;
+  font-size: .95rem;
 }
 
 .meta {
   margin-top: .25rem;
-  display: grid;
-  gap: .25rem;
-  padding: .75rem;
+  padding: .75rem 1rem;
   border-radius: .9rem;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.01);
 }
 
 .label {
@@ -97,18 +103,20 @@
 .reason textarea {
   width: 100%;
   min-height: 90px;
-  padding: .6rem .75rem;
+  padding: .65rem .75rem;
   border-radius: .75rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
   color: inherit;
   resize: vertical;
+  font-size: .95rem;
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: .6rem;
-  padding: .9rem 1rem 1rem;
+  padding: 1rem 1.15rem 1.25rem;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
 }

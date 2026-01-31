@@ -84,4 +84,46 @@
     </div>
 
   </form>
+
+  @if (mode() === 'edit') {
+    <section class="card form convert-card">
+      <div class="card-title">
+        <h2>Transfert de catégorie</h2>
+        <p class="subtitle">Déplacer ce consommable vers Matériels en conservant l’historique.</p>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label>Catégorie cible</label>
+          <select [formControl]="convertCategory">
+            <option value="Outil">Outil</option>
+            <option value="EPI">EPI</option>
+          </select>
+        </div>
+      </div>
+      @if (convertError()) {
+        <div class="state error">Erreur : {{ convertError() }}</div>
+      }
+      <div class="actions">
+        <button class="btn-outline" type="button" (click)="openConvertConfirm()" [disabled]="converting()">
+          @if (converting()) { Transfert… } @else { Transférer vers matériel }
+        </button>
+      </div>
+    </section>
+
+    <app-confirm-delete-modal
+      [open]="convertConfirmOpen()"
+      title="Confirmer le transfert"
+      question="Transférer ce consommable vers la catégorie Matériels ?"
+      entityLabel="ce consommable"
+      [entityName]="current()?.name ?? ''"
+      dangerHint="Le consommable sera déplacé vers la catégorie Matériels en conservant l’historique."
+      cancelText="Annuler"
+      confirmText="Transférer"
+      confirmLoadingText="Transfert…"
+      confirmIcon=""
+      [confirming]="converting()"
+      (cancel)="closeConvertConfirm()"
+      (confirm)="confirmConvertToMaterial()"
+    ></app-confirm-delete-modal>
+  }
 </section>

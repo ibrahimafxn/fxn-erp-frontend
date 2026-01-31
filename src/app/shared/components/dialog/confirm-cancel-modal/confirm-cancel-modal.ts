@@ -14,10 +14,11 @@ export class ConfirmCancelModal {
   readonly title = input('Confirmer l’annulation');
   readonly entityLabel = input('transaction');
   readonly entityName = input('');
+  readonly metaLabel = input('ID');
   readonly entityId = input<string | null>(null);
   readonly dangerHint = input('Cette action annulera la transaction.');
   readonly cancelText = input('Retour');
-  readonly confirmText = input('Annuler');
+  readonly confirmText = input('Confirmer l’annulation');
   readonly confirming = input(false);
   readonly showReason = input(true);
   readonly reasonPlaceholder = input('Motif (optionnel)…');

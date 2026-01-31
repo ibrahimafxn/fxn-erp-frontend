@@ -32,9 +32,17 @@ export class ConfirmDeleteModal {
   /** Texte d’avertissement */
   readonly dangerHint = input('Cette action est irréversible.');
 
+  /** Titre de la modale */
+  readonly title = input('Confirmer la suppression');
+
+  /** Question personnalisée (remplace le texte par défaut si fourni) */
+  readonly question = input<string | null>(null);
+
   /** Personnalisation boutons */
   readonly cancelText = input('Annuler');
   readonly confirmText = input('Supprimer');
+  readonly confirmLoadingText = input('Suppression…');
+  readonly confirmIcon = input('fa-solid fa-trash');
 
   /** Si tu veux bloquer le bouton "Supprimer" pendant une requête */
   readonly confirming = input(false);

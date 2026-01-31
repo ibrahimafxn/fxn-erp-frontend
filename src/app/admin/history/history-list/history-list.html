@@ -192,7 +192,7 @@
               <td class="actions-cell" data-label="Action">
                 <div class="row-actions">
                   <button
-                    class="btn-outline warning"
+                    class="btn-outline warning btn-compact"
                     type="button"
                     (click)="openCancelModal(m)"
                     [disabled]="!canCancel(m) || cancelLoading()[m._id]"><i class="bi bi-x"></i> Annuler</button>
@@ -232,7 +232,8 @@
   [open]="cancelModalOpen()"
   entityLabel="le mouvement"
   [entityName]="cancelTarget() ? resourceLabel(cancelTarget()!) : ''"
-  [entityId]="cancelTarget()?._id ?? null"
+  [entityId]="cancelTarget() ? authorLabel(cancelTarget()!) : null"
+  metaLabel="Auteur"
   [confirming]="cancelTarget() ? cancelLoading()[cancelTarget()!._id] : false"
   [showReason]="false"
   (cancel)="closeCancelModal()"

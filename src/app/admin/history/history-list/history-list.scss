@@ -114,6 +114,11 @@ tbody td {
   justify-content: flex-end;
   gap: .6rem;
   align-items: center;
+
+  .btn-compact {
+    padding: .45rem .9rem;
+    min-width: 0;
+  }
 }
 
 .badge {

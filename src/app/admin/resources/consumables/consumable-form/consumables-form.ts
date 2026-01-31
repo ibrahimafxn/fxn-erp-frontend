@@ -8,6 +8,7 @@ import {Consumable, Depot, DepotLite} from '../../../../core/models';
 import {toSignal} from '@angular/core/rxjs-interop';
 import {DetailBack} from '../../../../core/utils/detail-back';
 import { formatDepotName } from '../../../../core/utils/text-format';
+import { ConfirmDeleteModal } from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 type Mode = 'create' | 'edit';
 
@@ -15,7 +16,7 @@ type Mode = 'create' | 'edit';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-consumable-form',
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],
   templateUrl: './consumables-form.html',
   styleUrls: ['./consumables-form.scss'],
 })
@@ -62,6 +63,11 @@ export class ConsumablesForm extends DetailBack {
     minQuantity: this.fb.nonNullable.control(0, [Validators.min(0)]),
     idDepot: this.fb.control<string | null>(null),
   });
+
+  readonly convertCategory = this.fb.nonNullable.control<'Outil' | 'EPI'>('Outil');
+  readonly converting = signal(false);
+  readonly convertError = signal<string | null>(null);
+  readonly convertConfirmOpen = signal(false);
 
   // ✅ Signal “réactif” sur l’état du formulaire
   private readonly formStatus = toSignal(this.form.statusChanges, {
@@ -190,6 +196,38 @@ export class ConsumablesForm extends DetailBack {
 
   cancel(): void {
     this.router.navigate(['/admin/resources/consumables']);
+  }
+
+  openConvertConfirm(): void {
+    if (!this.id || this.mode() !== 'edit' || this.converting()) return;
+    this.convertConfirmOpen.set(true);
+  }
+
+  closeConvertConfirm(): void {
+    if (this.converting()) return;
+    this.convertConfirmOpen.set(false);
+  }
+
+  confirmConvertToMaterial(): void {
+    if (!this.id || this.mode() !== 'edit') return;
+    this.converting.set(true);
+    this.convertError.set(null);
+    this.consumableService.convertToMaterial(this.id, { category: this.convertCategory.value }).subscribe({
+      next: (res) => {
+        this.converting.set(false);
+        this.convertConfirmOpen.set(false);
+        if (res?.id) {
+          this.router.navigate([`/admin/resources/materials/${res.id}`]);
+        } else {
+          this.router.navigate(['/admin/resources/materials']);
+        }
+      },
+      error: (err) => {
+        this.converting.set(false);
+        this.convertConfirmOpen.set(false);
+        this.convertError.set(err?.error?.message || 'Erreur conversion');
+      }
+    });
   }
 
   // Pour afficher une erreur “propre”
