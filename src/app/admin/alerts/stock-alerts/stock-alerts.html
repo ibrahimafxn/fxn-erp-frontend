@@ -71,7 +71,7 @@
                 <tr class="clickable-row" (click)="goDetail(c)" tabindex="0" role="button" (keydown.enter)="goDetail(c)">
                   <td data-label="Consommable">{{ consumableName(c) }}</td>
                   <td data-label="Disponible">
-                    <span class="qty-pill success">{{ availableQty(c) }} {{ c.unit || '' }}</span>
+                    <span class="qty-pill danger">{{ availableQty(c) }} {{ c.unit || '' }}</span>
                   </td>
                   <td data-label="Dépôt">{{ depotLabel(c) }}</td>
                   <td data-label="Stock">
@@ -102,7 +102,7 @@
                 <tr class="clickable-row" (click)="goMaterialDetail(m)" tabindex="0" role="button" (keydown.enter)="goMaterialDetail(m)">
                   <td data-label="Matériel">{{ materialName(m) }}</td>
                   <td data-label="Disponible">
-                    <span class="qty-pill success">
+                    <span class="qty-pill danger">
                       {{ availableQtyMaterial(m) }} {{ materialUnit(m) }}
                     </span>
                   </td>
@@ -179,7 +179,7 @@
                 <tr class="clickable-row" (click)="goDetail(c)" tabindex="0" role="button" (keydown.enter)="goDetail(c)">
                   <td data-label="Consommable">{{ consumableName(c) }}</td>
                   <td data-label="Disponible">
-                    <span class="qty-pill success">{{ availableQty(c) }} {{ c.unit || '' }}</span>
+                    <span class="qty-pill danger">{{ availableQty(c) }} {{ c.unit || '' }}</span>
                   </td>
                   <td data-label="Dépôt">{{ depotLabel(c) }}</td>
                   <td data-label="Stock">
@@ -193,7 +193,7 @@
                 <tr class="clickable-row" (click)="goMaterialDetail(m)" tabindex="0" role="button" (keydown.enter)="goMaterialDetail(m)">
                   <td data-label="Matériel">{{ materialName(m) }}</td>
                   <td data-label="Disponible">
-                    <span class="qty-pill success">
+                    <span class="qty-pill danger">
                       {{ availableQtyMaterial(m) }} {{ materialUnit(m) }}
                     </span>
                   </td>
