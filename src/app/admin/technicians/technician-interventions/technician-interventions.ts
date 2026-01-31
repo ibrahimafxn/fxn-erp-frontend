@@ -462,14 +462,17 @@ export class TechnicianInterventions {
 
   private chooseFailureStatus(): string {
     const statuses = this.filters()?.statuses ?? [];
-    const preferred = statuses.find((status) => this.isTerminatedFailure(status));
-    return preferred ?? 'Échec';
+    const preferred = statuses.find((status) => this.isFailureTerminated(status));
+    return preferred ?? 'Échec terminée';
   }
 
-  private isTerminatedFailure(status?: string): boolean {
+  private isFailureTerminated(status?: string): boolean {
     if (!status) return false;
-    const normalized = status.toLowerCase();
-    return normalized.includes('termin') || normalized.includes('cloture');
+    const normalized = status
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+    return normalized.includes('echec') && normalized.includes('termin');
   }
 
   private isCancelledStatus(status?: string): boolean {
