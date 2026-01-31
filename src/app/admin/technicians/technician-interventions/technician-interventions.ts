@@ -449,8 +449,9 @@ export class TechnicianInterventions {
   applyView(view: 'topTech' | 'failures' | 'reconnections'): void {
     if (view === 'failures') {
       this.filterForm.controls.status.setValue(this.chooseFailureStatus());
+      this.filterForm.controls.type.setValue('');
     } else if (view === 'reconnections') {
-      this.filterForm.controls.status.setValue(this.chooseClosedStatus());
+      this.filterForm.controls.status.setValue('');
       this.filterForm.controls.type.setValue(this.chooseReconnectionType());
     }
     if (view === 'topTech') {
