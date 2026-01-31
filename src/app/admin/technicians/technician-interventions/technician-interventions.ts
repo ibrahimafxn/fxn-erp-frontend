@@ -495,7 +495,7 @@ export class TechnicianInterventions {
   private isReconnectionType(type?: string): boolean {
     if (!type) return false;
     const normalized = this.normalizeToken(type);
-    return normalized.includes('RECO') || normalized.includes('PLP');
+    return normalized.includes('RECO');
   }
 
   private isCancelledStatus(status?: string): boolean {
@@ -515,54 +515,17 @@ export class TechnicianInterventions {
     }
     const statusNormalized = this.normalizeToken(item?.statut);
     const operationNormalized = this.normalizeToken(item?.typeOperation);
-    const reconLabel = this.classifyReconnectionLabel(
-      normalizedType,
-      statusNormalized,
-      operationNormalized,
-      articlesNormalized
-    );
-    if (reconLabel) {
-      return reconLabel;
+    const isClosedTerminated =
+      statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINE');
+    const isReconnectionOperation = normalizedType === 'RECO' || operationNormalized.includes('RECONNEX');
+    if (articlesNormalized.includes('RECOIP') || (isClosedTerminated && isReconnectionOperation)) {
+      return 'RECO';
     }
     if (!raw) return 'Autre';
     const normalized = raw.toUpperCase().replace(/\s+/g, ' ').replace(/-/g, ' ');
     return TYPE_CANONICAL_ALIASES.get(normalized) ?? raw;
   }
 
-  private classifyReconnectionLabel(
-    typeNormalized: string,
-    statusNormalized: string,
-    operationNormalized: string,
-    articlesNormalized: string
-  ): 'RECO' | null {
-    if (articlesNormalized.includes('RECOIP')) {
-      return 'RECO';
-    }
-    const isClosedTerminated =
-      statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINE');
-    if (!isClosedTerminated) {
-      return null;
-    }
-    if (this.isPlpIndicator(typeNormalized, operationNormalized, articlesNormalized)) {
-      return 'RECO';
-    }
-    if (typeNormalized === 'RECO' || operationNormalized.includes('RECONNEX')) {
-      return 'RECO';
-    }
-    return null;
-  }
-
-  private isPlpIndicator(
-    typeNormalized: string,
-    operationNormalized: string,
-    articlesNormalized: string
-  ): boolean {
-    return (
-      typeNormalized === 'PLP' ||
-      operationNormalized.includes('PLP') ||
-      articlesNormalized.includes('PLP')
-    );
-  }
 
   private computeFailurePercent(stats: TechnicianInterventionStats): number {
     const denominator = stats.success + stats.failure;
