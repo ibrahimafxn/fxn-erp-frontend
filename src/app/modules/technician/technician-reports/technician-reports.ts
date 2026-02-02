@@ -38,6 +38,16 @@ export class TechnicianReports {
     toDate: this.fb.nonNullable.control('')
   });
 
+  readonly todayReport = computed(() => {
+    const todayKey = this.todayInput();
+    return (
+      this.items().find(
+        (report) => (this.datePipe.transform(report.reportDate, 'yyyy-MM-dd') || '') === todayKey
+      ) || null
+    );
+  });
+  readonly todayComplexProCount = computed(() => Number(this.todayReport()?.prestations?.racProC ?? 0));
+
   readonly form = this.fb.nonNullable.group({
     date: this.fb.nonNullable.control(this.todayInput(), [Validators.required]),
     prestations: this.fb.nonNullable.group({

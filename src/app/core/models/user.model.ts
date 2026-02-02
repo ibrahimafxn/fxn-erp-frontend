@@ -24,6 +24,7 @@ export interface User {
   role: Role;
   idDepot?: string | { _id: string; name?: string } | null;
   assignedVehicle?: string | { _id: string; plateNumber?: string; brand?: string; model?: string } | null;
+  osirisAlias?: string;
 
   /** Auth / accès */
   username?: string;

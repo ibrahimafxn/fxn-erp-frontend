@@ -2,27 +2,59 @@
   <header class="hero">
     <div class="hero-text">
       <span class="hero-badge">ERP FXN · ERT Technologies</span>
-      <h1>Poste de commandement des stocks</h1>
+      <h1>Poste de commandement</h1>
       <p class="subtitle">
         Vue stratégique des matériels, consommables et véhicules pour piloter le terrain en temps réel.
       </p>
 
       <div class="hero-foot">
+        <div class="hero-kpis" *ngIf="stats() as s">
+          <div class="hero-kpi alert">
+            <div class="label">Alertes totales</div>
+            <div class="value">{{ s.totalAlerts ?? s.totalLowStock ?? 0 }}</div>
+          </div>
+          <div class="hero-kpi alert">
+            <div class="label">Stock bas matériels</div>
+            <div class="value">{{ s.totalLowStockMaterials ?? 0 }}</div>
+          </div>
+          <div class="hero-kpi alert">
+            <div class="label">Stock bas consommables</div>
+            <div class="value">{{ s.totalLowStockConsumables ?? 0 }}</div>
+          </div>
+          <div class="hero-kpi alert">
+            <div class="label">Alertes véhicules</div>
+            <div class="value">{{ s.totalVehicleAlerts ?? 0 }}</div>
+          </div>
+        </div>
+        <div class="hero-admin" *ngIf="canManageAccess() || canViewHr()">
+          <div class="hero-admin-title">Administration</div>
+          <div class="hero-admin-actions">
+            <button class="btn-outline admin-access" type="button" (click)="goToUserAccess()" *ngIf="canManageAccess()">
+              <span class="material-icons notranslate" aria-hidden="true">vpn_key</span>
+              Accès connexion
+            </button>
+            <button class="btn-outline admin-hr" type="button" (click)="goToHr()" *ngIf="canViewHr()">
+              <span class="material-icons notranslate" aria-hidden="true">badge</span>
+              Ressources humaines
+            </button>
+          </div>
+        </div>
         <div class="hero-actions">
-          <button class="btn-outline btn-history" type="button" (click)="goToHistory()">
+          <button class="btn-outline btn-onboarding btn-depot-hero" type="button" (click)="goToDepotDashboard()">
             <span class="btn-text">
-              <span class="title">Journal des mouvements</span>
-              <span class="meta">Historique des stocks</span>
+              <span class="title">Dépôt</span>
+              <span class="meta">Tableau dépôt</span>
             </span>
+            <span class="badge">Stock</span>
           </button>
-          <button class="btn-outline btn-onboarding" type="button" (click)="goToOnboarding()">
+          <button class="btn-outline btn-onboarding btn-onboarding-hero" type="button" (click)="goToOnboarding()">
             <span class="btn-text">
               <span class="title">Onboarding</span>
               <span class="meta">Importer fichiers CSV</span>
             </span>
             <span class="badge">CSV</span>
           </button>
-          <button class="btn-outline btn-reload" type="button" (click)="adminService.loadDashboardStats()">
+          <button class="btn-outline btn-reload btn-reload-hero" type="button" (click)="adminService.loadDashboardStats()">
             <span class="btn-text">
               <span class="title">Rafraîchir</span>
               <span class="meta">Actualiser les indicateurs</span>
@@ -48,58 +80,9 @@
     </div>
   </div>
 
-  @if (stats(); as s) {
-    <section class="alert-strip">
-      <div class="alert-pill" [class.hot]="(s.totalLowStockMaterials ?? 0) > 0">
-        Stock bas matériels : <strong>{{ s.totalLowStockMaterials ?? 0 }}</strong>
-      </div>
-      <div class="alert-pill" [class.hot]="(s.totalLowStockConsumables ?? 0) > 0">
-        Stock bas consommables : <strong>{{ s.totalLowStockConsumables ?? 0 }}</strong>
-      </div>
-      <div class="alert-pill" [class.hot]="(s.totalVehicleAlerts ?? 0) > 0">
-        Alertes véhicules : <strong>{{ s.totalVehicleAlerts ?? 0 }}</strong>
-      </div>
-    </section>
-  }
-
-  <section class="action-grid">
-    <article class="action-card" (click)="goToNewUser()">
-      <div class="action-head">
-        <span class="material-icons notranslate action-icon">person_add</span>
-        <span class="action-tag">Accès rapide</span>
-      </div>
-      <div class="action-title">Nouveau collaborateur</div>
-      <div class="action-subtitle">Créer un utilisateur et activer l'accès</div>
-    </article>
-    <article class="action-card" (click)="goToNewDepot()">
-      <div class="action-head">
-        <span class="material-icons notranslate action-icon">warehouse</span>
-        <span class="action-tag">Logistique</span>
-      </div>
-      <div class="action-title">Nouveau dépôt</div>
-      <div class="action-subtitle">Ajouter un point logistique</div>
-    </article>
-    <article class="action-card" (click)="goToInterventions()">
-      <div class="action-head">
-        <span class="material-icons notranslate action-icon">upload_file</span>
-        <span class="action-tag">Import</span>
-      </div>
-      <div class="action-title">Importer interventions</div>
-      <div class="action-subtitle">Charger un CSV ERT</div>
-    </article>
-    <article class="action-card" (click)="goToStockAlerts()">
-      <div class="action-head">
-        <span class="material-icons notranslate action-icon">warning</span>
-        <span class="action-tag">Surveillance</span>
-      </div>
-      <div class="action-title">Voir les alertes</div>
-      <div class="action-subtitle">Stocks critiques et pannes</div>
-    </article>
-  </section>
-
   <!-- KPIs principaux -->
   <section class="kpi-grid" *ngIf="stats() as s">
-    <article class="kpi-card clickable" (click)="goToUsers()">
+    <article class="kpi-card kpi-primary clickable" (click)="goToUsers()">
       <div class="kpi-icon kpi-users"><span class="material-icons notranslate" aria-hidden="true">groups</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Utilisateurs</div>
@@ -108,7 +91,7 @@
       </div>
     </article>
 
-    <article class="kpi-card clickable" (click)="goToDepots()">
+    <article class="kpi-card kpi-primary clickable" (click)="goToDepots()">
       <div class="kpi-icon kpi-depots"><span class="material-icons notranslate" aria-hidden="true">home_work</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Dépôts</div>
@@ -117,7 +100,7 @@
       </div>
     </article>
 
-    <article class="kpi-card clickable" (click)="goToResources('materials')">
+    <article class="kpi-card kpi-primary clickable" (click)="goToResources('materials')">
       <div class="kpi-icon kpi-materials"><span class="material-icons notranslate" aria-hidden="true">build_circle</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Matériels</div>
@@ -126,7 +109,7 @@
       </div>
     </article>
 
-    <article class="kpi-card clickable" (click)="goToResources('consumables')">
+    <article class="kpi-card kpi-primary clickable" (click)="goToResources('consumables')">
       <div class="kpi-icon kpi-consumables"><span class="material-icons notranslate" aria-hidden="true">inventory</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Consommables</div>
@@ -135,7 +118,7 @@
       </div>
     </article>
 
-    <article class="kpi-card clickable" (click)="goToResources('vehicles')">
+    <article class="kpi-card kpi-primary clickable" (click)="goToResources('vehicles')">
       <div class="kpi-icon kpi-vehicles"><span class="material-icons notranslate" aria-hidden="true">directions_car</span></div>
       <div class="kpi-text">
         <div class="kpi-label">Véhicules</div>
@@ -144,14 +127,87 @@
       </div>
     </article>
 
-    <article class="kpi-card clickable" (click)="goToStockAlerts()">
-      <div class="kpi-icon kpi-alerts"><span class="material-icons notranslate" aria-hidden="true">warning</span></div>
-      <div class="kpi-text">
-        <div class="kpi-label">Alertes</div>
-        <div class="kpi-value">{{ s.totalAlerts ?? s.totalLowStock ?? 0 }}</div>
-        <div class="kpi-footer">Stock + véhicules</div>
+  </section>
+
+  <section class="action-grid">
+    <article class="action-card action-card-next" (click)="goToNewUser()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">person_add</span>
+        <span class="action-tag">Accès rapide</span>
       </div>
+      <div class="action-title">Nouveau collaborateur</div>
+      <div class="action-subtitle">Créer un utilisateur et activer l'accès</div>
     </article>
+    <article class="action-card action-card-next" (click)="goToNewDepot()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">warehouse</span>
+        <span class="action-tag">Logistique</span>
+      </div>
+      <div class="action-title">Nouveau dépôt</div>
+      <div class="action-subtitle">Ajouter un point logistique</div>
+    </article>
+    <article class="action-card action-card-next" (click)="goToNewOrder()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">receipt_long</span>
+        <span class="action-tag">Achats</span>
+      </div>
+      <div class="action-title">Nouvelle commande</div>
+      <div class="action-subtitle">Créer un bon de commande</div>
+    </article>
+  </section>
+
+  <section class="ops-block">
+    <div class="section-header">
+      <h2>Opérations</h2>
+      <p>Accès rapide aux interventions et au suivi terrain.</p>
+    </div>
+
+    <div class="action-grid ops-grid">
+      <article class="action-card ops-card" (click)="goToMovements()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">swap_horiz</span>
+          <span class="action-tag">Suivi</span>
+        </div>
+        <div class="action-title">Journal des mouvements</div>
+        <div class="action-subtitle">Historique des entrées et sorties</div>
+      </article>
+
+      <article class="action-card ops-card" (click)="goToInterventions()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">attach_money</span>
+          <span class="action-tag">Interventions</span>
+        </div>
+        <div class="action-title">Calcul d'attachement</div>
+        <div class="action-subtitle">Synthèse des prestations</div>
+      </article>
+
+      <article class="action-card ops-card" (click)="goToInterventionsImport()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">upload_file</span>
+          <span class="action-tag">Import</span>
+        </div>
+        <div class="action-title">Import interventions du jour</div>
+        <div class="action-subtitle">Charger le CSV quotidien</div>
+      </article>
+
+      <article class="action-card ops-card" (click)="goToTechnicianActivity()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">history</span>
+          <span class="action-tag">Techniciens</span>
+        </div>
+        <div class="action-title">Prestations techniciens</div>
+        <div class="action-subtitle">Suivi des actions terrain</div>
+      </article>
+
+      <article class="action-card ops-card" (click)="goToTechnicianInterventions()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">insights</span>
+          <span class="action-tag">Techniciens</span>
+        </div>
+        <div class="action-title">Interventions techniciens</div>
+        <div class="action-subtitle">Comparatif par technicien</div>
+      </article>
+    </div>
   </section>
 
   <section class="empty-state" *ngIf="!stats() && !loading() && !error()">

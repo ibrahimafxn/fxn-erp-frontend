@@ -175,7 +175,7 @@
                   [class.out]="m.action === 'OUT'"
                   [class.transfer]="m.action === 'TRANSFER'"
                 >
-                  {{ actionLabel(m.action) }}
+                  {{ actionLabelForRow(m) }}
                 </span>
               </td>
               <td class="mono" data-label="Origine">{{ endpointLabel(m.from.type, m.from.id, $any(m).fromLabel) }}</td>
@@ -183,7 +183,7 @@
               <td data-label="Quantité">{{ m.quantity }} {{ m.unit }}</td>
               <td data-label="Auteur">{{ authorLabel(m) }}</td>
               <td data-label="Statut">
-                @if (m.status === 'CANCELED') {
+                @if (isCanceled(m.status)) {
                   <span class="pill danger">{{ statusLabel(m.status) }}</span>
                 } @else {
                   <span class="pill ok">{{ statusLabel(m.status) }}</span>
@@ -191,11 +191,17 @@
               </td>
               <td class="actions-cell" data-label="Action">
                 <div class="row-actions">
-                  <button
-                    class="btn-outline warning btn-compact"
-                    type="button"
-                    (click)="openCancelModal(m)"
-                    [disabled]="!canCancel(m) || cancelLoading()[m._id]"><i class="bi bi-x"></i> Annuler</button>
+                  @if (statusLabel(m.status) === 'Annulé') {
+                    <button class="btn-outline warning btn-compact" type="button" disabled>
+                      <i class="bi bi-x"></i> Annuler
+                    </button>
+                  } @else {
+                    <button
+                      class="btn-outline warning btn-compact"
+                      type="button"
+                      (click)="openCancelModal(m)"
+                      [disabled]="isCancellationMovement(m) || !canCancelAction(m.action) || cancelLoading()[m._id]"><i class="bi bi-x"></i> Annuler</button>
+                  }
                   @if (rowError(m)) {
                     <div class="state error">{{ rowError(m) }}</div>
                   }
@@ -235,7 +241,6 @@
   [entityId]="cancelTarget() ? authorLabel(cancelTarget()!) : null"
   metaLabel="Auteur"
   [confirming]="cancelTarget() ? cancelLoading()[cancelTarget()!._id] : false"
-  [showReason]="false"
   (cancel)="closeCancelModal()"
   (confirm)="confirmCancel($event)"
 ></app-confirm-cancel-modal>

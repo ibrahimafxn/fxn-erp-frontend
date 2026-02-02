@@ -1,0 +1,226 @@
+<section class="interventions">
+  <header class="page-header card hero">
+    <div>
+      <h1>Import interventions du jour</h1>
+      <p class="subtitle">Importer l’export Osiris et distribuer les interventions.</p>
+    </div>
+
+    <div class="header-actions">
+      <label class="file-input" [class.disabled]="importLoading()">
+        <input
+          #csvInput
+          type="file"
+          accept=".csv"
+          [disabled]="importLoading()"
+          (click)="onFileClick()"
+          (change)="onFileChange($event)"
+        />
+        <span class="material-icons notranslate" aria-hidden="true">upload_file</span>
+        <span>Choisir un export CSV</span>
+      </label>
+      @if (selectedFile) {
+        <div class="file-meta">
+          <span class="material-icons notranslate" aria-hidden="true">description</span>
+          <span>{{ selectedFile.name }}</span>
+        </div>
+      }
+      <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading() || !selectedFile">
+        <span class="material-icons notranslate" aria-hidden="true">cloud_upload</span>
+        @if (importLoading()) { Import… } @else { Importer }
+      </button>
+      <a class="btn-outline" routerLink="/admin/technicians/interventions">
+        <span class="material-icons notranslate" aria-hidden="true">person-badge</span>
+        Aller aux interventions techniciens
+      </a>
+    </div>
+  </header>
+
+  @if (todayImportNotice()) {
+    <div class="state info card import-notice">{{ todayImportNotice() }}</div>
+  } @else if (latestImportNotice()) {
+    <div class="state hint card import-notice">{{ latestImportNotice() }}</div>
+  }
+
+  <app-confirm-delete-modal
+    [open]="overwriteOpen()"
+    title="Importer a nouveau"
+    entityLabel="import"
+    [question]="'Un import existe deja pour la periode ' + (overwriteInfo()?.periodLabel || 'selectionnee') + '. Voulez-vous l ecraser ?'"
+    confirmText="Ecraser l import"
+    cancelText="Annuler"
+    confirmIcon="fa-solid fa-rotate"
+    (confirm)="confirmOverwrite()"
+    (cancel)="cancelOverwrite()"
+  />
+
+  @if (importError()) {
+    <div class="state error card"><strong>Import :</strong> {{ importError() }}</div>
+  } @else if (importResult()) {
+    <div class="state ok card">{{ importResult() }}</div>
+  }
+
+  <section class="card">
+    <div class="table-head">
+      <h2><span class="material-icons notranslate">history</span>Derniers imports</h2>
+      <p>Archive CSV et statut du dernier import.</p>
+    </div>
+    <div class="invoice-summary">
+      @if (importsLoading()) {
+        <div class="state">Chargement des imports…</div>
+      } @else if (importsError()) {
+        <div class="state error">{{ importsError() }}</div>
+      } @else if (!latestImport()) {
+        <div class="state">Aucun import enregistré.</div>
+      } @else {
+        <div class="summary-card">
+          <span class="label">{{ latestImport().originalName || 'Import CSV' }}</span>
+          <span class="value">{{ latestImport().status || '—' }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Créées</span>
+          <span class="value">{{ latestImport().totals?.created ?? 0 }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Versionnées</span>
+          <span class="value">{{ latestImport().totals?.versioned ?? 0 }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="label">Rejetées</span>
+          <span class="value">{{ latestImport().totals?.rejected ?? 0 }}</span>
+        </div>
+        <button class="btn-outline" type="button" (click)="downloadLatestImport()" [disabled]="!latestImport()">
+          <span class="material-icons notranslate">download</span>
+          Télécharger CSV
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="table card">
+    <div class="table-head">
+      <h2><span class="material-icons notranslate">report</span>Tickets import (dernier import)</h2>
+      <p>Interventions rejetées en attente de résolution.</p>
+    </div>
+    @if (ticketsLoading()) {
+      <div class="state">Chargement des tickets…</div>
+    } @else if (ticketsError()) {
+      <div class="state error">{{ ticketsError() }}</div>
+    } @else if (importTickets().length === 0) {
+      <div class="state">Aucun ticket ouvert.</div>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Num Inter</th>
+            <th>Technicien</th>
+            <th>Raison</th>
+            <th>Import</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (ticket of importTickets(); track ticket._id) {
+            <tr>
+              <td>{{ ticket.numInter || '—' }}</td>
+              <td>{{ ticketTechLabel(ticket) }}</td>
+              <td>{{ ticket.reason || '—' }}</td>
+              <td>{{ ticket.importBatchId?.originalName || ticket.importBatchId?.storedName || '—' }}</td>
+              <td>{{ ticket.createdAt | date:'short' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+  <section class="card import-validation">
+    <div class="table-head">
+      <h2><span class="material-icons notranslate">assignment_turned_in</span>Vérification export</h2>
+      <p>Confirme la colonne des prestations et la reconnaissance des codes BPU avant l’import.</p>
+    </div>
+    @if (!selectedFile) {
+      <div class="state">Choisis un export pour lancer l’analyse rapide.</div>
+    } @else if (previewLoading()) {
+      <div class="state">Analyse du fichier…</div>
+    } @else if (previewError()) {
+      <div class="state error">{{ previewError() }}</div>
+    } @else {
+      @if (previewRows() === 0) {
+        <div class="state hint">Les lignes analysées ne contiennent aucun code de prestation.</div>
+      }
+      <div class="validation-grid">
+        <div class="validation-card columns">
+          <span class="validation-label">Colonnes détectées</span>
+          <div class="column-list">
+            @for (column of previewColumns(); track column.name) {
+              <div [class.present]="column.present" [class.absent]="!column.present">
+                <span class="material-icons notranslate" aria-hidden="true">
+                  @if (column.present) { check_circle } @else { radio_button_unchecked }
+                </span>
+                {{ column.name }}
+              </div>
+            }
+          </div>
+        </div>
+        <div class="validation-card rows">
+          <span class="validation-label">Lignes analysées</span>
+          <span class="value">{{ previewRows() }}</span>
+          <p class="hint">Basé sur les premières 40 lignes.</p>
+          @if (previewRecognizedList().length) {
+            <div class="code-list">
+              @for (code of previewRecognizedList(); track code) {
+                <span>{{ code }}</span>
+              }
+            </div>
+          } @else {
+            <p class="hint">Aucun code reconnu.</p>
+          }
+        </div>
+        <div class="validation-card unknown">
+          <span class="validation-label">Codes inconnus</span>
+          @if (previewUnknownList().length === 0) {
+            <span class="value ok">Aucun</span>
+          } @else {
+            <ul>
+              @for (code of previewUnknownList(); track code) {
+                <li>{{ code }}</li>
+              }
+            </ul>
+          }
+          <p class="hint">Ces codes ne correspondent pas à ceux attendus par FXN.</p>
+        </div>
+      </div>
+    }
+  </section>
+  <section class="card import-rules">
+    <div class="table-head">
+      <h2><span class="material-icons notranslate">rule</span>Règles d’import</h2>
+      <p>Codes BPU utilisés pour classer les prestations présentes dans l’export Osiris.</p>
+    </div>
+    <p class="import-rules-note">
+      Chaque ligne de votre CSV doit contenir le code prestation attendu : les désignations ci-dessous doivent correspondre à la colonne utilisée par Osiris pour qualifier la prestation facturée. Les tickets sont générés dès qu’un code est absent ou inconnu.
+    </p>
+    <div class="rules-table-wrapper">
+      <table class="import-rules-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Prestation</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rule of prestationRules; track rule.code) {
+            <tr>
+              <td class="mono">{{ rule.code }}</td>
+              <td>{{ rule.label }}</td>
+              <td>{{ rule.description }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="import-rules-footnote">
+      Les montants liés à ces codes sont ensuite répartis entre la part FXN et la part technicien selon les tarifs définis sur le tableau principal.
+    </p>
+  </section>
+</section>

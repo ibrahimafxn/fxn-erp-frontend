@@ -247,6 +247,10 @@ export class DepotDashboard {
     this.router.navigate(['/depot/alerts/stock']).then();
   }
 
+  goAttribution(): void {
+    this.router.navigate(['/depot/attribution']).then();
+  }
+
   resourceLabel(item: Material | Consumable): string {
     const qty = this.availableQty(item);
     if ('unit' in item) {

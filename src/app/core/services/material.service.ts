@@ -118,6 +118,14 @@ export class MaterialService {
     );
   }
 
+  convertToConsumable(id: string, payload: { unit?: string } = {}): Observable<{ id: string; type: string }> {
+    this.clearCache();
+    return this.http.post<ApiResponse<{ id: string; type: string }>>(`${this.baseUrl}/${id}/convert-to-consumable`, payload).pipe(
+      map(resp => resp.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+
   /** DELETE /materials/:id */
   remove(id: string): Observable<{ _id: string }> {
     this.clearCache();

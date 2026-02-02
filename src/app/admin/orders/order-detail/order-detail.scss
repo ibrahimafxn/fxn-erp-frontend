@@ -98,6 +98,23 @@ tbody td:last-child {
   border: 1px solid var(--fxn-border-strong);
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.actions select {
+  color: #000;
+  height: 38px;
+}
+
+.actions .btn-primary {
+  height: 38px;
+  padding: 0 16px;
+}
+
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;

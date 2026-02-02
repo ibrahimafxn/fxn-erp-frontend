@@ -98,6 +98,17 @@ export const ADMIN_ROUTES: Routes = [
       import('./interventions/interventions-dashboard/interventions-dashboard').then(m => m.InterventionsDashboard)
   },
   {
+    path: 'interventions/import',
+    loadComponent: () =>
+      import('./interventions/interventions-import/interventions-import').then(m => m.InterventionsImport)
+  },
+  {
+    path: 'interventions/technician/:technician',
+    loadComponent: () =>
+      import('./interventions/interventions-technician-detail/interventions-technician-detail')
+        .then(m => m.InterventionsTechnicianDetail)
+  },
+  {
     path: 'bpu',
     loadComponent: () => import('./bpu/bpu-type-list/bpu-type-list').then(m => m.BpuTypeList)
   },
@@ -253,6 +264,11 @@ export const ADMIN_ROUTES: Routes = [
     path: 'technicians/activity',
     loadComponent: () =>
       import('./technicians/technician-activity/technician-activity').then(m => m.TechnicianActivity)
+  },
+  {
+    path: 'technicians/interventions',
+    loadComponent: () =>
+      import('./technicians/technician-interventions/technician-interventions').then(m => m.TechnicianInterventions)
   }
 
   // Optionnel (on fera après)

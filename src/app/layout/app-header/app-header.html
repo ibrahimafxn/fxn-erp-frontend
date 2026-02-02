@@ -5,6 +5,13 @@
       <img class="brand-logo" src="/fxn_logo_header.png" alt="FXN" />
     </div>
 
+    @if (showBackButton()) {
+      <button class="btn-back header-back" type="button" (click)="back()">
+        <i class="bi bi-arrow-left"></i>
+        Retour
+      </button>
+    }
+
     <div class="page-title">
       {{ pageTitle() }}
     </div>
@@ -65,20 +72,6 @@
                   </div>
                 </div>
 
-                <div class="menu-group ops-group">
-                  <div class="section-label">Opérations</div>
-                  <div class="section-items">
-                    @if (canViewMovements()) {
-                      <button mat-button (click)="goMovements()"><span class="material-icons notranslate">swap_horiz</span>Journal des mouvements</button>
-                    }
-                    @if (canViewInterventions()) {
-                      <button mat-button (click)="goInterventions()"><span class="material-icons notranslate">attach_money</span>Calcul d'attachement</button>
-                    }
-                    @if (canViewTechnicianActivity()) {
-                      <button mat-button (click)="goTechnicianActivity()"><span class="material-icons notranslate">history</span>Prestations techniciens</button>
-                    }
-                  </div>
-                </div>
               }
             </div>
 

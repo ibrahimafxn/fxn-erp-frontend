@@ -70,6 +70,10 @@ export class MaterialForm extends DetailBack {
     idDepot: this.fb.control<string | null>(null),
   }, { validators: [this.minQuantityValidator()] });
 
+  readonly convertUnit = this.fb.nonNullable.control('pcs');
+  readonly converting = signal(false);
+  readonly convertError = signal<string | null>(null);
+
   private readonly formStatus = toSignal(this.form.statusChanges, {
     initialValue: this.form.status,
   });
@@ -193,6 +197,29 @@ export class MaterialForm extends DetailBack {
 
   cancel(): void {
     this.router.navigate(['/admin/resources/materials']).then();
+  }
+
+  convertToConsumable(): void {
+    if (!this.id || this.mode() !== 'edit') return;
+    const confirmed = window.confirm('Transférer ce matériel vers la catégorie Consommables ?');
+    if (!confirmed) return;
+
+    this.converting.set(true);
+    this.convertError.set(null);
+    this.materials.convertToConsumable(this.id, { unit: this.convertUnit.value }).subscribe({
+      next: (res) => {
+        this.converting.set(false);
+        if (res?.id) {
+          this.router.navigate([`/admin/resources/consumables/${res.id}`]);
+        } else {
+          this.router.navigate(['/admin/resources/consumables']);
+        }
+      },
+      error: (err) => {
+        this.converting.set(false);
+        this.convertError.set(err?.error?.message || 'Erreur conversion');
+      }
+    });
   }
 
   // -----------------------------

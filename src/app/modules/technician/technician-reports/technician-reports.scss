@@ -8,6 +8,41 @@
   color: rgba(255, 255, 255, 0.72);
 }
 
+.technician-reports .daily-report-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.85));
+}
+
+.technician-reports .daily-report-card__values {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.technician-reports .daily-report-card__label {
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.technician-reports .daily-report-card__value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.technician-reports .daily-report-card__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(226, 232, 240, 0.7);
+}
+
 .technician-reports .form-card,
 .technician-reports .list-card {
   padding: 18px;

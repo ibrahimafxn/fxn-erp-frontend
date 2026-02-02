@@ -118,7 +118,9 @@
                 @if (canDeclareBreakdown()) {
                   <td class="actions" data-label="Actions" (click)="$event.stopPropagation()">
                     <div class="actions-row">
-                      <button class="btn-outline warning" type="button" (click)="declareBreakdown(v)">Panne</button>
+                      <button class="btn-outline warning" type="button" (click)="declareBreakdown(v)">
+                        <i class="bi bi-exclamation-triangle"></i> Panne
+                      </button>
 
                       @if (!isDepotManager()) {
                         <button class="btn-outline edit" type="button" (click)="edit(v)"><i class="bi bi-pencil"></i> Modifier</button>
@@ -129,6 +131,7 @@
                           [disabled]="deletingId() === v._id"
                           (click)="openDeleteModal(v)"
                         ><i class="fa-solid fa-trash"></i> 
+                          Supprimer
                           @if (deletingId() === v._id) { Suppression… }
                         </button>
                       }

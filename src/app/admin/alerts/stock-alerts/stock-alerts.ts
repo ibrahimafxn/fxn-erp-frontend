@@ -252,6 +252,12 @@ export class StockAlerts {
     return Math.max(0, total - assigned);
   }
 
+  materialUnit(m: Material): string {
+    const unit = m.metadata?.['unit'];
+    if (typeof unit === 'string' && unit.trim().length) return unit;
+    return 'pcs';
+  }
+
   consumableName(c: Consumable): string {
     return formatResourceName(c.name ?? '') || '—';
   }

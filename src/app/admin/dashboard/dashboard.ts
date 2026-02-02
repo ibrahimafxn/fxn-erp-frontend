@@ -34,6 +34,11 @@ export class Dashboard implements OnInit {
   });
 
   readonly isDirigeant = computed(() => this.auth.getUserRole() === Role.DIRIGEANT);
+  readonly canManageAccess = computed(() => {
+    const role = this.auth.getUserRole();
+    return role === Role.DIRIGEANT || role === Role.ADMIN;
+  });
+  readonly canViewHr = computed(() => this.canManageAccess());
 
   ngOnInit(): void {
     // Charge les stats du dashboard au chargement de la page
@@ -72,6 +77,10 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/admin/onboarding']);
   }
 
+  goToDepotDashboard(): void {
+    this.router.navigate(['/depot']);
+  }
+
   goToStockAlerts(): void {
     this.router.navigate(['/admin/alerts/stock']);
   }
@@ -84,8 +93,36 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/admin/depots/new']);
   }
 
+  goToNewOrder(): void {
+    this.router.navigate(['/admin/orders/new']);
+  }
+
   goToInterventions(): void {
     this.router.navigate(['/admin/interventions']);
+  }
+
+  goToUserAccess(): void {
+    this.router.navigate(['/admin/security/user-access']);
+  }
+
+  goToHr(): void {
+    this.router.navigate(['/admin/hr']);
+  }
+
+  goToInterventionsImport(): void {
+    this.router.navigate(['/admin/interventions/import']);
+  }
+
+  goToMovements(): void {
+    this.router.navigate(['/admin/history']);
+  }
+
+  goToTechnicianActivity(): void {
+    this.router.navigate(['/admin/technicians/activity']);
+  }
+
+  goToTechnicianInterventions(): void {
+    this.router.navigate(['/admin/technicians/interventions']);
   }
 
   trackHistory(index: number, item: HistoryItem): string {

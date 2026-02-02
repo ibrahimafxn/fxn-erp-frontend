@@ -18,10 +18,11 @@
   display:grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr);
   gap: 1rem;
+  align-items: start;
 
   @media (max-width: 900px) { grid-template-columns: 1fr; }
 }
-/* Optionnel : sécurise au cas où une card serait encore stretchée */
+
 .grid > .card {
   align-self: start;
 }

@@ -6,6 +6,16 @@
     </div>
   </header>
 
+  @if (todayReport()) {
+    <section class="card daily-report-card">
+      <div class="daily-report-card__values">
+        <span class="daily-report-card__label">Raccordement pro complexe</span>
+        <span class="daily-report-card__value">{{ todayComplexProCount() }}</span>
+      </div>
+      <p class="daily-report-card__hint">Donnée extraite du dernier rapport journalier saisi.</p>
+    </section>
+  }
+
   <section class="card form-card">
     <form class="report-form" [formGroup]="form" (ngSubmit)="submit()">
       <label>

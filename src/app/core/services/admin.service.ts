@@ -20,6 +20,10 @@ export interface DashboardStats {
   totalLowStock?: number;
   totalVehicleAlerts?: number;
   totalAlerts?: number;
+  revenueMonth?: number;
+  revenueSemester?: number;
+  prestationsWeek?: number;
+  prestationsMonth?: number;
   // autres stats si nécessaire
 }
 

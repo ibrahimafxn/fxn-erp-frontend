@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService, AuthUser } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
@@ -18,6 +18,7 @@ import { AlertsService } from '../../core/services/alerts.service';
 export class AppHeader {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private location = inject(Location);
   private alertsService = inject(AlertsService);
 
   // user
@@ -28,15 +29,23 @@ export class AppHeader {
 
   // breadcrumb label simple (V2)
   readonly pageTitle = signal('Dashboard');
+  readonly currentUrl = signal(this.router.url);
   readonly alertsCount = this.alertsService.count;
   readonly showDirigeantWelcome = signal(false);
   private welcomeShown = false;
   private welcomeTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly showBackButton = computed(() => {
+    const url = this.currentUrl();
+    if (this.isDashboardUrl(url)) return false;
+    if (this.isOrdersNewUrl(url)) return true;
+    return !this.hasLocalBack(url);
+  });
 
   constructor() {
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
       .subscribe(() => {
+        this.currentUrl.set(this.router.url);
         this.pageTitle.set(this.computeTitle(this.router.url));
         this.menuOpen.set(false);
         this.alertsService.refresh();
@@ -116,6 +125,14 @@ export class AppHeader {
     this.menuOpen.update(v => !v);
   }
 
+  back(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+      return;
+    }
+    this.router.navigateByUrl(this.dashboardLink()).then();
+  }
+
   goDashboard(): void {
     this.router.navigate([this.dashboardLink()]).then();
   }
@@ -140,8 +157,15 @@ export class AppHeader {
     this.router.navigate(['/admin/interventions']).then();
   }
 
+  goInterventionsImport(): void {
+    this.router.navigate(['/admin/interventions/import']).then();
+  }
   goTechnicianActivity(): void {
     this.router.navigate(['/admin/technicians/activity']).then();
+  }
+
+  goTechnicianInterventions(): void {
+    this.router.navigate(['/admin/technicians/interventions']).then();
   }
 
   goBpu(): void {
@@ -213,6 +237,29 @@ export class AppHeader {
   /* ---------------------------
    * Title resolver (simple)
    * --------------------------- */
+  private hasLocalBack(url: string): boolean {
+    if (!url) return false;
+    if (url.includes('/detail')) return true;
+    if (url.includes('/edit')) return true;
+    if (url.includes('/new')) return true;
+    if (url.includes('/breakdown')) return true;
+    if (url.includes('/interventions/technician')) return true;
+    if (/^\/admin\/resources\/materials\/[^/]+$/.test(url)) return true;
+    if (/^\/admin\/resources\/consumables\/[^/]+$/.test(url)) return true;
+    return false;
+  }
+
+  private isDashboardUrl(url: string): boolean {
+    if (!url) return false;
+    if (url === '/' || url === '/admin' || url === '/admin/dashboard') return true;
+    if (url === '/depot' || url === '/technician') return true;
+    return false;
+  }
+
+  private isOrdersNewUrl(url: string): boolean {
+    return url === '/admin/orders/new';
+  }
+
   private computeTitle(url: string): string {
     if (url.startsWith('/depot')) {
       if (url.includes('/resources/vehicles')) return 'Véhicules';
@@ -244,7 +291,9 @@ export class AppHeader {
     if (url.includes('/orders/new')) return 'Nouvelle commande';
     if (url.includes('/orders')) return 'Commandes';
     if (url.includes('/alerts/stock')) return 'Alertes';
+    if (url.includes('/interventions/import')) return 'Import interventions';
     if (url.includes('/interventions')) return 'Interventions';
+    if (url.includes('/technicians/interventions')) return 'Interventions techniciens';
     if (url.includes('/technicians/activity')) return 'Prestations techniciens';
     if (url.includes('/bpu')) return 'BPU prestations';
     if (url.includes('/revenue')) return "Chiffre d'affaires";

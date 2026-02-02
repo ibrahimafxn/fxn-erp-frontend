@@ -1,0 +1,121 @@
+<section class="depot-attribution">
+  <header class="page-header">
+    <div>
+      <h1>Attribution technicien</h1>
+      <p class="subtitle">Attribue plusieurs articles en une seule validation.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="goBack()"><i class="bi bi-arrow-left"></i> Retour dépôt</button>
+    </div>
+  </header>
+
+  <section class="card form-card">
+    <div class="card-title">Panier d’attribution</div>
+    <p class="card-subtitle">Sélectionne le technicien, puis ajoute les articles à attribuer.</p>
+
+    @if (error()) {
+      <div class="state error">Erreur : {{ error() }}</div>
+    }
+    @if (success()) {
+      <div class="state success">{{ success() }}</div>
+    }
+
+    <form class="assign-form" [formGroup]="form" (ngSubmit)="openConfirm()">
+      <div class="field">
+        <label>Technicien</label>
+        @if (techniciansLoading()) {
+          <div class="hint">Chargement des techniciens…</div>
+        } @else {
+          <select formControlName="technicianId">
+            <option value="">— Sélectionner —</option>
+            @for (t of technicians(); track t._id) {
+              <option [value]="t._id">{{ techLabel(t) }}</option>
+            }
+          </select>
+        }
+      </div>
+
+      <div class="field span-2">
+        <label>Note globale</label>
+        <textarea rows="3" formControlName="globalNote" placeholder="Optionnel : motif, chantier..."></textarea>
+      </div>
+
+      <div class="lines card">
+        <div class="lines-head">
+          <div>
+            <div class="lines-title">Articles</div>
+            <div class="lines-subtitle">Ajoute autant de lignes que nécessaire.</div>
+          </div>
+          <button class="btn-outline" type="button" (click)="addLine()">
+            <i class="bi bi-plus"></i> Ajouter une ligne
+          </button>
+        </div>
+
+        <div class="lines-table" formArrayName="lines">
+          <div class="lines-row head">
+            <span>Type</span>
+            <span>Article</span>
+            <span>Quantité</span>
+            <span>Note</span>
+            <span></span>
+          </div>
+          @for (line of lines.controls; track line; let i = $index) {
+            <div class="lines-row" [formGroupName]="i">
+              <div>
+                <select formControlName="resourceType" (change)="line.get('resourceId')?.setValue('')">
+                  <option value="MATERIAL">Matériel</option>
+                  <option value="CONSUMABLE">Consommable</option>
+                </select>
+              </div>
+              <div>
+                @if (resourcesLoading()) {
+                  <div class="hint">Chargement…</div>
+                } @else {
+                  <select formControlName="resourceId">
+                    <option value="">— Sélectionner —</option>
+                    @for (item of resourceOptionsFor(line.get('resourceType')?.value); track item._id) {
+                      <option [value]="item._id">{{ resourceLabel(item) }}</option>
+                    }
+                  </select>
+                }
+              </div>
+              <div>
+                <input type="number" min="1" formControlName="quantity" />
+              </div>
+              <div>
+                <input type="text" formControlName="note" placeholder="Optionnel" />
+              </div>
+              <div class="line-actions">
+                <button class="btn-outline" type="button" (click)="removeLine(i)" [disabled]="lines.length <= 1">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="actions span-2">
+        <button class="btn-outline" type="button" (click)="resetForm()">
+          <i class="bi bi-x"></i> Réinitialiser
+        </button>
+        <button class="btn-primary" type="submit" [disabled]="submitting()">
+          @if (submitting()) { Attribution… } @else { Valider l’attribution }
+        </button>
+      </div>
+    </form>
+  </section>
+</section>
+
+<app-confirm-delete-modal
+  [open]="confirmOpen()"
+  title="Confirmer l’attribution"
+  entityLabel="technicien"
+  [entityName]="selectedTechLabel()"
+  confirmText="Valider"
+  confirmIcon="fa-solid fa-check"
+  dangerHint="Les articles seront attribués au technicien sélectionné."
+  [confirming]="submitting()"
+  (cancel)="closeConfirm()"
+  (confirm)="submit()"
+/>

@@ -1,0 +1,111 @@
+<section class="technician-revenue">
+  <header class="page-header">
+    <div>
+      <h1>Chiffre d'affaires</h1>
+      <p class="subtitle">Suivi journalier, hebdomadaire et mensuel.</p>
+    </div>
+  </header>
+
+  <section class="kpi-section">
+    <div class="kpi-header">
+      <h2>Résumé</h2>
+      <span class="kpi-meta">{{ todayLabel() }}</span>
+    </div>
+    @if (summaryLoading()) {
+      <div class="state loading">Chargement…</div>
+    }
+    @if (summaryError()) {
+      <div class="state error">Erreur : {{ summaryError() }}</div>
+    }
+    <div class="kpi-grid">
+      <article class="kpi-card kpi-daily">
+        <div class="kpi-info">
+          <div class="kpi-title">Journalier</div>
+          <div class="kpi-sub">Aujourd'hui</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(dailyAmount()) }}</div>
+      </article>
+      <article class="kpi-card kpi-weekly">
+        <div class="kpi-info">
+          <div class="kpi-title">Hebdomadaire</div>
+          <div class="kpi-sub">Cette semaine</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(weeklyAmount()) }}</div>
+      </article>
+      <article class="kpi-card kpi-monthly">
+        <div class="kpi-info">
+          <div class="kpi-title">Mensuel</div>
+          <div class="kpi-sub">Mois en cours</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(monthlyAmount()) }}</div>
+      </article>
+    </div>
+  </section>
+
+  <section class="card filters">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+      <label>
+        Du
+        <input type="date" formControlName="fromDate" />
+      </label>
+      <label>
+        Au
+        <input type="date" formControlName="toDate" />
+      </label>
+      <div class="actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
+    </form>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card">Erreur : {{ error() }}</div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucune prestation sur la période.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Montant</th>
+            <th>Interventions</th>
+            <th>Commentaire</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td data-label="Date">{{ reportDateLabel(item) }}</td>
+              <td data-label="Montant">{{ formatAmount(item.amount) }}</td>
+              <td data-label="Interventions">{{ interventionsLabel(item) }}</td>
+              <td data-label="Commentaire" class="note">{{ item.comment || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="pager pager-fixed">
+      <div class="pager-left">
+        <div class="page-size">
+          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+        </div>
+        <span class="pager-label">Éléments par page</span>
+      </div>
+      <div class="pager-right">
+        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+        <div class="pager-nav">
+          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </footer>
+  }
+</section>

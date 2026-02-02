@@ -79,27 +79,12 @@
         } @else {
           @for (status of stats().topStatuses; track status.label) {
             <div class="stat-line">
-              <span>{{ status.label }}</span>
-              <span class="count">{{ status.count }}</span>
+              <span class="status-label" [ngClass]="frequentStatusClass(status.label)">{{ status.label }}</span>
+              <span class="count" [ngClass]="frequentStatusClass(status.label)">{{ status.count }}</span>
             </div>
           }
         }
       </article>
-    </div>
-
-    <div class="summary-views">
-      <button class="view-pill" type="button" (click)="applyView('topTech')">
-        <strong>Top techniciens</strong>
-        <span>{{ stats().topTechnicians[0]?.success ?? 0 }}/{{ stats().topTechnicians[0]?.failure ?? 0 }}</span>
-      </button>
-      <button class="view-pill danger" type="button" (click)="applyView('failures')">
-        <strong>Échecs récents</strong>
-        <span>{{ topStatusCount('échec') }}</span>
-      </button>
-      <button class="view-pill info" type="button" (click)="applyView('reconnections')">
-        <strong>Reconnexions</strong>
-        <span>{{ reconnectionCount() }} PLP</span>
-      </button>
     </div>
 
     <footer class="summary-footer">

@@ -98,6 +98,23 @@
   }
 }
 
+.convert-card .card-title {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--fxn-text-muted);
+    font-size: 0.85rem;
+  }
+}
+
 td.actions {
   display: flex;
   gap: .5rem;

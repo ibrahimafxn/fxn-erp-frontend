@@ -181,6 +181,11 @@ td {
   align-items: center;
 }
 
+.actions-cell .btn-outline:hover {
+  background: var(--fxn-surface-soft);
+  border-color: var(--fxn-border-strong);
+}
+
 .row-clickable {
   cursor: pointer;
 }

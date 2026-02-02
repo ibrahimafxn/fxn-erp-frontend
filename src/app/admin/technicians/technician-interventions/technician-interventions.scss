@@ -216,6 +216,34 @@
 .stat-line .count {
   font-weight: 600;
 }
+
+.stat-line .count.status-success {
+  color: #22c55e;
+}
+
+.stat-line .count.status-error {
+  color: #f87171;
+}
+
+.stat-line .count.status-neutral {
+  color: #9ca3af;
+}
+
+.stat-line .status-label {
+  font-weight: 600;
+}
+
+.stat-line .status-label.status-success {
+  color: #22c55e;
+}
+
+.stat-line .status-label.status-error {
+  color: #f87171;
+}
+
+.stat-line .status-label.status-neutral {
+  color: #9ca3af;
+}
 .stat-line .count-success {
   color: var(--fxn-success);
 }

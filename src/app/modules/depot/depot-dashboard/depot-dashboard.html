@@ -6,11 +6,12 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="goMaterials()">Matériels</button>
-      <button class="btn-outline" type="button" (click)="goConsumables()">Consommables</button>
-      <button class="btn-outline" type="button" (click)="goVehicles()">Véhicules</button>
-      <button class="btn-outline" type="button" (click)="goStockAlerts()">Alertes stock</button>
-      <button class="btn-outline" type="button" (click)="goHistory()">Historique</button>
+      <button class="btn-outline btn-depot-attr" type="button" (click)="goAttribution()"><i class="bi bi-person-plus"></i> Attribution</button>
+      <button class="btn-outline btn-depot-materials" type="button" (click)="goMaterials()"><i class="bi bi-tools"></i> Matériels</button>
+      <button class="btn-outline btn-depot-consumables" type="button" (click)="goConsumables()"><i class="bi bi-box-seam"></i> Consommables</button>
+      <button class="btn-outline btn-depot-vehicles" type="button" (click)="goVehicles()"><i class="bi bi-truck"></i> Véhicules</button>
+      <button class="btn-outline btn-depot-alerts" type="button" (click)="goStockAlerts()"><i class="bi bi-exclamation-triangle"></i> Alertes stock</button>
+      <button class="btn-outline btn-depot-history" type="button" (click)="goHistory()"><i class="bi bi-clock-history"></i> Historique</button>
       <button class="btn-outline" type="button" (click)="refresh()"><i class="bi bi-arrow-clockwise"></i> Rafraîchir</button>
     </div>
   </header>

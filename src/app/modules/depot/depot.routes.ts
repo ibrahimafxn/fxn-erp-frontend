@@ -24,6 +24,15 @@ export const DEPOT_ROUTES: Routes = [
     ]
   },
   {
+    path: 'attribution',
+    loadComponent: () =>
+      import('./depot-attribution/depot-attribution').then(m => m.DepotAttribution),
+    canActivate: [
+      AuthGuard,
+      RoleGuard(DEPOT_ACCESS_ROLES)
+    ]
+  },
+  {
     path: 'resources/materials',
     loadComponent: () =>
       import('../../admin/resources/materials/material-list/material-list').then(m => m.MaterialList),

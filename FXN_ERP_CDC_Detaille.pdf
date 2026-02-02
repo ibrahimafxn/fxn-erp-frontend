@@ -1,0 +1,185 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 1890 >>
+stream
+BT
+/F1 12 Tf
+72 720 Td
+14 TL
+(FXN ERP - Cahier des charges fonctionnel \(detaille\)) Tj
+T*
+() Tj
+T*
+(1. Contexte et objectifs) Tj
+T*
+(  - Centraliser l'ensemble des operations terrain : stock, interventions, ressources,) Tj
+T*
+(    vehicules, finance et performance.) Tj
+T*
+(  - Assurer la tracabilite des operations et la visibilite multi-sites.) Tj
+T*
+(  - Donner a chaque role les ecrans et droits adaptes.) Tj
+T*
+() Tj
+T*
+(2. Perimetre fonctionnel) Tj
+T*
+(  - Administration, depots, ressources, stock, operations terrain, finance, securite,) Tj
+T*
+(    reporting.) Tj
+T*
+() Tj
+T*
+(3. Utilisateurs et roles) Tj
+T*
+(  - Administrateur / Dirigeant : supervision globale, parametres, finance, securite.) Tj
+T*
+(  - Gestionnaire de depot : stocks, receptions, alertes, historique.) Tj
+T*
+(  - Technicien : ressources affectees, rapports, historique.) Tj
+T*
+() Tj
+T*
+(4. Modules et fonctionnalites) Tj
+T*
+(4.1 Administration) Tj
+T*
+(  - Gestion des utilisateurs et roles.) Tj
+T*
+(  - Gestion des acces connexion.) Tj
+T*
+(  - Gestion RH.) Tj
+T*
+(  - Profil utilisateur.) Tj
+T*
+() Tj
+T*
+(4.2 Depots et logistique) Tj
+T*
+(  - Gestion des depots \(creation, edition, detail\).) Tj
+T*
+(  - Journal des mouvements et historique.) Tj
+T*
+() Tj
+T*
+(4.3 Ressources) Tj
+T*
+(  - Materiels : liste, creation, detail, edition.) Tj
+T*
+(  - Consommables : liste, creation, detail, edition.) Tj
+T*
+(  - Vehicules : liste, creation, detail, edition.) Tj
+T*
+(  - Pannes vehicules : declaration, historique.) Tj
+T*
+() Tj
+T*
+(4.4 Stock) Tj
+T*
+(  - Receptions stock.) Tj
+T*
+(  - Commandes.) Tj
+T*
+(  - Alertes de stock.) Tj
+T*
+(  - Attributions / reservations : consommables et materiels.) Tj
+T*
+() Tj
+T*
+(4.5 Operations terrain) Tj
+T*
+(  - Interventions et calcul d'attachement.) Tj
+T*
+(  - Prestations techniciens.) Tj
+T*
+(  - Rapport quotidien technicien.) Tj
+T*
+(  - Historique technicien.) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+6 0 obj
+<< /Length 817 >>
+stream
+BT
+/F1 12 Tf
+72 720 Td
+14 TL
+(4.6 Finance) Tj
+T*
+(  - Chiffre d'affaires : suivi et evolution.) Tj
+T*
+(  - BPU prestations : tarification et suivi.) Tj
+T*
+() Tj
+T*
+(4.7 Securite et conformite) Tj
+T*
+(  - Acces par roles.) Tj
+T*
+(  - Tracabilite des actions \(historique\).) Tj
+T*
+(  - Politique d'acces renforcee \(MFA email, logs\).) Tj
+T*
+() Tj
+T*
+(4.8 Reporting) Tj
+T*
+(  - Tableaux de bord et exports adaptes aux besoins FXN.) Tj
+T*
+() Tj
+T*
+(5. Exigences non fonctionnelles) Tj
+T*
+(  - Interface rapide et adaptee au terrain.) Tj
+T*
+(  - Accessibilite multi-roles, multi-sites.) Tj
+T*
+(  - Securite des acces et des donnees.) Tj
+T*
+() Tj
+T*
+(6. Livrables et accompagnement) Tj
+T*
+(  - Deploiement rapide et mise en route guidee.) Tj
+T*
+(  - Formation des roles cles.) Tj
+T*
+(  - Support et evolutions.) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000191 00000 n 
+0000002132 00000 n 
+0000002258 00000 n 
+0000003125 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R >>
+startxref
+3251
+%%EOF

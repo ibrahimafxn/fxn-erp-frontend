@@ -1,0 +1,509 @@
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { Component, ElementRef, ViewChild, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+
+import {
+  InterventionService,
+  InterventionImportBatch,
+  InterventionImportTicket
+} from '../../../core/services/intervention.service';
+import { formatPersonName } from '../../../core/utils/text-format';
+import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
+import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+
+@Component({
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-interventions-import',
+  imports: [CommonModule, RouterModule, ConfirmDeleteModal],
+  templateUrl: './interventions-import.html',
+  styleUrls: ['./interventions-import.scss']
+})
+export class InterventionsImport {
+  private svc = inject(InterventionService);
+
+  @ViewChild('csvInput') private csvInput?: ElementRef<HTMLInputElement>;
+
+  selectedFile: File | null = null;
+  readonly importLoading = signal(false);
+  readonly importResult = signal<string | null>(null);
+  readonly importError = signal<string | null>(null);
+  readonly overwriteOpen = signal(false);
+  readonly overwriteInfo = signal<{ periodLabel?: string; existingName?: string; createdAt?: string } | null>(null);
+
+  readonly importsLoading = signal(false);
+  readonly importsError = signal<string | null>(null);
+  readonly importBatches = signal<InterventionImportBatch[]>([]);
+  readonly ticketsLoading = signal(false);
+  readonly ticketsError = signal<string | null>(null);
+  readonly importTickets = signal<InterventionImportTicket[]>([]);
+
+  readonly latestImport = computed(() => this.importBatches()[0] || null);
+  readonly latestImportNotice = computed(() => this.formatImportNotice(this.latestImport(), false));
+  readonly todayImportNotice = computed(() => this.formatImportNotice(this.latestImport(), true));
+  readonly prestationRules = INTERVENTION_PRESTATION_FIELDS;
+  private readonly REQUIRED_COLUMNS = ['Liste des prestations réalisées', 'Articles'] as const;
+  private readonly OPTIONAL_COLUMNS = ['Statut', 'Type', 'Type operation', 'Commentaires technicien'] as const;
+  private readonly PREVIEW_LINE_LIMIT = 40;
+  readonly previewColumns = signal<{ name: string; present: boolean }[]>([]);
+  readonly previewRows = signal(0);
+  readonly previewUnknownList = signal<string[]>([]);
+  readonly previewRecognizedList = signal<string[]>([]);
+  readonly previewLoading = signal(false);
+  readonly previewError = signal<string | null>(null);
+
+  private formatImportNotice(batch: InterventionImportBatch | null, todayOnly: boolean): string | null {
+    if (!batch) return null;
+    if (todayOnly && !batch.isToday) return null;
+    const date = new Date(batch.createdAt || batch.importedAt || '');
+    if (Number.isNaN(date.getTime())) return null;
+    const formattedTime = new Intl.DateTimeFormat('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+    const importerName = batch.importedBy
+      ? formatPersonName(batch.importedBy.firstName ?? '', batch.importedBy.lastName ?? '')
+      : '—';
+    if (batch.isToday) {
+      return `Import du jour réalisé par ${importerName} à ${formattedTime}`;
+    }
+    if (todayOnly) {
+      return null;
+    }
+    const formattedDate = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(date);
+    return `Dernier import : ${formattedDate} à ${formattedTime} par ${importerName}`;
+  }
+
+  constructor() {
+    this.loadImports();
+  }
+
+  onFileClick(): void {
+    const input = this.csvInput?.nativeElement;
+    if (input) {
+      input.value = '';
+    }
+    this.selectedFile = null;
+    this.importError.set(null);
+    this.importResult.set(null);
+    this.resetPreview();
+  }
+
+  onFileChange(event: Event): void {
+    const el = event.target instanceof HTMLInputElement ? event.target : null;
+    this.selectedFile = el?.files?.[0] ?? null;
+    this.importError.set(null);
+    this.importResult.set(null);
+    if (this.selectedFile) {
+      this.previewCsv(this.selectedFile);
+    } else {
+      this.resetPreview();
+    }
+  }
+
+  importCsv(overwrite = false): void {
+    if (!this.selectedFile) {
+      this.importError.set('Sélectionne un fichier CSV.');
+      return;
+    }
+
+    this.importLoading.set(true);
+    this.importError.set(null);
+    this.importResult.set(null);
+
+    this.svc.importCsv(this.selectedFile, { overwrite }).subscribe({
+      next: (res) => {
+        this.importLoading.set(false);
+        if (res.success) {
+          const data = res.data as {
+            total?: number;
+            created?: number;
+            updated?: number;
+            versioned?: number;
+            rejected?: number;
+            tickets?: number;
+          } | undefined;
+          const total = data?.total ?? 0;
+          const created = data?.created ?? 0;
+          const versioned = data?.versioned ?? (data?.updated ?? 0);
+          const rejected = data?.rejected ?? 0;
+          const tickets = data?.tickets ?? 0;
+          if (total > 0) {
+            this.importResult.set(
+              `Import terminé. Total: ${total}. Créées: ${created}. Versionnées: ${versioned}. Rejetées: ${rejected}. Tickets: ${tickets}.`
+            );
+          } else {
+            this.importResult.set('Import terminé.');
+          }
+          this.resetFileInput();
+          this.loadImports();
+          this.loadTickets();
+          return;
+        }
+        this.importError.set(res.message || 'Erreur import CSV');
+        this.resetFileInput();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.importLoading.set(false);
+        if (err.status === 409 && err.error?.data) {
+          const info = err.error.data as { periodLabel?: string; existingImport?: { originalName?: string; createdAt?: string } };
+          this.overwriteInfo.set({
+            periodLabel: info.periodLabel,
+            existingName: info.existingImport?.originalName,
+            createdAt: info.existingImport?.createdAt
+          });
+          this.overwriteOpen.set(true);
+          this.importError.set(this.apiError(err, 'Import deja existant pour la periode.'));
+          return;
+        }
+        this.importError.set(this.apiError(err, 'Erreur import CSV'));
+        this.resetFileInput();
+      }
+    });
+  }
+
+  confirmOverwrite(): void {
+    this.overwriteOpen.set(false);
+    this.importCsv(true);
+  }
+
+  cancelOverwrite(): void {
+    this.overwriteOpen.set(false);
+  }
+
+  downloadLatestImport(): void {
+    const batch = this.latestImport();
+    const id = batch?._id;
+    if (!id) return;
+    const filename = (batch?.originalName || batch?.storedName || 'import.csv').trim();
+    this.svc.downloadImport(id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        anchor.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        this.importsError.set(this.apiError(err, 'Erreur téléchargement CSV'));
+      }
+    });
+  }
+
+  loadImports(): void {
+    this.importsLoading.set(true);
+    this.importsError.set(null);
+    this.svc.listImports({ page: 1, limit: 5 }).subscribe({
+      next: (res) => {
+        if (!res?.success) {
+          this.importsError.set('Erreur chargement imports');
+          this.importsLoading.set(false);
+          return;
+        }
+        const items = res.data.items || [];
+        this.importBatches.set(items);
+        this.importsLoading.set(false);
+        const latestId = items[0]?._id;
+        this.loadTickets(latestId);
+      },
+      error: (err) => {
+        this.importsLoading.set(false);
+        this.importsError.set(this.apiError(err, 'Erreur chargement imports'));
+      }
+    });
+  }
+
+  loadTickets(importBatchId?: string): void {
+    this.ticketsLoading.set(true);
+    this.ticketsError.set(null);
+    const query: { page: number; limit: number; status: string; importBatchId?: string } = {
+      page: 1,
+      limit: 20,
+      status: 'OPEN'
+    };
+    if (importBatchId) query.importBatchId = importBatchId;
+    this.svc.listImportTickets(query).subscribe({
+      next: (res) => {
+        if (!res?.success) {
+          this.ticketsError.set('Erreur chargement tickets');
+          this.ticketsLoading.set(false);
+          return;
+        }
+        this.importTickets.set(res.data.items || []);
+        this.ticketsLoading.set(false);
+      },
+      error: (err) => {
+        this.ticketsLoading.set(false);
+        this.ticketsError.set(this.apiError(err, 'Erreur chargement tickets'));
+      }
+    });
+  }
+
+  ticketTechLabel(ticket: InterventionImportTicket): string {
+    const first = ticket.techFirstName || '';
+    const last = ticket.techLastName || '';
+    const combined = `${first} ${last}`.trim();
+    return combined || ticket.techFull || '—';
+  }
+
+  private resetFileInput(): void {
+    const input = this.csvInput?.nativeElement;
+    if (input) input.value = '';
+    this.selectedFile = null;
+    this.resetPreview();
+  }
+
+  private previewCsv(file: File): void {
+    this.resetPreview();
+    this.previewLoading.set(true);
+    this.previewError.set(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.previewLoading.set(false);
+      const content = typeof reader.result === 'string' ? reader.result : '';
+      if (!content) {
+        this.previewError.set('Le fichier ne peut pas être lu.');
+        return;
+      }
+      this.handlePreviewText(content);
+    };
+    reader.onerror = () => {
+      this.previewLoading.set(false);
+      this.previewError.set('Impossible de lire le fichier pour analyse.');
+    };
+    reader.readAsText(file);
+  }
+
+  private handlePreviewText(text: string): void {
+    const lines = text.split(/\r?\n/).filter((line) => line.trim().length > 0);
+    if (!lines.length) {
+      this.previewError.set('Le fichier est vide ou mal formé.');
+      return;
+    }
+    const header = this.parseCsvLine(lines[0]);
+    if (!header.length) {
+      this.previewError.set('Impossible de détecter l’en-tête du CSV.');
+      return;
+    }
+    const normalizedHeader = header.map((value) => this.normalizeHeaderKey(value));
+    const columns = [...this.REQUIRED_COLUMNS, ...this.OPTIONAL_COLUMNS].map((name) => ({
+      name,
+      present: normalizedHeader.includes(this.normalizeHeaderKey(name))
+    }));
+    this.previewColumns.set(columns);
+
+    const indices = {
+      articles: this.findHeaderIndex(normalizedHeader, ['articles', 'article', 'prestations', 'codes']),
+      prestations: this.findHeaderIndex(normalizedHeader, [
+        'listedesprestationsrealisees',
+        'listeprestationsrealisees',
+        'prestationsrealisees'
+      ]),
+      statut: this.findHeaderIndex(normalizedHeader, ['statut', 'status']),
+      type: this.findHeaderIndex(normalizedHeader, ['type', 'typeintervention', 'prestation']),
+      typeOperation: this.findHeaderIndex(normalizedHeader, ['typeoperation']),
+      commentaires: this.findHeaderIndex(normalizedHeader, [
+        'commentairestechnicien',
+        'commentairetechnicien',
+        'commentaireinter',
+        'commentairesinter',
+        'commentaires',
+        'commentaire'
+      ])
+    };
+    if (indices.articles < 0 && indices.prestations < 0) {
+      this.previewError.set('Les colonnes Articles ou Liste des prestations ne sont pas présentes.');
+      return;
+    }
+
+    const sampleLines = lines.slice(1, 1 + this.PREVIEW_LINE_LIMIT);
+    const codeLookup = new Set(INTERVENTION_PRESTATION_FIELDS.map((field) => field.code.toUpperCase()));
+    const recognizedSet = new Set<string>();
+    const unknownSet = new Set<string>();
+    let scanned = 0;
+
+    for (const rawLine of sampleLines) {
+      if (!rawLine.trim()) continue;
+      const row = this.parseCsvLine(rawLine);
+      const codes = this.resolvePreviewCodes(row, indices);
+      if (!codes.length) continue;
+      scanned++;
+      for (const code of codes) {
+        if (codeLookup.has(code)) {
+          recognizedSet.add(code);
+        } else {
+          unknownSet.add(code);
+        }
+      }
+    }
+
+    this.previewRows.set(scanned);
+    this.previewUnknownList.set([...unknownSet].slice(0, 8));
+    this.previewRecognizedList.set([...recognizedSet].slice(0, 8));
+    this.previewError.set(null);
+  }
+
+  private parseCsvLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        const next = line[i + 1];
+        if (inQuotes && next === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+      if (char === ';' && !inQuotes) {
+        result.push(current);
+        current = '';
+        continue;
+      }
+      current += char;
+    }
+    result.push(current);
+    return result;
+  }
+
+  private extractPrestationCodes(value: string): string[] {
+    if (!value) return [];
+    return value
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .map((entry) => entry.split(/\s+/)[0])
+      .map((entry) => entry.replace(/[^a-zA-Z0-9_]/g, '').toUpperCase())
+      .filter(Boolean);
+  }
+
+  private resolvePreviewCodes(
+    row: string[],
+    indices: {
+      articles: number;
+      prestations: number;
+      statut: number;
+      type: number;
+      typeOperation: number;
+      commentaires: number;
+    }
+  ): string[] {
+    const codes = new Set<string>();
+    const articlesValue = indices.articles >= 0 ? row[indices.articles] ?? '' : '';
+    const prestationsValue = indices.prestations >= 0 ? row[indices.prestations] ?? '' : '';
+    const statutValue = indices.statut >= 0 ? row[indices.statut] ?? '' : '';
+    const typeValue = indices.type >= 0 ? row[indices.type] ?? '' : '';
+    const typeOperationValue = indices.typeOperation >= 0 ? row[indices.typeOperation] ?? '' : '';
+    const commentairesValue = indices.commentaires >= 0 ? row[indices.commentaires] ?? '' : '';
+
+    for (const code of this.extractPrestationCodes(articlesValue)) {
+      codes.add(code);
+    }
+    for (const code of this.extractPrestationCodes(prestationsValue)) {
+      codes.add(code);
+    }
+
+    const statusNormalized = this.normalizeToken(statutValue);
+    if (indices.statut >= 0 && !(statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINEE'))) {
+      return [];
+    }
+
+    const typeNormalized = this.normalizeToken(typeValue).replace(/-/g, ' ').trim();
+    const operationNormalized = this.normalizeToken(typeOperationValue);
+    const articlesNormalized = this.normalizeToken(articlesValue);
+    const commentairesNormalized = this.normalizeToken(commentairesValue);
+    const prestationsNormalized = this.normalizeToken(prestationsValue);
+
+    if (articlesNormalized.includes('RACPAV')) codes.add('RACPAV');
+    if (statusNormalized.includes('RACIH')) codes.add('RACIH');
+    if (
+      articlesNormalized.includes('RECOIP')
+      || operationNormalized.includes('RECONNEX')
+      || typeNormalized.includes('RECO')
+    ) {
+      codes.add('RECOIP');
+    }
+    if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
+      codes.add('RACPRO_S');
+    }
+    if (articlesNormalized.includes('RACPROC_C') || articlesNormalized.includes('RACPRO_C')) {
+      codes.add('RACPRO_C');
+    }
+    if (articlesNormalized.includes('SAV') || typeNormalized === 'SAV') {
+      codes.add('SAV');
+    }
+    if (
+      (typeNormalized.includes('PRESTA') && typeNormalized.includes('COMPL'))
+      || articlesNormalized.includes('PRESTA_COMPL')
+    ) {
+      codes.add('PRESTA_COMPL');
+    }
+    if (
+      articlesNormalized.includes('REPFOU_PRI')
+      || commentairesNormalized.includes('F8')
+      || prestationsNormalized.includes('FOURREAUX')
+      || prestationsNormalized.includes('DOMAINE')
+    ) {
+      codes.add('REPFOU_PRI');
+    }
+    if (typeNormalized === 'REFC_DGR' || statusNormalized.includes('REFC_DGR')) {
+      codes.add('REFC_DGR');
+    }
+    if (typeNormalized === 'DEPLPRISE' || articlesNormalized.includes('DEPLPRISE')) {
+      codes.add('DEPLPRISE');
+    }
+    if (typeNormalized === 'REFRAC' || articlesNormalized.includes('REFRAC')) {
+      codes.add('REFRAC');
+    }
+
+    return [...codes];
+  }
+
+  private normalizeHeaderKey(value: string): string {
+    return String(value ?? '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '')
+      .replace(/_/g, '');
+  }
+
+  private findHeaderIndex(normalizedHeader: string[], candidates: string[]): number {
+    for (const candidate of candidates) {
+      const idx = normalizedHeader.indexOf(this.normalizeHeaderKey(candidate));
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  }
+
+  private normalizeToken(value?: string): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .trim();
+  }
+
+  private resetPreview(): void {
+    this.previewColumns.set([]);
+    this.previewRows.set(0);
+    this.previewUnknownList.set([]);
+    this.previewRecognizedList.set([]);
+    this.previewLoading.set(false);
+    this.previewError.set(null);
+  }
+
+  private apiError(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      return err.error?.message || err.message || fallback;
+    }
+    return fallback;
+  }
+}

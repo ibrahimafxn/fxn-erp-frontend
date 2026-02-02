@@ -26,16 +26,16 @@ body {
 }
 
 main.app-content {
-  padding: var(--fxn-space-xl);
-  padding-bottom: var(--fxn-space-xl);
+  padding: var(--fxn-space-lg);
+  padding-bottom: var(--fxn-space-lg);
   min-height: calc(100vh - 64px);
   animation: fxn-fade-up .35s ease;
 }
 
 @media (max-width: 900px) {
   main.app-content {
-    padding: var(--fxn-space-lg);
-    padding-bottom: var(--fxn-space-lg);
+    padding: var(--fxn-space-md);
+    padding-bottom: var(--fxn-space-md);
   }
 }
 

@@ -1,0 +1,82 @@
+<section class="intervention-tech-detail">
+  <header class="page-header">
+    <div>
+      <h1>Interventions du technicien</h1>
+      <p class="subtitle">{{ technician() || '—' }}</p>
+    </div>
+    <button class="btn-outline" type="button" (click)="goBack()"><i class="bi bi-arrow-left"></i> Retour</button>
+  </header>
+
+  <section class="card">
+    <div class="table-head">
+      <h2><span class="material-icons notranslate">assignment</span>Détail par technicien</h2>
+      <p>Liste paginée des interventions pour ce technicien.</p>
+    </div>
+
+    @if (pageCount() > 1) {
+      <footer class="pager">
+        <div class="pager-left">
+          <div class="page-size">
+            <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+            <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+            <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+            <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+          </div>
+          <span class="pager-label">Éléments par page</span>
+        </div>
+        <div class="pager-right">
+          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+          <div class="pager-nav">
+            <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i></button>
+            <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </footer>
+    }
+
+    @if (loading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (error()) {
+      <div class="state error">{{ error() }}</div>
+    } @else if (items().length === 0) {
+      <div class="state empty">Aucune intervention trouvée.</div>
+    } @else {
+      <div class="detail-groups">
+        @for (group of detailGroups(); track group.key) {
+          <div class="detail-group">
+            <div class="detail-group-head">
+              <h4>{{ group.label }}</h4>
+              <span class="pill">{{ group.items.length }}</span>
+            </div>
+            <div class="detail-table">
+              <table>
+                <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Date</th>
+                  <th>Numéro</th>
+                  <th>Client</th>
+                  <th>Type</th>
+                  <th>Articles</th>
+                </tr>
+                </thead>
+                <tbody>
+                  @for (row of group.items; track row._id; let i = $index) {
+                    <tr>
+                      <td data-label="#">{{ (page() - 1) * limit() + i + 1 }}</td>
+                      <td data-label="Date">{{ row.dateRdv | date:'dd/MM/yyyy' }}</td>
+                      <td data-label="Numéro" class="mono">{{ row.numInter }}</td>
+                      <td data-label="Client">{{ row.client || '—' }}</td>
+                      <td data-label="Type">{{ row.type || '—' }}</td>
+                      <td data-label="Articles" class="mono">{{ formatArticleCodes(row.articlesRaw) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+</section>

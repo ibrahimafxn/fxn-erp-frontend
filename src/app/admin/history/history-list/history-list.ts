@@ -256,14 +256,36 @@ export class HistoryList {
     }
   }
 
+  actionLabelForRow(m: Movement): string {
+    const action = String(m.action || '').trim().toUpperCase();
+    if (this.isCanceledStatus(m.status) && action === 'ASSIGN') return 'Reprise';
+    return this.actionLabel(action);
+  }
+
   statusLabel(status: string): string {
-    return status === 'CANCELED' ? 'Annulé' : 'Validé';
+    return this.isCanceledStatus(status) ? 'Annulé' : 'Validé';
   }
 
   canCancel(m: Movement): boolean {
-    if (m.status === 'CANCELED') return false;
-    const action = String(m.action || '');
-    return ['IN', 'OUT', 'TRANSFER', 'ASSIGN', 'RELEASE', 'ADJUST'].includes(action);
+    if (this.isCanceledStatus(m.status)) return false;
+    if (this.isCancellationMovement(m)) return false;
+    return this.canCancelAction(m.action);
+  }
+
+  isCanceled(status: string | null | undefined): boolean {
+    return this.isCanceledStatus(status);
+  }
+
+  canCancelAction(action: string | null | undefined): boolean {
+    const normalized = String(action || '').trim().toUpperCase();
+    return ['IN', 'OUT', 'TRANSFER', 'ASSIGN', 'RELEASE', 'ADJUST'].includes(normalized);
+  }
+
+  isCancellationMovement(m: Movement | null | undefined): boolean {
+    if (!m) return false;
+    const note = this.normalizeText(m.note).replace(/[^A-Z]/g, '');
+    const reason = this.normalizeText(m.reason).replace(/[^A-Z]/g, '');
+    return note.includes('ANNULATIONMOUVEMENT') || reason.includes('ANNULATIONMOUVEMENT');
   }
 
   openCancelModal(m: Movement): void {
@@ -288,6 +310,7 @@ export class HistoryList {
         this.setCancelLoading(m._id, false);
         this.closeCancelModal();
         this.refresh(true);
+        this.loadResources(this.isDepotManager() ? this.managerDepotId() : null);
       },
       error: (err: HttpErrorResponse) => {
         this.setCancelLoading(m._id, false);
@@ -325,6 +348,19 @@ export class HistoryList {
 
   rowError(m: Movement): string {
     return this.cancelError()[m._id] || '';
+  }
+
+  private isCanceledStatus(status: string | null | undefined): boolean {
+    const cleaned = this.normalizeText(status).replace(/[^A-Z]/g, '');
+    return cleaned.includes('CANCEL') || cleaned.includes('ANNUL');
+  }
+
+  private normalizeText(value: string | null | undefined): string {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toUpperCase();
   }
 
   private loadDepots(): void {

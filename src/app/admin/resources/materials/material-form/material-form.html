@@ -85,4 +85,32 @@
     </div>
 
   </form>
+
+  @if (mode() === 'edit') {
+    <section class="card form convert-card">
+      <div class="card-title">
+        <h2>Transfert de catégorie</h2>
+        <p class="subtitle">Déplacer ce matériel vers Consommables en conservant l’historique.</p>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label>Unité cible</label>
+          <select [formControl]="convertUnit">
+            <option value="pcs">pcs</option>
+            <option value="m">m</option>
+            <option value="rouleau">rouleau</option>
+            <option value="boîte">boîte</option>
+          </select>
+        </div>
+      </div>
+      @if (convertError()) {
+        <div class="state error">Erreur : {{ convertError() }}</div>
+      }
+      <div class="actions">
+        <button class="btn-outline" type="button" (click)="convertToConsumable()" [disabled]="converting()">
+          @if (converting()) { Transfert… } @else { Transférer vers consommable }
+        </button>
+      </div>
+    </section>
+  }
 </section>

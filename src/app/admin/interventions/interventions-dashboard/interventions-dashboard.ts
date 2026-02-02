@@ -20,6 +20,8 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
+import { downloadBlob } from '../../../core/utils/download';
 
 @Component({
   standalone: true,
@@ -104,17 +106,26 @@ export class InterventionsDashboard {
       const isB2b = categories.includes('racProS')
         || categories.includes('racProC')
         || this.hasB2bInArticles(item.articlesRaw);
+      const successMatches = this.resolveSuccessPrestations(item);
       let key = 'other';
-      if (isClosed && isReconnexion) key = 'reconnexion';
-      else if (categories.includes('racPavillon')) key = 'racPavillon';
-      else if (categories.includes('racImmeuble')) key = 'racImmeuble';
-      else if (categories.includes('reconnexion')) key = 'reconnexion';
-      else if (categories.includes('sav')) key = 'sav';
-      else if (isB2b) key = 'b2b';
-      else {
-        if (type.includes('PRESTA') && type.includes('COMPL')) key = 'other';
-        else if (type.includes('SAV')) key = 'sav';
-        else if (isReconnexion) key = 'reconnexion';
+      if (successMatches.length) {
+        if (successMatches.includes('RACPAV')) key = 'racPavillon';
+        else if (successMatches.includes('RACIH')) key = 'racImmeuble';
+        else if (successMatches.includes('RECOIP')) key = 'reconnexion';
+        else if (successMatches.includes('SAV')) key = 'sav';
+        else if (successMatches.includes('RACPRO_S') || successMatches.includes('RACPRO_C')) key = 'b2b';
+      } else {
+        if (isClosed && isReconnexion) key = 'reconnexion';
+        else if (categories.includes('racPavillon')) key = 'racPavillon';
+        else if (categories.includes('racImmeuble')) key = 'racImmeuble';
+        else if (categories.includes('reconnexion')) key = 'reconnexion';
+        else if (categories.includes('sav')) key = 'sav';
+        else if (isB2b) key = 'b2b';
+        else {
+          if (type.includes('PRESTA') && type.includes('COMPL')) key = 'other';
+          else if (type.includes('SAV')) key = 'sav';
+          else if (isReconnexion) key = 'reconnexion';
+        }
       }
       (buckets.get(key) || buckets.get('other'))?.push(item);
     }
@@ -142,6 +153,63 @@ export class InterventionsDashboard {
     const normalized = this.normalizeText(raw);
     if (!normalized) return false;
     return normalized.includes('RACPRO') || normalized.includes('RAC PRO');
+  }
+
+  private resolveSuccessPrestations(item: InterventionItem): string[] {
+    const statusNormalized = this.normalizeText(item.statut);
+    if (!(statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINEE'))) {
+      return [];
+    }
+    const typeNormalized = this.normalizeText(item.type).replace(/-/g, ' ').trim();
+    const articlesNormalized = this.normalizeText(item.articlesRaw);
+    const operationNormalized = this.normalizeText(item.typeOperation);
+    const commentsNormalized = this.normalizeText(item.commentairesTechnicien);
+    const prestationsNormalized = this.normalizeText(item.listePrestationsRaw);
+    const matches: string[] = [];
+
+    if (articlesNormalized.includes('RACPAV')) matches.push('RACPAV');
+    if (statusNormalized.includes('RACIH')) matches.push('RACIH');
+    if (
+      articlesNormalized.includes('RECOIP')
+      || operationNormalized.includes('RECONNEX')
+      || typeNormalized.includes('RECO')
+    ) {
+      matches.push('RECOIP');
+    }
+    if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
+      matches.push('RACPRO_S');
+    }
+    if (articlesNormalized.includes('RACPROC_C') || articlesNormalized.includes('RACPRO_C')) {
+      matches.push('RACPRO_C');
+    }
+    if (articlesNormalized.includes('SAV') || typeNormalized === 'SAV') {
+      matches.push('SAV');
+    }
+    if (
+      (typeNormalized.includes('PRESTA') && typeNormalized.includes('COMPL'))
+      || articlesNormalized.includes('PRESTA_COMPL')
+    ) {
+      matches.push('PRESTA_COMPL');
+    }
+    if (
+      articlesNormalized.includes('REPFOU_PRI')
+      || commentsNormalized.includes('F8')
+      || prestationsNormalized.includes('FOURREAUX')
+      || prestationsNormalized.includes('DOMAINE')
+    ) {
+      matches.push('REPFOU_PRI');
+    }
+    if (typeNormalized === 'REFC_DGR' || statusNormalized.includes('REFC_DGR')) {
+      matches.push('REFC_DGR');
+    }
+    if (typeNormalized === 'DEPLPRISE' || articlesNormalized.includes('DEPLPRISE')) {
+      matches.push('DEPLPRISE');
+    }
+    if (typeNormalized === 'REFRAC' || articlesNormalized.includes('REFRAC')) {
+      matches.push('REFRAC');
+    }
+
+    return matches;
   }
 
   ticketTechLabel(ticket: InterventionImportTicket): string {
@@ -236,25 +304,7 @@ export class InterventionsDashboard {
   private touchStartY = 0;
   private touchTargetTech: string | null = null;
 
-  readonly rateFields = [
-    { key: 'racPavillon', label: 'Raccordement pavillon', code: 'RACPAV' },
-    { key: 'cablePav1', label: 'Câble pavillon tranche 1', code: 'CABLE_PAV_1' },
-    { key: 'cablePav2', label: 'Câble pavillon tranche 2', code: 'CABLE_PAV_2' },
-    { key: 'cablePav3', label: 'Câble pavillon tranche 3', code: 'CABLE_PAV_3' },
-    { key: 'cablePav4', label: 'Câble pavillon tranche 4', code: 'CABLE_PAV_4' },
-    { key: 'clem', label: 'Mise en service', code: 'CLEM' },
-    { key: 'reconnexion', label: 'Reconnexion', code: 'RECOIP' },
-    { key: 'racImmeuble', label: 'Raccordement immeuble', code: 'RACIH' },
-    { key: 'racProS', label: 'Raccordement pro simple', code: 'RACPRO_S' },
-    { key: 'racProC', label: 'Raccordement pro complexe', code: 'RACPRO_C' },
-    { key: 'racF8', label: 'Raccordement F8', code: 'REPFOU_PRI' },
-    { key: 'deprise', label: 'Déplacement prise', code: 'DEPLPRISE' },
-    { key: 'demo', label: 'Démonstration service', code: 'DEMO' },
-    { key: 'sav', label: 'Service après-vente', code: 'SAV' },
-    { key: 'savExp', label: 'SAV Expédition', code: 'SAV_EXP' },
-    { key: 'refrac', label: 'Raccord refait', code: 'REFRAC' },
-    { key: 'refcDgr', label: 'Dégradation client', code: 'REFC_DGR' }
-  ] as const;
+  readonly rateFields = INTERVENTION_PRESTATION_FIELDS;
 
   private readonly revenueKeys = new Set([
     'racPavillon',
@@ -423,6 +473,38 @@ export class InterventionsDashboard {
     this.detailPage.set(1);
     this.detailOpen.set(true);
     this.loadDetail();
+  }
+
+  exportSummaryCsv(): void {
+    const f = this.filterForm.getRawValue();
+    this.svc.exportCsv({
+      fromDate: f.fromDate || undefined,
+      toDate: f.toDate || undefined,
+      technician: f.technician || undefined,
+      region: f.region || undefined,
+      client: f.client || undefined,
+      status: f.status || undefined,
+      type: f.type || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `interventions-techniciens-${new Date().toISOString().slice(0, 10)}.csv`),
+      error: () => this.error.set('Erreur export CSV')
+    });
+  }
+
+  exportSummaryPdf(): void {
+    const f = this.filterForm.getRawValue();
+    this.svc.exportPdf({
+      fromDate: f.fromDate || undefined,
+      toDate: f.toDate || undefined,
+      technician: f.technician || undefined,
+      region: f.region || undefined,
+      client: f.client || undefined,
+      status: f.status || undefined,
+      type: f.type || undefined
+    }).subscribe({
+      next: (blob) => downloadBlob(blob, `interventions-techniciens-${new Date().toISOString().slice(0, 10)}.pdf`),
+      error: () => this.error.set('Erreur export PDF')
+    });
   }
 
   closeDetail(): void {
@@ -784,6 +866,9 @@ export class InterventionsDashboard {
     const f = this.filterForm.getRawValue();
     this.compareLoading.set(true);
     this.compareError.set(null);
+    const invoiceIds = this.lastImportedInvoices()
+      .map((inv) => inv._id)
+      .filter((id): id is string => Boolean(id));
     this.svc.compare({
       fromDate: f.fromDate || undefined,
       toDate: f.toDate || undefined,
@@ -792,7 +877,8 @@ export class InterventionsDashboard {
       client: f.client || undefined,
       status: f.status || undefined,
       type: f.type || undefined,
-      periodKey: this.selectedPeriodKey() || undefined
+      periodKey: invoiceIds.length ? undefined : (this.selectedPeriodKey() || undefined),
+      invoiceIds: invoiceIds.length ? invoiceIds : undefined
     }).subscribe({
       next: (res) => {
         this.compareResult.set(res.data);

@@ -195,6 +195,14 @@ export class ConsumableService {
     );
   }
 
+  convertToMaterial(id: string, payload: { category?: string } = {}): Observable<{ id: string; type: string }> {
+    this.clearCache();
+    return this.http.post<ApiResponse<{ id: string; type: string }>>(`${this.baseUrl}/${id}/convert-to-material`, payload).pipe(
+      map((resp) => resp.data),
+      catchError((err: HttpErrorResponse) => this.handleHttpError(err))
+    );
+  }
+
   remove(id: string): Observable<ApiResponse<{ message: string }>> {
     this.clearCache();
 

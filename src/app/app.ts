@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnDestroy, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, effect, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
 import {DOCUMENT} from '@angular/common';
 import {RouterOutlet} from '@angular/router';
 import {AppHeader} from './layout/app-header/app-header';
@@ -18,6 +18,7 @@ export class App implements AfterViewInit, OnDestroy {
   private toneObserver: MutationObserver | null = null;
 
   protected readonly title = signal('fxn-erp-frontend');
+  readonly showHeader = computed(() => Boolean(this.auth.user$()));
 
   private readonly themeEffect = effect(() => {
     const role = this.auth.getUserRole();

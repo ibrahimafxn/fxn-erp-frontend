@@ -64,7 +64,7 @@ export class BpuTypeList {
 
   edit(item: BpuType): void {
     const segment = String(item.type || '').trim().toUpperCase();
-    if (segment === 'AUTO' || segment === 'SALARIE') {
+    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'ASSOCIE') {
       this.router.navigate(['/admin/bpu/new'], { queryParams: { segment } }).then();
       return;
     }

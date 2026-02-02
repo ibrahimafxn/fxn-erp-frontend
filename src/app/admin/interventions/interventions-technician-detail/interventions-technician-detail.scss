@@ -1,0 +1,123 @@
+.intervention-tech-detail {
+  display: grid;
+  gap: 24px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.subtitle {
+  color: var(--fxn-text-muted);
+  margin-top: 4px;
+}
+
+.intervention-tech-detail .pager {
+  margin: 0.5rem 0 1rem;
+}
+
+.detail-groups {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 0.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.detail-group {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.9rem;
+  background: rgba(10, 16, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.detail-group + .detail-group {
+  margin-top: 0.75rem;
+}
+
+.detail-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.detail-group-head h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.detail-table {
+  border-radius: 0.9rem;
+  border: 1px solid var(--fxn-border);
+  overflow: auto;
+  min-height: 0;
+}
+
+.detail-table table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.detail-table th,
+.detail-table td {
+  white-space: normal;
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .detail-table table {
+    min-width: 0;
+  }
+
+  .detail-table table,
+  .detail-table tbody {
+    display: block;
+  }
+
+  .detail-table thead {
+    display: none;
+  }
+
+  .detail-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .detail-table tbody tr {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    border-radius: var(--fxn-radius-md);
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-soft);
+  }
+
+  .detail-table tbody td {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px;
+    padding: 0;
+    border-bottom: none;
+    white-space: normal;
+  }
+
+  .detail-table tbody td::before {
+    content: attr(data-label);
+    color: var(--fxn-text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+}

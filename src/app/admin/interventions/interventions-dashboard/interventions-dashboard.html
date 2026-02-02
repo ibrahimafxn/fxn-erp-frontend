@@ -520,9 +520,41 @@
     </div>
 
     <div class="table card">
-      <div class="table-head">
-        <h2><span class="material-icons notranslate">table_chart</span>Détail par technicien</h2>
-        <p>Indicateurs et chiffre d’affaires par intervenant. Clique sur un technicien pour afficher ses interventions.</p>
+      <div class="table-head table-head-actions">
+        <div class="table-title">
+          <h2><span class="material-icons notranslate">table_chart</span>Détail par technicien</h2>
+          <p>Indicateurs et chiffre d’affaires par intervenant. Clique sur un technicien pour afficher ses interventions.</p>
+        </div>
+        <div class="table-actions">
+          <button class="btn-outline" type="button" (click)="exportSummaryCsv()">
+            <i class="bi bi-file-earmark-spreadsheet"></i>
+            <span>Exporter CSV</span>
+          </button>
+          <button class="btn-outline" type="button" (click)="exportSummaryPdf()">
+            <i class="bi bi-file-earmark-pdf"></i>
+            <span>Exporter PDF</span>
+          </button>
+        </div>
+      </div>
+      <div class="table-pager">
+        <footer class="pager">
+          <div class="pager-left">
+            <div class="page-size">
+              <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+              <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+              <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+              <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+            </div>
+            <span class="pager-label">Éléments par page</span>
+          </div>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(page(), limit(), totalItems()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i></button>
+              <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
+        </footer>
       </div>
       <table class="tech-summary-table">
         <thead>
@@ -578,25 +610,6 @@
         </tbody>
       </table>
     </div>
-
-    <footer class="pager pager-fixed">
-      <div class="pager-left">
-        <div class="page-size">
-          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
-          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
-          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
-          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
-        </div>
-        <span class="pager-label">Éléments par page</span>
-      </div>
-      <div class="pager-right">
-        <span class="pager-range">{{ pageRange(page(), limit(), totalItems()) }}</span>
-        <div class="pager-nav">
-          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i></button>
-          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i></button>
-        </div>
-      </div>
-    </footer>
   }
 </section>
 
@@ -617,6 +630,29 @@
       </div>
 
       <div class="overlay-meta"></div>
+
+      @if (detailPageCount() > 1) {
+        <div class="detail-pager">
+          <footer class="pager">
+            <div class="pager-left">
+              <div class="page-size">
+                <button type="button" [class.active]="detailLimit() === 10" (click)="setDetailLimitValue(10)">10</button>
+                <button type="button" [class.active]="detailLimit() === 20" (click)="setDetailLimitValue(20)">20</button>
+                <button type="button" [class.active]="detailLimit() === 50" (click)="setDetailLimitValue(50)">50</button>
+                <button type="button" [class.active]="detailLimit() === 100" (click)="setDetailLimitValue(100)">100</button>
+              </div>
+              <span class="pager-label">Éléments par page</span>
+            </div>
+            <div class="pager-right">
+              <span class="pager-range">{{ pageRange(detailPage(), detailLimit(), detailTotal()) }}</span>
+              <div class="pager-nav">
+                <button class="btn-outline" type="button" (click)="detailPrev()" [disabled]="detailPage() <= 1"><i class="bi bi-chevron-left"></i></button>
+                <button class="btn-outline" type="button" (click)="detailNext()" [disabled]="detailPage() >= detailPageCount()"><i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
+          </footer>
+        </div>
+      }
 
       @if (detailLoading()) {
         <div class="state loading">Chargement…</div>
@@ -661,27 +697,6 @@
             </div>
           }
         </div>
-
-        @if (detailPageCount() > 1) {
-          <footer class="pager pager-fixed">
-            <div class="pager-left">
-              <div class="page-size">
-                <button type="button" [class.active]="detailLimit() === 10" (click)="setDetailLimitValue(10)">10</button>
-                <button type="button" [class.active]="detailLimit() === 20" (click)="setDetailLimitValue(20)">20</button>
-                <button type="button" [class.active]="detailLimit() === 50" (click)="setDetailLimitValue(50)">50</button>
-                <button type="button" [class.active]="detailLimit() === 100" (click)="setDetailLimitValue(100)">100</button>
-              </div>
-              <span class="pager-label">Éléments par page</span>
-            </div>
-            <div class="pager-right">
-              <span class="pager-range">{{ pageRange(detailPage(), detailLimit(), detailTotal()) }}</span>
-              <div class="pager-nav">
-                <button class="btn-outline" type="button" (click)="detailPrev()" [disabled]="detailPage() <= 1"><i class="bi bi-chevron-left"></i></button>
-                <button class="btn-outline" type="button" (click)="detailNext()" [disabled]="detailPage() >= detailPageCount()"><i class="bi bi-chevron-right"></i></button>
-              </div>
-            </div>
-          </footer>
-        }
       }
     </div>
   </div>

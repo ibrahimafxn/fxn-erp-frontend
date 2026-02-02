@@ -46,7 +46,7 @@ export class BpuList {
 
   constructor() {
     const segment = this.route.snapshot.queryParamMap.get('segment');
-    if (segment === 'AUTO' || segment === 'SALARIE') {
+    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'ASSOCIE') {
       this.currentSegment.set(segment);
       this.isEditing.set(true);
     }
