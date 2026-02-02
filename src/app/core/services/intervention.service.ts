@@ -12,6 +12,7 @@ export type InterventionSummaryItem = {
   racF8: number;
   racProS: number;
   racProC?: number;
+  prestaCompl?: number;
   sav: number;
   clem: number;
   deprise?: number;
@@ -35,6 +36,7 @@ export type InterventionTotals = {
   racF8: number;
   racProS: number;
   racProC?: number;
+  prestaCompl?: number;
   sav: number;
   clem: number;
   deprise?: number;
@@ -74,6 +76,29 @@ export type InterventionItem = {
   type?: string;
   client?: string;
   statut?: string;
+  debut?: string;
+  duree?: string;
+  clotureHotline?: string;
+  clotureTech?: string;
+  debutIntervention?: string;
+  creneauPlus2h?: string;
+  motifEchec?: string;
+  commentairesTechnicien?: string;
+  ville?: string;
+  typeLogement?: string;
+  actionSav?: string;
+  longueurCable?: string;
+  typePbo?: string;
+  typeOperation?: string;
+  typeHabitation?: string;
+  priseExistante?: string;
+  recoRacc?: string;
+  marque?: string;
+  listePrestationsRaw?: string;
+  isSuccess?: boolean;
+  isFailure?: boolean;
+  versionIndex?: number;
+  latestVersionId?: string;
   articlesRaw?: string;
   categories?: string[];
   importedAt?: string;
@@ -92,6 +117,72 @@ export type InterventionFilters = {
   statuses: string[];
   technicians: string[];
   types: string[];
+};
+
+export type InterventionImportBatch = {
+  _id: string;
+  originalName?: string;
+  storedName?: string;
+  storedPath?: string;
+  fileSize?: number;
+  status?: string;
+  totals?: {
+    total?: number;
+    created?: number;
+    versioned?: number;
+    rejected?: number;
+    tickets?: number;
+  };
+  createdAt?: string;
+  importedAt?: string;
+  importedBy?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  isToday?: boolean;
+};
+
+export type InterventionImportTicket = {
+  _id: string;
+  numInter?: string;
+  techFirstName?: string;
+  techLastName?: string;
+  techFull?: string;
+  reason?: string;
+  status?: string;
+  importBatchId?: {
+    _id?: string;
+    originalName?: string;
+    storedName?: string;
+    storedPath?: string;
+    createdAt?: string;
+  };
+  createdAt?: string;
+};
+
+export type InterventionImportListResponse = {
+  total: number;
+  page: number;
+  limit: number;
+  items: InterventionImportBatch[];
+};
+
+export type InterventionImportTicketResponse = {
+  total: number;
+  page: number;
+  limit: number;
+  items: InterventionImportTicket[];
+};
+
+export type InterventionImportSummaryQuery = {
+  importBatchId?: string;
+};
+
+export type InterventionImportTechnicianSummary = {
+  totals: InterventionTotals;
+  total: number;
+  referenceDate?: string | null;
 };
 
 export type InterventionInvoiceItem = {
@@ -146,15 +237,30 @@ export type InterventionSummaryQuery = {
   limit?: number;
 };
 
+export type InterventionImportQuery = {
+  page?: number;
+  limit?: number;
+};
+
+export type InterventionImportTicketQuery = {
+  page?: number;
+  limit?: number;
+  status?: string;
+  importBatchId?: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class InterventionService {
   private baseUrl = `${environment.apiBaseUrl}/interventions`;
 
   constructor(private http: HttpClient) {}
 
-  importCsv(file: File): Observable<{ success: boolean; data?: unknown; message?: string }> {
+  importCsv(file: File, options: { overwrite?: boolean } = {}): Observable<{ success: boolean; data?: unknown; message?: string }> {
     const formData = new FormData();
     formData.append('file', file);
+    if (options.overwrite) {
+      formData.append('overwrite', 'true');
+    }
     return this.http.post<{ success: boolean; data?: unknown; message?: string }>(`${this.baseUrl}/import`, formData);
   }
 
@@ -171,6 +277,30 @@ export class InterventionService {
     if (query.limit) params = params.set('limit', String(query.limit));
 
     return this.http.get<{ success: boolean; data: InterventionSummaryResponse }>(`${this.baseUrl}/summary`, { params });
+  }
+
+  exportCsv(query: InterventionSummaryQuery = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (query.fromDate) params = params.set('fromDate', query.fromDate);
+    if (query.toDate) params = params.set('toDate', query.toDate);
+    if (query.technician) params = params.set('technician', query.technician);
+    if (query.region) params = params.set('region', query.region);
+    if (query.client) params = params.set('client', query.client);
+    if (query.status) params = params.set('status', query.status);
+    if (query.type) params = params.set('type', query.type);
+    return this.http.get(`${this.baseUrl}/export/csv`, { params, responseType: 'blob' });
+  }
+
+  exportPdf(query: InterventionSummaryQuery = {}): Observable<Blob> {
+    let params = new HttpParams();
+    if (query.fromDate) params = params.set('fromDate', query.fromDate);
+    if (query.toDate) params = params.set('toDate', query.toDate);
+    if (query.technician) params = params.set('technician', query.technician);
+    if (query.region) params = params.set('region', query.region);
+    if (query.client) params = params.set('client', query.client);
+    if (query.status) params = params.set('status', query.status);
+    if (query.type) params = params.set('type', query.type);
+    return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' });
   }
 
   list(query: InterventionSummaryQuery = {}): Observable<{ success: boolean; data: InterventionListResponse }> {
@@ -190,6 +320,66 @@ export class InterventionService {
 
   filters(): Observable<{ success: boolean; data: InterventionFilters }> {
     return this.http.get<{ success: boolean; data: InterventionFilters }>(`${this.baseUrl}/filters`);
+  }
+
+  listImports(query: InterventionImportQuery = {}): Observable<{ success: boolean; data: InterventionImportListResponse }> {
+    let params = new HttpParams();
+    if (query.page) params = params.set('page', String(query.page));
+    if (query.limit) params = params.set('limit', String(query.limit));
+    return this.http.get<{ success: boolean; data: InterventionImportListResponse }>(`${this.baseUrl}/imports`, { params });
+  }
+
+  listImportsTechnician(query: InterventionImportQuery = {}): Observable<{ success: boolean; data: InterventionImportListResponse }> {
+    let params = new HttpParams();
+    if (query.page) params = params.set('page', String(query.page));
+    if (query.limit) params = params.set('limit', String(query.limit));
+    return this.http.get<{ success: boolean; data: InterventionImportListResponse }>(
+      `${this.baseUrl}/imports/technician`,
+      { params }
+    );
+  }
+
+  importSummaryTechnician(
+    query: InterventionImportSummaryQuery = {}
+  ): Observable<{ success: boolean; data: InterventionImportTechnicianSummary }> {
+    let params = new HttpParams();
+    if (query.importBatchId) params = params.set('importBatchId', query.importBatchId);
+    return this.http.get<{ success: boolean; data: InterventionImportTechnicianSummary }>(
+      `${this.baseUrl}/imports/technician/summary`,
+      { params }
+    );
+  }
+
+  downloadImport(id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/imports/${id}/download`, { responseType: 'blob' });
+  }
+
+  listImportTickets(
+    query: InterventionImportTicketQuery = {}
+  ): Observable<{ success: boolean; data: InterventionImportTicketResponse }> {
+    let params = new HttpParams();
+    if (query.page) params = params.set('page', String(query.page));
+    if (query.limit) params = params.set('limit', String(query.limit));
+    if (query.status) params = params.set('status', query.status);
+    if (query.importBatchId) params = params.set('importBatchId', query.importBatchId);
+    return this.http.get<{ success: boolean; data: InterventionImportTicketResponse }>(
+      `${this.baseUrl}/import-tickets`,
+      { params }
+    );
+  }
+
+  listImportTicketsTechnician(
+    query: InterventionImportTicketQuery = {}
+  ): Observable<{ success: boolean; data: InterventionImportTicketResponse }> {
+    let params = new HttpParams();
+    if (query.page) params = params.set('page', String(query.page));
+    if (query.limit) params = params.set('limit', String(query.limit));
+    if (query.status) params = params.set('status', query.status);
+    if (query.importBatchId) params = params.set('importBatchId', query.importBatchId);
+    return this.http.get<{ success: boolean; data: InterventionImportTicketResponse }>(
+      `${this.baseUrl}/import-tickets/technician`,
+      { params }
+    );
   }
 
   resetAll(): Observable<{ success: boolean; data: { deleted: number } }> {
@@ -220,7 +410,9 @@ export class InterventionService {
     return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/invoices/reset`);
   }
 
-  compare(query: InterventionSummaryQuery & { periodKey?: string } = {}): Observable<{ success: boolean; data: InterventionCompare }> {
+  compare(
+    query: InterventionSummaryQuery & { periodKey?: string; invoiceIds?: string[] } = {}
+  ): Observable<{ success: boolean; data: InterventionCompare }> {
     let params = new HttpParams();
     if (query.fromDate) params = params.set('fromDate', query.fromDate);
     if (query.toDate) params = params.set('toDate', query.toDate);
@@ -230,6 +422,7 @@ export class InterventionService {
     if (query.status) params = params.set('status', query.status);
     if (query.type) params = params.set('type', query.type);
     if (query.periodKey) params = params.set('periodKey', query.periodKey);
+    if (query.invoiceIds?.length) params = params.set('invoiceIds', query.invoiceIds.join(','));
     return this.http.get<{ success: boolean; data: InterventionCompare }>(`${this.baseUrl}/compare`, { params });
   }
 }

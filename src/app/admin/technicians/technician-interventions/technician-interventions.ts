@@ -38,6 +38,15 @@ const EMPTY_STATS: TechnicianInterventionStats = {
 type SortField = 'date' | 'type' | 'statut' | 'duree';
 
 const TYPE_CANONICAL_ALIASES = new Map([
+  ['RACIH', 'IMM'],
+  ['RAC_IH', 'IMM'],
+  ['RACPAV', 'RACPAV'],
+  ['RAC_PAV', 'RACPAV'],
+  ['PRESTA COMPL', 'PRESTA_COMPL'],
+  ['PRESTA COMPL', 'PRESTA COMPL'],
+  ['REPFOU_PRI', 'REPFOU_PRI'],
+  ['REPFOU PRI', 'REPFOU_PRI'],
+  ['REPFOU-PRI', 'REPFOU_PRI'],
   ['RACC PRO S', 'RACPRO_S'],
   ['RACC PRO_S', 'RACPRO_S'],
   ['RACC PRO-S', 'RACPRO_S'],
@@ -50,17 +59,33 @@ const TYPE_CANONICAL_ALIASES = new Map([
   ['RACPRO C', 'RACPRO_C'],
   ['RACPRO_C', 'RACPRO_C'],
   ['RACPRO-C', 'RACPRO_C'],
-  ['RECOIP', 'RECO'],
-  ['RECO IP', 'RECO'],
-  ['RECO-IP', 'RECO'],
-  ['RECO', 'RECO']
+  ['RECOIP', 'RECOIP'],
+  ['RECO IP', 'RECOIP'],
+  ['RECO-IP', 'RECOIP'],
+  ['RECO', 'RECOIP'],
+  ['SAV', 'SAV']
 ]);
 const ARTICLE_TYPE_LABELS = [
   { label: 'PRO S', marker: 'RACPRO_S' },
   { label: 'PRO C', marker: 'RACPRO_C' },
-  { label: 'PRESTA COMP', marker: 'PRESTA_COMPL' }
+  { label: 'PAV', marker: 'RACPAV' },
+  { label: 'IMM', marker: 'RACIH' },
+  { label: 'RECO', marker: 'RECOIP' },
+  { label: 'SAV', marker: 'SAV' },
+  { label: 'PRESTA COMPL', marker: 'PRESTA_COMPL' },
+  { label: 'PRESTA F8', marker: 'REPFOU_PRI' }
 ];
-const REQUIRED_TYPE_LABELS = ['RECO'];
+const ARTICLE_TYPE_BY_CODE = new Map([
+  ['RACPRO_S', 'PRO S'],
+  ['RACPRO_C', 'PRO C'],
+  ['RACPAV', 'PAV'],
+  ['RACIH', 'IMM'],
+  ['RECOIP', 'RECO'],
+  ['PRESTA_COMPL', 'PRESTA COMPL'],
+  ['REPFOU_PRI', 'PRESTA F8'],
+  ['SAV', 'SAV']
+]);
+const REQUIRED_TYPE_LABELS = ['RECOIP'];
 
 @Component({
   standalone: true,
@@ -108,10 +133,10 @@ export class TechnicianInterventions {
   });
 
   readonly statsDataset = signal<InterventionItem[]>([]);
-  readonly stats = computed(() => this.computeStats(this.statsDataset(), this.total()));
+  readonly stats = computed(() => this.computeStats(this.statsDataset(), this.total(), this.filterForm.controls.type.value));
   readonly failurePercent = computed(() => this.computeFailurePercent(this.stats()));
   readonly successRateBg = computed(() => this.computeSuccessRateBg(this.stats().successRate));
-  readonly reconnectionCount = computed(() => this.countMatchingType('RECO'));
+  readonly reconnectionCount = computed(() => this.countMatchingType('RECOIP'));
   readonly sortField = signal<SortField>('date');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly sortedInterventions = computed(() => this.sortedItems());
@@ -273,9 +298,12 @@ export class TechnicianInterventions {
     };
   }
 
-  private computeStats(items: InterventionItem[], totalCount: number): TechnicianInterventionStats {
+  private computeStats(items: InterventionItem[], totalCount: number, filterType?: string): TechnicianInterventionStats {
     const total = Number.isFinite(totalCount) && totalCount >= 0 ? totalCount : items.length;
     if (!items.length) return { ...EMPTY_STATS, total };
+    const allowedType = this.normalizeFilterType(filterType);
+    const allowedTypeLabel = allowedType ? this.normalizeTypeLabel(allowedType) : '';
+    const enforcedTypeLabels = allowedType ? [allowedType] : REQUIRED_TYPE_LABELS;
     let success = 0;
     let failure = 0;
     let durationSum = 0;
@@ -288,13 +316,16 @@ export class TechnicianInterventions {
     );
 
     for (const item of items) {
-      const statut = (item.statut ?? '')
+      const statutRaw = item.statut ?? '';
+      const statut = statutRaw
         .toLowerCase()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
       if (statut.includes('echec') || statut.includes('fail')) {
         failure++;
-      } else if (statut.includes('termine') || statut.includes('cloture')) {
+      }
+      const successMatches = this.resolveSuccessPrestations(item);
+      if (successMatches.length) {
         success++;
       }
       const isCancelled = statut.includes('annul');
@@ -309,17 +340,48 @@ export class TechnicianInterventions {
       const techStats = technicians.get(techLabel) ?? { success: 0, failure: 0 };
       if (statut.includes('echec') || statut.includes('fail')) {
         techStats.failure = (techStats.failure || 0) + 1;
-      } else if (statut.includes('termine') || statut.includes('cloture')) {
+      } else if (successMatches.length) {
         techStats.success = (techStats.success || 0) + 1;
       }
       technicians.set(techLabel, techStats);
-      const typeLabel = this.canonicalType(item.type, item);
-      types.set(typeLabel, (types.get(typeLabel) ?? 0) + 1);
+      if (allowedType) {
+        if (successMatches.length) {
+          if (successMatches.includes(allowedType)) {
+            types.set(allowedType, (types.get(allowedType) ?? 0) + 1);
+          }
+        } else {
+          const typeLabel = this.canonicalType(item.type, item);
+          if (this.matchesAllowedType(typeLabel, allowedType)) {
+            types.set(allowedType, (types.get(allowedType) ?? 0) + 1);
+          }
+        }
+      } else if (successMatches.length) {
+        for (const label of successMatches) {
+          types.set(label, (types.get(label) ?? 0) + 1);
+        }
+      } else {
+        const typeLabel = this.canonicalType(item.type, item);
+        types.set(typeLabel, (types.get(typeLabel) ?? 0) + 1);
+      }
       const statusLabel = item.statut?.trim() || 'Autre';
       statuses.set(statusLabel, (statuses.get(statusLabel) ?? 0) + 1);
       const articlesNormalized = this.normalizeToken(item.articlesRaw);
+      const articleLabels = new Set<string>();
       for (const { label, marker } of ARTICLE_TYPE_LABELS) {
         if (articlesNormalized.includes(marker)) {
+          if (allowedType && !this.isAllowedArticleLabel(label, allowedTypeLabel)) {
+            continue;
+          }
+          articleTypeCounts.set(label, (articleTypeCounts.get(label) ?? 0) + 1);
+          articleLabels.add(label);
+        }
+      }
+      for (const code of successMatches) {
+        const label = ARTICLE_TYPE_BY_CODE.get(code);
+        if (label && !articleLabels.has(label)) {
+          if (allowedType && !this.isAllowedArticleLabel(label, allowedTypeLabel)) {
+            continue;
+          }
           articleTypeCounts.set(label, (articleTypeCounts.get(label) ?? 0) + 1);
         }
       }
@@ -335,30 +397,39 @@ export class TechnicianInterventions {
       .sort((a, b) => b.ratio - a.ratio)
       .slice(0, 3)
       .map(({ label, success, failure }) => ({ label, success, failure }));
-    const requiredTypes = ['RACC PRO_S', 'RACC PRO_C'];
-    for (const required of requiredTypes) {
-      if (!types.has(required)) {
-        types.set(required, 0);
-      }
-    }
     const baseTopTypes = Array.from(types.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
       .map(([label, count]) => ({ label, count }));
-    const filteredBaseTopTypes = baseTopTypes.filter(
-      (type) => type.label !== 'RACPRO_S' && type.label !== 'RACPRO_C'
-    );
-    const enforcedTypes = REQUIRED_TYPE_LABELS
+    const displayBaseTopTypes = baseTopTypes.map((type) => ({
+      label: this.normalizeTypeLabel(type.label),
+      count: type.count
+    }));
+    const baseTypeLabels = new Set(displayBaseTopTypes.map((type) => type.label));
+    const enforcedTypes = enforcedTypeLabels
       .filter((label) => !baseTopTypes.some((type) => type.label === label))
       .map((label) => ({ label, count: types.get(label) ?? 0 }));
-    const filteredEnforcedTypes = enforcedTypes.filter(
-      (type) => type.label !== 'RACPRO_S' && type.label !== 'RACPRO_C'
-    );
     const articleTypeEntries = ARTICLE_TYPE_LABELS.map(({ label }) => ({
       label,
       count: articleTypeCounts.get(label) ?? 0
-    }));
-    const topTypes = [...filteredBaseTopTypes, ...articleTypeEntries, ...filteredEnforcedTypes];
+    })).filter((entry) => !baseTypeLabels.has(entry.label));
+    const enforcedTypeEntries = enforcedTypes
+      .map((entry) => ({
+        label: this.normalizeTypeLabel(entry.label),
+        count: entry.count
+      }))
+      .filter((entry) => !baseTypeLabels.has(entry.label));
+    const topTypes = [...displayBaseTopTypes, ...articleTypeEntries, ...enforcedTypeEntries];
+    const uniqueTopTypes: Array<{ label: string; count: number }> = [];
+    for (const entry of topTypes) {
+      const existing = uniqueTopTypes.find((item) => item.label === entry.label);
+      if (existing) {
+        existing.count = Math.max(existing.count, entry.count);
+      } else {
+        uniqueTopTypes.push({ ...entry });
+      }
+    }
+    uniqueTopTypes.sort((a, b) => b.count - a.count);
     const topStatuses = Array.from(statuses.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
@@ -373,7 +444,7 @@ export class TechnicianInterventions {
       avgDuration: durationCount ? Math.round(durationSum / durationCount) : 0,
       successRate: denominator ? Math.round((success / denominator) * 100) : 0,
       topTechnicians,
-      topTypes,
+      topTypes: uniqueTopTypes,
       topStatuses
     };
   }
@@ -474,6 +545,8 @@ export class TechnicianInterventions {
     if (view === 'failures') {
       this.filterForm.controls.status.setValue(this.chooseFailureStatus());
       this.filterForm.controls.type.setValue('');
+      this.sortField.set('duree');
+      this.sortDirection.set('desc');
     } else if (view === 'reconnections') {
       this.filterForm.controls.status.setValue('');
       this.filterForm.controls.type.setValue(this.chooseReconnectionType());
@@ -529,27 +602,113 @@ export class TechnicianInterventions {
 
   private canonicalType(value?: string, item?: InterventionItem): string {
     const raw = (value ?? '').trim();
-    const normalizedType = this.normalizeToken(raw);
+    const normalizedType = this.normalizeToken(raw).replace(/-/g, ' ');
+    const normalizedTypeCollapsed = normalizedType.replace(/\s+/g, ' ').trim();
     const articlesNormalized = this.normalizeToken(item?.articlesRaw);
-    if (articlesNormalized.includes('RACPRO_S')) {
-      return 'RACPRO_S';
-    }
-    if (articlesNormalized.includes('RACPRO_C')) {
-      return 'RACPRO_C';
-    }
     const statusNormalized = this.normalizeToken(item?.statut);
     const operationNormalized = this.normalizeToken(item?.typeOperation);
-    const isClosedTerminated =
-      statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINE');
-    const isReconnectionOperation = normalizedType === 'RECO' || operationNormalized.includes('RECONNEX');
-    if (articlesNormalized.includes('RECOIP') || (isClosedTerminated && isReconnectionOperation)) {
-      return 'RECO';
+    const commentsNormalized = this.normalizeToken(item?.commentairesTechnicien);
+    const prestationsNormalized = this.normalizeToken(item?.listePrestationsRaw);
+    if (articlesNormalized.includes('RACPAV')) {
+      return 'RACPAV';
+    }
+    if (statusNormalized.includes('RACIH')) {
+      return 'IMM';
+    }
+    if (
+      articlesNormalized.includes('RECOIP')
+      || operationNormalized.includes('RECONNEX')
+      || normalizedType.includes('RECO')
+    ) {
+      return 'RECOIP';
+    }
+    if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
+      return 'RACPRO_S';
+    }
+    if (articlesNormalized.includes('RACPROC_C') || articlesNormalized.includes('RACPRO_C')) {
+      return 'RACPRO_C';
+    }
+    if (articlesNormalized.includes('SAV') || normalizedTypeCollapsed === 'SAV') {
+      return 'SAV';
+    }
+    if (
+      (normalizedType.includes('PRESTA') && normalizedType.includes('COMPL'))
+      || articlesNormalized.includes('PRESTA_COMPL')
+    ) {
+      return 'PRESTA_COMPL';
+    }
+    if (
+      articlesNormalized.includes('REPFOU_PRI')
+      || commentsNormalized.includes('F8')
+      || prestationsNormalized.includes('FOURREAUX')
+      || prestationsNormalized.includes('DOMAINE')
+    ) {
+      return 'REPFOU_PRI';
+    }
+    if (normalizedTypeCollapsed === 'REFC_DGR' || statusNormalized.includes('REFC_DGR')) {
+      return 'REFC_DGR';
+    }
+    if (normalizedTypeCollapsed === 'DEPLPRISE' || articlesNormalized.includes('DEPLPRISE')) {
+      return 'DEPLPRISE';
+    }
+    if (normalizedTypeCollapsed === 'REFRAC' || articlesNormalized.includes('REFRAC')) {
+      return 'REFRAC';
     }
     if (!raw) return 'Autre';
-    const normalized = raw.toUpperCase().replace(/\s+/g, ' ').replace(/-/g, ' ');
-    return TYPE_CANONICAL_ALIASES.get(normalized) ?? raw;
+    if (normalizedTypeCollapsed === 'RACIH') {
+      return 'IMM';
+    }
+    return TYPE_CANONICAL_ALIASES.get(normalizedTypeCollapsed) ?? raw;
   }
 
+  private normalizeFilterType(value?: string): string {
+    const normalized = this.normalizeToken(value).replace(/[^A-Z0-9_]/g, '');
+    if (!normalized) return '';
+    const aliases = new Map([
+      ['RACPAV', 'RACPAV'],
+      ['RACIH', 'RACIH'],
+      ['RECOIP', 'RECOIP'],
+      ['RECO', 'RECOIP'],
+      ['RACPROS', 'RACPRO_S'],
+      ['RACPRO_S', 'RACPRO_S'],
+      ['RACPROC', 'RACPRO_C'],
+      ['RACPRO_C', 'RACPRO_C'],
+      ['SAV', 'SAV'],
+      ['PRESTACOMPL', 'PRESTA_COMPL'],
+      ['PRESTA_COMPL', 'PRESTA_COMPL'],
+      ['PRESTAF8', 'REPFOU_PRI'],
+      ['REPFOU_PRI', 'REPFOU_PRI'],
+      ['REFC_DGR', 'REFC_DGR'],
+      ['REFCDGR', 'REFC_DGR'],
+      ['DEPLPRISE', 'DEPLPRISE'],
+      ['REFRAC', 'REFRAC']
+    ]);
+    return aliases.get(normalized) ?? '';
+  }
+
+  private normalizeTypeLabel(label: string): string {
+    const normalized = this.normalizeToken(label);
+    if (normalized === 'RACPAV') return 'PAV';
+    if (normalized === 'RECOIP') return 'RECO';
+    if (normalized === 'RACPRO_S') return 'PRO S';
+    if (normalized === 'RACPRO_C') return 'PRO C';
+    if (normalized === 'REPFOU_PRI') return 'PRESTA F8';
+    if (normalized === 'IMM' || normalized === 'RACIH') return 'IMM';
+    return label;
+  }
+
+  private matchesAllowedType(typeLabel: string, allowedType: string): boolean {
+    if (!allowedType) return true;
+    const normalizedType = this.normalizeToken(typeLabel);
+    const normalizedAllowed = this.normalizeToken(allowedType);
+    if (normalizedAllowed === 'RACIH' && normalizedType === 'IMM') return true;
+    return normalizedType === normalizedAllowed;
+  }
+
+  private isAllowedArticleLabel(label: string, allowedLabel: string): boolean {
+    if (!allowedLabel) return true;
+    return this.normalizeToken(label) === this.normalizeToken(allowedLabel);
+  }
 
   private computeFailurePercent(stats: TechnicianInterventionStats): number {
     const denominator = stats.success + stats.failure;
@@ -563,7 +722,7 @@ export class TechnicianInterventions {
     const quantized = Math.min(100, Math.max(0, Math.round(clamped / step) * step));
     const t = quantized / 100;
     const start = { r: 239, g: 68, b: 68 };
-    const end = { r: 16, g: 185, b: 129 };
+    const end = { r: 46, g: 140, b: 108 };
     const lerp = (startValue: number, endValue: number) =>
       Math.round(startValue + (endValue - startValue) * t);
     return `rgb(${lerp(start.r, end.r)}, ${lerp(start.g, end.g)}, ${lerp(start.b, end.b)})`;
@@ -608,6 +767,20 @@ export class TechnicianInterventions {
     return labels.length ? labels.join(', ') : '—';
   }
 
+  frequentStatusClass(label?: string): string {
+    const normalized = this.normalizeToken(label);
+    if (normalized.includes('CLOTURE') && normalized.includes('TERMINEE')) {
+      return 'status-success';
+    }
+    if (normalized.includes('ANNULE')) {
+      return 'status-neutral';
+    }
+    if (normalized.includes('ECHEC') && normalized.includes('TERMINE')) {
+      return 'status-error';
+    }
+    return '';
+  }
+
   private apiError(err: any, fallback: string): string {
     if (typeof err?.error === 'object' && err.error !== null && 'message' in err.error) {
       return String(err.error.message ?? fallback);
@@ -621,5 +794,60 @@ export class TechnicianInterventions {
       .replace(/[\u0300-\u036f]/g, '')
       .toUpperCase()
       .trim();
+  }
+
+  private resolveSuccessPrestations(item: InterventionItem): string[] {
+    if (!this.isClosedTerminated(item.statut)) return [];
+    const typeNormalized = this.normalizeToken(item.type).replace(/-/g, ' ').trim();
+    const articlesNormalized = this.normalizeToken(item.articlesRaw);
+    const statusNormalized = this.normalizeToken(item.statut);
+    const operationNormalized = this.normalizeToken(item.typeOperation);
+    const commentsNormalized = this.normalizeToken(item.commentairesTechnicien);
+    const prestationsNormalized = this.normalizeToken(item.listePrestationsRaw);
+    const matches: string[] = [];
+
+    if (articlesNormalized.includes('RACPAV')) matches.push('RACPAV');
+    if (statusNormalized.includes('RACIH')) matches.push('RACIH');
+    if (
+      articlesNormalized.includes('RECOIP')
+      || operationNormalized.includes('RECONNEX')
+      || typeNormalized.includes('RECO')
+    ) {
+      matches.push('RECOIP');
+    }
+    if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
+      matches.push('RACPRO_S');
+    }
+    if (articlesNormalized.includes('RACPROC_C') || articlesNormalized.includes('RACPRO_C')) {
+      matches.push('RACPRO_C');
+    }
+    if (articlesNormalized.includes('SAV') || typeNormalized === 'SAV') {
+      matches.push('SAV');
+    }
+    if (
+      (typeNormalized.includes('PRESTA') && typeNormalized.includes('COMPL'))
+      || articlesNormalized.includes('PRESTA_COMPL')
+    ) {
+      matches.push('PRESTA_COMPL');
+    }
+    if (
+      articlesNormalized.includes('REPFOU_PRI')
+      || commentsNormalized.includes('F8')
+      || prestationsNormalized.includes('FOURREAUX')
+      || prestationsNormalized.includes('DOMAINE')
+    ) {
+      matches.push('REPFOU_PRI');
+    }
+    if (typeNormalized === 'REFC_DGR' || statusNormalized.includes('REFC_DGR')) {
+      matches.push('REFC_DGR');
+    }
+    if (typeNormalized === 'DEPLPRISE' || articlesNormalized.includes('DEPLPRISE')) {
+      matches.push('DEPLPRISE');
+    }
+    if (typeNormalized === 'REFRAC' || articlesNormalized.includes('REFRAC')) {
+      matches.push('REFRAC');
+    }
+
+    return matches;
   }
 }

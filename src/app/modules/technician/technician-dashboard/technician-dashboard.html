@@ -28,6 +28,89 @@
     </div>
   </section>
 
+  <section class="import-section">
+    <div class="import-head">
+      <div>
+        <h2>Import du jour</h2>
+        <p class="subtitle">Interventions importees automatiquement depuis Osiris.</p>
+      </div>
+      <div class="import-meta">
+        <div>{{ importLabel() }}</div>
+        @if (importBatch()?._id) {
+          <div class="import-batch">Batch: {{ importBatch()?._id }}</div>
+        }
+      </div>
+    </div>
+    @if (importLoading()) {
+      <div class="state loading">Chargement…</div>
+    }
+    @if (importError()) {
+      <div class="state error">Erreur : {{ importError() }}</div>
+    }
+    @if (!importLoading() && !importBatch()) {
+      <div class="state empty">Aucun import detecte aujourd'hui.</div>
+    }
+    @if (importBatch()) {
+      <div class="import-grid">
+        <article class="import-card">
+          <div class="label">Total interventions</div>
+          <div class="value">{{ importSummary()?.totals?.total ?? 0 }}</div>
+        </article>
+        <article class="import-card">
+          <div class="label">Raccordements</div>
+          <div class="value">{{ techRaccordements() }}</div>
+        </article>
+        <article class="import-card">
+          <div class="label">Reconnexion</div>
+          <div class="value">{{ importSummary()?.totals?.reconnexion ?? 0 }}</div>
+        </article>
+        <article class="import-card">
+          <div class="label">Prestation F8</div>
+          <div class="value">{{ importSummary()?.totals?.racF8 ?? 0 }}</div>
+        </article>
+        <article class="import-card">
+          <div class="label">SAV</div>
+          <div class="value">{{ importSummary()?.totals?.sav ?? 0 }}</div>
+        </article>
+      </div>
+      @if (prestationCards().length) {
+        <div class="import-subtitle">Prestations du jour</div>
+        <div class="import-grid">
+          @for (item of prestationCards(); track item.label) {
+            <article class="import-card">
+              <div class="label">{{ item.label }}</div>
+              <div class="value">{{ item.value }}</div>
+            </article>
+          }
+        </div>
+      }
+      <div class="import-alerts">
+        <div class="alert-card" [class.ok]="techTickets().length === 0">
+          <div>
+            <div class="label">Anomalies sur vos interventions</div>
+            <div class="value">{{ techTickets().length }}</div>
+          </div>
+          <div class="hint">
+            @if (techTickets().length === 0) { Aucune anomalie detectee. } @else { A signaler au support. }
+          </div>
+        </div>
+        @if (techTickets().length) {
+          <div class="alert-list">
+            <div class="label">Derniers tickets</div>
+            <ul>
+              @for (ticket of techTicketPreview(); track ticket._id) {
+                <li>{{ ticketLabel(ticket) }}</li>
+              }
+            </ul>
+            @if (techTickets().length > techTicketPreview().length) {
+              <div class="hint">+{{ techTickets().length - techTicketPreview().length }} autres</div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+
   <div class="action-grid">
     <article class="action-card" (click)="goReports()">
       <div class="action-head">
