@@ -39,7 +39,7 @@
       <article class="stat-card">
         <span class="label">Durée moyenne (min)</span>
         <span class="value">{{ stats().avgDuration }}</span>
-        <p class="helper">Toutes interventions hors “annulé”.</p>
+        <p class="helper">Hors échecs et “annulé”.</p>
       </article>
     </div>
 
@@ -237,7 +237,7 @@
           </thead>
           <tbody>
             @for (item of sortedInterventions(); track item._id) {
-              <tr>
+              <tr class="row-click" (click)="openDetails(item)">
                 <td>{{ item.dateRdv | date:'shortDate' }}</td>
                 <td>{{ item.numInter || '—' }}</td>
                 <td>{{ formatTechnicianName(item) }}</td>
@@ -276,4 +276,28 @@
       </div>
     </footer>
   </section>
+
+  @if (detailOpen() && selectedDetail()) {
+    <div class="modal-backdrop" (click)="closeDetails()" (keydown)="closeDetails()" tabindex="-1">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="Details intervention" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div class="modal-title">Intervention {{ selectedDetail()?.numInter || '—' }}</div>
+          <button class="icon-btn" type="button" (click)="closeDetails()" aria-label="Fermer">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </header>
+        <section class="modal-body detail-grid">
+          @for (entry of detailEntries(); track entry.label) {
+            <div class="detail-row">
+              <div class="detail-label">{{ entry.label }}</div>
+              <div class="detail-value">{{ entry.value }}</div>
+            </div>
+          }
+        </section>
+        <footer class="modal-actions">
+          <button class="btn-outline" type="button" (click)="closeDetails()">Fermer</button>
+        </footer>
+      </div>
+    </div>
+  }
 </section>

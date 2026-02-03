@@ -115,7 +115,15 @@
           </div>
           <div class="total-item">
             <div class="label">Montant TVA</div>
-            <div class="value">{{ formatCurrency(tvaAmount()) }}</div>
+            <input
+              class="tva-input"
+              type="number"
+              min="0"
+              step="0.01"
+              formControlName="tvaAmount"
+              (input)="onTvaInput()"
+              (blur)="onTvaBlur()"
+            />
           </div>
           <div class="total-item">
             <div class="label">Montant TTC</div>

@@ -32,6 +32,7 @@ export class OrderForm {
   readonly clientsLoading = signal(false);
   readonly clientsError = signal<string | null>(null);
   readonly clients = signal<string[]>([]);
+  readonly tvaManual = signal(false);
   private orderId = this.route.snapshot.paramMap.get('id') || '';
   readonly isEdit = computed(() => Boolean(this.orderId));
   readonly title = computed(() => (this.isEdit() ? 'Modifier la commande' : 'Nouvelle commande'));
@@ -42,6 +43,7 @@ export class OrderForm {
     date: this.fb.nonNullable.control(new Date().toISOString().slice(0, 10), [Validators.required]),
     status: this.fb.nonNullable.control('En cours', [Validators.required]),
     amount: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+    tvaAmount: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     notes: this.fb.nonNullable.control(''),
     lines: this.fb.array([this.buildLine()])
   });
@@ -50,7 +52,7 @@ export class OrderForm {
     this.loadResources();
     this.loadClients();
     this.lines.valueChanges.subscribe(() => {
-      this.syncAmount();
+      this.syncAmounts();
     });
     this.form.get('client')?.valueChanges.subscribe((value) => {
       this.syncClientList(String(value || '').trim());
@@ -58,7 +60,7 @@ export class OrderForm {
     if (this.isEdit()) {
       this.loadOrder();
     } else {
-      this.syncAmount();
+      this.syncAmounts();
     }
   }
 
@@ -111,6 +113,11 @@ export class OrderForm {
   }
 
   tvaAmount(): number {
+    const value = Number(this.form.get('tvaAmount')?.value ?? 0);
+    return Number.isFinite(value) ? this.round2(value) : 0;
+  }
+
+  private computedTvaAmount(): number {
     return this.lines.controls.reduce((sum, _, index) => {
       const group = this.lines.at(index) as FormGroup;
       const applyTva = Boolean(group.get('applyTva')?.value);
@@ -149,6 +156,7 @@ export class OrderForm {
       date: raw.date,
       status: raw.status.trim(),
       amount: this.linesTotal(),
+      tvaAmount: this.tvaAmount(),
       notes: raw.notes.trim() || undefined,
       lines: (raw.lines || []).map((line) => ({
         resourceId: String(line["resourceId"] || '').trim(),
@@ -207,13 +215,19 @@ export class OrderForm {
     this.orders.getById(this.orderId).subscribe({
       next: (res) => {
         const order = res.data;
+        const savedTva = order.tvaAmount;
+        const hasSavedTva = typeof savedTva === 'number' && Number.isFinite(savedTva);
         this.form.patchValue({
           reference: order.reference || '',
           client: order.client || '',
           date: this.toDateInput(order.date),
           status: order.status || '',
-          notes: order.notes || ''
+          notes: order.notes || '',
+          tvaAmount: hasSavedTva
+            ? this.round2(savedTva)
+            : this.round2(this.computeTvaFromLines(order.lines || []))
         });
+        this.tvaManual.set(hasSavedTva);
         this.lines.clear();
         (order.lines || []).forEach((line) => {
           const group = this.buildLine();
@@ -229,7 +243,7 @@ export class OrderForm {
           this.lines.push(group);
         });
         if (this.lines.length === 0) this.lines.push(this.buildLine());
-        this.syncAmount();
+        this.syncAmounts();
         this.saving.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -243,9 +257,49 @@ export class OrderForm {
     });
   }
 
-  private syncAmount(): void {
+  private syncAmounts(): void {
     const total = this.linesTotal();
-    this.form.patchValue({ amount: total }, { emitEvent: false });
+    const tva = this.computedTvaAmount();
+    const hasTvaLines = this.lines.controls.some((control) => {
+      const group = control as FormGroup;
+      return Boolean(group.get('applyTva')?.value);
+    });
+    const patch: { amount: number; tvaAmount?: number } = { amount: total };
+    if (!hasTvaLines) {
+      this.tvaManual.set(false);
+      patch.tvaAmount = 0;
+    } else if (!this.tvaManual()) {
+      patch.tvaAmount = this.round2(tva);
+    }
+    this.form.patchValue(patch, { emitEvent: false });
+  }
+
+  onTvaInput(): void {
+    if (!this.tvaManual()) {
+      this.tvaManual.set(true);
+    }
+  }
+
+  onTvaBlur(): void {
+    const value = Number(this.form.get('tvaAmount')?.value ?? 0);
+    if (!Number.isFinite(value)) return;
+    this.form.patchValue({ tvaAmount: this.round2(value) }, { emitEvent: false });
+  }
+
+  private computeTvaFromLines(
+    lines: Array<{ applyTva?: boolean; quantity?: number; unitPrice?: number }>
+  ): number {
+    return lines.reduce((sum, line) => {
+      if (!line.applyTva) return sum;
+      const qty = Number(line.quantity ?? 0);
+      const unitPrice = Number(line.unitPrice ?? 0);
+      if (!Number.isFinite(qty) || !Number.isFinite(unitPrice)) return sum;
+      return sum + qty * unitPrice * this.tvaRate;
+    }, 0);
+  }
+
+  private round2(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   private toDateInput(value: string): string {

@@ -244,6 +244,23 @@
   font-weight: 700;
 }
 
+.tva-input {
+  border-radius: var(--fxn-radius-sm);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface);
+  color: var(--fxn-text);
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 700;
+  width: 100%;
+}
+
+.tva-input:focus {
+  outline: none;
+  border-color: var(--fxn-primary-border);
+  box-shadow: var(--fxn-ring);
+}
+
 .side-card {
   display: grid;
   gap: 16px;

@@ -149,20 +149,52 @@
       <table>
         <thead>
         <tr>
-          <th>Date</th>
-          <th>Ressource</th>
-          <th>Action</th>
-          <th>Origine</th>
-          <th>Destination</th>
-          <th>Quantité</th>
-          <th>Auteur</th>
-          <th>Statut</th>
+          <th>
+            <button class="sort-button" type="button" (click)="setSort('date')">
+              Date <span class="sort-arrow">{{ sortArrow('date') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-button" type="button" (click)="setSort('resource')">
+              Ressource <span class="sort-arrow">{{ sortArrow('resource') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-button" type="button" (click)="setSort('action')">
+              Action <span class="sort-arrow">{{ sortArrow('action') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-button" type="button" (click)="setSort('from')">
+              Origine <span class="sort-arrow">{{ sortArrow('from') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-button" type="button" (click)="setSort('to')">
+              Destination <span class="sort-arrow">{{ sortArrow('to') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-button" type="button" (click)="setSort('quantity')">
+              Quantité <span class="sort-arrow">{{ sortArrow('quantity') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-button" type="button" (click)="setSort('author')">
+              Auteur <span class="sort-arrow">{{ sortArrow('author') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-button" type="button" (click)="setSort('status')">
+              Statut <span class="sort-arrow">{{ sortArrow('status') }}</span>
+            </button>
+          </th>
           <th>Action</th>
         </tr>
         </thead>
 
         <tbody>
-          @for (m of items(); track m._id) {
+          @for (m of sortedItems(); track m._id) {
             <tr>
               <td data-label="Date">{{ createdAtText(m) }}</td>
               <td class="mono" data-label="Ressource">{{ resourceLabel(m) }}</td>
@@ -174,6 +206,11 @@
                   [class.in]="m.action === 'IN'"
                   [class.out]="m.action === 'OUT'"
                   [class.transfer]="m.action === 'TRANSFER'"
+                  [class.adjust]="m.action === 'ADJUST'"
+                  [class.update]="m.action === 'UPDATE'"
+                  [class.create]="m.action === 'CREATE'"
+                  [class.delete]="m.action === 'DELETE'"
+                  [class.cancel]="isCancellationMovement(m)"
                 >
                   {{ actionLabelForRow(m) }}
                 </span>

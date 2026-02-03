@@ -150,6 +150,27 @@ td {
   font-size: 0.95rem;
 }
 
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sort-arrow {
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+.sort-button:hover .sort-arrow {
+  opacity: 1;
+}
+
 .amount-pill {
   display: inline-flex;
   align-items: center;
@@ -171,6 +192,17 @@ td {
   color: #ffe9c7;
   background: rgba(245, 158, 11, 0.2);
   border-color: rgba(245, 158, 11, 0.5);
+}
+
+.tva-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  color: #fff4e6;
+  border: 1px solid rgba(251, 146, 60, 0.6);
+  background: rgba(251, 146, 60, 0.2);
 }
 
 .actions-cell {

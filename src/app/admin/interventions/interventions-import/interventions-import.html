@@ -56,7 +56,70 @@
   @if (importError()) {
     <div class="state error card"><strong>Import :</strong> {{ importError() }}</div>
   } @else if (importResult()) {
-    <div class="state ok card">{{ importResult() }}</div>
+    <div class="state ok card import-result">
+      <div class="import-result-text">{{ importResult() }}</div>
+      <div class="import-categories">
+        @for (category of categoryKeys; track category) {
+          <div class="category-card">
+            <div class="category-head">
+              <span class="label">{{ categoryLabels[category] }}</span>
+              <span class="count">{{ categoryState(category).total }}</span>
+            </div>
+            @if (categoryState(category).loading) {
+              <div class="state">Chargement…</div>
+            } @else if (categoryState(category).error) {
+              <div class="state error">{{ categoryState(category).error }}</div>
+            } @else if (categoryState(category).items.length === 0) {
+              <div class="state hint">Aucune intervention.</div>
+            } @else {
+              <div class="category-list">
+                @for (item of categoryState(category).items; track $index) {
+                  <div class="category-row">
+                    <div class="row-main">
+                      <span class="mono">{{ item.numInter || '—' }}</span>
+                      <span class="tech">{{ item.techFull || '—' }}</span>
+                      @if (item.versionIndex && category === 'versioned') {
+                        <span class="pill subtle">V{{ item.versionIndex }}</span>
+                      }
+                    </div>
+                    <div class="row-meta">
+                      @if (item.statut) {
+                        <span>{{ item.statut }}</span>
+                      }
+                      @if (item.reason) {
+                        <span>{{ item.reason }}</span>
+                      }
+                      @if (item.articles) {
+                        <span class="articles">Articles: {{ item.articles }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="category-pager">
+                <button
+                  class="btn-outline btn-compact"
+                  type="button"
+                  (click)="prevCategoryPage(category)"
+                  [disabled]="categoryState(category).page <= 1"
+                >
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <span class="pager-range">{{ categoryPageRange(category) }}</span>
+                <button
+                  class="btn-outline btn-compact"
+                  type="button"
+                  (click)="nextCategoryPage(category)"
+                  [disabled]="categoryState(category).page >= categoryTotalPages(category)"
+                >
+                  <i class="bi bi-chevron-right"></i>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
   }
 
   <section class="card">

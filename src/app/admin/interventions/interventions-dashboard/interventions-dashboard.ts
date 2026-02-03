@@ -49,6 +49,7 @@ export class InterventionsDashboard {
   readonly importsLoading = signal(false);
   readonly importsError = signal<string | null>(null);
   readonly importBatches = signal<InterventionImportBatch[]>([]);
+  readonly syncLatestOnLoad = signal(false);
   readonly ticketsLoading = signal(false);
   readonly ticketsError = signal<string | null>(null);
   readonly importTickets = signal<InterventionImportTicket[]>([]);
@@ -56,6 +57,7 @@ export class InterventionsDashboard {
   readonly resetResult = signal<string | null>(null);
   readonly resetError = signal<string | null>(null);
   readonly resetModalOpen = signal(false);
+  readonly viewCleared = signal(false);
   readonly rateSaving = signal(false);
   readonly rateSuccess = signal<string | null>(null);
   readonly rateError = signal<string | null>(null);
@@ -286,7 +288,7 @@ export class InterventionsDashboard {
     type: this.fb.nonNullable.control('')
   });
 
-  readonly hasData = computed(() => this.summaryItems().length > 0);
+  readonly hasData = computed(() => this.summaryItems().length > 0 || Boolean(this.latestImport()));
   readonly canEditRates = computed(() => this.auth.hasRole([Role.ADMIN, Role.DIRIGEANT]));
   readonly pageCount = computed(() => {
     const t = this.totalItems();
@@ -635,19 +637,24 @@ export class InterventionsDashboard {
             versioned?: number;
             rejected?: number;
             tickets?: number;
+            success?: number;
+            failure?: number;
           } | undefined;
           const total = data?.total ?? 0;
           const created = data?.created ?? 0;
           const versioned = data?.versioned ?? (data?.updated ?? 0);
           const rejected = data?.rejected ?? 0;
           const tickets = data?.tickets ?? 0;
+          const success = data?.success ?? 0;
+          const failure = data?.failure ?? 0;
           if (total > 0) {
             this.importResult.set(
-              `Import terminé. Total: ${total}. Créées: ${created}. Versionnées: ${versioned}. Rejetées: ${rejected}. Tickets: ${tickets}.`
+              `Import terminé. Total: ${total}. Succès: ${success}. Échec: ${failure}. Créées: ${created}. Versionnées: ${versioned}. Rejetées: ${rejected}. Tickets: ${tickets}.`
             );
           } else {
             this.importResult.set('Import terminé.');
           }
+          this.syncLatestOnLoad.set(true);
           this.resetFileInput();
           this.loadFilters();
           this.loadImports();
@@ -680,6 +687,10 @@ export class InterventionsDashboard {
         this.importBatches.set(items);
         this.importsLoading.set(false);
         const latestId = items[0]?._id;
+        if (this.syncLatestOnLoad()) {
+          this.syncLatestOnLoad.set(false);
+          this.applyImportPeriod(items[0] || null);
+        }
         this.loadTickets(latestId);
       },
       error: (err) => {
@@ -713,6 +724,25 @@ export class InterventionsDashboard {
         this.ticketsError.set(this.apiError(err, 'Erreur chargement tickets'));
       }
     });
+  }
+
+  private applyImportPeriod(batch: InterventionImportBatch | null): void {
+    if (!batch) return;
+    const toDateInput = (value?: string) => {
+      if (!value) return '';
+      const dt = new Date(value);
+      return Number.isNaN(dt.getTime()) ? '' : dt.toISOString().slice(0, 10);
+    };
+    const fromDate = toDateInput(batch.periodStart || batch.importedAt || batch.createdAt);
+    const toDate = toDateInput(batch.periodEnd || batch.periodStart || batch.importedAt || batch.createdAt);
+    if (!fromDate && !toDate) return;
+    this.filterForm.patchValue({
+      fromDate: fromDate || '',
+      toDate: toDate || ''
+    });
+    this.page.set(1);
+    this.refresh();
+    this.refreshCompare();
   }
 
   importInvoices(): void {
@@ -774,29 +804,35 @@ export class InterventionsDashboard {
     this.resetLoading.set(true);
     this.resetError.set(null);
     this.resetResult.set(null);
-
-    this.svc.resetAll().subscribe({
-      next: (res) => {
-        this.resetLoading.set(false);
-        if (res.success) {
-          const deleted = res.data?.deleted ?? 0;
-          this.resetResult.set(`Données supprimées (${deleted}).`);
-          this.summaryItems.set([]);
-          this.totals.set(null);
-          this.loadFilters();
-          this.refresh();
-          return;
-        }
-        this.resetError.set('Erreur suppression');
-      },
-      error: (err: HttpErrorResponse) => {
-        this.resetLoading.set(false);
-        this.resetError.set(this.apiError(err, 'Erreur suppression'));
-      }
-    });
+    this.viewCleared.set(true);
+    this.summaryItems.set([]);
+    this.totals.set(null);
+    this.totalItems.set(0);
+    this.detailItems.set([]);
+    this.detailTotal.set(0);
+    this.detailOpen.set(false);
+    this.detailError.set(null);
+    this.importBatches.set([]);
+    this.importTickets.set([]);
+    this.importResult.set(null);
+    this.importError.set(null);
+    this.importsError.set(null);
+    this.ticketsError.set(null);
+    this.invoiceSummary.set(null);
+    this.lastImportedInvoices.set([]);
+    this.compareResult.set(null);
+    this.selectedPeriodKey.set('');
+    this.invoiceResult.set(null);
+    this.invoiceError.set(null);
+    this.compareError.set(null);
+    this.resetFileInput();
+    this.resetInvoiceInput();
+    this.resetLoading.set(false);
+    this.resetResult.set('Affichage réinitialisé (aucune donnée supprimée).');
   }
 
   refresh(): void {
+    this.viewCleared.set(false);
     const f = this.filterForm.getRawValue();
     this.loading.set(true);
     this.error.set(null);

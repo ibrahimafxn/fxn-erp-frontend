@@ -16,7 +16,7 @@ describe('VehicleService', () => {
     brand: 'Renault',
     model: 'Kangoo',
     year: 2022,
-    status: 'AVAILABLE',
+    state: 'AVAILABLE',
     idDepot: 'depot1'
   };
 

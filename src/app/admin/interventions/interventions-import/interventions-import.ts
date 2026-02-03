@@ -6,7 +6,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   InterventionService,
   InterventionImportBatch,
-  InterventionImportTicket
+  InterventionImportTicket,
+  InterventionImportCategory,
+  InterventionImportCategoryItem
 } from '../../../core/services/intervention.service';
 import { formatPersonName } from '../../../core/utils/text-format';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
@@ -22,6 +24,7 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 })
 export class InterventionsImport {
   private svc = inject(InterventionService);
+  private readonly emptyCategoryState = { items: [], total: 0, page: 1, loading: false, error: null } as const;
 
   @ViewChild('csvInput') private csvInput?: ElementRef<HTMLInputElement>;
 
@@ -38,6 +41,22 @@ export class InterventionsImport {
   readonly ticketsLoading = signal(false);
   readonly ticketsError = signal<string | null>(null);
   readonly importTickets = signal<InterventionImportTicket[]>([]);
+  readonly importCategoryState = signal<Record<InterventionImportCategory, {
+    items: InterventionImportCategoryItem[];
+    total: number;
+    page: number;
+    loading: boolean;
+    error: string | null;
+  }>>({
+    success: { items: [], total: 0, page: 1, loading: false, error: null },
+    failure: { items: [], total: 0, page: 1, loading: false, error: null },
+    versioned: { items: [], total: 0, page: 1, loading: false, error: null },
+    rejected: { items: [], total: 0, page: 1, loading: false, error: null },
+    tickets: { items: [], total: 0, page: 1, loading: false, error: null }
+  });
+  private readonly CATEGORY_LIMIT = 20;
+  readonly categoryKeys: InterventionImportCategory[] = ['success', 'failure', 'versioned', 'rejected', 'tickets'];
+  readonly lastImportBatchId = signal<string | null>(null);
 
   readonly latestImport = computed(() => this.importBatches()[0] || null);
   readonly latestImportNotice = computed(() => this.formatImportNotice(this.latestImport(), false));
@@ -52,6 +71,18 @@ export class InterventionsImport {
   readonly previewRecognizedList = signal<string[]>([]);
   readonly previewLoading = signal(false);
   readonly previewError = signal<string | null>(null);
+  readonly categoryLabels: Record<InterventionImportCategory, string> = {
+    success: 'Succès',
+    failure: 'Échec',
+    versioned: 'Versionnées',
+    rejected: 'Rejetées',
+    tickets: 'Tickets'
+  };
+  readonly Math = Math;
+
+  categoryState(category: InterventionImportCategory) {
+    return this.importCategoryState()[category] ?? this.emptyCategoryState;
+  }
 
   private formatImportNotice(batch: InterventionImportBatch | null, todayOnly: boolean): string | null {
     if (!batch) return null;
@@ -123,18 +154,27 @@ export class InterventionsImport {
             versioned?: number;
             rejected?: number;
             tickets?: number;
+            success?: number;
+            failure?: number;
+            importBatchId?: string;
           } | undefined;
           const total = data?.total ?? 0;
           const created = data?.created ?? 0;
           const versioned = data?.versioned ?? (data?.updated ?? 0);
           const rejected = data?.rejected ?? 0;
           const tickets = data?.tickets ?? 0;
+          const success = data?.success ?? 0;
+          const failure = data?.failure ?? 0;
           if (total > 0) {
             this.importResult.set(
-              `Import terminé. Total: ${total}. Créées: ${created}. Versionnées: ${versioned}. Rejetées: ${rejected}. Tickets: ${tickets}.`
+              `Import terminé. Total: ${total}. Succès: ${success}. Échec: ${failure}. Créées: ${created}. Versionnées: ${versioned}. Rejetées: ${rejected}. Tickets: ${tickets}.`
             );
           } else {
             this.importResult.set('Import terminé.');
+          }
+          if (data?.importBatchId) {
+            this.lastImportBatchId.set(String(data.importBatchId));
+            this.loadImportCategories(String(data.importBatchId));
           }
           this.resetFileInput();
           this.loadImports();
@@ -206,6 +246,10 @@ export class InterventionsImport {
         this.importBatches.set(items);
         this.importsLoading.set(false);
         const latestId = items[0]?._id;
+        if (latestId) {
+          this.lastImportBatchId.set(latestId);
+          this.loadImportCategories(latestId);
+        }
         this.loadTickets(latestId);
       },
       error: (err) => {
@@ -239,6 +283,82 @@ export class InterventionsImport {
         this.ticketsError.set(this.apiError(err, 'Erreur chargement tickets'));
       }
     });
+  }
+
+  loadImportCategories(importBatchId?: string): void {
+    const batchId = importBatchId || this.lastImportBatchId();
+    if (!batchId) return;
+    this.categoryKeys.forEach((category) => this.loadImportCategory(category, batchId, 1));
+  }
+
+  loadImportCategory(category: InterventionImportCategory, importBatchId: string, page: number): void {
+    const state = this.importCategoryState();
+    const current = state[category];
+    this.importCategoryState.set({
+      ...state,
+      [category]: { ...current, loading: true, error: null, page }
+    });
+    this.svc.listImportCategory({
+      category,
+      importBatchId,
+      page,
+      limit: this.CATEGORY_LIMIT
+    }).subscribe({
+      next: (res) => {
+        const data = res.data;
+        this.importCategoryState.set({
+          ...this.importCategoryState(),
+          [category]: {
+            items: data.items || [],
+            total: data.total || 0,
+            page: data.page || page,
+            loading: false,
+            error: null
+          }
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        const message = this.apiError(err, 'Erreur chargement catégorie');
+        this.importCategoryState.set({
+          ...this.importCategoryState(),
+          [category]: {
+            ...this.importCategoryState()[category],
+            loading: false,
+            error: message
+          }
+        });
+      }
+    });
+  }
+
+  prevCategoryPage(category: InterventionImportCategory): void {
+    const state = this.categoryState(category);
+    if (state.page <= 1) return;
+    const batchId = this.lastImportBatchId();
+    if (!batchId) return;
+    this.loadImportCategory(category, batchId, state.page - 1);
+  }
+
+  nextCategoryPage(category: InterventionImportCategory): void {
+    const state = this.categoryState(category);
+    const totalPages = Math.max(1, Math.ceil((state.total || 0) / this.CATEGORY_LIMIT));
+    if (state.page >= totalPages) return;
+    const batchId = this.lastImportBatchId();
+    if (!batchId) return;
+    this.loadImportCategory(category, batchId, state.page + 1);
+  }
+
+  categoryPageRange(category: InterventionImportCategory): string {
+    const state = this.categoryState(category);
+    if (!state.total) return '0';
+    const start = (state.page - 1) * this.CATEGORY_LIMIT + 1;
+    const end = Math.min(state.page * this.CATEGORY_LIMIT, state.total);
+    return `${start}–${end} / ${state.total}`;
+  }
+
+  categoryTotalPages(category: InterventionImportCategory): number {
+    const state = this.categoryState(category);
+    return Math.max(1, Math.ceil((state.total || 0) / this.CATEGORY_LIMIT));
   }
 
   ticketTechLabel(ticket: InterventionImportTicket): string {

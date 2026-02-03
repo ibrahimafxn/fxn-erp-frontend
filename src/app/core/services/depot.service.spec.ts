@@ -15,7 +15,7 @@ describe('DepotService', () => {
     name: 'Dépôt Principal',
     address: '123 Rue Test',
     city: 'Paris',
-    manager: null
+    managerId: null
   };
 
   const mockDepotList: DepotListResult = {
@@ -134,7 +134,7 @@ describe('DepotService', () => {
       const newDepot = { name: 'Nouveau Dépôt', address: '456 Rue Nouvelle' };
 
       service.createDepot(newDepot).subscribe(response => {
-        expect(response.body?.success).toBeTrue();
+        expect(response.success).toBeTrue();
       });
 
       const req = httpMock.expectOne(`${environment.apiBaseUrl}/depots`);
@@ -173,14 +173,14 @@ describe('DepotService', () => {
   describe('assignManager', () => {
     it('should send POST request to assign manager', () => {
       service.assignManager('depot1', 'user123').subscribe(depot => {
-        expect(depot.manager).toBe('user123');
+        expect(depot.managerId).toBe('user123');
       });
 
       const req = httpMock.expectOne(`${environment.apiBaseUrl}/depots/depot1/assign-manager`);
       expect(req.request.method).toBe('POST');
       expect(req.request.body).toEqual({ managerId: 'user123' });
 
-      req.flush({ success: true, data: { ...mockDepot, manager: 'user123' } });
+      req.flush({ success: true, data: { ...mockDepot, managerId: 'user123' } });
     });
 
     it('should allow removing manager with null', () => {
@@ -189,13 +189,13 @@ describe('DepotService', () => {
       const req = httpMock.expectOne(`${environment.apiBaseUrl}/depots/depot1/assign-manager`);
       expect(req.request.body).toEqual({ managerId: null });
 
-      req.flush({ success: true, data: { ...mockDepot, manager: null } });
+      req.flush({ success: true, data: { ...mockDepot, managerId: null } });
     });
   });
 
   describe('getDepotStats', () => {
     it('should fetch depot statistics', () => {
-      const mockStats = { materials: 10, consumables: 25, vehicles: 5 };
+      const mockStats = { materials: 10, consumables: 25, vehicles: 5, technicians: 3 };
 
       service.getDepotStats('depot1').subscribe(stats => {
         expect(stats).toEqual(mockStats);

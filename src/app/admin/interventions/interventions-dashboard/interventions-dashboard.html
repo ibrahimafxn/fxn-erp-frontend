@@ -1,179 +1,6 @@
 <section class="interventions">
-  <header class="page-header card hero">
-    <div>
-      <h1>Calcul d'attachement</h1>
-      <p class="subtitle">Import CSV et synthèse par technicien.</p>
-    </div>
+  @if (!viewCleared()) {
 
-    <div class="header-actions">
-      <label class="file-input" [class.disabled]="hasData() || importLoading()">
-        <input
-          #csvInput
-          type="file"
-          accept=".csv"
-          [disabled]="hasData() || importLoading()"
-          (click)="onFileClick()"
-          (change)="onFileChange($event)"
-        />
-        <span class="material-icons notranslate" aria-hidden="true">upload_file</span>
-        <span>Choisir un export CSV</span>
-      </label>
-      @if (selectedFile) {
-        <div class="file-meta">
-          <span class="material-icons notranslate" aria-hidden="true">description</span>
-          <span>{{ selectedFile.name }}</span>
-        </div>
-      }
-      <button
-        class="btn-danger"
-        type="button"
-        (click)="openResetModal()"
-        [disabled]="resetLoading() || importLoading() || selectedFile || !hasData()"
-      >
-        <span class="material-icons notranslate" aria-hidden="true">delete_forever</span>
-        @if (resetLoading()) { Reset… } @else { Reset data }
-      </button>
-      <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading() || !selectedFile">
-        <span class="material-icons notranslate" aria-hidden="true">cloud_upload</span>
-        @if (importLoading()) { Import… } @else { Importer }
-      </button>
-    </div>
-  </header>
-
-  @if (importError()) {
-    <div class="state error card"><strong>Import :</strong> {{ importError() }}</div>
-  } @else if (importResult()) {
-    <div class="state ok card">{{ importResult() }}</div>
-  }
-  @if (resetError()) {
-    <div class="state error card"><strong>Reset :</strong> {{ resetError() }}</div>
-  } @else if (resetResult()) {
-    <div class="state ok card">{{ resetResult() }}</div>
-  }
-
-  <section class="card executive-kpi">
-    <div class="executive-head">
-      <h2><span class="material-icons notranslate">leaderboard</span>Pilotage ERT</h2>
-      <p>Vision synthétique pour les dirigeants de sous-traitant.</p>
-    </div>
-    <div class="executive-kpi-grid">
-      <article class="kpi-pill">
-        <span class="label">Interventions / technicien</span>
-        <span class="value">{{ averagePerTech() }}</span>
-        <p class="helper">Moyenne sur la période sélectionnée.</p>
-      </article>
-      <article class="kpi-pill">
-        <span class="label">Tickets ouverts</span>
-        <span class="value">{{ openTickets() }}</span>
-        <p class="helper">Tickets d’import en attente.</p>
-      </article>
-      <article class="kpi-pill">
-        <span class="label">Taux de rejet</span>
-        <span class="value">{{ rejectRate() }}%</span>
-        <p class="helper">Par rapport aux interventions créées.</p>
-      </article>
-      <article class="kpi-pill">
-        <span class="label">Part reconnexions</span>
-        <span class="value">{{ reconnectionShare() }}%</span>
-        <p class="helper">Reconnexions vs total.</p>
-      </article>
-      <article class="kpi-pill">
-        <span class="label">Écart CA</span>
-        <span class="value" [class.positive]="revenueGap() >= 0" [class.negative]="revenueGap() < 0">
-          {{ revenueGap() | number:'1.0-0' }} €
-        </span>
-        <p class="helper">OSIRIS - factures.</p>
-      </article>
-    </div>
-    <div class="executive-nav">
-      <a class="btn-link" routerLink="/admin/interventions/import">
-        <i class="material-icons notranslate">file_upload</i> Importer interventions
-      </a>
-      <a class="btn-link" routerLink="/admin/technicians/interventions">
-        <i class="material-icons notranslate">support_agent</i> Dashboard techniciens
-      </a>
-      <a class="btn-link" routerLink="/admin/interventions/dashboard">
-        <i class="material-icons notranslate">savings</i> Comparer factures
-      </a>
-      <a class="btn-link" routerLink="/admin/technicians/activity">
-        <i class="material-icons notranslate">trending_up</i> Accès opérationnel
-      </a>
-    </div>
-  </section>
-
-  <section class="card">
-    <div class="table-head">
-      <h2><span class="material-icons notranslate">history</span>Derniers imports</h2>
-      <p>Archive CSV et statut du dernier import.</p>
-    </div>
-    <div class="invoice-summary">
-      @if (importsLoading()) {
-        <div class="state">Chargement des imports…</div>
-      } @else if (importsError()) {
-        <div class="state error">{{ importsError() }}</div>
-      } @else if (!latestImport()) {
-        <div class="state">Aucun import enregistré.</div>
-      } @else {
-        <div class="summary-card">
-          <span class="label">{{ latestImport().originalName || 'Import CSV' }}</span>
-          <span class="value">{{ latestImport().status || '—' }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Créées</span>
-          <span class="value">{{ latestImport().totals?.created ?? 0 }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Versionnées</span>
-          <span class="value">{{ latestImport().totals?.versioned ?? 0 }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Rejetées</span>
-          <span class="value">{{ latestImport().totals?.rejected ?? 0 }}</span>
-        </div>
-        <button class="btn-outline" type="button" (click)="downloadLatestImport()" [disabled]="!latestImport()">
-          <span class="material-icons notranslate">download</span>
-          Télécharger CSV
-        </button>
-      }
-    </div>
-  </section>
-
-  <section class="table card">
-    <div class="table-head">
-      <h2><span class="material-icons notranslate">report</span>Tickets import (dernier import)</h2>
-      <p>Interventions rejetées en attente de résolution.</p>
-    </div>
-    @if (ticketsLoading()) {
-      <div class="state">Chargement des tickets…</div>
-    } @else if (ticketsError()) {
-      <div class="state error">{{ ticketsError() }}</div>
-    } @else if (importTickets().length === 0) {
-      <div class="state">Aucun ticket ouvert.</div>
-    } @else {
-      <table>
-        <thead>
-          <tr>
-            <th>Num Inter</th>
-            <th>Technicien</th>
-            <th>Raison</th>
-            <th>Import</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (ticket of importTickets(); track ticket._id) {
-            <tr>
-              <td>{{ ticket.numInter || '—' }}</td>
-              <td>{{ ticketTechLabel(ticket) }}</td>
-              <td>{{ ticket.reason || '—' }}</td>
-              <td>{{ ticket.importBatchId?.originalName || ticket.importBatchId?.storedName || '—' }}</td>
-              <td>{{ ticket.createdAt | date:'short' }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    }
-  </section>
 
   <section class="invoice card">
     <div class="invoice-head">
@@ -358,12 +185,16 @@
     </section>
   }
 
+  } @else {
+    <div class="state hint card">Affichage réinitialisé. Utilise les filtres ou un import pour recharger.</div>
+  }
+
   <app-confirm-delete-modal
     [open]="resetModalOpen()"
-    entityLabel="données interventions"
-    entityName="toutes les interventions importées"
-    dangerHint="Cette action supprimera toutes les interventions."
-    confirmText="Reset"
+    entityLabel="affichage interventions"
+    entityName="la vue actuelle"
+    dangerHint="Cette action vide uniquement la page et ne supprime rien en base."
+    confirmText="Réinitialiser"
     [confirming]="resetLoading()"
     (cancel)="closeResetModal()"
     (confirm)="confirmResetData()">

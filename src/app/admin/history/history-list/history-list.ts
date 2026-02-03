@@ -78,6 +78,49 @@ export class HistoryList {
   });
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly sortField = signal<'date' | 'resource' | 'action' | 'from' | 'to' | 'quantity' | 'author' | 'status'>('date');
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
+  readonly sortedItems = computed<Movement[]>(() => {
+    const items = [...this.items()];
+    const field = this.sortField();
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
+    const compareText = (a: string, b: string) =>
+      this.normalizeText(a).localeCompare(this.normalizeText(b), 'fr', { sensitivity: 'base' });
+    const compareNumber = (a: number, b: number) => a - b;
+    const compareDate = (value: string | Date | null | undefined) => {
+      if (!value) return 0;
+      const time = new Date(value).getTime();
+      return Number.isFinite(time) ? time : 0;
+    };
+    return items.sort((a, b) => {
+      switch (field) {
+        case 'date':
+          return direction * compareNumber(compareDate(a.createdAt), compareDate(b.createdAt));
+        case 'resource':
+          return direction * compareText(this.resourceLabel(a), this.resourceLabel(b));
+        case 'action':
+          return direction * compareText(this.actionLabelForRow(a), this.actionLabelForRow(b));
+        case 'from': {
+          const aLabel = this.endpointLabel(a.from?.type, a.from?.id, (a as any).fromLabel);
+          const bLabel = this.endpointLabel(b.from?.type, b.from?.id, (b as any).fromLabel);
+          return direction * compareText(aLabel, bLabel);
+        }
+        case 'to': {
+          const aLabel = this.endpointLabel(a.to?.type, a.to?.id, (a as any).toLabel);
+          const bLabel = this.endpointLabel(b.to?.type, b.to?.id, (b as any).toLabel);
+          return direction * compareText(aLabel, bLabel);
+        }
+        case 'quantity':
+          return direction * compareNumber(Number(a.quantity || 0), Number(b.quantity || 0));
+        case 'author':
+          return direction * compareText(this.authorLabel(a), this.authorLabel(b));
+        case 'status':
+          return direction * compareText(this.statusLabel(a.status), this.statusLabel(b.status));
+        default:
+          return 0;
+      }
+    });
+  });
 
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly managerDepotId = computed(() => {
@@ -198,6 +241,20 @@ export class HistoryList {
     this.refresh(true);
   }
 
+  setSort(field: 'date' | 'resource' | 'action' | 'from' | 'to' | 'quantity' | 'author' | 'status'): void {
+    if (this.sortField() === field) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+    this.sortField.set(field);
+    this.sortDirection.set(field === 'date' ? 'desc' : 'asc');
+  }
+
+  sortArrow(field: 'date' | 'resource' | 'action' | 'from' | 'to' | 'quantity' | 'author' | 'status'): string {
+    if (this.sortField() !== field) return '↕';
+    return this.sortDirection() === 'asc' ? '↑' : '↓';
+  }
+
   endpointLabel(type: string, id: string | null | undefined, label?: string): string {
     if (label) return label;
     if (!id) return '—';
@@ -257,6 +314,7 @@ export class HistoryList {
   }
 
   actionLabelForRow(m: Movement): string {
+    if (this.isCancellationMovement(m)) return 'Annulation';
     const action = String(m.action || '').trim().toUpperCase();
     if (this.isCanceledStatus(m.status) && action === 'ASSIGN') return 'Reprise';
     return this.actionLabel(action);

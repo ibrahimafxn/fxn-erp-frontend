@@ -21,7 +21,7 @@ module.exports = function (config) {
       reporters: [{ type: 'html' }, { type: 'text-summary' }]
     },
     reporters: ['progress', 'kjhtml'],
-    port: 9877,
+    port: Number(process.env.KARMA_PORT) || 9877,
     hostname: '127.0.0.1',
     listenAddress: '127.0.0.1',
     customLaunchers: {

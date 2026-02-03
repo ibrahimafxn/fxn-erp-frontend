@@ -52,7 +52,7 @@ export class OrderDetail {
   }
 
   backToList(): void {
-    this.location.back();
+    this.router.navigate(['/admin/orders']).then();
   }
 
   linesTotal(lines: OrderLine[] = []): number {

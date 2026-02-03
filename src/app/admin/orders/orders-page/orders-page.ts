@@ -20,6 +20,7 @@ export class OrdersPage {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private orders = inject(OrderService);
+  private readonly tvaRate = 0.2;
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -59,6 +60,8 @@ export class OrdersPage {
   } | null>(null);
   readonly importModalOpen = signal(false);
   readonly pageRange = formatPageRange;
+  readonly sortField = signal<'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva'>('date');
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly importTotalTva = computed(() => {
     const preview = this.importPreview();
     if (!preview) return 0;
@@ -69,6 +72,37 @@ export class OrdersPage {
     const t = this.total();
     const l = this.limit();
     return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
+  });
+  readonly sortedItems = computed(() => {
+    const items = [...this.items()];
+    const field = this.sortField();
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
+    const compareText = (a?: string | null, b?: string | null) =>
+      (a ?? '').localeCompare(b ?? '', 'fr', { sensitivity: 'base' });
+    const compareNumber = (a?: number | null, b?: number | null) => (a ?? 0) - (b ?? 0);
+    const compareDate = (value?: string | null) => {
+      if (!value) return 0;
+      const time = new Date(value).getTime();
+      return Number.isFinite(time) ? time : 0;
+    };
+    return items.sort((a, b) => {
+      switch (field) {
+        case 'reference':
+          return direction * compareText(a.reference, b.reference);
+        case 'client':
+          return direction * compareText(a.client, b.client);
+        case 'status':
+          return direction * compareText(a.status, b.status);
+        case 'date':
+          return direction * (compareDate(a.date) - compareDate(b.date));
+        case 'ttc':
+          return direction * compareNumber(this.displayAmount(a), this.displayAmount(b));
+        case 'tva':
+          return direction * compareNumber(this.tvaAmount(a), this.tvaAmount(b));
+        default:
+          return 0;
+      }
+    });
   });
 
   readonly filterForm = this.fb.nonNullable.group({
@@ -265,6 +299,49 @@ export class OrdersPage {
     this.limit.set(value);
     this.page.set(1);
     this.refresh();
+  }
+
+  setSort(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva'): void {
+    if (this.sortField() === field) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+    this.sortField.set(field);
+    this.sortDirection.set(field === 'date' ? 'desc' : 'asc');
+  }
+
+  sortArrow(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva'): string {
+    if (this.sortField() !== field) return '↕';
+    return this.sortDirection() === 'asc' ? '↑' : '↓';
+  }
+
+  tvaAmount(order: Order): number {
+    if (Number.isFinite(order.tvaAmount)) {
+      return Number(order.tvaAmount);
+    }
+    if (order.lines?.length) {
+      return order.lines.reduce((sum, line) => {
+        if (!line.applyTva) return sum;
+        const qty = Number(line.quantity ?? 0);
+        const unit = Number(line.unitPrice ?? 0);
+        if (!Number.isFinite(qty) || !Number.isFinite(unit)) return sum;
+        return sum + qty * unit * this.tvaRate;
+      }, 0);
+    }
+    return Number(order.amount ?? 0) * this.tvaRate;
+  }
+
+  private isTvaActive(order: Order): boolean {
+    if (Number.isFinite(order.tvaAmount)) {
+      return Number(order.tvaAmount) > 0;
+    }
+    return (order.lines || []).some((line) => Boolean(line.applyTva));
+  }
+
+  displayAmount(order: Order): number {
+    const baseAmount = Number(order.amount ?? 0);
+    if (!this.isTvaActive(order)) return baseAmount;
+    return baseAmount + this.tvaAmount(order);
   }
 
   formatAmount(value?: number | string | null): string {

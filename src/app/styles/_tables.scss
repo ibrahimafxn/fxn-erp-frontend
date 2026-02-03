@@ -119,3 +119,21 @@ tbody tr:hover {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+@media (max-width: 1100px) {
+  .table,
+  .table-wrap,
+  .table-wrapper,
+  .table-scroll,
+  .compare-table,
+  .detail-table,
+  .lines-table,
+  .history-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 700px;
+  }
+}

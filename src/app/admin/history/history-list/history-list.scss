@@ -94,6 +94,27 @@ thead th {
   border-bottom: 1px solid var(--fxn-border-strong);
 }
 
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sort-arrow {
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+.sort-button:hover .sort-arrow {
+  opacity: 1;
+}
+
 thead th:last-child,
 tbody td:last-child {
   padding-right: 1.8rem;
@@ -132,8 +153,8 @@ tbody td {
 }
 
 .badge.assign {
-  background: rgba(0, 180, 120, 0.18);
-  border-color: rgba(0, 180, 120, 0.35);
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(248, 113, 113, 0.4);
 }
 
 .badge.release {
@@ -150,6 +171,28 @@ tbody td {
 .badge.out {
   background: rgba(255, 0, 60, 0.18);
   border-color: rgba(255, 0, 60, 0.35);
+}
+
+.badge.adjust,
+.badge.update {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.45);
+}
+
+.badge.create {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: rgba(234, 179, 8, 0.45);
+}
+
+.badge.delete {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.badge.cancel {
+  background: rgba(148, 163, 184, 0.2);
+  border-color: rgba(148, 163, 184, 0.45);
+  color: rgba(226, 232, 240, 0.9);
 }
 
 .pill {

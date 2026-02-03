@@ -18,6 +18,7 @@ type TechnicianInterventionStats = {
   success: number;
   failure: number;
   avgDuration: number;
+  avgFailureDuration: number;
   successRate: number;
   topTechnicians: Array<{ label: string; success: number; failure: number }>;
   topTypes: Array<{ label: string; count: number }>;
@@ -29,6 +30,7 @@ const EMPTY_STATS: TechnicianInterventionStats = {
   success: 0,
   failure: 0,
   avgDuration: 0,
+  avgFailureDuration: 0,
   successRate: 0,
   topTechnicians: [],
   topTypes: [],
@@ -36,10 +38,11 @@ const EMPTY_STATS: TechnicianInterventionStats = {
 };
 
 type SortField = 'date' | 'type' | 'statut' | 'duree';
+type InterventionDetailField = { key: keyof InterventionItem; label: string };
 
 const TYPE_CANONICAL_ALIASES = new Map([
-  ['RACIH', 'IMM'],
-  ['RAC_IH', 'IMM'],
+  ['RACIH', 'RACIH'],
+  ['RAC_IH', 'RACIH'],
   ['RACPAV', 'RACPAV'],
   ['RAC_PAV', 'RACPAV'],
   ['PRESTA COMPL', 'PRESTA_COMPL'],
@@ -63,15 +66,23 @@ const TYPE_CANONICAL_ALIASES = new Map([
   ['RECO IP', 'RECOIP'],
   ['RECO-IP', 'RECOIP'],
   ['RECO', 'RECOIP'],
-  ['SAV', 'SAV']
+  ['SAV', 'SAV'],
+  ['CABLE_PAV_1', 'CABLE_PAV_1'],
+  ['CABLE_PAV_2', 'CABLE_PAV_2'],
+  ['CABLE_PAV_3', 'CABLE_PAV_3'],
+  ['CABLE_PAV_4', 'CABLE_PAV_4']
 ]);
 const ARTICLE_TYPE_LABELS = [
   { label: 'PRO S', marker: 'RACPRO_S' },
   { label: 'PRO C', marker: 'RACPRO_C' },
   { label: 'PAV', marker: 'RACPAV' },
-  { label: 'IMM', marker: 'RACIH' },
+  { label: 'RACIH', marker: 'RACIH' },
   { label: 'RECO', marker: 'RECOIP' },
   { label: 'SAV', marker: 'SAV' },
+  { label: 'CABLE PAV 1', marker: 'CABLE_PAV_1' },
+  { label: 'CABLE PAV 2', marker: 'CABLE_PAV_2' },
+  { label: 'CABLE PAV 3', marker: 'CABLE_PAV_3' },
+  { label: 'CABLE PAV 4', marker: 'CABLE_PAV_4' },
   { label: 'PRESTA COMPL', marker: 'PRESTA_COMPL' },
   { label: 'PRESTA F8', marker: 'REPFOU_PRI' }
 ];
@@ -79,11 +90,15 @@ const ARTICLE_TYPE_BY_CODE = new Map([
   ['RACPRO_S', 'PRO S'],
   ['RACPRO_C', 'PRO C'],
   ['RACPAV', 'PAV'],
-  ['RACIH', 'IMM'],
+  ['RACIH', 'RACIH'],
   ['RECOIP', 'RECO'],
   ['PRESTA_COMPL', 'PRESTA COMPL'],
   ['REPFOU_PRI', 'PRESTA F8'],
-  ['SAV', 'SAV']
+  ['SAV', 'SAV'],
+  ['CABLE_PAV_1', 'CABLE PAV 1'],
+  ['CABLE_PAV_2', 'CABLE PAV 2'],
+  ['CABLE_PAV_3', 'CABLE PAV 3'],
+  ['CABLE_PAV_4', 'CABLE PAV 4']
 ]);
 const REQUIRED_TYPE_LABELS = ['RECOIP'];
 
@@ -111,6 +126,49 @@ export class TechnicianInterventions {
   readonly total = signal(0);
   readonly page = signal(1);
   readonly limit = signal(20);
+  readonly detailOpen = signal(false);
+  readonly selectedDetail = signal<InterventionItem | null>(null);
+
+  private readonly detailFields: InterventionDetailField[] = [
+    { key: '_id', label: 'ID' },
+    { key: 'numInter', label: 'Numero' },
+    { key: 'dateRdv', label: 'Date RDV' },
+    { key: 'region', label: 'Region' },
+    { key: 'plaque', label: 'Plaque' },
+    { key: 'societe', label: 'Societe' },
+    { key: 'techFirstName', label: 'Technicien prenom' },
+    { key: 'techLastName', label: 'Technicien nom' },
+    { key: 'techFull', label: 'Technicien' },
+    { key: 'type', label: 'Type' },
+    { key: 'client', label: 'Client' },
+    { key: 'statut', label: 'Statut' },
+    { key: 'commentairesTechnicien', label: 'Commentaires technicien' },
+    { key: 'debut', label: 'Debut' },
+    { key: 'duree', label: 'Duree' },
+    { key: 'clotureHotline', label: 'Cloture hotline' },
+    { key: 'clotureTech', label: 'Cloture tech' },
+    { key: 'debutIntervention', label: 'Debut intervention' },
+    { key: 'creneauPlus2h', label: 'Creneau +2h' },
+    { key: 'motifEchec', label: 'Motif echec' },
+    { key: 'ville', label: 'Ville' },
+    { key: 'typeLogement', label: 'Type logement' },
+    { key: 'actionSav', label: 'Action SAV' },
+    { key: 'longueurCable', label: 'Longueur cable' },
+    { key: 'typePbo', label: 'Type PBO' },
+    { key: 'typeOperation', label: 'Type operation' },
+    { key: 'typeHabitation', label: 'Type habitation' },
+    { key: 'priseExistante', label: 'Prise existante' },
+    { key: 'recoRacc', label: 'Reco/Racc' },
+    { key: 'marque', label: 'Marque' },
+    { key: 'listePrestationsRaw', label: 'Liste prestations' },
+    { key: 'articlesRaw', label: 'Articles' },
+    { key: 'categories', label: 'Categories' },
+    { key: 'isSuccess', label: 'Succes' },
+    { key: 'isFailure', label: 'Echec' },
+    { key: 'versionIndex', label: 'Version' },
+    { key: 'latestVersionId', label: 'Derniere version ID' },
+    { key: 'importedAt', label: 'Importe le' }
+  ];
 
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -229,7 +287,7 @@ export class TechnicianInterventions {
       next: (res) => {
         this.filterLoading.set(false);
         if (res?.success) {
-          this.filters.set(res.data);
+          this.filters.set(this.ensureCablePavTypes(res.data));
           return;
         }
         this.filtersError.set('Impossible de charger les filtres des interventions.');
@@ -239,6 +297,17 @@ export class TechnicianInterventions {
         this.filtersError.set(this.apiError(err, 'Impossible de charger les filtres des interventions.'));
       }
     });
+  }
+
+  private ensureCablePavTypes(filters: InterventionFilters): InterventionFilters {
+    const extra = ['CABLE_PAV_1', 'CABLE_PAV_2', 'CABLE_PAV_3', 'CABLE_PAV_4'];
+    const types = Array.isArray(filters?.types) ? [...filters.types] : [];
+    for (const entry of extra) {
+      if (!types.includes(entry)) {
+        types.push(entry);
+      }
+    }
+    return { ...filters, types };
   }
 
   private loadTechnicians(): void {
@@ -308,6 +377,8 @@ export class TechnicianInterventions {
     let failure = 0;
     let durationSum = 0;
     let durationCount = 0;
+    let failureDurationSum = 0;
+    let failureDurationCount = 0;
     const technicians = new Map<string, { success: number; failure: number }>();
     const types = new Map<string, number>();
     const statuses = new Map<string, number>();
@@ -331,19 +402,30 @@ export class TechnicianInterventions {
       const isCancelled = statut.includes('annul');
       const isEchecTermine = statut.includes('echec') && statut.includes('termine');
       const isCompleted = statut.includes('termine') || statut.includes('cloture') || isEchecTermine;
+      const isFailure = isEchecTermine;
       const value = isCompleted ? this.computeDuration(item) : 0;
-      if (Number.isFinite(value) && value > 0 && !isCancelled) {
+      if (Number.isFinite(value) && value > 0 && !isCancelled && !isFailure) {
         durationSum += value;
         durationCount++;
       }
-      const techLabel = this.formatTechnicianName(item);
-      const techStats = technicians.get(techLabel) ?? { success: 0, failure: 0 };
-      if (statut.includes('echec') || statut.includes('fail')) {
-        techStats.failure = (techStats.failure || 0) + 1;
-      } else if (successMatches.length) {
-        techStats.success = (techStats.success || 0) + 1;
+      const failureValue = isFailure ? this.computeFailureDuration(item) : 0;
+      if (Number.isFinite(failureValue) && failureValue > 0 && !isCancelled) {
+        failureDurationSum += failureValue;
+        failureDurationCount++;
       }
-      technicians.set(techLabel, techStats);
+      const matchesAllowedType = !allowedType
+        || successMatches.includes(allowedType)
+        || this.matchesAllowedType(this.canonicalType(item.type, item), allowedType);
+      if (matchesAllowedType) {
+        const techLabel = this.formatTechnicianName(item);
+        const techStats = technicians.get(techLabel) ?? { success: 0, failure: 0 };
+        if (statut.includes('echec') || statut.includes('fail')) {
+          techStats.failure = (techStats.failure || 0) + 1;
+        } else if (successMatches.length) {
+          techStats.success = (techStats.success || 0) + 1;
+        }
+        technicians.set(techLabel, techStats);
+      }
       if (allowedType) {
         if (successMatches.length) {
           if (successMatches.includes(allowedType)) {
@@ -368,7 +450,8 @@ export class TechnicianInterventions {
       const articlesNormalized = this.normalizeToken(item.articlesRaw);
       const articleLabels = new Set<string>();
       for (const { label, marker } of ARTICLE_TYPE_LABELS) {
-        if (articlesNormalized.includes(marker)) {
+        const altMarker = marker.replace(/_/g, ' ');
+        if (articlesNormalized.includes(marker) || articlesNormalized.includes(altMarker)) {
           if (allowedType && !this.isAllowedArticleLabel(label, allowedTypeLabel)) {
             continue;
           }
@@ -430,6 +513,7 @@ export class TechnicianInterventions {
       }
     }
     uniqueTopTypes.sort((a, b) => b.count - a.count);
+    const filteredTopTypes = uniqueTopTypes.filter((entry) => !this.isRaccType(entry.label));
     const topStatuses = Array.from(statuses.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
@@ -442,9 +526,10 @@ export class TechnicianInterventions {
       success,
       failure,
       avgDuration: durationCount ? Math.round(durationSum / durationCount) : 0,
+      avgFailureDuration: failureDurationCount ? Math.round(failureDurationSum / failureDurationCount) : 0,
       successRate: denominator ? Math.round((success / denominator) * 100) : 0,
       topTechnicians,
-      topTypes: uniqueTopTypes,
+      topTypes: filteredTopTypes,
       topStatuses
     };
   }
@@ -462,9 +547,27 @@ export class TechnicianInterventions {
     return diffMs > 0 ? Math.round(diffMs / 60000) : 0;
   }
 
+  private computeFailureDuration(item: InterventionItem): number {
+    const start = item.debutIntervention || item.debut;
+    const end = item.clotureTech;
+    if (!start || !end) return 0;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime())) {
+      return 0;
+    }
+    const diffMs = endDate.getTime() - startDate.getTime();
+    return diffMs > 0 ? Math.round(diffMs / 60000) : 0;
+  }
+
   formatDuration(item: InterventionItem): string {
     const minutes = this.computeDuration(item);
-    return minutes > 0 ? `${minutes} min` : '';
+    if (minutes <= 0) return '';
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const remainder = minutes % 60;
+    if (remainder === 0) return `${hours} h`;
+    return `${hours} h ${remainder} min`;
   }
 
   private updateStatsDataset(items: InterventionItem[], totalCount: number, lastQuery: InterventionSummaryQuery): void {
@@ -613,7 +716,7 @@ export class TechnicianInterventions {
       return 'RACPAV';
     }
     if (statusNormalized.includes('RACIH')) {
-      return 'IMM';
+      return 'RACIH';
     }
     if (
       articlesNormalized.includes('RECOIP')
@@ -654,9 +757,37 @@ export class TechnicianInterventions {
     if (normalizedTypeCollapsed === 'REFRAC' || articlesNormalized.includes('REFRAC')) {
       return 'REFRAC';
     }
+    if (
+      normalizedTypeCollapsed.includes('CABLE PAV 1')
+      || articlesNormalized.includes('CABLE_PAV_1')
+      || articlesNormalized.includes('CABLE PAV 1')
+    ) {
+      return 'CABLE_PAV_1';
+    }
+    if (
+      normalizedTypeCollapsed.includes('CABLE PAV 2')
+      || articlesNormalized.includes('CABLE_PAV_2')
+      || articlesNormalized.includes('CABLE PAV 2')
+    ) {
+      return 'CABLE_PAV_2';
+    }
+    if (
+      normalizedTypeCollapsed.includes('CABLE PAV 3')
+      || articlesNormalized.includes('CABLE_PAV_3')
+      || articlesNormalized.includes('CABLE PAV 3')
+    ) {
+      return 'CABLE_PAV_3';
+    }
+    if (
+      normalizedTypeCollapsed.includes('CABLE PAV 4')
+      || articlesNormalized.includes('CABLE_PAV_4')
+      || articlesNormalized.includes('CABLE PAV 4')
+    ) {
+      return 'CABLE_PAV_4';
+    }
     if (!raw) return 'Autre';
     if (normalizedTypeCollapsed === 'RACIH') {
-      return 'IMM';
+      return 'RACIH';
     }
     return TYPE_CANONICAL_ALIASES.get(normalizedTypeCollapsed) ?? raw;
   }
@@ -681,7 +812,15 @@ export class TechnicianInterventions {
       ['REFC_DGR', 'REFC_DGR'],
       ['REFCDGR', 'REFC_DGR'],
       ['DEPLPRISE', 'DEPLPRISE'],
-      ['REFRAC', 'REFRAC']
+      ['REFRAC', 'REFRAC'],
+      ['CABLE_PAV_1', 'CABLE_PAV_1'],
+      ['CABLE_PAV_2', 'CABLE_PAV_2'],
+      ['CABLE_PAV_3', 'CABLE_PAV_3'],
+      ['CABLE_PAV_4', 'CABLE_PAV_4'],
+      ['CABLEPAV1', 'CABLE_PAV_1'],
+      ['CABLEPAV2', 'CABLE_PAV_2'],
+      ['CABLEPAV3', 'CABLE_PAV_3'],
+      ['CABLEPAV4', 'CABLE_PAV_4']
     ]);
     return aliases.get(normalized) ?? '';
   }
@@ -693,8 +832,17 @@ export class TechnicianInterventions {
     if (normalized === 'RACPRO_S') return 'PRO S';
     if (normalized === 'RACPRO_C') return 'PRO C';
     if (normalized === 'REPFOU_PRI') return 'PRESTA F8';
-    if (normalized === 'IMM' || normalized === 'RACIH') return 'IMM';
+    if (normalized === 'IMM' || normalized === 'RACIH') return 'RACIH';
+    if (normalized === 'CABLE_PAV_1') return 'CABLE PAV 1';
+    if (normalized === 'CABLE_PAV_2') return 'CABLE PAV 2';
+    if (normalized === 'CABLE_PAV_3') return 'CABLE PAV 3';
+    if (normalized === 'CABLE_PAV_4') return 'CABLE PAV 4';
     return label;
+  }
+
+  private isRaccType(label: string): boolean {
+    const normalized = this.normalizeToken(label);
+    return normalized.includes('RACC');
   }
 
   private matchesAllowedType(typeLabel: string, allowedType: string): boolean {
@@ -747,6 +895,32 @@ export class TechnicianInterventions {
   formatTechnicianName(item: InterventionItem): string {
     const formatted = formatPersonName(item.techFirstName ?? '', item.techLastName ?? '');
     return formatted || '–';
+  }
+
+  openDetails(item: InterventionItem): void {
+    this.selectedDetail.set(item);
+    this.detailOpen.set(true);
+  }
+
+  closeDetails(): void {
+    this.detailOpen.set(false);
+    this.selectedDetail.set(null);
+  }
+
+  detailEntries(): Array<{ label: string; value: string }> {
+    const item = this.selectedDetail();
+    if (!item) return [];
+    return this.detailFields.map((field) => ({
+      label: field.label,
+      value: this.formatDetailValue(item[field.key])
+    }));
+  }
+
+  private formatDetailValue(value: unknown): string {
+    if (value === null || value === undefined || value === '') return '—';
+    if (Array.isArray(value)) return value.length ? value.join(', ') : '—';
+    if (typeof value === 'boolean') return value ? 'Oui' : 'Non';
+    return String(value);
   }
 
   technicianLabel(tech: User): string {
@@ -807,7 +981,13 @@ export class TechnicianInterventions {
     const matches: string[] = [];
 
     if (articlesNormalized.includes('RACPAV')) matches.push('RACPAV');
-    if (statusNormalized.includes('RACIH')) matches.push('RACIH');
+    if (
+      statusNormalized.includes('RACIH')
+      || typeNormalized.includes('RACIH')
+      || articlesNormalized.includes('RACIH')
+    ) {
+      matches.push('RACIH');
+    }
     if (
       articlesNormalized.includes('RECOIP')
       || operationNormalized.includes('RECONNEX')
@@ -820,6 +1000,38 @@ export class TechnicianInterventions {
     }
     if (articlesNormalized.includes('RACPROC_C') || articlesNormalized.includes('RACPRO_C')) {
       matches.push('RACPRO_C');
+    }
+    if (
+      typeNormalized.includes('CABLE_PAV_1')
+      || typeNormalized.includes('CABLE PAV 1')
+      || articlesNormalized.includes('CABLE_PAV_1')
+      || articlesNormalized.includes('CABLE PAV 1')
+    ) {
+      matches.push('CABLE_PAV_1');
+    }
+    if (
+      typeNormalized.includes('CABLE_PAV_2')
+      || typeNormalized.includes('CABLE PAV 2')
+      || articlesNormalized.includes('CABLE_PAV_2')
+      || articlesNormalized.includes('CABLE PAV 2')
+    ) {
+      matches.push('CABLE_PAV_2');
+    }
+    if (
+      typeNormalized.includes('CABLE_PAV_3')
+      || typeNormalized.includes('CABLE PAV 3')
+      || articlesNormalized.includes('CABLE_PAV_3')
+      || articlesNormalized.includes('CABLE PAV 3')
+    ) {
+      matches.push('CABLE_PAV_3');
+    }
+    if (
+      typeNormalized.includes('CABLE_PAV_4')
+      || typeNormalized.includes('CABLE PAV 4')
+      || articlesNormalized.includes('CABLE_PAV_4')
+      || articlesNormalized.includes('CABLE PAV 4')
+    ) {
+      matches.push('CABLE_PAV_4');
     }
     if (articlesNormalized.includes('SAV') || typeNormalized === 'SAV') {
       matches.push('SAV');

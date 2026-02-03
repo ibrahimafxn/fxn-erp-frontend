@@ -22,6 +22,7 @@ export type Order = {
   date: string;
   status: string;
   amount: number;
+  tvaAmount?: number;
   notes?: string;
   lines?: OrderLine[];
   importedToDepotAt?: string | null;
@@ -48,6 +49,7 @@ export type OrderPayload = {
   date: string;
   status: string;
   amount: number;
+  tvaAmount?: number;
   notes?: string;
   lines?: OrderLine[];
 };

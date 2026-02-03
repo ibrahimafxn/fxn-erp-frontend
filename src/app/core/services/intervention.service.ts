@@ -132,6 +132,8 @@ export type InterventionImportBatch = {
     versioned?: number;
     rejected?: number;
     tickets?: number;
+    success?: number;
+    failure?: number;
   };
   createdAt?: string;
   importedAt?: string;
@@ -140,6 +142,8 @@ export type InterventionImportBatch = {
     firstName?: string;
     lastName?: string;
   };
+  periodStart?: string;
+  periodEnd?: string;
   isToday?: boolean;
 };
 
@@ -173,6 +177,27 @@ export type InterventionImportTicketResponse = {
   page: number;
   limit: number;
   items: InterventionImportTicket[];
+};
+
+export type InterventionImportCategory = 'success' | 'failure' | 'versioned' | 'rejected' | 'tickets';
+
+export type InterventionImportCategoryItem = {
+  numInter?: string;
+  techFull?: string;
+  statut?: string;
+  articles?: string;
+  reason?: string;
+  versionIndex?: number;
+  createdAt?: string;
+};
+
+export type InterventionImportCategoryResponse = {
+  total: number;
+  page: number;
+  limit: number;
+  category: InterventionImportCategory;
+  importBatchId?: string;
+  items: InterventionImportCategoryItem[];
 };
 
 export type InterventionImportSummaryQuery = {
@@ -275,8 +300,12 @@ export class InterventionService {
     if (query.type) params = params.set('type', query.type);
     if (query.page) params = params.set('page', String(query.page));
     if (query.limit) params = params.set('limit', String(query.limit));
+    params = params.set('_ts', String(Date.now()));
 
-    return this.http.get<{ success: boolean; data: InterventionSummaryResponse }>(`${this.baseUrl}/summary`, { params });
+    return this.http.get<{ success: boolean; data: InterventionSummaryResponse }>(`${this.baseUrl}/summary`, {
+      params,
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
+    });
   }
 
   exportCsv(query: InterventionSummaryQuery = {}): Observable<Blob> {
@@ -364,6 +393,22 @@ export class InterventionService {
     if (query.importBatchId) params = params.set('importBatchId', query.importBatchId);
     return this.http.get<{ success: boolean; data: InterventionImportTicketResponse }>(
       `${this.baseUrl}/import-tickets`,
+      { params }
+    );
+  }
+
+  listImportCategory(query: {
+    category: InterventionImportCategory;
+    importBatchId?: string;
+    page?: number;
+    limit?: number;
+  }): Observable<{ success: boolean; data: InterventionImportCategoryResponse }> {
+    let params = new HttpParams().set('category', query.category);
+    if (query.page) params = params.set('page', String(query.page));
+    if (query.limit) params = params.set('limit', String(query.limit));
+    if (query.importBatchId) params = params.set('importBatchId', query.importBatchId);
+    return this.http.get<{ success: boolean; data: InterventionImportCategoryResponse }>(
+      `${this.baseUrl}/imports/category`,
       { params }
     );
   }
