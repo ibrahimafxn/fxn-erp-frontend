@@ -39,7 +39,7 @@
                   class="pill"
                   [class.pill-green]="(item.type || '').toUpperCase() === 'AUTO'"
                   [class.pill-gold]="(item.type || '').toUpperCase() === 'SALARIE'"
-                >{{ item.type || '—' }}</span>
+                >{{ displayType(item.type) }}</span>
               </td>
               <td class="actions" data-label="Actions">
                 <div class="actions-group">

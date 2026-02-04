@@ -84,7 +84,7 @@ export class HrList {
     { value: 'HABILITATION', label: 'Habilitation' }
   ];
   readonly leaveTypes = ['CONGE', 'MALADIE', 'PERMISSION', 'AUTRE'];
-  readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'ASSOCIE', 'AUTRE'];
+  readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'AUTRE'];
   readonly employeeRoles = [
     { value: '', label: 'Tous les rôles' },
     { value: 'ADMIN', label: 'ADMIN' },

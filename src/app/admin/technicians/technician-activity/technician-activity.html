@@ -37,13 +37,19 @@
 
       <label>
         Du
-        <input type="date" formControlName="fromDate" />
+        <input type="date" formControlName="fromDate" (change)="applyFilters()" />
       </label>
 
       <label>
         Au
-        <input type="date" formControlName="toDate" />
+        <input type="date" formControlName="toDate" (change)="applyFilters()" />
       </label>
+
+      <div class="amount-summary">
+        <span class="label">Montant</span>
+        <span class="value">{{ formatAmount(totalAmount()) }}</span>
+        <span class="hint">Total sur la période filtrée</span>
+      </div>
 
       <div class="actions">
         <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Filtrer</button>

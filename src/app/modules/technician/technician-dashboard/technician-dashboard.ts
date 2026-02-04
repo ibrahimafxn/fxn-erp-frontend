@@ -4,11 +4,9 @@ import { Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import {
   InterventionImportBatch,
-  InterventionImportTicket,
   InterventionImportTechnicianSummary,
   InterventionService
 } from '../../../core/services/intervention.service';
-import { TechnicianReportService } from '../../../core/services/technician-report.service';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 
 @Component({
@@ -21,18 +19,18 @@ import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervent
 })
 export class TechnicianDashboard {
   private router = inject(Router);
-  private reports = inject(TechnicianReportService);
   private interventions = inject(InterventionService);
 
   readonly caLoading = signal(false);
   readonly caError = signal<string | null>(null);
   readonly dailyAmount = signal(0);
+  readonly weeklyAmount = signal(0);
+  readonly monthlyAmount = signal(0);
   readonly todayLabel = computed(() => new Date().toLocaleDateString('fr-FR'));
 
   readonly importLoading = signal(false);
   readonly importError = signal<string | null>(null);
   readonly importBatch = signal<InterventionImportBatch | null>(null);
-  readonly importTickets = signal<InterventionImportTicket[]>([]);
   readonly importSummary = signal<InterventionImportTechnicianSummary | null>(null);
 
   readonly importLabel = computed(() => {
@@ -44,8 +42,6 @@ export class TechnicianDashboard {
     return `Dernier import : ${formatted}`;
   });
 
-  readonly techTickets = computed(() => this.importTickets());
-  readonly techTicketPreview = computed(() => this.importTickets().slice(0, 3));
   readonly techRaccordements = computed(() => {
     const totals = this.importSummary()?.totals;
     if (!totals) return 0;
@@ -94,23 +90,29 @@ export class TechnicianDashboard {
     this.router.navigate(['/technician/history']).then();
   }
 
+  goInterventionsHistory(): void {
+    this.router.navigate(['/technician/interventions']).then();
+  }
+
   private loadCa(): void {
     this.caLoading.set(true);
     this.caError.set(null);
-    const today = new Date();
-    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const fmt = (d: Date) => {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const dayOfMonth = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${dayOfMonth}`;
-    };
+    const day = this.startOfToday();
+    const monthStart = new Date(day.getFullYear(), day.getMonth(), 1);
+    const weekStart = this.startOfWeek(day);
+    const todayStr = this.formatDateInput(day);
+    const weekStartStr = this.formatDateInput(weekStart);
+    const monthStartStr = this.formatDateInput(monthStart);
 
     forkJoin({
-      daily: this.reports.summary({ fromDate: fmt(day), toDate: fmt(day) })
+      daily: this.interventions.importSummaryTechnician({ fromDate: todayStr, toDate: todayStr }),
+      weekly: this.interventions.importSummaryTechnician({ fromDate: weekStartStr, toDate: todayStr }),
+      monthly: this.interventions.importSummaryTechnician({ fromDate: monthStartStr, toDate: todayStr })
     }).subscribe({
       next: (res) => {
         this.dailyAmount.set(res.daily.data.totalAmount || 0);
+        this.weeklyAmount.set(res.weekly.data.totalAmount || 0);
+        this.monthlyAmount.set(res.monthly.data.totalAmount || 0);
         this.caLoading.set(false);
       },
       error: (err) => {
@@ -128,37 +130,34 @@ export class TechnicianDashboard {
         const items = res.data.items || [];
         const batch = items.find((item) => item.isToday) || items[0] || null;
         this.importBatch.set(batch);
-        const summary$ = this.interventions.importSummaryTechnician(
-          batch?._id ? { importBatchId: batch._id } : {}
-        );
+        const today = this.startOfToday();
+        const todayStr = this.formatDateInput(today);
+        const summary$ = this.interventions.importSummaryTechnician({
+          ...(batch?._id ? { importBatchId: batch._id } : {}),
+          fromDate: todayStr,
+          toDate: todayStr
+        });
         if (!batch?._id) {
           summary$.subscribe({
             next: (summaryRes) => {
               this.importSummary.set(summaryRes.data);
-              this.importTickets.set([]);
               this.importLoading.set(false);
             },
             error: (err) => {
               this.importSummary.set(null);
-              this.importTickets.set([]);
               this.importLoading.set(false);
               this.importError.set(err?.message || 'Erreur chargement import');
             }
           });
           return;
         }
-        forkJoin({
-          summary: summary$,
-          tickets: this.interventions.listImportTicketsTechnician({ importBatchId: batch._id, limit: 200 })
-        }).subscribe({
+        summary$.subscribe({
           next: (importRes) => {
-            this.importSummary.set(importRes.summary.data);
-            this.importTickets.set(importRes.tickets.data.items || []);
+            this.importSummary.set(importRes.data);
             this.importLoading.set(false);
           },
           error: (err) => {
             this.importSummary.set(null);
-            this.importTickets.set([]);
             this.importLoading.set(false);
             this.importError.set(err?.message || 'Erreur chargement import');
           }
@@ -182,9 +181,24 @@ export class TechnicianDashboard {
     }).format(amount);
   }
 
-  ticketLabel(ticket: InterventionImportTicket): string {
-    const reason = ticket.reason || 'Anomalie';
-    const numInter = ticket.numInter ? `#${ticket.numInter}` : '';
-    return numInter ? `${reason} - ${numInter}` : reason;
+  private startOfToday(): Date {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }
+
+  private startOfWeek(date: Date): Date {
+    const day = date.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    const start = new Date(date);
+    start.setDate(date.getDate() + diff);
+    return new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  }
+
+  private formatDateInput(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const dayOfMonth = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${dayOfMonth}`;
+  }
+
 }

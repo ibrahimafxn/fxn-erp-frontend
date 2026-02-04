@@ -231,69 +231,6 @@
     </div>
   </div>
 
-  <section class="toolbar card">
-    <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
-      <label>
-        Du
-        <input type="date" formControlName="fromDate" />
-      </label>
-      <label>
-        Au
-        <input type="date" formControlName="toDate" />
-      </label>
-      <label>
-        Technicien
-        <select formControlName="technician">
-          <option value="">Tous</option>
-          @for (t of filters().technicians; track t) {
-            <option [value]="t">{{ t }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        Région
-        <select formControlName="region">
-          <option value="">Toutes</option>
-          @for (r of filters().regions; track r) {
-            <option [value]="r">{{ r }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        Client
-        <select formControlName="client">
-          <option value="">Tous</option>
-          @for (c of filters().clients; track c) {
-            <option [value]="c">{{ c }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        Statut
-        <select formControlName="status">
-          <option value="">Tous</option>
-          @for (s of filters().statuses; track s) {
-            <option [value]="s">{{ s }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        Type
-        <select formControlName="type">
-          <option value="">Tous</option>
-          @for (t of filters().types; track t) {
-            <option [value]="t">{{ t }}</option>
-          }
-        </select>
-      </label>
-      <div class="actions">
-        <button class="btn-outline btn-search" type="submit" [disabled]="loading()"><span class="material-icons notranslate" aria-hidden="true">search</span>Rechercher</button>
-        <button class="btn-outline btn-clear" type="button" (click)="clearFilters()"><span class="material-icons notranslate" aria-hidden="true">clear</span>Effacer</button>
-      </div>
-    </form>
-
-  </section>
-
   @if (loading()) {
     <div class="state loading card">Chargement…</div>
   } @else if (error()) {
@@ -312,8 +249,8 @@
           <span class="value">{{ totals()?.total ?? 0 }}</span>
         </div>
         <div class="summary-pill">
-          <span class="label">Raccordements</span>
-          <span class="value">{{ racTotal(totals()) }}</span>
+          <span class="label">Presta compl</span>
+          <span class="value">{{ totals()?.prestaCompl ?? 0 }}</span>
         </div>
         <div class="summary-pill">
           <span class="label">Rac pavillon</span>
@@ -347,6 +284,66 @@
           <span class="label">CLEM</span>
           <span class="value">{{ totals()?.clem ?? 0 }}</span>
         </div>
+      </div>
+
+      <div class="summary-filters">
+        <div class="filters-title">Filtres avancés</div>
+        <form class="summary-filters-grid" [formGroup]="filterForm" (ngSubmit)="search()">
+          <label>
+            Technicien
+            <select formControlName="technician" (change)="search()">
+              <option value="">Tous</option>
+              @for (tech of filters().technicians; track tech) {
+                <option [value]="tech">{{ tech }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Dépôt
+            <select formControlName="depot" (change)="search()">
+              <option value="">Tous</option>
+              @for (d of depots(); track d._id) {
+                <option [value]="d._id">{{ d.name }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Type prestation
+            <select formControlName="type" (change)="search()">
+              <option value="">Tous</option>
+              @for (t of prestationTypeOptions; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Type contrat
+            <select formControlName="contractType" (change)="search()">
+              <option value="">Tous</option>
+              @for (c of contractTypes; track c) {
+                <option [value]="c">{{ c }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Du
+            <input type="date" formControlName="fromDate" (change)="search()" />
+          </label>
+          <label>
+            Au
+            <input type="date" formControlName="toDate" (change)="search()" />
+          </label>
+          <div class="actions">
+            <button class="btn-primary compact" type="submit">
+              <i class="bi bi-funnel"></i>
+              <span>Appliquer</span>
+            </button>
+            <button class="btn-outline compact" type="button" (click)="clearFilters()">
+              <i class="bi bi-arrow-counterclockwise"></i>
+              <span>Réinitialiser</span>
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 

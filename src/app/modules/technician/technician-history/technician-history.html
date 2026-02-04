@@ -11,29 +11,29 @@
 
   <section class="toolbar card">
     <form class="search" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
-      <input type="text" formControlName="q" placeholder="Rechercher (nom, plaque…)" />
+      <input type="text" formControlName="q" placeholder="Rechercher (nom, plaque…)" (input)="applyFilters()" />
 
-      <select formControlName="resourceType">
+      <select formControlName="resourceType" (change)="applyFilters()">
         <option value="">Toutes ressources</option>
         <option value="MATERIAL">Matériels</option>
         <option value="CONSUMABLE">Consommables</option>
         <option value="VEHICLE">Véhicules</option>
       </select>
 
-      <select formControlName="action">
+      <select formControlName="action" (change)="applyFilters()">
         <option value="">Toutes actions</option>
         <option value="ATTRIBUTION">Attribution</option>
         <option value="REPRISE">Reprise</option>
       </select>
 
-      <select formControlName="quickRange" (change)="applyQuickRange()">
+      <select formControlName="quickRange" (change)="applyQuickRange(); applyFilters()">
         <option value="">Période</option>
         <option value="this-week">Cette semaine</option>
         <option value="this-month">Ce mois</option>
       </select>
 
-      <input type="date" formControlName="from" />
-      <input type="date" formControlName="to" />
+      <input type="date" formControlName="from" (change)="applyFilters()" />
+      <input type="date" formControlName="to" (change)="applyFilters()" />
 
       <div class="actions">
         <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>

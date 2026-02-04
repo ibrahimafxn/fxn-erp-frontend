@@ -33,7 +33,7 @@
       </article>
       <article class="stat-card">
         <span class="label">Échecs détectés</span>
-        <span class="value">{{ stats().failure }} ({{ failurePercent() }}%)</span>
+        <span class="value">{{ stats().failure }}</span>
         <p class="helper">Statuts “Échec” ou similaires.</p>
       </article>
       <article class="stat-card">
@@ -59,7 +59,7 @@
           }
         }
       </article>
-      <article>
+      <article class="dominant-types">
         <div class="section-label">Types dominants</div>
         @if (stats().topTypes.length === 0) {
           <p class="helper">Pas de types.</p>
@@ -138,6 +138,10 @@
           </select>
         </label>
         <label>
+          N° Inter
+          <input type="text" formControlName="numInter" (input)="applyFilters()" placeholder="Ex: 145310041" />
+        </label>
+        <label>
           Statut
           <select formControlName="status" (change)="applyFilters()">
             <option value="">Tous</option>
@@ -157,12 +161,17 @@
         </label>
         <label>
           Du
-          <input type="date" formControlName="fromDate" />
+          <input type="date" formControlName="fromDate" (change)="applyFilters()" />
         </label>
         <label>
           Au
-          <input type="date" formControlName="toDate" />
+          <input type="date" formControlName="toDate" (change)="applyFilters()" />
         </label>
+        <div class="filter-kpi">
+          <span class="label">Montant total</span>
+          <span class="value">{{ summaryLoading() ? '…' : formatAmount(totalAmount()) }}</span>
+          <span class="hint">Prestations réalisées (période filtrée)</span>
+        </div>
         <div class="actions">
           <button class="btn-primary compact" type="submit">
             <i class="bi bi-funnel"></i>

@@ -13,13 +13,25 @@
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
+      "i18n": {
+        "sourceLocale": {
+          "code": "fr",
+          "baseHref": "/"
+        },
+        "locales": {
+          "en": {
+            "translation": "src/locale/messages.en.xlf",
+            "baseHref": "/en/"
+          }
+        }
+      },
       "architect": {
         "build": {
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
             "polyfills": [
-              "zone.js"
+              "src/polyfills.ts"
             ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
@@ -27,6 +39,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "assets"
               }
             ],
             "styles": [
@@ -62,6 +79,16 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "en": {
+              "localize": [
+                "en"
+              ]
+            },
+            "fr": {
+              "localize": [
+                "fr"
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -77,6 +104,12 @@
             },
             "development": {
               "buildTarget": "fxn-erp-frontend:build:development"
+            },
+            "en": {
+              "buildTarget": "fxn-erp-frontend:build:en"
+            },
+            "fr": {
+              "buildTarget": "fxn-erp-frontend:build:fr"
             }
           },
           "defaultConfiguration": "development"

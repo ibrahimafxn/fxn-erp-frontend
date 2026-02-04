@@ -77,5 +77,12 @@ export const TECHNICIAN_ROUTES: Routes = [
     loadComponent: () =>
       import('./technician-history/technician-history').then(m => m.TechnicianHistory),
     canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
+  },
+  {
+    path: 'interventions',
+    loadComponent: () =>
+      import('./technician-interventions-history/technician-interventions-history')
+        .then(m => m.TechnicianInterventionsHistory),
+    canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
   }
 ];

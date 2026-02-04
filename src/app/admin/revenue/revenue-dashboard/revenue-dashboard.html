@@ -13,7 +13,7 @@
     <form class="filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
       <label>
         Mois
-        <select formControlName="month">
+        <select formControlName="month" (change)="applyFilters()">
           <option value="">Tous</option>
           @for (m of monthOptions(); track m.value) {
             <option [value]="m.value">{{ m.label }}</option>
@@ -22,7 +22,7 @@
       </label>
       <label>
         Période
-        <select formControlName="period">
+        <select formControlName="period" (change)="applyFilters()">
           @for (p of periodOptions; track p.value) {
             <option [value]="p.value">{{ p.label }}</option>
           }
@@ -30,7 +30,7 @@
       </label>
       <label>
         Année
-        <select formControlName="year">
+        <select formControlName="year" (change)="applyFilters()">
           <option value="">Toutes</option>
           @for (y of yearOptions(); track y) {
             <option [value]="y">{{ y }}</option>

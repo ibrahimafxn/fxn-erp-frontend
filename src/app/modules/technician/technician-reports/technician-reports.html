@@ -55,15 +55,15 @@
     <form class="history-filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
       <label>
         Année
-        <input type="number" min="2000" max="2100" placeholder="2026" formControlName="year" />
+        <input type="number" min="2000" max="2100" placeholder="2026" formControlName="year" (input)="applyFilters()" />
       </label>
       <label>
         Période (du)
-        <input type="date" formControlName="fromDate" />
+        <input type="date" formControlName="fromDate" (change)="applyFilters()" />
       </label>
       <label>
         Période (au)
-        <input type="date" formControlName="toDate" />
+        <input type="date" formControlName="toDate" (change)="applyFilters()" />
       </label>
       <div class="actions">
         <button class="btn-outline" type="submit">Filtrer</button>

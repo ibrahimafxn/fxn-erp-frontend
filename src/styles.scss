@@ -9,7 +9,7 @@
   font-style: normal;
   font-weight: 300;
   font-display: swap;
-  src: url('/fonts/manrope/manrope-light.woff2') format('woff2');
+  src: url('assets/fonts/manrope/manrope-light.woff2') format('woff2');
 }
 
 @font-face {
@@ -17,7 +17,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/manrope/manrope-regular.woff2') format('woff2');
+  src: url('assets/fonts/manrope/manrope-regular.woff2') format('woff2');
 }
 
 @font-face {
@@ -25,7 +25,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('/fonts/manrope/manrope-medium.woff2') format('woff2');
+  src: url('assets/fonts/manrope/manrope-medium.woff2') format('woff2');
 }
 
 @font-face {
@@ -33,7 +33,7 @@
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('/fonts/manrope/manrope-semibold.woff2') format('woff2');
+  src: url('assets/fonts/manrope/manrope-semibold.woff2') format('woff2');
 }
 
 @font-face {
@@ -41,7 +41,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/manrope/manrope-bold.woff2') format('woff2');
+  src: url('assets/fonts/manrope/manrope-bold.woff2') format('woff2');
 }
 
 @font-face {
@@ -49,7 +49,7 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/space-grotesk/SpaceGrotesk-Regular.woff2') format('woff2');
+  src: url('assets/fonts/space-grotesk/SpaceGrotesk-Regular.woff2') format('woff2');
 }
 
 @font-face {
@@ -57,7 +57,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('/fonts/space-grotesk/SpaceGrotesk-Medium.woff2') format('woff2');
+  src: url('assets/fonts/space-grotesk/SpaceGrotesk-Medium.woff2') format('woff2');
 }
 
 @font-face {
@@ -65,21 +65,21 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/space-grotesk/SpaceGrotesk-Bold.woff2') format('woff2');
+  src: url('assets/fonts/space-grotesk/SpaceGrotesk-Bold.woff2') format('woff2');
 }
 
 @font-face {
   font-family: 'Material Icons';
   font-style: normal;
   font-weight: 400;
-  src: url('/fonts/material-icons/MaterialIcons-Regular.ttf') format('truetype');
+  src: url('assets/fonts/material-icons/MaterialIcons-Regular.ttf') format('truetype');
 }
 
 @font-face {
   font-family: 'Material Icons Outlined';
   font-style: normal;
   font-weight: 400;
-  src: url('/fonts/material-icons/MaterialIconsOutlined-Regular.otf') format('opentype');
+  src: url('assets/fonts/material-icons/MaterialIconsOutlined-Regular.otf') format('opentype');
 }
 
 .material-icons,

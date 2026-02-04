@@ -45,6 +45,32 @@
   gap: .5rem;
 }
 
+.amount-summary {
+  display: grid;
+  gap: .25rem;
+  min-width: 220px;
+  padding: .6rem .75rem;
+  border-radius: .75rem;
+  border: 1px solid var(--fxn-border-strong);
+  background: rgba(10, 16, 28, 0.6);
+}
+
+.amount-summary .label {
+  font-size: .75rem;
+  color: var(--fxn-text-muted);
+}
+
+.amount-summary .value {
+  font-weight: 700;
+  font-size: .95rem;
+  color: #2f8a3b;
+}
+
+.amount-summary .hint {
+  font-size: .7rem;
+  color: var(--fxn-text-muted);
+}
+
 .grid {
   display: grid;
   gap: 1rem;

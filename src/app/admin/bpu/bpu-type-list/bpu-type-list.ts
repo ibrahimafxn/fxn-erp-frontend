@@ -43,6 +43,11 @@ export class BpuTypeList {
     this.load();
   }
 
+  displayType(type: string | null | undefined): string {
+    if (!type) return '—';
+    return type.toUpperCase() === 'ASSOCIE' ? 'AUTRE' : type;
+  }
+
   load(): void {
     this.loading.set(true);
     this.error.set(null);

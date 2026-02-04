@@ -35,8 +35,10 @@ export class TechnicianActivity {
   readonly depots = signal<Depot[]>([]);
   readonly reservations = signal<Movement[]>([]);
   readonly interventions = signal<TechnicianReport[]>([]);
+  readonly summaryTotalAmount = signal(0);
   readonly reservationsLoading = signal(false);
   readonly interventionsLoading = signal(false);
+  readonly summaryLoading = signal(false);
   readonly loadingUsers = signal(false);
   readonly loadingDepots = signal(false);
   readonly error = signal<string | null>(null);
@@ -88,6 +90,7 @@ export class TechnicianActivity {
   refreshAll(): void {
     this.refreshReservations();
     this.refreshInterventions();
+    this.refreshSummary();
   }
 
   refreshReservations(): void {
@@ -264,6 +267,10 @@ export class TechnicianActivity {
     }).format(amount);
   }
 
+  totalAmount(): number {
+    return this.summaryTotalAmount();
+  }
+
   private loadUsers(): void {
     this.loadingUsers.set(true);
     this.userService.refreshUsers(true, {
@@ -313,6 +320,36 @@ export class TechnicianActivity {
       fromDate: fromDate || undefined,
       toDate: toDate || undefined
     };
+  }
+
+  private refreshSummary(): void {
+    const filters = this.filterForm.getRawValue();
+    const dates = this.normalizeDateRange(filters.fromDate, filters.toDate);
+    const depotId = this.isDepotManager() ? (this.managerDepotId() ?? undefined) : (filters.depot || undefined);
+    const technicianId = filters.technicianId || undefined;
+
+    this.summaryLoading.set(true);
+    this.error.set(null);
+    this.reportService.summary({
+      fromDate: dates.fromDate,
+      toDate: dates.toDate,
+      technicianId,
+      depotId
+    }).subscribe({
+      next: (res) => {
+        if (!res?.success) {
+          this.error.set('Erreur chargement montant');
+          this.summaryLoading.set(false);
+          return;
+        }
+        this.summaryTotalAmount.set(res.data.totalAmount || 0);
+        this.summaryLoading.set(false);
+      },
+      error: (err) => {
+        this.summaryLoading.set(false);
+        this.error.set(this.apiError(err, 'Erreur chargement montant'));
+      }
+    });
   }
 
   private apiError(err: any, fallback: string): string {

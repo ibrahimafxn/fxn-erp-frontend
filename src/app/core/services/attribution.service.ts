@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {BehaviorSubject, catchError, map, of, tap, throwError} from 'rxjs';
 import {environment} from '../../environments/environment';
 
@@ -53,8 +53,14 @@ export class AttributionService {
 
   // GET history
   listHistory(filter?: any) {
-    const params = filter ? { params: filter } : {};
-    return this.http.get<any>(`${API_BASE}/attributions/history`, params).pipe(
+    let params = new HttpParams();
+    if (filter && typeof filter === 'object') {
+      for (const [key, value] of Object.entries(filter)) {
+        if (value === undefined || value === null || value === '') continue;
+        params = params.set(key, String(value));
+      }
+    }
+    return this.http.get<any>(`${API_BASE}/attributions/history`, { params }).pipe(
       map((resp) => {
         if (resp && typeof resp === 'object' && 'items' in resp) {
           return resp as { items: any[]; total: number; page: number; limit: number };

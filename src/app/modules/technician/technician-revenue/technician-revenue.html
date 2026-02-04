@@ -46,11 +46,11 @@
     <form class="search" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
       <label>
         Du
-        <input type="date" formControlName="fromDate" />
+        <input type="date" formControlName="fromDate" (change)="applyFilters()" />
       </label>
       <label>
         Au
-        <input type="date" formControlName="toDate" />
+        <input type="date" formControlName="toDate" (change)="applyFilters()" />
       </label>
       <div class="actions">
         <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>

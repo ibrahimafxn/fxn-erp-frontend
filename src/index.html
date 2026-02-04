@@ -11,6 +11,16 @@
   <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body translate="no">
+  <script>
+    (function () {
+      var path = window.location.pathname || '/';
+      if (path === '/en' || path.indexOf('/en/') === 0) return;
+      var lang = (navigator.language || '').toLowerCase();
+      if (lang.indexOf('en') !== 0) return;
+      var target = '/en' + (path === '/' ? '' : path);
+      window.location.replace(target + (window.location.search || '') + (window.location.hash || ''));
+    })();
+  </script>
   <app-root translate="no"></app-root>
   <noscript>Please enable JavaScript to continue using this application.</noscript>
 </body>

@@ -9,11 +9,12 @@ import {DEPOT_ROUTES} from './modules/depot/depot.routes';
 import {ADMIN_ROUTES} from './admin/admin.routes';
 import {TECHNICIAN_ROUTES} from './modules/technician/technician.routes';
 import {Role} from './core/models/roles.model';
-import {LOCALE_ID} from '@angular/core';
 import {registerLocaleData} from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
+import localeEn from '@angular/common/locales/en';
 
-registerLocaleData(localeFr);
+registerLocaleData(localeFr, 'fr');
+registerLocaleData(localeEn, 'en');
 /**
  * AppConfig : centralise les routes et providers globaux
  */
@@ -89,7 +90,6 @@ export const AppConfig = {
   ],
 
   providers: [
-    { provide: LOCALE_ID, useValue: 'fr-FR' },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
   ]
 };

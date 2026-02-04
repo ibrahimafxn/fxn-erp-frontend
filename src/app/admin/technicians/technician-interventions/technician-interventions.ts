@@ -6,8 +6,10 @@ import {
   InterventionFilters,
   InterventionItem,
   InterventionService,
-  InterventionSummaryQuery
+  InterventionSummaryQuery,
+  InterventionTotals
 } from '../../../core/services/intervention.service';
+import { InterventionRates, InterventionRatesService } from '../../../core/services/intervention-rates.service';
 import { User, Role } from '../../../core/models';
 import { UserService } from '../../../core/services/user.service';
 import { formatPersonName } from '../../../core/utils/text-format';
@@ -75,7 +77,7 @@ const TYPE_CANONICAL_ALIASES = new Map([
 const ARTICLE_TYPE_LABELS = [
   { label: 'PRO S', marker: 'RACPRO_S' },
   { label: 'PRO C', marker: 'RACPRO_C' },
-  { label: 'PAV', marker: 'RACPAV' },
+  { label: 'RACPAV', marker: 'RACPAV' },
   { label: 'RACIH', marker: 'RACIH' },
   { label: 'RECO', marker: 'RECOIP' },
   { label: 'SAV', marker: 'SAV' },
@@ -89,7 +91,7 @@ const ARTICLE_TYPE_LABELS = [
 const ARTICLE_TYPE_BY_CODE = new Map([
   ['RACPRO_S', 'PRO S'],
   ['RACPRO_C', 'PRO C'],
-  ['RACPAV', 'PAV'],
+  ['RACPAV', 'RACPAV'],
   ['RACIH', 'RACIH'],
   ['RECOIP', 'RECO'],
   ['PRESTA_COMPL', 'PRESTA COMPL'],
@@ -112,6 +114,7 @@ const REQUIRED_TYPE_LABELS = ['RECOIP'];
 })
 export class TechnicianInterventions {
   private svc = inject(InterventionService);
+  private ratesService = inject(InterventionRatesService);
   private userService = inject(UserService);
   private fb = inject(FormBuilder);
 
@@ -119,6 +122,8 @@ export class TechnicianInterventions {
   readonly filtersError = signal<string | null>(null);
   readonly filters = signal<InterventionFilters | null>(null);
   readonly technicians = signal<User[]>([]);
+  readonly summaryLoading = signal(false);
+  readonly summaryTotals = signal<InterventionTotals | null>(null);
 
   readonly tableLoading = signal(false);
   readonly tableError = signal<string | null>(null);
@@ -184,6 +189,7 @@ export class TechnicianInterventions {
     technician: this.fb.nonNullable.control(''),
     region: this.fb.nonNullable.control(''),
     client: this.fb.nonNullable.control(''),
+    numInter: this.fb.nonNullable.control(''),
     status: this.fb.nonNullable.control(''),
     type: this.fb.nonNullable.control(''),
     fromDate: this.fb.nonNullable.control(''),
@@ -202,11 +208,14 @@ export class TechnicianInterventions {
     this.loadFilters();
     this.loadTechnicians();
     this.loadInterventions();
+    this.loadSummary();
+    this.ratesService.refresh().subscribe();
   }
 
   applyFilters(): void {
     this.page.set(1);
     this.loadInterventions();
+    this.loadSummary();
   }
 
   clearFilters(): void {
@@ -214,6 +223,7 @@ export class TechnicianInterventions {
       technician: '',
       region: '',
       client: '',
+      numInter: '',
       status: '',
       type: '',
       fromDate: '',
@@ -221,6 +231,7 @@ export class TechnicianInterventions {
     });
     this.page.set(1);
     this.loadInterventions();
+    this.loadSummary();
   }
 
   prevPage(): void {
@@ -300,7 +311,7 @@ export class TechnicianInterventions {
   }
 
   private ensureCablePavTypes(filters: InterventionFilters): InterventionFilters {
-    const extra = ['CABLE_PAV_1', 'CABLE_PAV_2', 'CABLE_PAV_3', 'CABLE_PAV_4'];
+    const extra = ['CABLE_PAV_1', 'CABLE_PAV_2', 'CABLE_PAV_3', 'CABLE_PAV_4', 'CLEM', 'VIDE'];
     const types = Array.isArray(filters?.types) ? [...filters.types] : [];
     for (const entry of extra) {
       if (!types.includes(entry)) {
@@ -342,6 +353,26 @@ export class TechnicianInterventions {
     });
   }
 
+  private loadSummary(): void {
+    this.summaryLoading.set(true);
+    const query = this.buildQuery({ includePagination: false });
+    this.svc.summary(query).subscribe({
+      next: (res) => {
+        if (!res?.success) {
+          this.summaryTotals.set(null);
+          this.summaryLoading.set(false);
+          return;
+        }
+        this.summaryTotals.set(res.data.totals || null);
+        this.summaryLoading.set(false);
+      },
+      error: () => {
+        this.summaryTotals.set(null);
+        this.summaryLoading.set(false);
+      }
+    });
+  }
+
   private buildQuery(options?: { includePagination?: boolean }): InterventionSummaryQuery {
     const filters = this.filterForm.getRawValue();
     const range = this.normalizeDateRange(filters.fromDate, filters.toDate);
@@ -349,6 +380,7 @@ export class TechnicianInterventions {
       technician: filters.technician || undefined,
       region: filters.region || undefined,
       client: filters.client || undefined,
+      numInter: filters.numInter || undefined,
       status: filters.status || undefined,
       type: filters.type || undefined,
       ...range,
@@ -448,10 +480,16 @@ export class TechnicianInterventions {
       const statusLabel = item.statut?.trim() || 'Autre';
       statuses.set(statusLabel, (statuses.get(statusLabel) ?? 0) + 1);
       const articlesNormalized = this.normalizeToken(item.articlesRaw);
+      const prestationsNormalized = this.normalizeToken(item.listePrestationsRaw);
       const articleLabels = new Set<string>();
       for (const { label, marker } of ARTICLE_TYPE_LABELS) {
         const altMarker = marker.replace(/_/g, ' ');
-        if (articlesNormalized.includes(marker) || articlesNormalized.includes(altMarker)) {
+        if (
+          articlesNormalized.includes(marker)
+          || articlesNormalized.includes(altMarker)
+          || prestationsNormalized.includes(marker)
+          || prestationsNormalized.includes(altMarker)
+        ) {
           if (allowedType && !this.isAllowedArticleLabel(label, allowedTypeLabel)) {
             continue;
           }
@@ -513,7 +551,7 @@ export class TechnicianInterventions {
       }
     }
     uniqueTopTypes.sort((a, b) => b.count - a.count);
-    const filteredTopTypes = uniqueTopTypes.filter((entry) => !this.isRaccType(entry.label));
+    const filteredTopTypes = uniqueTopTypes.filter((entry) => !this.isRaccType(entry.label) && !this.isPavLabel(entry.label));
     const topStatuses = Array.from(statuses.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3)
@@ -532,6 +570,41 @@ export class TechnicianInterventions {
       topTypes: filteredTopTypes,
       topStatuses
     };
+  }
+
+  totalAmount(): number {
+    return this.computeTotalAmount(this.summaryTotals(), this.ratesService.rates());
+  }
+
+  formatAmount(value?: number | null): string {
+    const amount = Number(value ?? 0);
+    if (!Number.isFinite(amount)) return '0,00 €';
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  }
+
+  private computeTotalAmount(totals: InterventionTotals | null, rates: InterventionRates): number {
+    if (!totals) return 0;
+    const get = (value?: number) => (Number.isFinite(value as number) ? Number(value) : 0);
+    let amount = 0;
+    amount += get(totals.racPavillon) * rates.racPavillon.total;
+    amount += get(totals.clem) * rates.clem.total;
+    amount += get(totals.reconnexion) * rates.reconnexion.total;
+    amount += get(totals.racImmeuble) * rates.racImmeuble.total;
+    amount += get(totals.racProS) * rates.racProS.total;
+    amount += get(totals.racProC) * rates.racProC.total;
+    amount += get(totals.racF8) * rates.racF8.total;
+    amount += get(totals.deprise) * rates.deprise.total;
+    amount += get(totals.demo) * rates.demo.total;
+    amount += get(totals.sav) * rates.sav.total;
+    amount += get(totals.savExp) * rates.savExp.total;
+    amount += get(totals.refrac) * rates.refrac.total;
+    amount += get(totals.refcDgr) * rates.refcDgr.total;
+    return Math.round(amount * 100) / 100;
   }
 
   private computeDuration(item: InterventionItem): number {
@@ -640,8 +713,11 @@ export class TechnicianInterventions {
     const anchor = document.createElement('a');
     anchor.href = url;
     anchor.download = filename;
+    anchor.rel = 'noopener';
+    document.body.appendChild(anchor);
     anchor.click();
-    window.URL.revokeObjectURL(url);
+    anchor.remove();
+    window.setTimeout(() => window.URL.revokeObjectURL(url), 0);
   }
 
   applyView(view: 'topTech' | 'failures' | 'reconnections'): void {
@@ -708,10 +784,10 @@ export class TechnicianInterventions {
     const normalizedType = this.normalizeToken(raw).replace(/-/g, ' ');
     const normalizedTypeCollapsed = normalizedType.replace(/\s+/g, ' ').trim();
     const articlesNormalized = this.normalizeToken(item?.articlesRaw);
+    const prestationsNormalized = this.normalizeToken(item?.listePrestationsRaw);
     const statusNormalized = this.normalizeToken(item?.statut);
     const operationNormalized = this.normalizeToken(item?.typeOperation);
     const commentsNormalized = this.normalizeToken(item?.commentairesTechnicien);
-    const prestationsNormalized = this.normalizeToken(item?.listePrestationsRaw);
     if (articlesNormalized.includes('RACPAV')) {
       return 'RACPAV';
     }
@@ -759,29 +835,41 @@ export class TechnicianInterventions {
     }
     if (
       normalizedTypeCollapsed.includes('CABLE PAV 1')
+      || normalizedTypeCollapsed.includes('CABLE_PAV_1')
       || articlesNormalized.includes('CABLE_PAV_1')
       || articlesNormalized.includes('CABLE PAV 1')
+      || prestationsNormalized.includes('CABLE_PAV_1')
+      || prestationsNormalized.includes('CABLE PAV 1')
     ) {
       return 'CABLE_PAV_1';
     }
     if (
       normalizedTypeCollapsed.includes('CABLE PAV 2')
+      || normalizedTypeCollapsed.includes('CABLE_PAV_2')
       || articlesNormalized.includes('CABLE_PAV_2')
       || articlesNormalized.includes('CABLE PAV 2')
+      || prestationsNormalized.includes('CABLE_PAV_2')
+      || prestationsNormalized.includes('CABLE PAV 2')
     ) {
       return 'CABLE_PAV_2';
     }
     if (
       normalizedTypeCollapsed.includes('CABLE PAV 3')
+      || normalizedTypeCollapsed.includes('CABLE_PAV_3')
       || articlesNormalized.includes('CABLE_PAV_3')
       || articlesNormalized.includes('CABLE PAV 3')
+      || prestationsNormalized.includes('CABLE_PAV_3')
+      || prestationsNormalized.includes('CABLE PAV 3')
     ) {
       return 'CABLE_PAV_3';
     }
     if (
       normalizedTypeCollapsed.includes('CABLE PAV 4')
+      || normalizedTypeCollapsed.includes('CABLE_PAV_4')
       || articlesNormalized.includes('CABLE_PAV_4')
       || articlesNormalized.includes('CABLE PAV 4')
+      || prestationsNormalized.includes('CABLE_PAV_4')
+      || prestationsNormalized.includes('CABLE PAV 4')
     ) {
       return 'CABLE_PAV_4';
     }
@@ -843,6 +931,11 @@ export class TechnicianInterventions {
   private isRaccType(label: string): boolean {
     const normalized = this.normalizeToken(label);
     return normalized.includes('RACC');
+  }
+
+  private isPavLabel(label: string): boolean {
+    const normalized = this.normalizeToken(label);
+    return normalized === 'PAV';
   }
 
   private matchesAllowedType(typeLabel: string, allowedType: string): boolean {
@@ -949,7 +1042,7 @@ export class TechnicianInterventions {
     if (normalized.includes('ANNULE')) {
       return 'status-neutral';
     }
-    if (normalized.includes('ECHEC') && normalized.includes('TERMINE')) {
+    if (normalized.includes('ECHEC')) {
       return 'status-error';
     }
     return '';

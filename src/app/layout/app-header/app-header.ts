@@ -26,6 +26,7 @@ export class AppHeader {
 
   // menu state
   readonly menuOpen = signal(false);
+  readonly currentLocale = signal<'fr' | 'en'>('fr');
 
   // breadcrumb label simple (V2)
   readonly pageTitle = signal('Dashboard');
@@ -42,12 +43,14 @@ export class AppHeader {
   });
 
   constructor() {
+    this.currentLocale.set(this.detectLocale());
     this.router.events
       .pipe(filter(e => e instanceof NavigationEnd))
       .subscribe(() => {
         this.currentUrl.set(this.router.url);
         this.pageTitle.set(this.computeTitle(this.router.url));
         this.menuOpen.set(false);
+        this.currentLocale.set(this.detectLocale());
         this.alertsService.refresh();
       });
     this.alertsService.refresh();
@@ -224,6 +227,17 @@ export class AppHeader {
     this.auth.logout(true).subscribe();
   }
 
+  localeHref(locale: 'fr' | 'en'): string {
+    const path = window.location.pathname || '/';
+    const normalized = path.startsWith('/en/')
+      ? path.slice(3)
+      : path === '/en'
+        ? '/'
+        : path;
+    const base = locale === 'en' ? `/en${normalized === '/' ? '' : normalized}` : (normalized || '/');
+    return `${base}${window.location.search || ''}${window.location.hash || ''}`;
+  }
+
   private triggerDirigeantWelcome(): void {
     if (this.welcomeShown) return;
     this.welcomeShown = true;
@@ -300,5 +314,10 @@ export class AppHeader {
     if (url.includes('/consumables')) return 'Consommables';
     if (url.includes('/materials')) return 'Matériels';
     return 'Dashboard';
+  }
+
+  private detectLocale(): 'fr' | 'en' {
+    const path = window.location.pathname || '';
+    return path === '/en' || path.startsWith('/en/') ? 'en' : 'fr';
   }
 }

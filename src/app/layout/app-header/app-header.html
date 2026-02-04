@@ -1,14 +1,14 @@
 <header class="app-header">
   <!-- LEFT -->
   <div class="left">
-    <div class="brand" [routerLink]="dashboardLink()" role="button" aria-label="Accueil">
-      <img class="brand-logo" src="/fxn_logo_header.png" alt="FXN" />
+    <div class="brand" [routerLink]="dashboardLink()" role="button" aria-label="Accueil" i18n-aria-label="@@header.homeAria">
+      <img class="brand-logo" src="assets/fxn_logo_header.png" alt="FXN" />
     </div>
 
     @if (showBackButton()) {
       <button class="btn-back header-back" type="button" (click)="back()">
         <i class="bi bi-arrow-left"></i>
-        Retour
+        <span i18n="@@header.back">Retour</span>
       </button>
     }
 
@@ -18,8 +18,13 @@
   </div>
 
   <!-- RIGHT -->
-  @if (user()) {
-    <div class="right">
+  <div class="right">
+    <div class="lang-switch" role="group" aria-label="Langue" i18n-aria-label="@@header.langAria">
+      <a class="lang-pill" [class.active]="currentLocale() === 'fr'" [href]="localeHref('fr')">FR</a>
+      <span class="sep">/</span>
+      <a class="lang-pill" [class.active]="currentLocale() === 'en'" [href]="localeHref('en')">EN</a>
+    </div>
+    @if (user()) {
       <!-- USER MENU -->
       <div class="user-menu">
         <button class="user-trigger" (click)="toggleMenu()">
@@ -47,27 +52,27 @@
               <div class="menu-col">
                 @if (isTechnician()) {
                   <div class="menu-group admin-group">
-                    <div class="section-label">Technicien</div>
+                    <div class="section-label" i18n="@@header.section.technician">Technicien</div>
                     <div class="section-items">
-                      <button mat-button (click)="goTechMaterials()"><span class="material-icons notranslate">handyman</span>Matériels</button>
-                      <button mat-button (click)="goTechConsumables()"><span class="material-icons notranslate">inventory_2</span>Consommables</button>
-                      <button mat-button (click)="goTechVehicles()"><span class="material-icons notranslate">directions_car</span>Véhicules</button>
-                      <button mat-button (click)="goTechReports()"><span class="material-icons notranslate">event_note</span>Rapport quotidien</button>
-                      <button mat-button (click)="goTechRevenue()"><span class="material-icons notranslate">insights</span>Chiffre d'affaires</button>
-                      <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span>Historique</button>
+                      <button mat-button (click)="goTechMaterials()"><span class="material-icons notranslate">handyman</span><span i18n="@@header.menu.techMaterials">Matériels</span></button>
+                      <button mat-button (click)="goTechConsumables()"><span class="material-icons notranslate">inventory_2</span><span i18n="@@header.menu.techConsumables">Consommables</span></button>
+                      <button mat-button (click)="goTechVehicles()"><span class="material-icons notranslate">directions_car</span><span i18n="@@header.menu.techVehicles">Véhicules</span></button>
+                      <button mat-button (click)="goTechReports()"><span class="material-icons notranslate">event_note</span><span i18n="@@header.menu.techReports">Rapport quotidien</span></button>
+                      <button mat-button (click)="goTechRevenue()"><span class="material-icons notranslate">insights</span><span i18n="@@header.menu.techRevenue">Chiffre d'affaires</span></button>
+                      <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span><span i18n="@@header.menu.techHistory">Historique</span></button>
                     </div>
                   </div>
                 }
 
               @if (!isTechnician()) {
                 <div class="menu-group admin-group">
-                  <div class="section-label">Administration</div>
+                  <div class="section-label" i18n="@@header.section.admin">Administration</div>
                   <div class="section-items">
                     @if (canManageAccess()) {
-                      <button mat-button (click)="goUserAccess()"><span class="material-icons notranslate">key</span>Accès connexion</button>
+                      <button mat-button (click)="goUserAccess()"><span class="material-icons notranslate">key</span><span i18n="@@header.menu.access">Accès connexion</span></button>
                     }
                     @if (canViewHr()) {
-                      <button mat-button (click)="goHr()"><span class="material-icons notranslate">badge</span>Ressources humaines</button>
+                      <button mat-button (click)="goHr()"><span class="material-icons notranslate">badge</span><span i18n="@@header.menu.hr">Ressources humaines</span></button>
                     }
                   </div>
                 </div>
@@ -78,18 +83,18 @@
               <div class="menu-col">
                 @if (!isTechnician()) {
                   <div class="menu-group stock-group">
-                    <div class="section-label">Stock</div>
+                    <div class="section-label" i18n="@@header.section.stock">Stock</div>
                   <div class="section-items">
                     @if (canViewMovements()) {
-                      <button mat-button (click)="goReceipts()"><span class="material-icons notranslate">inventory_2</span>Réceptions stock</button>
+                      <button mat-button (click)="goReceipts()"><span class="material-icons notranslate">inventory_2</span><span i18n="@@header.menu.stockReceipts">Réceptions stock</span></button>
                     }
                     @if (canManageAccess()) {
-                      <button mat-button (click)="goOrders()"><span class="material-icons notranslate">receipt_long</span>Commandes</button>
+                      <button mat-button (click)="goOrders()"><span class="material-icons notranslate">receipt_long</span><span i18n="@@header.menu.orders">Commandes</span></button>
                     }
                     @if (canViewMovements()) {
                       <button mat-button (click)="goStockAlerts()">
                         <span class="material-icons notranslate">report</span>
-                        Alertes
+                        <span i18n="@@header.menu.alerts">Alertes</span>
                         @if (alertsCount() > 0) {
                           <span class="badge">{{ alertsCount() }}</span>
                         }
@@ -97,11 +102,11 @@
                     }
                     @if (canViewMovements()) {
                       <div class="menu-section">
-                        <div class="section-label">Attributions</div>
+                        <div class="section-label" i18n="@@header.section.assignments">Attributions</div>
                         <div class="section-items">
-                          <button mat-button class="submenu" (click)="goReservations()"><span class="material-icons notranslate">widgets</span>Consommables</button>
+                          <button mat-button class="submenu" (click)="goReservations()"><span class="material-icons notranslate">widgets</span><span i18n="@@header.menu.assignmentsConsumables">Consommables</span></button>
                           @if (canViewMaterialReservations()) {
-                            <button mat-button class="submenu" (click)="goMaterialReservations()"><span class="material-icons notranslate">handyman</span>Matériels</button>
+                            <button mat-button class="submenu" (click)="goMaterialReservations()"><span class="material-icons notranslate">handyman</span><span i18n="@@header.menu.assignmentsMaterials">Matériels</span></button>
                           }
                         </div>
                       </div>
@@ -110,11 +115,11 @@
                 </div>
 
                 <div class="menu-group finance-group">
-                  <div class="section-label">Finance</div>
+                  <div class="section-label" i18n="@@header.section.finance">Finance</div>
                   <div class="section-items">
                     @if (canManageAccess()) {
-                      <button mat-button (click)="goRevenue()"><span class="material-icons notranslate">insights</span>Chiffre d'affaires</button>
-                      <button mat-button (click)="goBpu()"><span class="material-icons notranslate">price_check</span>BPU prestations</button>
+                      <button mat-button (click)="goRevenue()"><span class="material-icons notranslate">insights</span><span i18n="@@header.menu.revenue">Chiffre d'affaires</span></button>
+                      <button mat-button (click)="goBpu()"><span class="material-icons notranslate">price_check</span><span i18n="@@header.menu.bpu">BPU prestations</span></button>
                     }
                   </div>
                 </div>
@@ -124,23 +129,23 @@
 
             <div class="menu-footer">
               <div class="menu-group account-group">
-                <div class="section-label">Compte</div>
+                <div class="section-label" i18n="@@header.section.account">Compte</div>
                 <div class="section-items">
-                  <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span>Mon profil</button>
-                  <button mat-button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</button>
+                  <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span><span i18n="@@header.menu.profile">Mon profil</span></button>
+                  <button mat-button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span i18n="@@header.menu.logout">Déconnexion</span></button>
                 </div>
               </div>
             </div>
           </div>
         }
       </div>
-    </div>
-  }
+    }
+  </div>
 
   @if (showDirigeantWelcome()) {
     <div class="welcome-toast" role="status">
-      <div class="welcome-title">Bienvenue Patron.</div>
-      <div class="welcome-text">Optimisez les stocks et les opérations. Passez au plan FXN complet.</div>
+      <div class="welcome-title" i18n="@@header.welcomeTitle">Bienvenue Patron.</div>
+      <div class="welcome-text" i18n="@@header.welcomeText">Optimisez les stocks et les opérations. Passez au plan FXN complet.</div>
     </div>
   }
 </header>

@@ -202,11 +202,14 @@ export type InterventionImportCategoryResponse = {
 
 export type InterventionImportSummaryQuery = {
   importBatchId?: string;
+  fromDate?: string;
+  toDate?: string;
 };
 
 export type InterventionImportTechnicianSummary = {
   totals: InterventionTotals;
   total: number;
+  totalAmount?: number;
   referenceDate?: string | null;
 };
 
@@ -256,6 +259,7 @@ export type InterventionSummaryQuery = {
   technician?: string;
   region?: string;
   client?: string;
+  numInter?: string;
   status?: string;
   type?: string;
   page?: number;
@@ -296,6 +300,7 @@ export class InterventionService {
     if (query.technician) params = params.set('technician', query.technician);
     if (query.region) params = params.set('region', query.region);
     if (query.client) params = params.set('client', query.client);
+    if (query.numInter) params = params.set('numInter', query.numInter);
     if (query.status) params = params.set('status', query.status);
     if (query.type) params = params.set('type', query.type);
     if (query.page) params = params.set('page', String(query.page));
@@ -315,6 +320,7 @@ export class InterventionService {
     if (query.technician) params = params.set('technician', query.technician);
     if (query.region) params = params.set('region', query.region);
     if (query.client) params = params.set('client', query.client);
+    if (query.numInter) params = params.set('numInter', query.numInter);
     if (query.status) params = params.set('status', query.status);
     if (query.type) params = params.set('type', query.type);
     return this.http.get(`${this.baseUrl}/export/csv`, { params, responseType: 'blob' });
@@ -327,6 +333,7 @@ export class InterventionService {
     if (query.technician) params = params.set('technician', query.technician);
     if (query.region) params = params.set('region', query.region);
     if (query.client) params = params.set('client', query.client);
+    if (query.numInter) params = params.set('numInter', query.numInter);
     if (query.status) params = params.set('status', query.status);
     if (query.type) params = params.set('type', query.type);
     return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' });
@@ -339,6 +346,7 @@ export class InterventionService {
     if (query.technician) params = params.set('technician', query.technician);
     if (query.region) params = params.set('region', query.region);
     if (query.client) params = params.set('client', query.client);
+    if (query.numInter) params = params.set('numInter', query.numInter);
     if (query.status) params = params.set('status', query.status);
     if (query.type) params = params.set('type', query.type);
     if (query.page) params = params.set('page', String(query.page));
@@ -373,6 +381,8 @@ export class InterventionService {
   ): Observable<{ success: boolean; data: InterventionImportTechnicianSummary }> {
     let params = new HttpParams();
     if (query.importBatchId) params = params.set('importBatchId', query.importBatchId);
+    if (query.fromDate) params = params.set('fromDate', query.fromDate);
+    if (query.toDate) params = params.set('toDate', query.toDate);
     return this.http.get<{ success: boolean; data: InterventionImportTechnicianSummary }>(
       `${this.baseUrl}/imports/technician/summary`,
       { params }

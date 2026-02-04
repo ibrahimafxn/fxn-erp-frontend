@@ -2,18 +2,25 @@
   <div class="login-card">
     <section class="login-brand">
       <div class="brand-mark">FXN</div>
-      <h1>Connexion</h1>
-      <p>Accédez à votre ERP et pilotez vos opérations en temps réel.</p>
+      <div class="login-title-row">
+        <h1 i18n="@@login.title">Connexion</h1>
+        <div class="login-lang-switch" role="group" aria-label="Langue" i18n-aria-label="@@header.langAria">
+          <a class="lang-pill" [class.active]="currentLocale() === 'fr'" [href]="localeHref('fr')">FR</a>
+          <span class="sep">/</span>
+          <a class="lang-pill" [class.active]="currentLocale() === 'en'" [href]="localeHref('en')">EN</a>
+        </div>
+      </div>
+      <p i18n="@@login.subtitle">Accédez à votre ERP et pilotez vos opérations en temps réel.</p>
       <ul class="brand-list">
-        <li>Stocks et flux centralisés</li>
-        <li>Suivi terrain instantané</li>
-        <li>Rapports clairs et fiables</li>
+        <li i18n="@@login.benefit.stock">Stocks et flux centralisés</li>
+        <li i18n="@@login.benefit.field">Suivi terrain instantané</li>
+        <li i18n="@@login.benefit.reports">Rapports clairs et fiables</li>
       </ul>
     </section>
 
     <section class="login-form">
-      <h2>Accès sécurisé</h2>
-      <p class="form-subtitle">Utilisez votre adresse professionnelle pour continuer.</p>
+      <h2 i18n="@@login.form.title">Accès sécurisé</h2>
+      <p class="form-subtitle" i18n="@@login.form.subtitle">Utilisez votre adresse professionnelle pour continuer.</p>
 
       @if (error()){
         <div class="error">{{ error() }}</div>
@@ -25,12 +32,12 @@
       @if (step() === 'login') {
         <form [formGroup]="form" (ngSubmit)="submit()">
           <div class="form-group">
-            <label for="login-email">Email</label>
-            <input id="login-email" formControlName="email" type="email" autocomplete="email" placeholder="admin@fxn.local" />
+            <label for="login-email" i18n="@@login.emailLabel">Email</label>
+            <input id="login-email" formControlName="email" type="email" autocomplete="email" placeholder="admin@fxn.local" i18n-placeholder="@@login.emailPlaceholder" />
           </div>
 
           <div class="form-group">
-            <label for="login-password">Mot de passe</label>
+            <label for="login-password" i18n="@@login.passwordLabel">Mot de passe</label>
             <div class="password-field">
               <input
                 id="login-password"
@@ -38,39 +45,54 @@
                 [type]="showPassword() ? 'text' : 'password'"
                 autocomplete="current-password"
                 placeholder="Entrez votre mot de passe"
+                i18n-placeholder="@@login.passwordPlaceholder"
               />
-              <button
-                type="button"
-                class="toggle-visibility"
-                (click)="togglePassword()"
-                [attr.aria-pressed]="showPassword()"
-                [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
-              >
-                @if (showPassword()) { Masquer } @else { Afficher }
-              </button>
+              @if (showPassword()) {
+                <button
+                  type="button"
+                  class="toggle-visibility"
+                  (click)="togglePassword()"
+                  [attr.aria-pressed]="showPassword()"
+                  aria-label="Masquer le mot de passe"
+                  i18n-aria-label="@@login.hidePasswordAria"
+                >
+                  <span i18n="@@login.hidePassword">Masquer</span>
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="toggle-visibility"
+                  (click)="togglePassword()"
+                  [attr.aria-pressed]="showPassword()"
+                  aria-label="Afficher le mot de passe"
+                  i18n-aria-label="@@login.showPasswordAria"
+                >
+                  <span i18n="@@login.showPassword">Afficher</span>
+                </button>
+              }
             </div>
           </div>
 
           @if (mfaRequired()) {
             <div class="form-group">
-              <label for="login-mfa">Code MFA</label>
-              <input id="login-mfa" formControlName="mfaCode" type="text" autocomplete="one-time-code" placeholder="123456" />
-              <div class="hint">Un code a été envoyé par email.</div>
+              <label for="login-mfa" i18n="@@login.mfaLabel">Code MFA</label>
+              <input id="login-mfa" formControlName="mfaCode" type="text" autocomplete="one-time-code" placeholder="123456" i18n-placeholder="@@login.mfaPlaceholder" />
+              <div class="hint" i18n="@@login.mfaHint">Un code a été envoyé par email.</div>
             </div>
           }
 
           <div class="remember-device" [class.is-hidden]="!showRememberDevice()">
             <label>
               <input type="checkbox" formControlName="rememberDevice" />
-              <span>Se souvenir de cet appareil (30 jours)</span>
+              <span i18n="@@login.rememberDevice">Se souvenir de cet appareil (30 jours)</span>
             </label>
           </div>
 
           <button type="submit" [disabled]="loading()">
             @if (loading()){
-              <span>Connexion...</span>
+              <span i18n="@@login.loading">Connexion...</span>
             }@else{
-              <span>Se connecter</span>
+              <span i18n="@@login.submit">Se connecter</span>
             }
           </button>
         </form>
@@ -79,31 +101,31 @@
       @if (step() === 'password') {
         <form [formGroup]="passwordForm" (ngSubmit)="submitPasswordChange()">
           <div class="form-group">
-            <label for="new-password">Nouveau mot de passe</label>
-            <input id="new-password" formControlName="newPassword" type="password" autocomplete="new-password" placeholder="Min 8, 1 majuscule, 1 chiffre" />
+            <label for="new-password" i18n="@@login.newPasswordLabel">Nouveau mot de passe</label>
+            <input id="new-password" formControlName="newPassword" type="password" autocomplete="new-password" placeholder="Min 8, 1 majuscule, 1 chiffre" i18n-placeholder="@@login.newPasswordPlaceholder" />
           </div>
 
           <div class="form-group">
-            <label for="confirm-password">Confirmer le mot de passe</label>
-            <input id="confirm-password" formControlName="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirmez le mot de passe" />
+            <label for="confirm-password" i18n="@@login.confirmPasswordLabel">Confirmer le mot de passe</label>
+            <input id="confirm-password" formControlName="confirmPassword" type="password" autocomplete="new-password" placeholder="Confirmez le mot de passe" i18n-placeholder="@@login.confirmPasswordPlaceholder" />
           </div>
 
           @if (mfaRequired()) {
             <div class="form-group">
-              <label for="mfa-reset">Code MFA</label>
-              <input id="mfa-reset" formControlName="mfaCode" type="text" autocomplete="one-time-code" placeholder="123456" />
+              <label for="mfa-reset" i18n="@@login.resetMfaLabel">Code MFA</label>
+              <input id="mfa-reset" formControlName="mfaCode" type="text" autocomplete="one-time-code" placeholder="123456" i18n-placeholder="@@login.resetMfaPlaceholder" />
             </div>
           }
 
           <button type="submit" [disabled]="loading()">
             @if (loading()){
-              <span>Mise à jour...</span>
+              <span i18n="@@login.updateLoading">Mise à jour...</span>
             }@else{
-              <span>Mettre à jour</span>
+              <span i18n="@@login.updateSubmit">Mettre à jour</span>
             }
           </button>
 
-          <button class="btn-link" type="button" (click)="backToLogin()">Revenir</button>
+          <button class="btn-link" type="button" (click)="backToLogin()" i18n="@@login.backToLogin">Revenir</button>
         </form>
       }
     </section>

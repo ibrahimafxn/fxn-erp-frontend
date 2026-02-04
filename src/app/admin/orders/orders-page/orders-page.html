@@ -37,11 +37,11 @@
     <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
       <label>
         Recherche
-        <input type="text" formControlName="q" placeholder="Reference ou client" [disabled]="importLoading()" />
+        <input type="text" formControlName="q" placeholder="Reference ou client" [disabled]="importLoading()" (input)="search()" />
       </label>
       <label>
         Statut
-        <select formControlName="status" [disabled]="importLoading()">
+        <select formControlName="status" [disabled]="importLoading()" (change)="search()">
           <option value="">Tous</option>
           <option value="En cours">En cours</option>
           <option value="Validée">Validée</option>

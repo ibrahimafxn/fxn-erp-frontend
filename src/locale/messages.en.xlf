@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="fr" target-language="en" datatype="plaintext" original="ng2.template">
+    <body>
+      <trans-unit id="login.title">
+        <source>Connexion</source>
+        <target>Sign in</target>
+      </trans-unit>
+      <trans-unit id="login.subtitle">
+        <source>Accédez à votre ERP et pilotez vos opérations en temps réel.</source>
+        <target>Access your ERP and manage operations in real time.</target>
+      </trans-unit>
+      <trans-unit id="login.benefit.stock">
+        <source>Stocks et flux centralisés</source>
+        <target>Centralized stock and flows</target>
+      </trans-unit>
+      <trans-unit id="login.benefit.field">
+        <source>Suivi terrain instantané</source>
+        <target>Instant field tracking</target>
+      </trans-unit>
+      <trans-unit id="login.benefit.reports">
+        <source>Rapports clairs et fiables</source>
+        <target>Clear, reliable reporting</target>
+      </trans-unit>
+      <trans-unit id="login.form.title">
+        <source>Accès sécurisé</source>
+        <target>Secure access</target>
+      </trans-unit>
+      <trans-unit id="login.form.subtitle">
+        <source>Utilisez votre adresse professionnelle pour continuer.</source>
+        <target>Use your work email to continue.</target>
+      </trans-unit>
+      <trans-unit id="login.emailLabel">
+        <source>Email</source>
+        <target>Email</target>
+      </trans-unit>
+      <trans-unit id="login.emailPlaceholder">
+        <source>admin@fxn.local</source>
+        <target>admin@fxn.local</target>
+      </trans-unit>
+      <trans-unit id="login.passwordLabel">
+        <source>Mot de passe</source>
+        <target>Password</target>
+      </trans-unit>
+      <trans-unit id="login.passwordPlaceholder">
+        <source>Entrez votre mot de passe</source>
+        <target>Enter your password</target>
+      </trans-unit>
+      <trans-unit id="login.hidePasswordAria">
+        <source>Masquer le mot de passe</source>
+        <target>Hide password</target>
+      </trans-unit>
+      <trans-unit id="login.hidePassword">
+        <source>Masquer</source>
+        <target>Hide</target>
+      </trans-unit>
+      <trans-unit id="login.showPasswordAria">
+        <source>Afficher le mot de passe</source>
+        <target>Show password</target>
+      </trans-unit>
+      <trans-unit id="login.showPassword">
+        <source>Afficher</source>
+        <target>Show</target>
+      </trans-unit>
+      <trans-unit id="login.mfaLabel">
+        <source>Code MFA</source>
+        <target>MFA code</target>
+      </trans-unit>
+      <trans-unit id="login.mfaPlaceholder">
+        <source>123456</source>
+        <target>123456</target>
+      </trans-unit>
+      <trans-unit id="login.mfaHint">
+        <source>Un code a été envoyé par email.</source>
+        <target>A code was sent by email.</target>
+      </trans-unit>
+      <trans-unit id="login.rememberDevice">
+        <source>Se souvenir de cet appareil (30 jours)</source>
+        <target>Remember this device (30 days)</target>
+      </trans-unit>
+      <trans-unit id="login.loading">
+        <source>Connexion...</source>
+        <target>Signing in...</target>
+      </trans-unit>
+      <trans-unit id="login.submit">
+        <source>Se connecter</source>
+        <target>Sign in</target>
+      </trans-unit>
+      <trans-unit id="login.newPasswordLabel">
+        <source>Nouveau mot de passe</source>
+        <target>New password</target>
+      </trans-unit>
+      <trans-unit id="login.newPasswordPlaceholder">
+        <source>Min 8, 1 majuscule, 1 chiffre</source>
+        <target>Min 8, 1 uppercase, 1 number</target>
+      </trans-unit>
+      <trans-unit id="login.confirmPasswordLabel">
+        <source>Confirmer le mot de passe</source>
+        <target>Confirm password</target>
+      </trans-unit>
+      <trans-unit id="login.confirmPasswordPlaceholder">
+        <source>Confirmez le mot de passe</source>
+        <target>Confirm your password</target>
+      </trans-unit>
+      <trans-unit id="login.resetMfaLabel">
+        <source>Code MFA</source>
+        <target>MFA code</target>
+      </trans-unit>
+      <trans-unit id="login.resetMfaPlaceholder">
+        <source>123456</source>
+        <target>123456</target>
+      </trans-unit>
+      <trans-unit id="login.updateLoading">
+        <source>Mise à jour...</source>
+        <target>Updating...</target>
+      </trans-unit>
+      <trans-unit id="login.updateSubmit">
+        <source>Mettre à jour</source>
+        <target>Update</target>
+      </trans-unit>
+      <trans-unit id="login.backToLogin">
+        <source>Revenir</source>
+        <target>Back</target>
+      </trans-unit>
+      <trans-unit id="notFound.title">
+        <source>Oups ! La page demandée n'existe pas.</source>
+        <target>Oops! The page you requested doesn't exist.</target>
+      </trans-unit>
+      <trans-unit id="notFound.subtitle">
+        <source>Vous pouvez retourner à l'accueil ou vérifier l'URL.</source>
+        <target>You can go back home or check the URL.</target>
+      </trans-unit>
+      <trans-unit id="notFound.backHome">
+        <source>Retour à l'accueil</source>
+        <target>Back to home</target>
+      </trans-unit>
+      <trans-unit id="unauthorized.title">
+        <source>Accès refusé</source>
+        <target>Access denied</target>
+      </trans-unit>
+      <trans-unit id="unauthorized.message">
+        <source>Tu n’as pas les droits nécessaires pour accéder à cette page.</source>
+        <target>You don't have permission to access this page.</target>
+      </trans-unit>
+      <trans-unit id="unauthorized.currentRole">
+        <source>Rôle courant :</source>
+        <target>Current role:</target>
+      </trans-unit>
+      <trans-unit id="unauthorized.notLogged">
+        <source>Tu n’es pas connecté.</source>
+        <target>You're not signed in.</target>
+      </trans-unit>
+      <trans-unit id="unauthorized.backHome">
+        <source>Revenir à l’accueil</source>
+        <target>Back to home</target>
+      </trans-unit>
+      <trans-unit id="unauthorized.logout">
+        <source>Se déconnecter</source>
+        <target>Sign out</target>
+      </trans-unit>
+      <trans-unit id="header.homeAria">
+        <source>Accueil</source>
+        <target>Home</target>
+      </trans-unit>
+      <trans-unit id="header.back">
+        <source>Retour</source>
+        <target>Back</target>
+      </trans-unit>
+      <trans-unit id="header.section.technician">
+        <source>Technicien</source>
+        <target>Technician</target>
+      </trans-unit>
+      <trans-unit id="header.menu.techMaterials">
+        <source>Matériels</source>
+        <target>Materials</target>
+      </trans-unit>
+      <trans-unit id="header.menu.techConsumables">
+        <source>Consommables</source>
+        <target>Consumables</target>
+      </trans-unit>
+      <trans-unit id="header.menu.techVehicles">
+        <source>Véhicules</source>
+        <target>Vehicles</target>
+      </trans-unit>
+      <trans-unit id="header.menu.techReports">
+        <source>Rapport quotidien</source>
+        <target>Daily report</target>
+      </trans-unit>
+      <trans-unit id="header.menu.techRevenue">
+        <source>Chiffre d'affaires</source>
+        <target>Revenue</target>
+      </trans-unit>
+      <trans-unit id="header.menu.techHistory">
+        <source>Historique</source>
+        <target>History</target>
+      </trans-unit>
+      <trans-unit id="header.section.admin">
+        <source>Administration</source>
+        <target>Administration</target>
+      </trans-unit>
+      <trans-unit id="header.menu.access">
+        <source>Accès connexion</source>
+        <target>Access credentials</target>
+      </trans-unit>
+      <trans-unit id="header.menu.hr">
+        <source>Ressources humaines</source>
+        <target>Human resources</target>
+      </trans-unit>
+      <trans-unit id="header.section.stock">
+        <source>Stock</source>
+        <target>Stock</target>
+      </trans-unit>
+      <trans-unit id="header.menu.stockReceipts">
+        <source>Réceptions stock</source>
+        <target>Stock receipts</target>
+      </trans-unit>
+      <trans-unit id="header.menu.orders">
+        <source>Commandes</source>
+        <target>Orders</target>
+      </trans-unit>
+      <trans-unit id="header.menu.alerts">
+        <source>Alertes</source>
+        <target>Alerts</target>
+      </trans-unit>
+      <trans-unit id="header.section.assignments">
+        <source>Attributions</source>
+        <target>Assignments</target>
+      </trans-unit>
+      <trans-unit id="header.menu.assignmentsConsumables">
+        <source>Consommables</source>
+        <target>Consumables</target>
+      </trans-unit>
+      <trans-unit id="header.menu.assignmentsMaterials">
+        <source>Matériels</source>
+        <target>Materials</target>
+      </trans-unit>
+      <trans-unit id="header.section.finance">
+        <source>Finance</source>
+        <target>Finance</target>
+      </trans-unit>
+      <trans-unit id="header.menu.revenue">
+        <source>Chiffre d'affaires</source>
+        <target>Revenue</target>
+      </trans-unit>
+      <trans-unit id="header.menu.bpu">
+        <source>BPU prestations</source>
+        <target>BPU services</target>
+      </trans-unit>
+      <trans-unit id="header.section.account">
+        <source>Compte</source>
+        <target>Account</target>
+      </trans-unit>
+      <trans-unit id="header.menu.profile">
+        <source>Mon profil</source>
+        <target>My profile</target>
+      </trans-unit>
+      <trans-unit id="header.menu.logout">
+        <source>Déconnexion</source>
+        <target>Sign out</target>
+      </trans-unit>
+      <trans-unit id="header.welcomeTitle">
+        <source>Bienvenue Patron.</source>
+        <target>Welcome, boss.</target>
+      </trans-unit>
+      <trans-unit id="header.welcomeText">
+        <source>Optimisez les stocks et les opérations. Passez au plan FXN complet.</source>
+        <target>Optimize stock and operations. Upgrade to the full FXN plan.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

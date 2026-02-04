@@ -302,3 +302,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 700px) {
+  .technician-dashboard .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .technician-dashboard .kpi-header,
+  .technician-dashboard .import-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .technician-dashboard .import-meta {
+    text-align: left;
+  }
+
+  .technician-dashboard .kpi-card,
+  .technician-dashboard .import-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .technician-dashboard .action-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .technician-dashboard .action-card {
+    padding: 14px;
+  }
+}

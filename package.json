@@ -4,7 +4,14 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:fr": "ng serve --configuration=fr",
+    "start:en": "ng serve --configuration=en",
     "build": "ng build",
+    "build:fr": "ng build --configuration=fr",
+    "build:en": "ng build --configuration=en",
+    "build:localize": "ng build --localize",
+    "serve:localize": "npx http-server dist/fxn-erp-frontend/browser",
+    "i18n:serve": "npm run build:localize && npm run serve:localize",
     "serve:prod": "npx http-server dist/fxn-erp-frontend/browser",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -27,6 +34,7 @@
     "@angular/common": "^21.1.2",
     "@angular/compiler": "^21.1.2",
     "@angular/core": "^21.1.2",
+    "@angular/localize": "^21.1.2",
     "@angular/forms": "^21.1.2",
     "@angular/material": "^21.1.2",
     "@angular/platform-browser": "^21.1.2",

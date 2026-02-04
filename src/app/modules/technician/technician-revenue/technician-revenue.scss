@@ -208,6 +208,19 @@
     padding: 1rem;
   }
 
+  .technician-revenue .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .technician-revenue .filters .actions {
+    justify-content: stretch;
+  }
+
+  .technician-revenue .filters .actions .btn-outline {
+    flex: 1 1 auto;
+  }
+
   .technician-revenue table {
     min-width: 0;
   }

@@ -40,10 +40,13 @@ export class Login {
   mfaRequired = signal(false);
   showPassword = signal(false);
   showRememberDevice = signal(false);
+  readonly currentLocale = signal<'fr' | 'en'>('fr');
   private pendingEmail = signal<string | null>(null);
   private pendingPassword = signal<string | null>(null);
 
-  constructor() {}
+  constructor() {
+    this.currentLocale.set(this.detectLocale());
+  }
 
   // --- Soumission du formulaire ---
   submit() {
@@ -157,6 +160,17 @@ export class Login {
     this.showPassword.update((v) => !v);
   }
 
+  localeHref(locale: 'fr' | 'en'): string {
+    const path = window.location.pathname || '/';
+    const normalized = path.startsWith('/en/')
+      ? path.slice(3)
+      : path === '/en'
+        ? '/'
+        : path;
+    const base = locale === 'en' ? `/en${normalized === '/' ? '' : normalized}` : (normalized || '/');
+    return `${base}${window.location.search || ''}${window.location.hash || ''}`;
+  }
+
   private redirectAfterLogin(): void {
     const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
     const role = this.auth.getUserRole();
@@ -180,5 +194,10 @@ export class Login {
     const isReturnAllowed = prefixes.some((prefix) => returnUrl.startsWith(prefix));
 
     this.router.navigateByUrl(isReturnAllowed ? returnUrl : safeDefault);
+  }
+
+  private detectLocale(): 'fr' | 'en' {
+    const path = window.location.pathname || '';
+    return path === '/en' || path.startsWith('/en/') ? 'en' : 'fr';
   }
 }

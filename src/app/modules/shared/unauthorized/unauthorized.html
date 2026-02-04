@@ -1,27 +1,27 @@
 <section class="unauthorized-page">
   <div class="card">
-    <h1>Accès refusé</h1>
+    <h1 i18n="@@unauthorized.title">Accès refusé</h1>
     <p>
-      Tu n’as pas les droits nécessaires pour accéder à cette page.
+      <span i18n="@@unauthorized.message">Tu n’as pas les droits nécessaires pour accéder à cette page.</span>
     </p>
 
     @if (role()) {
       <p class="hint">
-        Rôle courant : <strong>{{ role() }}</strong>
+        <span i18n="@@unauthorized.currentRole">Rôle courant :</span> <strong>{{ role() }}</strong>
       </p>
     } @else {
       <p class="hint">
-        Tu n’es pas connecté.
+        <span i18n="@@unauthorized.notLogged">Tu n’es pas connecté.</span>
       </p>
     }
 
     <div class="actions">
       <button type="button" class="btn-primary" (click)="goHome()">
-        Revenir à l’accueil
+        <span i18n="@@unauthorized.backHome">Revenir à l’accueil</span>
       </button>
 
       <button type="button" class="btn-outline" (click)="logout()">
-        Se déconnecter
+        <span i18n="@@unauthorized.logout">Se déconnecter</span>
       </button>
     </div>
   </div>

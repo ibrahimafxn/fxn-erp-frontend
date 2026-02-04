@@ -137,9 +137,7 @@
               <label>Contrat</label>
               <select formControlName="contractType">
                 @for (t of contractTypes; track t) {
-                  <option [value]="t">
-                    @if (t === 'FREELANCE') { AUTO ENTREPRENEUR } @else { {{ t }} }
-                  </option>
+                  <option [value]="t">{{ t }}</option>
                 }
               </select>
             </div>

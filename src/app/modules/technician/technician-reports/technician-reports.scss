@@ -274,6 +274,17 @@
 }
 
 @media (max-width: 900px) {
+  .technician-reports .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .technician-reports .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
   .technician-reports .report-form {
     grid-template-columns: 1fr;
   }
@@ -284,6 +295,14 @@
 
   .technician-reports .history-filters {
     grid-template-columns: 1fr;
+  }
+
+  .technician-reports .history-filters .actions {
+    justify-content: stretch;
+  }
+
+  .technician-reports .history-filters .actions .btn-outline {
+    flex: 1 1 auto;
   }
 
   .technician-reports .table table,

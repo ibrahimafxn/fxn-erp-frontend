@@ -19,7 +19,12 @@ import { InterventionRatesService, InterventionRates } from '../../../core/servi
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
+import { Depot, User } from '../../../core/models';
+import { DepotService } from '../../../core/services/depot.service';
+import { HrService } from '../../../core/services/hr.service';
+import { EmployeeSummary } from '../../../core/models/hr.model';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { formatPersonName } from '../../../core/utils/text-format';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { downloadBlob } from '../../../core/utils/download';
 
@@ -37,6 +42,8 @@ export class InterventionsDashboard {
   private fb = inject(FormBuilder);
   private ratesService = inject(InterventionRatesService);
   private auth = inject(AuthService);
+  private depotService = inject(DepotService);
+  private hrService = inject(HrService);
 
   @ViewChild('csvInput') private csvInput?: ElementRef<HTMLInputElement>;
   @ViewChild('invoiceInput') private invoiceInput?: ElementRef<HTMLInputElement>;
@@ -73,6 +80,7 @@ export class InterventionsDashboard {
   readonly selectedPeriodKey = signal<string>('');
 
   readonly summaryItems = signal<InterventionSummaryItem[]>([]);
+  readonly summaryAllItems = signal<InterventionSummaryItem[]>([]);
   readonly totals = signal<InterventionTotals | null>(null);
   readonly totalItems = signal(0);
   readonly page = signal(1);
@@ -248,6 +256,20 @@ export class InterventionsDashboard {
     technicians: [],
     types: []
   });
+  readonly prestationTypeOptions = [
+    { label: 'PRO C', value: 'RACPRO_C' },
+    { label: 'PRO S', value: 'RACPRO_S' },
+    { label: 'RAC PAV', value: 'RACPAV' },
+    { label: 'RAC IMM', value: 'RACIH' },
+    { label: 'RECO', value: 'RECOIP' },
+    { label: 'PRESTA COMPL', value: 'PRESTA_COMPL' },
+    { label: 'SAV', value: 'SAV' },
+    { label: 'PRESTAT F8', value: 'REPFOU_PRI' },
+    { label: 'DEMO', value: 'DEMO' }
+  ] as const;
+  readonly depots = signal<Depot[]>([]);
+  readonly employees = signal<EmployeeSummary[]>([]);
+  readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'AUTRE'] as const;
 
   readonly averagePerTech = computed(() => {
     const items = this.summaryItems();
@@ -282,6 +304,8 @@ export class InterventionsDashboard {
     fromDate: this.fb.nonNullable.control(''),
     toDate: this.fb.nonNullable.control(''),
     technician: this.fb.nonNullable.control(''),
+    depot: this.fb.nonNullable.control(''),
+    contractType: this.fb.nonNullable.control(''),
     region: this.fb.nonNullable.control(''),
     client: this.fb.nonNullable.control(''),
     status: this.fb.nonNullable.control('CLOTURE TERMINEE'),
@@ -463,6 +487,8 @@ export class InterventionsDashboard {
       this.showRates.set(stored !== 'false');
     }
     this.loadFilters();
+    this.loadDepots();
+    this.loadEmployees();
     this.loadImports();
     this.resetInvoicesOnLoad();
     this.ratesService.refresh().subscribe();
@@ -845,19 +871,20 @@ export class InterventionsDashboard {
       client: f.client || undefined,
       status: f.status || undefined,
       type: f.type || undefined,
-      page: this.page(),
-      limit: this.limit()
+      page: 1,
+      limit: 1000
     }).subscribe({
       next: (res) => {
         const items = (res.data.items || [])
           .map((item) => this.normalizeSummaryItem(item))
           .filter((item): item is InterventionSummaryItem => item !== null);
-        const totals = this.normalizeSummaryItem(res.data.totals || null);
-        this.summaryItems.set(items);
+        const filteredItems = this.applyAdvancedFilters(items);
+        const pagedItems = this.paginateSummaryItems(filteredItems);
+        const totals = this.computeTotals(filteredItems);
+        this.summaryAllItems.set(filteredItems);
+        this.summaryItems.set(pagedItems);
         this.totals.set(totals);
-        this.totalItems.set(res.data.total ?? res.data.items?.length ?? 0);
-        if (res.data.page) this.page.set(res.data.page);
-        if (res.data.limit) this.limit.set(res.data.limit);
+        this.totalItems.set(filteredItems.length);
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -976,6 +1003,9 @@ export class InterventionsDashboard {
     if (item.racProC == null && typeof raw['racpro_c'] === 'number') {
       (item as { racProC?: number }).racProC = raw['racpro_c'] as number;
     }
+    if (item.prestaCompl == null && typeof raw['presta_compl'] === 'number') {
+      (item as { prestaCompl?: number }).prestaCompl = raw['presta_compl'] as number;
+    }
     if (item.refcDgr == null && typeof raw['refc_dgr'] === 'number') {
       (item as { refcDgr?: number }).refcDgr = raw['refc_dgr'] as number;
     }
@@ -993,6 +1023,8 @@ export class InterventionsDashboard {
       fromDate: '',
       toDate: '',
       technician: '',
+      depot: '',
+      contractType: '',
       region: '',
       client: '',
       status: 'CLOTURE TERMINEE',
@@ -1001,6 +1033,120 @@ export class InterventionsDashboard {
     this.page.set(1);
     this.refresh();
     this.refreshCompare();
+  }
+
+  private loadDepots(): void {
+    this.depotService.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
+      next: (res) => this.depots.set(res.items ?? []),
+      error: () => this.depots.set([])
+    });
+  }
+
+  private loadEmployees(): void {
+    this.hrService.listEmployees({ role: 'TECHNICIEN', page: 1, limit: 1000 }).subscribe({
+      next: (res) => this.employees.set(res.items ?? []),
+      error: () => this.employees.set([])
+    });
+  }
+
+  private applyAdvancedFilters(items: InterventionSummaryItem[]): InterventionSummaryItem[] {
+    const f = this.filterForm.getRawValue();
+    const depotId = f.depot || '';
+    const contractType = f.contractType || '';
+    if (!depotId && !contractType) return items;
+    if (!this.employees().length) return items;
+    const metaMap = this.buildTechMetaMap();
+    return items.filter((item) => {
+      const key = this.normalizeLabel(item.technician || '');
+      const meta = metaMap.get(key);
+      if (!meta) return false;
+      if (depotId && meta.depotId !== depotId) return false;
+      if (contractType && meta.contractType !== contractType) return false;
+      return true;
+    });
+  }
+
+  private paginateSummaryItems(items: InterventionSummaryItem[]): InterventionSummaryItem[] {
+    const page = this.page();
+    const limit = this.limit();
+    if (!items.length || limit <= 0) return items;
+    const start = (page - 1) * limit;
+    return items.slice(start, start + limit);
+  }
+
+  private computeTotals(items: InterventionSummaryItem[]): InterventionTotals {
+    const totals: InterventionTotals = {
+      total: 0,
+      racPavillon: 0,
+      racImmeuble: 0,
+      reconnexion: 0,
+      racF8: 0,
+      racProS: 0,
+      racProC: 0,
+      prestaCompl: 0,
+      sav: 0,
+      clem: 0,
+      deprise: 0,
+      demo: 0,
+      refrac: 0,
+      refcDgr: 0,
+      savExp: 0,
+      cablePav1: 0,
+      cablePav2: 0,
+      cablePav3: 0,
+      cablePav4: 0,
+      racAutre: 0,
+      other: 0
+    };
+    for (const item of items) {
+      totals.total = (totals.total ?? 0) + (item.total || 0);
+      totals.racPavillon = (totals.racPavillon ?? 0) + (item.racPavillon || 0);
+      totals.racImmeuble = (totals.racImmeuble ?? 0) + (item.racImmeuble || 0);
+      totals.reconnexion = (totals.reconnexion ?? 0) + (item.reconnexion || 0);
+      totals.racF8 = (totals.racF8 ?? 0) + (item.racF8 || 0);
+      totals.racProS = (totals.racProS ?? 0) + (item.racProS || 0);
+      totals.racProC = (totals.racProC ?? 0) + (item.racProC || 0);
+      totals.prestaCompl = (totals.prestaCompl ?? 0) + (item.prestaCompl || 0);
+      totals.sav = (totals.sav ?? 0) + (item.sav || 0);
+      totals.clem = (totals.clem ?? 0) + (item.clem || 0);
+      totals.deprise = (totals.deprise ?? 0) + (item.deprise || 0);
+      totals.demo = (totals.demo ?? 0) + (item.demo || 0);
+      totals.refrac = (totals.refrac ?? 0) + (item.refrac || 0);
+      totals.refcDgr = (totals.refcDgr ?? 0) + (item.refcDgr || 0);
+      totals.savExp = (totals.savExp ?? 0) + (item.savExp || 0);
+      totals.cablePav1 = (totals.cablePav1 ?? 0) + (item.cablePav1 || 0);
+      totals.cablePav2 = (totals.cablePav2 ?? 0) + (item.cablePav2 || 0);
+      totals.cablePav3 = (totals.cablePav3 ?? 0) + (item.cablePav3 || 0);
+      totals.cablePav4 = (totals.cablePav4 ?? 0) + (item.cablePav4 || 0);
+      totals.racAutre = (totals.racAutre ?? 0) + (item.racAutre || 0);
+      totals.other = (totals.other ?? 0) + (item.other || 0);
+    }
+    return totals;
+  }
+
+  private buildTechMetaMap(): Map<string, { depotId?: string; contractType?: string }> {
+    const map = new Map<string, { depotId?: string; contractType?: string }>();
+    for (const entry of this.employees()) {
+      const user = entry.user as User | undefined;
+      if (!user) continue;
+      const label = this.normalizeLabel(formatPersonName(user.firstName ?? '', user.lastName ?? '') || user.email || '');
+      if (!label) continue;
+      const depotId = typeof user.idDepot === 'string'
+        ? user.idDepot
+        : (user.idDepot && typeof user.idDepot === 'object' ? String(user.idDepot._id || '') : '');
+      const contractType = entry.profile?.contractType || '';
+      map.set(label, { depotId: depotId || undefined, contractType: contractType || undefined });
+    }
+    return map;
+  }
+
+  private normalizeLabel(value: string): string {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   saveRates(): void {
@@ -1068,14 +1214,11 @@ export class InterventionsDashboard {
     if (!item) return 0;
     return (item.racPavillon || 0)
       + (item.racImmeuble || 0)
-      + (item.racF8 || 0)
       + (item.racProS || 0)
       + (item.racProC || 0)
       + (item.deprise || 0)
-      + (item.demo || 0)
       + (item.refrac || 0)
-      + (item.refcDgr || 0)
-      + (item.racAutre || 0);
+      + (item.refcDgr || 0);
   }
 
   fxnRevenue(item: InterventionSummaryItem | InterventionTotals | null): number {

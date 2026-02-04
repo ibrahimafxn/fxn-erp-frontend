@@ -110,7 +110,7 @@
       <form class="history-filters" [formGroup]="filterForm" (ngSubmit)="searchHistory()">
         <label>
           Type
-          <select formControlName="resourceType">
+          <select formControlName="resourceType" (change)="searchHistory()">
             <option value="">Tous</option>
             <option value="CONSUMABLE">Consommables</option>
             <option value="MATERIAL">Matériels</option>
@@ -118,12 +118,12 @@
         </label>
         <label>
           Ressource
-          <input type="text" formControlName="resourceName" placeholder="Nom ressource" />
+          <input type="text" formControlName="resourceName" placeholder="Nom ressource" (input)="searchHistory()" />
         </label>
         @if (showDepotFilter()) {
           <label>
             Dépôt
-            <select formControlName="depot" [disabled]="depotsLoading()">
+            <select formControlName="depot" [disabled]="depotsLoading()" (change)="searchHistory()">
               <option value="">{{ depotsLoading() ? 'Chargement…' : 'Tous dépôts' }}</option>
               @for (d of depots(); track d._id) {
                 <option [value]="d._id">{{ depotLabelById(d._id) }}</option>
@@ -133,11 +133,11 @@
         }
         <label>
           Du
-          <input type="date" formControlName="fromDate" />
+          <input type="date" formControlName="fromDate" (change)="searchHistory()" />
         </label>
         <label>
           Au
-          <input type="date" formControlName="toDate" />
+          <input type="date" formControlName="toDate" (change)="searchHistory()" />
         </label>
         <div class="filter-actions">
           <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>

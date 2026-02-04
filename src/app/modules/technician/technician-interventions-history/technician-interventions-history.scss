@@ -1,0 +1,233 @@
+.technician-interventions-history {
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.page-header .subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--fxn-text-muted);
+}
+
+.toolbar.card,
+.table.card,
+.state.card {
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-glass);
+  padding: 1.2rem;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.85rem;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--fxn-text-muted);
+}
+
+.filters input,
+.filters select {
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.75);
+  color: var(--fxn-text);
+}
+
+.filters .actions {
+  grid-column: span 2;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  flex-wrap: nowrap;
+  align-self: end;
+  justify-self: end;
+}
+
+.filters .actions button {
+  height: 42px;
+  min-width: 110px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+thead th {
+  font-size: 0.8rem;
+  color: var(--fxn-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.row-closed td {
+  color: #7ee787;
+}
+
+.row-failed td {
+  color: #ff6b6b;
+}
+
+.row-cancelled td {
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.sort-button .sort-arrow {
+  min-width: 0.75rem;
+  text-align: center;
+  font-size: 0.7rem;
+  opacity: 0.55;
+}
+
+.sort-button:hover,
+.sort-button.is-active {
+  color: var(--fxn-text);
+}
+
+.sort-button.is-active .sort-arrow {
+  opacity: 0.95;
+  color: rgba(147, 197, 253, 0.9);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.pager .page-size button {
+  margin-right: 0.35rem;
+}
+
+.pager-label {
+  color: var(--fxn-text-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 700px) {
+  .technician-interventions-history {
+    padding: 1rem;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .btn-outline {
+    width: 100%;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .filters .actions {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    flex-wrap: wrap;
+  }
+
+  .filters .actions {
+    justify-content: stretch;
+  }
+
+  .filters .actions .btn-outline {
+    flex: 1 1 auto;
+  }
+
+  .table {
+    padding: 0;
+  }
+
+  .table table,
+  .table thead,
+  .table tbody,
+  .table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .table tr {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 0.6rem 0.7rem;
+    background: rgba(10, 16, 28, 0.6);
+  }
+
+  .table td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.4rem 0;
+    border-bottom: none;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+  }
+
+  .pager {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

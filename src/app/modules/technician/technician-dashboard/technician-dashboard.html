@@ -25,6 +25,20 @@
         </div>
         <div class="kpi-value">{{ formatAmount(dailyAmount()) }}</div>
       </article>
+      <article class="kpi-card kpi-weekly">
+        <div class="kpi-info">
+          <div class="kpi-title">Hebdomadaire</div>
+          <div class="kpi-sub">Cette semaine</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(weeklyAmount()) }}</div>
+      </article>
+      <article class="kpi-card kpi-monthly">
+        <div class="kpi-info">
+          <div class="kpi-title">Mensuel</div>
+          <div class="kpi-sub">Mois en cours</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(monthlyAmount()) }}</div>
+      </article>
     </div>
   </section>
 
@@ -84,30 +98,6 @@
           }
         </div>
       }
-      <div class="import-alerts">
-        <div class="alert-card" [class.ok]="techTickets().length === 0">
-          <div>
-            <div class="label">Anomalies sur vos interventions</div>
-            <div class="value">{{ techTickets().length }}</div>
-          </div>
-          <div class="hint">
-            @if (techTickets().length === 0) { Aucune anomalie detectee. } @else { A signaler au support. }
-          </div>
-        </div>
-        @if (techTickets().length) {
-          <div class="alert-list">
-            <div class="label">Derniers tickets</div>
-            <ul>
-              @for (ticket of techTicketPreview(); track ticket._id) {
-                <li>{{ ticketLabel(ticket) }}</li>
-              }
-            </ul>
-            @if (techTickets().length > techTicketPreview().length) {
-              <div class="hint">+{{ techTickets().length - techTicketPreview().length }} autres</div>
-            }
-          </div>
-        }
-      </div>
     }
   </section>
 
@@ -155,6 +145,15 @@
       </div>
       <div class="action-title">Historique des attributions</div>
       <div class="action-subtitle">Consulter les attributions et reprises.</div>
+    </article>
+
+    <article class="action-card" (click)="goInterventionsHistory()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">assignment</span>
+        <span class="action-tag">Interventions</span>
+      </div>
+      <div class="action-title">Historique des interventions</div>
+      <div class="action-subtitle">Consulter vos rapports et interventions.</div>
     </article>
   </div>
 </section>
