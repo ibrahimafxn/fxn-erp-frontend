@@ -43,7 +43,10 @@ export class Profile {
 
   readonly photoUrl = computed(() => {
     const u = this.user();
-    return resolveCloudinaryAvatarUrl(u?.photoUrl, u?.avatarUrl);
+    const cacheKey = (u as { updatedAt?: string; lastLoginAt?: string } | null)?.updatedAt
+      || (u as { updatedAt?: string; lastLoginAt?: string } | null)?.lastLoginAt
+      || '';
+    return resolveCloudinaryAvatarUrl(u?.photoUrl, u?.avatarUrl, cacheKey);
   });
 
   readonly roleLabel = computed(() => {

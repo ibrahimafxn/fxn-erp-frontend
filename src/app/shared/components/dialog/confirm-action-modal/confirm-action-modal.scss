@@ -1,0 +1,68 @@
+.confirm-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 10, 18, 0.65);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 60;
+}
+
+.confirm-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.confirm-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.98);
+  width: min(420px, 92vw);
+  background: rgba(12, 20, 34, 0.98);
+  border-radius: 16px;
+  border: 1px solid rgba(88, 123, 255, 0.25);
+  padding: 16px;
+  z-index: 70;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.confirm-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.confirm-modal header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.confirm-modal header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.confirm-modal .content {
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.confirm-modal footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.confirm-modal .btn-primary.danger {
+  background: rgba(233, 85, 85, 0.85);
+}
+
+.confirm-modal .btn-primary.success {
+  background: rgba(42, 164, 122, 0.85);
+}

@@ -5,7 +5,7 @@
       <p class="subtitle">Congés et absences sur une vue claire et filtrable.</p>
     </div>
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="openModal()">
+      <button class="btn-primary" type="button" (click)="openModal()">
         <i class="bi bi-plus-lg"></i>
         Nouvelle absence
       </button>
@@ -78,6 +78,7 @@
         <button type="button" [class.active]="viewMode() === 'month'" (click)="setView('month')">Mois</button>
         <button type="button" [class.active]="viewMode() === 'week'" (click)="setView('week')">Semaine</button>
         <button type="button" [class.active]="viewMode() === 'day'" (click)="setView('day')">Jour</button>
+        <button type="button" [class.active]="showList()" (click)="toggleList()">Liste</button>
       </div>
     </div>
 
@@ -100,7 +101,7 @@
                 @for (absence of absencesForDay(date); track absence._id || absence.startDate + absence.technicianId) {
                   <div class="event-pill" [class]="statusClass(absence.status)">
                     <span class="event-type">{{ typeLabel(absence.type) }}</span>
-                    <span class="event-tech">{{ technicianLabel(absence.technicianId) }}</span>
+                    <span class="event-tech">{{ absenceTechnicianLabel(absence) }}</span>
                   </div>
                 }
               </div>
@@ -108,7 +109,44 @@
           }
         </div>
       } @else {
-        <div class="list-view">
+        @if (!showList()) {
+          <div class="list-view">
+            @for (absence of visibleAbsences(); track absence._id || absence.startDate + absence.technicianId) {
+              <div class="list-item">
+                <div>
+                  <div class="item-title">{{ technicianLabel(absence.technicianId) }}</div>
+                  <div class="item-sub">{{ typeLabel(absence.type) }} · {{ statusLabel(absence.status) }}</div>
+                </div>
+                <div class="item-dates">
+                  <span>{{ absence.startDate | date:'shortDate' }}</span>
+                  <span>→</span>
+                  <span>{{ absence.endDate | date:'shortDate' }}</span>
+                </div>
+                <div class="item-meta">{{ depotLabel(absence.depot) }}</div>
+                <div class="item-actions">
+                  @if (absence.status === 'EN_ATTENTE') {
+                    <button class="btn-success" type="button" (click)="approveAbsence(absence)" [disabled]="updating()">
+                      Approuver
+                    </button>
+                    <button class="btn-danger" type="button" (click)="refuseAbsence(absence)" [disabled]="updating()">
+                      Refuser
+                    </button>
+                  } @else {
+                    <span class="status-pill" [class]="statusClass(absence.status)">{{ statusLabel(absence.status) }}</span>
+                  }
+                  <button class="btn-primary" type="button" (click)="openEdit(absence)">Modifier</button>
+                  <button class="btn-outline" type="button" (click)="openHistory(absence)">Historique</button>
+                </div>
+              </div>
+            }
+            @if (!visibleAbsences().length) {
+              <div class="state empty">Aucune absence sur la période.</div>
+            }
+          </div>
+        }
+      }
+      @if (showList()) {
+        <div class="list-view list-overlay">
           @for (absence of visibleAbsences(); track absence._id || absence.startDate + absence.technicianId) {
             <div class="list-item">
               <div>
@@ -132,6 +170,7 @@
                 } @else {
                   <span class="status-pill" [class]="statusClass(absence.status)">{{ statusLabel(absence.status) }}</span>
                 }
+                <button class="btn-primary" type="button" (click)="openEdit(absence)">Modifier</button>
                 <button class="btn-outline" type="button" (click)="openHistory(absence)">Historique</button>
               </div>
             </div>
@@ -148,7 +187,7 @@
     <div class="modal-backdrop" (click)="closeModal()"></div>
     <div class="modal">
       <header>
-        <h2>Nouvelle absence</h2>
+        <h2>@if (editTarget()) { Modifier absence } @else { Nouvelle absence }</h2>
         <button class="btn-icon" type="button" (click)="closeModal()"><i class="bi bi-x-lg"></i></button>
       </header>
       <form [formGroup]="absenceForm">
@@ -242,6 +281,13 @@
                   @if (historyPayloadLabel(item)) {
                     <div class="line-note">{{ historyPayloadLabel(item) }}</div>
                   }
+                  @if (historyDetails(item).length) {
+                    <ul class="detail-list">
+                      @for (line of historyDetails(item); track line) {
+                        <li>{{ line }}</li>
+                      }
+                    </ul>
+                  }
                 </div>
               </div>
             }
@@ -250,4 +296,26 @@
       </div>
     </div>
   }
+
+  <app-confirm-action-modal
+    [open]="confirmOpen()"
+    [title]="confirmStatus() === 'APPROUVE' ? 'Approuver absence' : 'Refuser absence'"
+    [message]="confirmStatus() === 'APPROUVE' ? 'Confirmer l’approbation de cette absence ?' : 'Confirmer le refus de cette absence ?'"
+    [confirmText]="confirmStatus() === 'APPROUVE' ? 'Approuver' : 'Refuser'"
+    [tone]="confirmStatus() === 'APPROUVE' ? 'success' : 'danger'"
+    [confirming]="updating()"
+    (cancel)="closeConfirm()"
+    (confirm)="confirmUpdateStatus()"
+  />
+
+  <app-confirm-action-modal
+    [open]="saveConfirmOpen()"
+    [title]="editTarget() ? 'Modifier absence' : 'Nouvelle absence'"
+    [message]="editTarget() ? 'Confirmer la mise à jour de cette absence ?' : 'Confirmer la création de cette absence ?'"
+    [confirmText]="editTarget() ? 'Modifier' : 'Créer'"
+    [tone]="'primary'"
+    [confirming]="saving()"
+    (cancel)="closeSaveConfirm()"
+    (confirm)="confirmSaveAbsence()"
+  />
 </section>

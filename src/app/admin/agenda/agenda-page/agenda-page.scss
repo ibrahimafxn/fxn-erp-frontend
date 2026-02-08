@@ -1,7 +1,9 @@
 .agenda-page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .page-header {
@@ -18,14 +20,14 @@
 .toolbar form {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
   align-items: end;
 }
 
 label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.72);
 }
@@ -36,7 +38,7 @@ textarea {
   background: rgba(10, 16, 29, 0.85);
   border: 1px solid rgba(88, 123, 255, 0.25);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   color: #fff;
 }
 
@@ -48,14 +50,14 @@ textarea {
 .calendar {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .calendar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .calendar-nav {
@@ -105,7 +107,7 @@ textarea {
 .month-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .week-day {
@@ -117,13 +119,13 @@ textarea {
 
 .day-cell {
   min-height: 120px;
-  padding: 8px;
+  padding: 6px;
   border-radius: 12px;
   background: rgba(10, 16, 29, 0.65);
   border: 1px solid rgba(88, 123, 255, 0.15);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .day-cell.today {
@@ -149,16 +151,17 @@ textarea {
 .event-pill {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 6px 8px;
+  gap: 1px;
+  padding: 5px 6px;
   border-radius: 10px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   background: rgba(54, 96, 161, 0.25);
 }
 
 .event-pill .event-type {
   font-weight: 600;
 }
+
 
 .status-ok {
   background: rgba(42, 164, 122, 0.25);
@@ -181,11 +184,17 @@ textarea {
   gap: 10px;
 }
 
+.list-overlay {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(88, 123, 255, 0.2);
+}
+
 .list-item {
   display: grid;
   grid-template-columns: 1.2fr 1fr 0.8fr auto;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 10px;
   border-radius: 12px;
   background: rgba(10, 16, 29, 0.65);
   border: 1px solid rgba(88, 123, 255, 0.15);
@@ -239,6 +248,14 @@ textarea {
   color: #fff;
 }
 
+.item-actions .btn-primary,
+.item-actions .btn-outline {
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.1;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -255,11 +272,11 @@ textarea {
   background: rgba(12, 20, 34, 0.98);
   border-radius: 18px;
   border: 1px solid rgba(88, 123, 255, 0.25);
-  padding: 18px;
+  padding: 14px;
   z-index: 50;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .modal.timeline {
@@ -275,7 +292,7 @@ textarea {
 .modal .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
 }
 
 .modal .full {
@@ -343,6 +360,13 @@ textarea {
   margin-top: 4px;
   color: rgba(255, 255, 255, 0.8);
   font-size: 0.82rem;
+}
+
+.detail-list {
+  margin: 8px 0 0;
+  padding-left: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.78rem;
 }
 
 @media (max-width: 900px) {

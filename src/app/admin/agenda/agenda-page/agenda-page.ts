@@ -6,6 +6,7 @@ import { AbsenceService } from '../../../core/services/absence.service';
 import { HrService } from '../../../core/services/hr.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 
 type ViewMode = 'month' | 'week' | 'day';
 
@@ -13,7 +14,7 @@ type ViewMode = 'month' | 'week' | 'day';
   standalone: true,
   selector: 'app-agenda-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmActionModal],
   providers: [DatePipe],
   templateUrl: './agenda-page.html',
   styleUrl: './agenda-page.scss'
@@ -26,6 +27,7 @@ export class AgendaPage {
   private datePipe = inject(DatePipe);
 
   readonly viewMode = signal<ViewMode>('month');
+  readonly showList = signal(false);
   readonly currentDate = signal(new Date());
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -39,6 +41,11 @@ export class AgendaPage {
   readonly historyLoading = signal(false);
   readonly historyItems = signal<AbsenceHistoryItem[]>([]);
   readonly historyTarget = signal<Absence | null>(null);
+  readonly editTarget = signal<Absence | null>(null);
+  readonly confirmOpen = signal(false);
+  readonly confirmTarget = signal<Absence | null>(null);
+  readonly confirmStatus = signal<AbsenceStatus>('EN_ATTENTE');
+  readonly saveConfirmOpen = signal(false);
 
   readonly filterForm = this.fb.nonNullable.group({
     technicianId: this.fb.nonNullable.control(''),
@@ -104,6 +111,10 @@ export class AgendaPage {
     this.viewMode.set(mode);
   }
 
+  toggleList(): void {
+    this.showList.set(!this.showList());
+  }
+
   goPrev(): void {
     const date = new Date(this.currentDate());
     if (this.viewMode() === 'day') {
@@ -130,6 +141,7 @@ export class AgendaPage {
 
   openModal(): void {
     this.modalOpen.set(true);
+    this.editTarget.set(null);
     this.absenceForm.reset({
       technicianId: '',
       type: 'CONGE',
@@ -142,8 +154,25 @@ export class AgendaPage {
     });
   }
 
+  openEdit(absence: Absence): void {
+    if (!absence) return;
+    this.modalOpen.set(true);
+    this.editTarget.set(absence);
+    this.absenceForm.reset({
+      technicianId: absence.technicianId || '',
+      type: absence.type,
+      status: absence.status,
+      startDate: String(absence.startDate || '').slice(0, 10),
+      endDate: String(absence.endDate || '').slice(0, 10),
+      isHalfDay: Boolean(absence.isHalfDay),
+      halfDayPeriod: absence.halfDayPeriod || 'AM',
+      comment: absence.comment || ''
+    });
+  }
+
   closeModal(): void {
     this.modalOpen.set(false);
+    this.editTarget.set(null);
   }
 
   applyFilters(): void {
@@ -181,7 +210,11 @@ export class AgendaPage {
           this.loading.set(false);
           return;
         }
-        this.absences.set(res.data || []);
+        const normalized = (res.data || []).map((item) => {
+          const technicianId = item.technician?._id || item.technicianId;
+          return { ...item, technicianId };
+        });
+        this.absences.set(normalized);
         this.loading.set(false);
       },
       error: () => {
@@ -196,6 +229,15 @@ export class AgendaPage {
       this.absenceForm.markAllAsTouched();
       return;
     }
+    this.saveConfirmOpen.set(true);
+  }
+
+  closeSaveConfirm(): void {
+    if (this.saving()) return;
+    this.saveConfirmOpen.set(false);
+  }
+
+  confirmSaveAbsence(): void {
     const raw = this.absenceForm.getRawValue();
     this.saving.set(true);
     const payload: Absence = {
@@ -208,38 +250,61 @@ export class AgendaPage {
       halfDayPeriod: raw.halfDayPeriod,
       comment: raw.comment
     };
-    this.absencesService.create(payload).subscribe({
+    const target = this.editTarget();
+    const request$ = target?._id
+      ? this.absencesService.update(target._id, payload)
+      : this.absencesService.create(payload);
+    request$.subscribe({
       next: () => {
         this.saving.set(false);
+        this.saveConfirmOpen.set(false);
         this.modalOpen.set(false);
+        this.editTarget.set(null);
         this.refresh();
       },
       error: () => {
         this.saving.set(false);
-        this.error.set('Erreur création absence');
+        this.saveConfirmOpen.set(false);
+        this.error.set(target?._id ? 'Erreur mise à jour absence' : 'Erreur création absence');
       }
     });
   }
 
   approveAbsence(absence: Absence): void {
-    this.updateStatus(absence, 'APPROUVE');
+    this.openConfirm(absence, 'APPROUVE');
   }
 
   refuseAbsence(absence: Absence): void {
-    this.updateStatus(absence, 'REFUSE');
+    this.openConfirm(absence, 'REFUSE');
   }
 
-  private updateStatus(absence: Absence, status: AbsenceStatus): void {
+  openConfirm(absence: Absence, status: AbsenceStatus): void {
+    if (!absence?._id) return;
+    this.confirmTarget.set(absence);
+    this.confirmStatus.set(status);
+    this.confirmOpen.set(true);
+  }
+
+  closeConfirm(): void {
+    if (this.updating()) return;
+    this.confirmOpen.set(false);
+    this.confirmTarget.set(null);
+  }
+
+  confirmUpdateStatus(): void {
+    const absence = this.confirmTarget();
+    const status = this.confirmStatus();
     if (!absence?._id || this.updating()) return;
-    if (!confirm(`Confirmer le statut: ${this.statusLabel(status)} ?`)) return;
     this.updating.set(true);
     this.absencesService.updateStatus(absence._id, status).subscribe({
       next: () => {
         this.updating.set(false);
+        this.closeConfirm();
         this.refresh();
       },
       error: () => {
         this.updating.set(false);
+        this.closeConfirm();
         this.error.set('Erreur mise à jour statut');
       }
     });
@@ -300,6 +365,50 @@ export class AgendaPage {
     return '';
   }
 
+  historyDetails(item: AbsenceHistoryItem): string[] {
+    const payload = item.payload as Record<string, unknown> | undefined;
+    const snapshot =
+      (payload?.['after'] as Record<string, unknown> | undefined)
+      || (payload?.['snapshot'] as Record<string, unknown> | undefined)
+      || (payload?.['before'] as Record<string, unknown> | undefined)
+      || undefined;
+    if (!snapshot) return [];
+    const techId = snapshot['technician'] as string | { _id?: string } | undefined;
+    const depotId = snapshot['depot'] as string | { _id?: string; name?: string } | undefined;
+    const type = snapshot['type'] as AbsenceType | undefined;
+    const status = snapshot['status'] as AbsenceStatus | undefined;
+    const startDate = snapshot['startDate'] as string | undefined;
+    const endDate = snapshot['endDate'] as string | undefined;
+    const isHalfDay = Boolean(snapshot['isHalfDay']);
+    const halfDayPeriod = snapshot['halfDayPeriod'] as 'AM' | 'PM' | undefined;
+    const comment = String(snapshot['comment'] || '').trim();
+
+    const details: string[] = [];
+    const techIdValue = typeof techId === 'string' ? techId : techId?._id;
+    if (techIdValue) {
+      details.push(`Technicien: ${this.technicianLabel(techIdValue)}`);
+    }
+    if (type) details.push(`Type: ${this.typeLabel(type)}`);
+    if (status) details.push(`Statut: ${this.statusLabel(status)}`);
+    if (startDate || endDate) {
+      const start = startDate ? this.datePipe.transform(startDate, 'shortDate') : '—';
+      const end = endDate ? this.datePipe.transform(endDate, 'shortDate') : '—';
+      details.push(`Dates: ${start} → ${end}`);
+    }
+    if (isHalfDay) {
+      details.push(`Demi-journée: ${halfDayPeriod === 'PM' ? 'Après-midi' : 'Matin'}`);
+    }
+    const depotIdValue = typeof depotId === 'string' ? depotId : depotId?._id;
+    if (depotIdValue) {
+      const depot = this.depots().find((d) => d._id === depotIdValue);
+      details.push(`Dépôt: ${this.depotLabel(depot || null)}`);
+    }
+    if (comment) {
+      details.push(`Commentaire: ${comment}`);
+    }
+    return details;
+  }
+
   dayLabel(date: Date): string {
     return this.datePipe.transform(date, 'EEE d') || '';
   }
@@ -354,6 +463,15 @@ export class AgendaPage {
     if (!user) return '—';
     return formatPersonName(user.firstName ?? '', user.lastName ?? '') || user.email || '—';
   }
+
+  absenceTechnicianLabel(absence: Absence): string {
+    const tech = absence.technician;
+    if (tech && typeof tech === 'object') {
+      return formatPersonName(tech.firstName ?? '', tech.lastName ?? '') || tech.email || '—';
+    }
+    return this.technicianLabel(absence.technicianId);
+  }
+
 
   depotLabel(depot?: Depot | null): string {
     if (!depot?.name) return '—';

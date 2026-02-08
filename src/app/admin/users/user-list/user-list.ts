@@ -95,7 +95,7 @@ export class UserList extends DetailBack {
   }
 
   avatarSrc(u: User): string {
-    return resolveCloudinaryAvatarUrl(u.photoUrl, u.avatarUrl);
+    return resolveCloudinaryAvatarUrl(u.photoUrl, u.avatarUrl, (u as { updatedAt?: string }).updatedAt || '');
   }
 
   refresh(force = false): void {
