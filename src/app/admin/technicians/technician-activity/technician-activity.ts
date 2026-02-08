@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { forkJoin, firstValueFrom } from 'rxjs';
 
@@ -81,6 +82,7 @@ export class TechnicianActivity {
   readonly employeeContracts = signal(new Map<string, string>());
   readonly bpuLoaded = signal(false);
   readonly employeesLoaded = signal(false);
+  readonly selectedTechnicianId = signal('');
 
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly managerDepotId = computed(() => {
@@ -97,6 +99,11 @@ export class TechnicianActivity {
     void this.ensureBpuSelections();
     void this.ensureEmployeeContracts();
     this.refreshAll();
+
+    this.selectedTechnicianId.set(this.filterForm.controls.technicianId.value || '');
+    this.filterForm.controls.technicianId.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((value) => this.selectedTechnicianId.set(value || ''));
   }
 
   refreshAll(): void {
@@ -291,7 +298,7 @@ export class TechnicianActivity {
   }
 
   readonly selectedBpuLabel = computed(() => {
-    const techId = this.filterForm.value.technicianId || '';
+    const techId = this.selectedTechnicianId();
     if (!techId) return '';
     const type = this.resolveBpuSegment(techId);
     if (type === 'AUTO') return 'AUTO';
