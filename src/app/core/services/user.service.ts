@@ -47,7 +47,6 @@ export class UserService {
   // Gestion des erreurs
   // -----------------------------
   private handleError(err: any) {
-    console.error(err);
     this._error.set(err);
     return throwError(() => err);
   }

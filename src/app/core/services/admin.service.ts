@@ -65,7 +65,6 @@ export class AdminService {
   // Gestion des erreurs
   // -----------------------------
   private handleError(err: any) {
-    console.error(err);
     this._error.set(err);
     this._loading.set(false);
     return throwError(() => err);

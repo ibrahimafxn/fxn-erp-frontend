@@ -14,7 +14,6 @@ export class ToolService {
     return this.http.get<any[]>(`${API_BASE}/tools`).pipe(
       tap(list => this.tools$.next(list)),
       catchError(err => {
-        console.error('listTools error', err);
         return of([]);
       })
     );

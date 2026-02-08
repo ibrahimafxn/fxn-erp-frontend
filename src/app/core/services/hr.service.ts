@@ -68,7 +68,6 @@ export class HrService {
     return this.http.get<{ success: boolean; data: EmployeeDoc[] }>(url, options).pipe(
       map(resp => resp.data),
       catchError(err => {
-        console.error('listDocs error', err);
         return of([]);
       })
     );

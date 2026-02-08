@@ -633,11 +633,6 @@ export class TechnicianInterventions {
     push('CABLE_PAV_4', totals.cablePav4, rates.cablePav4.total);
 
     if (!rows.length) return;
-    const sum = rows.reduce((acc, row) => acc + row.total, 0);
-    console.groupCollapsed('[FXN] Montant total - détail prestations');
-    console.table(rows);
-    console.log('Total:', Math.round(sum * 100) / 100);
-    console.groupEnd();
   }
 
   private computeStats(items: InterventionItem[], totalCount: number, filterType?: string): TechnicianInterventionStats {
@@ -900,30 +895,6 @@ export class TechnicianInterventions {
     ];
 
     const denominator = success + failure;
-
-    if (missingTypeRows.length) {
-      console.groupCollapsed('[FXN] Interventions cloture terminee sans type detecte');
-      console.table(missingTypeRows);
-      console.groupEnd();
-    }
-    if (dominantDebugRows.length) {
-      console.groupCollapsed('[FXN] Debug dominant types (cloture terminee)');
-      console.table(dominantDebugRows);
-      const highlightRows = dominantDebugRows
-        .map((row, index) => ({ row, index }))
-        .filter((entry) => entry.row.dominantInArticles);
-      if (highlightRows.length) {
-        console.groupCollapsed('[FXN] Colonnes en blanc (dominantTypes + articlesRaw)');
-        for (const { row, index } of highlightRows) {
-          console.log(
-            '%c' + `Ligne ${index + 1} | dominantTypes: ${row.dominantTypes ?? ''} | articlesRaw: ${row.articlesRaw ?? ''}`,
-            'color:#fff;background:#000;padding:2px 4px;border-radius:2px'
-          );
-        }
-        console.groupEnd();
-      }
-      console.groupEnd();
-    }
 
     return {
       total,

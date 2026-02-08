@@ -24,7 +24,6 @@ export class AttributionService {
       }),
       tap(list => this.attributions$.next(list.items ?? [])),
       catchError(err => {
-        console.error('listAttributions error', err);
         return silent
           ? of({ items: [], total: 0, page: 1, limit: 500 })
           : throwError(() => err);
