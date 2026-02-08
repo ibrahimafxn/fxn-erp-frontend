@@ -261,6 +261,10 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('../modules/hr/hr-list/hr-list').then(m => m.HrList)
   },
   {
+    path: 'agenda',
+    loadComponent: () => import('./agenda/agenda-page/agenda-page').then(m => m.AgendaPage)
+  },
+  {
     path: 'technicians/activity',
     loadComponent: () =>
       import('./technicians/technician-activity/technician-activity').then(m => m.TechnicianActivity)
