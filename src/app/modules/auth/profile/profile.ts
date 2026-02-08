@@ -3,6 +3,7 @@ import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } 
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { resolveCloudinaryAvatarUrl } from '../../../core/utils/avatar-url';
 import { DepotService } from '../../../core/services/depot.service';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
@@ -42,7 +43,7 @@ export class Profile {
 
   readonly photoUrl = computed(() => {
     const u = this.user();
-    return u?.photoUrl || u?.avatarUrl || '';
+    return resolveCloudinaryAvatarUrl(u?.photoUrl, u?.avatarUrl);
   });
 
   readonly roleLabel = computed(() => {

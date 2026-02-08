@@ -14,7 +14,7 @@ import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { downloadBlob } from '../../../core/utils/download';
 import { formatPageRange } from '../../../core/utils/pagination';
-import { environment } from '../../../environments/environment';
+import { resolveCloudinaryAvatarUrl } from '../../../core/utils/avatar-url';
 
 @Component({
   standalone: true,
@@ -36,8 +36,6 @@ export class UserList extends DetailBack {
   private depotSvc = inject(DepotService);
   private fb = inject(FormBuilder);
   private datePipe = inject(DatePipe);
-  private readonly uploadsBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
-
   // service signals
   readonly loading = this.userService.loading;
   readonly error = this.userService.error;
@@ -97,11 +95,7 @@ export class UserList extends DetailBack {
   }
 
   avatarSrc(u: User): string {
-    const raw = String(u.photoUrl || u.avatarUrl || '').trim();
-    if (!raw) return '';
-    if (/^https?:\/\//i.test(raw)) return raw;
-    if (raw.startsWith('/')) return `${this.uploadsBaseUrl}${raw}`;
-    return `${this.uploadsBaseUrl}/${raw}`;
+    return resolveCloudinaryAvatarUrl(u.photoUrl, u.avatarUrl);
   }
 
   refresh(force = false): void {

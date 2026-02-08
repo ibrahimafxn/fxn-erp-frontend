@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { AuthService, AuthUser } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
 import { formatPersonName } from '../../core/utils/text-format';
+import { resolveCloudinaryAvatarUrl } from '../../core/utils/avatar-url';
 import { AlertsService } from '../../core/services/alerts.service';
 
 @Component({
@@ -82,7 +83,7 @@ export class AppHeader {
 
   readonly avatarUrl = computed(() => {
     const u = this.user();
-    return u?.photoUrl || u?.avatarUrl || '';
+    return resolveCloudinaryAvatarUrl(u?.photoUrl, u?.avatarUrl);
   });
 
   readonly roleLabel = computed(() => {
