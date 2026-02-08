@@ -1123,8 +1123,6 @@ export class InterventionsDashboard {
 
       if (requestId !== this.revenueRequestId) return;
       this.revenueItems.set(items);
-      this.logRevenueBreakdown(items);
-      this.logFilteredPrestations(items);
       this.applyReconnectionTotalsIfNeeded(items);
     } catch (err) {
       if (requestId !== this.revenueRequestId) return;
@@ -1137,64 +1135,10 @@ export class InterventionsDashboard {
     }
   }
 
-  private logRevenueBreakdown(items: InterventionItem[]): void {
-    if (!items.length) return;
-    const rates = this.rates();
-    const rows: Array<{ code: string; qty: number; fxn: number; tech: number; total: number }> = [];
-    const map = new Map<string, { qty: number; fxn: number; tech: number; total: number }>();
-    const selectedCode = this.selectedRevenueCode();
-
-    for (const item of items) {
-      const codes = this.resolveBillingCodes(item);
-      for (const code of codes) {
-        if (selectedCode && code !== selectedCode) continue;
-        const key = this.rateCodeMap.get(code);
-        if (!key) continue;
-        const rate = rates[key];
-        const fxn = Number(rate?.fxn || 0);
-        const total = Number(rate?.total || 0);
-        const tech = Math.max(0, total - fxn);
-        const entry = map.get(code) || { qty: 0, fxn: 0, tech: 0, total: 0 };
-        entry.qty += 1;
-        entry.fxn += fxn;
-        entry.tech += tech;
-        entry.total += total;
-        map.set(code, entry);
-      }
-    }
-
-    for (const [code, entry] of map.entries()) {
-      rows.push({ code, ...entry });
-    }
-    rows.sort((a, b) => a.code.localeCompare(b.code));
-
-    console.groupCollapsed('[FXN] Détail CA par code');
-    console.table(rows);
-    console.groupEnd();
-  }
-
-  private logFilteredPrestations(items: InterventionItem[]): void {
-    if (!items.length) return;
-    const map = new Map<string, number>();
-    for (const item of items) {
-      const codes = this.resolveBillingCodes(item);
-      for (const code of codes) {
-        map.set(code, (map.get(code) ?? 0) + 1);
-      }
-    }
-    const rows = Array.from(map.entries())
-      .map(([code, qty]) => ({ code, qty }))
-      .sort((a, b) => a.code.localeCompare(b.code));
-    console.groupCollapsed('[FXN] Prestations du filtre');
-    console.table(rows);
-    console.groupEnd();
-  }
-
   private applyReconnectionTotalsIfNeeded(items: InterventionItem[]): void {
     const selectedCode = this.selectedRevenueCode();
     if (selectedCode !== 'RECOIP') return;
     const count = items.reduce((acc, item) => acc + (this.isReconnectionItem(item) ? 1 : 0), 0);
-    this.logReconnectionDebug(items);
     const totals: InterventionTotals = {
       total: count,
       racPavillon: 0,
@@ -1219,33 +1163,6 @@ export class InterventionsDashboard {
       other: 0
     };
     this.totals.set(totals);
-  }
-
-  private logReconnectionDebug(items: InterventionItem[]): void {
-    if (!items.length) return;
-    const rows = items
-      .filter((item) => this.isReconnectionItem(item))
-      .map((item) => {
-        const reasons: string[] = [];
-        const typeNormalized = this.normalizeText(item.type);
-        const operationNormalized = this.normalizeText(item.typeOperation);
-        const articlesNormalized = this.normalizeText(item.articlesRaw);
-        if (articlesNormalized.includes('RECOIP') || articlesNormalized.includes('RECO')) reasons.push('articles');
-        if (operationNormalized.includes('RECONNEX')) reasons.push('typeOperation');
-        if (typeNormalized.includes('RECO')) reasons.push('type');
-        return {
-          numero: item.numInter || '',
-          date: item.dateRdv || item.debutIntervention || item.debut || '',
-          statut: item.statut || '',
-          type: item.type || '',
-          typeOperation: item.typeOperation || '',
-          articles: item.articlesRaw || '',
-          raisons: reasons.join(', ')
-        };
-      });
-    console.groupCollapsed('[FXN] RECO debug');
-    console.table(rows);
-    console.groupEnd();
   }
 
   private normalizeSummaryItem<T extends InterventionSummaryItem | InterventionTotals>(item: T | null): T | null {
