@@ -1,7 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Absence, AbsenceStatus, AbsenceType, Depot, User } from '../../../core/models';
+import { Absence, AbsenceHistoryItem, AbsenceStatus, AbsenceType, Depot, EmployeeSummary } from '../../../core/models';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { HrService } from '../../../core/services/hr.service';
 import { DepotService } from '../../../core/services/depot.service';
@@ -30,10 +30,15 @@ export class AgendaPage {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly absences = signal<Absence[]>([]);
-  readonly users = signal<User[]>([]);
+  readonly users = signal<EmployeeSummary[]>([]);
   readonly depots = signal<Depot[]>([]);
   readonly modalOpen = signal(false);
   readonly saving = signal(false);
+  readonly updating = signal(false);
+  readonly historyOpen = signal(false);
+  readonly historyLoading = signal(false);
+  readonly historyItems = signal<AbsenceHistoryItem[]>([]);
+  readonly historyTarget = signal<Absence | null>(null);
 
   readonly filterForm = this.fb.nonNullable.group({
     technicianId: this.fb.nonNullable.control(''),
@@ -216,6 +221,85 @@ export class AgendaPage {
     });
   }
 
+  approveAbsence(absence: Absence): void {
+    this.updateStatus(absence, 'APPROUVE');
+  }
+
+  refuseAbsence(absence: Absence): void {
+    this.updateStatus(absence, 'REFUSE');
+  }
+
+  private updateStatus(absence: Absence, status: AbsenceStatus): void {
+    if (!absence?._id || this.updating()) return;
+    if (!confirm(`Confirmer le statut: ${this.statusLabel(status)} ?`)) return;
+    this.updating.set(true);
+    this.absencesService.updateStatus(absence._id, status).subscribe({
+      next: () => {
+        this.updating.set(false);
+        this.refresh();
+      },
+      error: () => {
+        this.updating.set(false);
+        this.error.set('Erreur mise à jour statut');
+      }
+    });
+  }
+
+  openHistory(absence: Absence): void {
+    if (!absence?._id) return;
+    this.historyOpen.set(true);
+    this.historyTarget.set(absence);
+    this.historyLoading.set(true);
+    this.historyItems.set([]);
+    this.absencesService.history(absence._id).subscribe({
+      next: (res) => {
+        this.historyItems.set(res.data || []);
+        this.historyLoading.set(false);
+      },
+      error: () => {
+        this.historyLoading.set(false);
+        this.error.set('Erreur chargement historique');
+      }
+    });
+  }
+
+  closeHistory(): void {
+    this.historyOpen.set(false);
+    this.historyTarget.set(null);
+    this.historyItems.set([]);
+  }
+
+  historyActor(item: AbsenceHistoryItem): string {
+    const actor = item.actor;
+    if (!actor) return '—';
+    return formatPersonName(actor.firstName ?? '', actor.lastName ?? '') || actor.email || '—';
+  }
+
+  historyActionLabel(item: AbsenceHistoryItem): string {
+    switch (item.action) {
+      case 'CREATE': return 'Création';
+      case 'UPDATE': return 'Mise à jour';
+      case 'STATUS': return 'Changement de statut';
+      case 'DELETE': return 'Suppression';
+      default: return '—';
+    }
+  }
+
+  historyPayloadLabel(item: AbsenceHistoryItem): string {
+    const payload = item.payload || {};
+    const statusValue = (payload as { status?: string }).status;
+    if (item.action === 'STATUS' && typeof statusValue === 'string') {
+      return this.statusLabel(statusValue as AbsenceStatus);
+    }
+    if (item.action === 'CREATE') {
+      return 'Création d’une absence';
+    }
+    if (item.action === 'DELETE') {
+      return 'Suppression';
+    }
+    return '';
+  }
+
   dayLabel(date: Date): string {
     return this.datePipe.transform(date, 'EEE d') || '';
   }
@@ -266,7 +350,7 @@ export class AgendaPage {
 
   technicianLabel(id?: string | null): string {
     if (!id) return '—';
-    const user = this.users().find((u) => u._id === id);
+    const user = this.users().find((u) => u.user?._id === id)?.user;
     if (!user) return '—';
     return formatPersonName(user.firstName ?? '', user.lastName ?? '') || user.email || '—';
   }

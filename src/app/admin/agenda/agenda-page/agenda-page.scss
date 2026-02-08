@@ -183,7 +183,7 @@ textarea {
 
 .list-item {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 0.8fr;
+  grid-template-columns: 1.2fr 1fr 0.8fr auto;
   gap: 12px;
   padding: 12px;
   border-radius: 12px;
@@ -204,6 +204,39 @@ textarea {
   align-items: center;
   gap: 8px;
   color: rgba(255, 255, 255, 0.75);
+}
+
+.item-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-success {
+  background: rgba(42, 164, 122, 0.2);
+  color: #b5f5d6;
+  border: 1px solid rgba(42, 164, 122, 0.5);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+}
+
+.btn-danger {
+  background: rgba(233, 85, 85, 0.15);
+  color: #ffd1d1;
+  border: 1px solid rgba(233, 85, 85, 0.5);
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+}
+
+.status-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
 }
 
 .modal-backdrop {
@@ -227,6 +260,10 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.modal.timeline {
+  width: min(720px, 92vw);
 }
 
 .modal header {
@@ -255,6 +292,57 @@ textarea {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.timeline-body {
+  max-height: 60vh;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 12px;
+}
+
+.timeline-item .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(88, 123, 255, 0.85);
+  margin-top: 6px;
+}
+
+.timeline-item .content {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(10, 16, 29, 0.7);
+  border: 1px solid rgba(88, 123, 255, 0.2);
+}
+
+.line-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.line-sub {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.85rem;
+}
+
+.line-note {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.82rem;
 }
 
 @media (max-width: 900px) {

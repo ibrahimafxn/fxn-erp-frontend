@@ -172,6 +172,10 @@ export class AppHeader {
     this.router.navigate(['/admin/technicians/interventions']).then();
   }
 
+  goAgenda(): void {
+    this.router.navigate(['/admin/agenda']).then();
+  }
+
   goBpu(): void {
     this.router.navigate(['/admin/bpu']).then();
   }

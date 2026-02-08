@@ -20,3 +20,12 @@ export type Absence = {
   createdAt?: string;
   createdBy?: User;
 };
+
+export type AbsenceHistoryItem = {
+  _id?: string;
+  absence: string;
+  action: 'CREATE' | 'UPDATE' | 'STATUS' | 'DELETE';
+  actor?: User;
+  payload?: Record<string, unknown>;
+  createdAt?: string;
+};

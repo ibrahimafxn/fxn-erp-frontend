@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Absence, AbsenceStatus } from '../models';
+import { Absence, AbsenceHistoryItem, AbsenceStatus } from '../models';
 
 type ApiResponse<T> = { success: boolean; data: T; message?: string };
 
@@ -28,6 +28,11 @@ export class AbsenceService {
     if (params?.status) httpParams = httpParams.set('status', params.status);
     if (params?.type) httpParams = httpParams.set('type', params.type);
     return this.http.get<ApiResponse<Absence[]>>(this.baseUrl, { params: httpParams });
+  }
+
+  history(absenceId: string): Observable<ApiResponse<AbsenceHistoryItem[]>> {
+    const httpParams = new HttpParams().set('absenceId', absenceId);
+    return this.http.get<ApiResponse<AbsenceHistoryItem[]>>(`${this.baseUrl}/history`, { params: httpParams });
   }
 
   create(payload: Absence): Observable<ApiResponse<Absence>> {

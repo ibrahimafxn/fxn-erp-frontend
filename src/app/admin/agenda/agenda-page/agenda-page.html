@@ -18,8 +18,8 @@
         Technicien
         <select formControlName="technicianId">
           <option value="">Tous</option>
-          @for (u of users(); track u._id) {
-            <option [value]="u._id">{{ technicianLabel(u._id) }}</option>
+          @for (u of users(); track u.user._id) {
+            <option [value]="u.user._id">{{ technicianLabel(u.user._id) }}</option>
           }
         </select>
       </label>
@@ -121,6 +121,19 @@
                 <span>{{ absence.endDate | date:'shortDate' }}</span>
               </div>
               <div class="item-meta">{{ depotLabel(absence.depot) }}</div>
+              <div class="item-actions">
+                @if (absence.status === 'EN_ATTENTE') {
+                  <button class="btn-success" type="button" (click)="approveAbsence(absence)" [disabled]="updating()">
+                    Approuver
+                  </button>
+                  <button class="btn-danger" type="button" (click)="refuseAbsence(absence)" [disabled]="updating()">
+                    Refuser
+                  </button>
+                } @else {
+                  <span class="status-pill" [class]="statusClass(absence.status)">{{ statusLabel(absence.status) }}</span>
+                }
+                <button class="btn-outline" type="button" (click)="openHistory(absence)">Historique</button>
+              </div>
             </div>
           }
           @if (!visibleAbsences().length) {
@@ -144,8 +157,8 @@
             Technicien
             <select formControlName="technicianId">
               <option value="">Sélectionner</option>
-              @for (u of users(); track u._id) {
-                <option [value]="u._id">{{ technicianLabel(u._id) }}</option>
+              @for (u of users(); track u.user._id) {
+                <option [value]="u.user._id">{{ technicianLabel(u.user._id) }}</option>
               }
             </select>
           </label>
@@ -197,6 +210,44 @@
           @if (saving()) { Enregistrement… } @else { Enregistrer }
         </button>
       </footer>
+    </div>
+  }
+
+  @if (historyOpen()) {
+    <div class="modal-backdrop" (click)="closeHistory()"></div>
+    <div class="modal timeline">
+      <header>
+        <div>
+          <h2>Historique</h2>
+          <p class="subtitle">{{ technicianLabel(historyTarget()?.technicianId || '') }}</p>
+        </div>
+        <button class="btn-icon" type="button" (click)="closeHistory()"><i class="bi bi-x-lg"></i></button>
+      </header>
+      <div class="timeline-body">
+        @if (historyLoading()) {
+          <div class="state loading">Chargement…</div>
+        } @else if (!historyItems().length) {
+          <div class="state empty">Aucun historique.</div>
+        } @else {
+          <div class="timeline-list">
+            @for (item of historyItems(); track item._id || item.createdAt) {
+              <div class="timeline-item">
+                <div class="dot"></div>
+                <div class="content">
+                  <div class="line-title">
+                    <span class="action">{{ historyActionLabel(item) }}</span>
+                    <span class="time">{{ item.createdAt | date:'short' }}</span>
+                  </div>
+                  <div class="line-sub">{{ historyActor(item) }}</div>
+                  @if (historyPayloadLabel(item)) {
+                    <div class="line-note">{{ historyPayloadLabel(item) }}</div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
   }
 </section>
