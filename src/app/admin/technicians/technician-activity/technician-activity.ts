@@ -283,6 +283,22 @@ export class TechnicianActivity {
     return this.computeBpuAmount(report);
   }
 
+  reportBpuLabel(report: TechnicianReport): string {
+    const type = this.resolveBpuSegment(report.technician?._id);
+    if (type === 'AUTO') return 'AUTO';
+    if (type === 'ASSOCIE') return 'AUTRE';
+    return 'SALARIE';
+  }
+
+  readonly selectedBpuLabel = computed(() => {
+    const techId = this.filterForm.value.technicianId || '';
+    if (!techId) return '';
+    const type = this.resolveBpuSegment(techId);
+    if (type === 'AUTO') return 'AUTO';
+    if (type === 'ASSOCIE') return 'AUTRE';
+    return 'SALARIE';
+  });
+
   totalAmount(): number {
     return this.summaryTotalAmount();
   }

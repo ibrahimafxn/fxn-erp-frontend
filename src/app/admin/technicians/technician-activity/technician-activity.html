@@ -48,7 +48,12 @@
       <div class="amount-summary">
         <span class="label">Montant</span>
         <span class="value">{{ formatAmount(totalAmount()) }}</span>
-        <span class="hint">Total sur la période filtrée</span>
+        <span class="hint">
+          Total sur la période filtrée
+          @if (selectedBpuLabel()) {
+            • BPU {{ selectedBpuLabel() }}
+          }
+        </span>
       </div>
 
       <div class="actions">
