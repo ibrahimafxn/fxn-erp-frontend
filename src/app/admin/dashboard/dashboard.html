@@ -66,6 +66,60 @@
     </div>
   </header>
 
+  <section class="ops-block">
+    <div class="section-header">
+      <h2>Opérations</h2>
+      <p>Accès rapide aux interventions et au suivi terrain.</p>
+    </div>
+
+    <div class="action-grid ops-grid">
+      <article class="action-card ops-card" (click)="goToMovements()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">swap_horiz</span>
+          <span class="action-tag">Suivi</span>
+        </div>
+        <div class="action-title">Journal des mouvements</div>
+        <div class="action-subtitle">Historique des entrées et sorties</div>
+      </article>
+
+      <article class="action-card ops-card" (click)="goToInterventions()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">attach_money</span>
+          <span class="action-tag">Interventions</span>
+        </div>
+        <div class="action-title">Calcul d'attachement</div>
+        <div class="action-subtitle">Synthèse des prestations</div>
+      </article>
+
+      <article class="action-card ops-card ops-card-import" (click)="goToInterventionsImport()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">upload_file</span>
+          <span class="action-tag">Import</span>
+        </div>
+        <div class="action-title">Import interventions du jour</div>
+        <div class="action-subtitle">Charger le CSV quotidien</div>
+      </article>
+
+      <article class="action-card ops-card" (click)="goToTechnicianActivity()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">history</span>
+          <span class="action-tag">Techniciens</span>
+        </div>
+        <div class="action-title">Prestations techniciens</div>
+        <div class="action-subtitle">Suivi des actions terrain</div>
+      </article>
+
+      <article class="action-card ops-card" (click)="goToTechnicianInterventions()">
+        <div class="action-head">
+          <span class="material-icons notranslate action-icon">insights</span>
+          <span class="action-tag">Techniciens</span>
+        </div>
+        <div class="action-title">Interventions techniciens</div>
+        <div class="action-subtitle">Comparatif par technicien</div>
+      </article>
+    </div>
+  </section>
+
   <!-- Messages de statut global -->
   <div class="status-bar">
     @if (loading()) {
@@ -154,60 +208,6 @@
       <div class="action-title">Nouvelle commande</div>
       <div class="action-subtitle">Créer un bon de commande</div>
     </article>
-  </section>
-
-  <section class="ops-block">
-    <div class="section-header">
-      <h2>Opérations</h2>
-      <p>Accès rapide aux interventions et au suivi terrain.</p>
-    </div>
-
-    <div class="action-grid ops-grid">
-      <article class="action-card ops-card" (click)="goToMovements()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">swap_horiz</span>
-          <span class="action-tag">Suivi</span>
-        </div>
-        <div class="action-title">Journal des mouvements</div>
-        <div class="action-subtitle">Historique des entrées et sorties</div>
-      </article>
-
-      <article class="action-card ops-card" (click)="goToInterventions()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">attach_money</span>
-          <span class="action-tag">Interventions</span>
-        </div>
-        <div class="action-title">Calcul d'attachement</div>
-        <div class="action-subtitle">Synthèse des prestations</div>
-      </article>
-
-      <article class="action-card ops-card ops-card-import" (click)="goToInterventionsImport()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">upload_file</span>
-          <span class="action-tag">Import</span>
-        </div>
-        <div class="action-title">Import interventions du jour</div>
-        <div class="action-subtitle">Charger le CSV quotidien</div>
-      </article>
-
-      <article class="action-card ops-card" (click)="goToTechnicianActivity()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">history</span>
-          <span class="action-tag">Techniciens</span>
-        </div>
-        <div class="action-title">Prestations techniciens</div>
-        <div class="action-subtitle">Suivi des actions terrain</div>
-      </article>
-
-      <article class="action-card ops-card" (click)="goToTechnicianInterventions()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">insights</span>
-          <span class="action-tag">Techniciens</span>
-        </div>
-        <div class="action-title">Interventions techniciens</div>
-        <div class="action-subtitle">Comparatif par technicien</div>
-      </article>
-    </div>
   </section>
 
   <section class="empty-state" *ngIf="!stats() && !loading() && !error()">

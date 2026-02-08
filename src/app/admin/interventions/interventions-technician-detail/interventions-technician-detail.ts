@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import { InterventionItem, InterventionService } from '../../../core/services/intervention.service';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { isRacihSuccess, isRacpavSuccess } from '../../../core/utils/intervention-prestations';
 
 type DetailFilters = {
   fromDate: string;
@@ -235,8 +236,8 @@ export class InterventionsTechnicianDetail {
     const prestationsNormalized = this.normalizeText(item.listePrestationsRaw);
     const matches: string[] = [];
 
-    if (articlesNormalized.includes('RACPAV')) matches.push('RACPAV');
-    if (statusNormalized.includes('RACIH')) matches.push('RACIH');
+    if (isRacpavSuccess(item.statut, item.articlesRaw)) matches.push('RACPAV');
+    if (isRacihSuccess(item.statut, item.articlesRaw)) matches.push('RACIH');
     if (
       articlesNormalized.includes('RECOIP')
       || operationNormalized.includes('RECONNEX')

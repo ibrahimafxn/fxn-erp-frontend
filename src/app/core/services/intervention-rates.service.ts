@@ -17,6 +17,7 @@ export type InterventionRates = {
   racProS: InterventionRate;
   racProC: InterventionRate;
   racF8: InterventionRate;
+  prestaCompl: InterventionRate;
   deprise: InterventionRate;
   demo: InterventionRate;
   sav: InterventionRate;
@@ -37,6 +38,7 @@ const DEFAULT_RATES: InterventionRates = {
   racProS: { total: 195, fxn: 45 },
   racProC: { total: 245, fxn: 55 },
   racF8: { total: 200, fxn: 100 },
+  prestaCompl: { total: 50, fxn: 0 },
   deprise: { total: 50, fxn: 0 },
   demo: { total: 10, fxn: 10 },
   sav: { total: 10, fxn: 10 },
@@ -88,6 +90,7 @@ export class InterventionRatesService {
       RACPRO_S: rates.racProS,
       RACPRO_C: rates.racProC,
       REPFOU_PRI: rates.racF8,
+      PRESTA_COMPL: rates.prestaCompl,
       DEPLPRISE: rates.deprise,
       DEMO: rates.demo,
       SAV: rates.sav,
@@ -111,6 +114,7 @@ export class InterventionRatesService {
       racProS: data['RACPRO_S'] ?? DEFAULT_RATES.racProS,
       racProC: data['RACPRO_C'] ?? DEFAULT_RATES.racProC,
       racF8: data['REPFOU_PRI'] ?? DEFAULT_RATES.racF8,
+      prestaCompl: data['PRESTA_COMPL'] ?? DEFAULT_RATES.prestaCompl,
       deprise: data['DEPLPRISE'] ?? DEFAULT_RATES.deprise,
       demo: data['DEMO'] ?? DEFAULT_RATES.demo,
       sav: data['SAV'] ?? DEFAULT_RATES.sav,

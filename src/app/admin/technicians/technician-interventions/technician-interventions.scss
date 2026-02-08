@@ -4,6 +4,14 @@
   gap: 1.25rem;
 }
 
+.technician-interventions.busy button,
+.technician-interventions.busy .btn-outline,
+.technician-interventions.busy .btn-primary,
+.technician-interventions.busy .btn-secondary {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 .page-header.card.hero {
   padding: 1rem;
 }
@@ -307,6 +315,9 @@
 }
 .stat-line .count-failure {
   color: var(--fxn-danger);
+}
+.stat-line .count-cancel {
+  color: #9ca3af;
 }
 
 .table-head {

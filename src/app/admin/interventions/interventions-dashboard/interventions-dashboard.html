@@ -1,4 +1,9 @@
 <section class="interventions">
+  @if (rateSuccess()) {
+    <div class="toast toast-success" role="status">{{ rateSuccess() }}</div>
+  } @else if (rateError()) {
+    <div class="toast toast-error" role="status">{{ rateError() }}</div>
+  }
   @if (!viewCleared()) {
 
 
@@ -60,15 +65,15 @@
       </div>
 
       <div class="invoice-summary">
-        <div class="summary-card">
+        <div class="summary-card summary-card-invoice">
           <span class="label">Total facturé (HT)</span>
           <span class="value">{{ invoiceTotalHt() | number:'1.0-0' }} €</span>
         </div>
-        <div class="summary-card">
+        <div class="summary-card summary-card-osiris">
           <span class="label">Total OSIRIS estimé</span>
           <span class="value">{{ (compareTotals()?.osiris || 0) | number:'1.0-0' }} €</span>
         </div>
-        <div class="summary-card" [class.negative]="(compareTotals()?.delta || 0) < 0">
+        <div class="summary-card summary-card-delta" [class.negative]="(compareTotals()?.delta || 0) < 0">
           <span class="label">Écart</span>
           <span class="value">{{ (compareTotals()?.delta || 0) | number:'1.0-0' }} €</span>
         </div>
@@ -105,7 +110,7 @@
           </tr>
           </thead>
           <tbody>
-            @for (row of compareResult()?.rows || []; track row.code) {
+            @for (row of compareRows(); track row.code) {
               <tr [class.alert]="row.deltaQty !== 0 || row.deltaAmount !== 0">
                 <td data-label="Code" class="mono">{{ row.code }}</td>
                 <td data-label="OSIRIS Qté">{{ row.osirisQty }}</td>

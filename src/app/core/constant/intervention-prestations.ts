@@ -75,6 +75,12 @@ export const INTERVENTION_PRESTATION_FIELDS: InterventionPrestationField[] = [
     description: 'Réparation de fourreaux bouchés en domaine privé.'
   },
   {
+    key: 'prestaCompl',
+    label: 'Prestation complémentaire',
+    code: 'PRESTA_COMPL',
+    description: 'Prestation complémentaire facturée en supplément.'
+  },
+  {
     key: 'deprise',
     label: 'Déplacement prise',
     code: 'DEPLPRISE',
@@ -94,7 +100,7 @@ export const INTERVENTION_PRESTATION_FIELDS: InterventionPrestationField[] = [
   },
   {
     key: 'savExp',
-    label: 'SAV Expédition',
+    label: 'SAV EXP',
     code: 'SAV_EXP',
     description: 'SAV sans déplacement physique (expédition ou assistance à distance).'
   },

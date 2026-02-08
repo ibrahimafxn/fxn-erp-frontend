@@ -233,6 +233,18 @@
       overflow: hidden;
     }
 
+    .btn-onboarding.btn-depot-hero {
+      border-color: rgba(34, 197, 94, 0.45);
+      background: linear-gradient(135deg, rgba(7, 26, 20, 0.95), rgba(11, 33, 25, 0.95));
+      box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.18), 0 18px 28px rgba(5, 10, 18, 0.28);
+    }
+
+    .btn-onboarding.btn-onboarding-hero {
+      border-color: rgba(250, 204, 21, 0.5);
+      background: linear-gradient(135deg, rgba(35, 24, 8, 0.95), rgba(42, 28, 10, 0.95));
+      box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.18), 0 18px 28px rgba(5, 10, 18, 0.28);
+    }
+
     .btn-onboarding.btn-depot-hero::after {
       content: 'warehouse';
       font-family: 'Material Icons';
@@ -319,9 +331,9 @@
     gap: 0.7rem;
     padding: 0.75rem 1rem;
     border-radius: 1rem;
-    border: 1px solid rgba(120, 208, 255, 0.35);
-    background: linear-gradient(135deg, rgba(16, 22, 36, 0.92), rgba(10, 18, 30, 0.92));
-    box-shadow: inset 0 0 0 1px rgba(90, 150, 255, 0.15), 0 18px 28px rgba(5, 10, 18, 0.25);
+    border: 1px solid rgba(167, 139, 250, 0.45);
+    background: linear-gradient(135deg, rgba(24, 15, 38, 0.92), rgba(17, 12, 32, 0.92));
+    box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.18), 0 18px 28px rgba(5, 10, 18, 0.25);
     width: 220px;
     position: relative;
     overflow: hidden;
@@ -329,7 +341,7 @@
 
   .btn-outline.btn-reload .material-icons {
     font-size: 1.35rem;
-    color: rgba(120, 200, 255, 0.9);
+    color: rgba(196, 181, 253, 0.9);
   }
 
   .btn-outline.btn-reload .btn-text {
@@ -359,14 +371,14 @@
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    border: 1px solid rgba(120, 200, 255, 0.55);
-    color: rgba(190, 220, 255, 0.95);
-    background: rgba(35, 80, 140, 0.3);
+    border: 1px solid rgba(196, 181, 253, 0.55);
+    color: rgba(233, 213, 255, 0.95);
+    background: rgba(88, 28, 135, 0.35);
   }
 
   .btn-outline.btn-reload:hover:not(:disabled) {
-    border-color: rgba(120, 200, 255, 0.65);
-    background: linear-gradient(135deg, rgba(18, 28, 44, 0.95), rgba(12, 20, 36, 0.95));
+    border-color: rgba(196, 181, 253, 0.75);
+    background: linear-gradient(135deg, rgba(28, 18, 46, 0.95), rgba(18, 12, 36, 0.95));
     transform: translateY(-1px);
   }
 
@@ -522,11 +534,26 @@
     overflow: hidden;
   }
 
-  .ops-grid .action-card.ops-card:nth-of-type(1) { --ops-blue: rgba(30, 58, 138, 0.55); }
-  .ops-grid .action-card.ops-card:nth-of-type(2) { --ops-blue: rgba(30, 64, 175, 0.65); }
-  .ops-grid .action-card.ops-card:nth-of-type(3) { --ops-blue: rgba(37, 99, 235, 0.72); }
-  .ops-grid .action-card.ops-card:nth-of-type(4) { --ops-blue: rgba(59, 130, 246, 0.78); }
-  .ops-grid .action-card.ops-card:nth-of-type(5) { --ops-blue: rgba(96, 165, 250, 0.85); }
+  .ops-grid .action-card.ops-card:nth-of-type(1) {
+    --ops-blue: rgba(20, 83, 45, 0.6);
+    border-color: rgba(34, 197, 94, 0.45);
+  }
+  .ops-grid .action-card.ops-card:nth-of-type(2) {
+    --ops-blue: rgba(49, 46, 129, 0.62);
+    border-color: rgba(129, 140, 248, 0.5);
+  }
+  .ops-grid .action-card.ops-card:nth-of-type(3) {
+    --ops-blue: rgba(124, 45, 18, 0.62);
+    border-color: rgba(251, 146, 60, 0.55);
+  }
+  .ops-grid .action-card.ops-card:nth-of-type(4) {
+    --ops-blue: rgba(88, 28, 135, 0.62);
+    border-color: rgba(168, 85, 247, 0.5);
+  }
+  .ops-grid .action-card.ops-card:nth-of-type(5) {
+    --ops-blue: rgba(21, 94, 117, 0.62);
+    border-color: rgba(6, 182, 212, 0.5);
+  }
 
   .ops-grid .action-card.ops-card.ops-card-import {
     border-color: rgba(250, 204, 21, 0.65);

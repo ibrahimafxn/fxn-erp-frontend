@@ -541,7 +541,7 @@ export class InterventionsImport {
     const prestationsNormalized = this.normalizeToken(prestationsValue);
 
     if (articlesNormalized.includes('RACPAV')) codes.add('RACPAV');
-    if (statusNormalized.includes('RACIH')) codes.add('RACIH');
+    if (articlesNormalized.includes('RACIH')) codes.add('RACIH');
     if (
       articlesNormalized.includes('RECOIP')
       || operationNormalized.includes('RECONNEX')
