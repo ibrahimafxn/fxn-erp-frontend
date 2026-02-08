@@ -1,13 +1,15 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, firstValueFrom } from 'rxjs';
 
 import { MovementService } from '../../../core/services/movement.service';
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
 import { UserService } from '../../../core/services/user.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
+import { HrService } from '../../../core/services/hr.service';
 import { Movement, Depot, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
@@ -28,6 +30,8 @@ export class TechnicianActivity {
   private userService = inject(UserService);
   private depotService = inject(DepotService);
   private auth = inject(AuthService);
+  private bpuSelectionService = inject(BpuSelectionService);
+  private hrService = inject(HrService);
   private datePipe = inject(DatePipe);
   private fb = inject(FormBuilder);
 
@@ -41,6 +45,8 @@ export class TechnicianActivity {
   readonly summaryLoading = signal(false);
   readonly loadingUsers = signal(false);
   readonly loadingDepots = signal(false);
+  readonly loadingBpu = signal(false);
+  readonly loadingEmployees = signal(false);
   readonly error = signal<string | null>(null);
 
   readonly interventionPage = signal(1);
@@ -71,6 +77,10 @@ export class TechnicianActivity {
     { key: 'sav', label: 'SAV' },
     { key: 'prestationF8', label: 'Prestation F8' }
   ] as const;
+  readonly bpuSelections = signal(new Map<string, Map<string, number>>());
+  readonly employeeContracts = signal(new Map<string, string>());
+  readonly bpuLoaded = signal(false);
+  readonly employeesLoaded = signal(false);
 
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly managerDepotId = computed(() => {
@@ -84,6 +94,8 @@ export class TechnicianActivity {
   constructor() {
     this.loadUsers();
     this.loadDepots();
+    void this.ensureBpuSelections();
+    void this.ensureEmployeeContracts();
     this.refreshAll();
   }
 
@@ -267,6 +279,10 @@ export class TechnicianActivity {
     }).format(amount);
   }
 
+  reportAmount(report: TechnicianReport): number {
+    return this.computeBpuAmount(report);
+  }
+
   totalAmount(): number {
     return this.summaryTotalAmount();
   }
@@ -322,7 +338,10 @@ export class TechnicianActivity {
     };
   }
 
-  private refreshSummary(): void {
+  private summaryRequestId = 0;
+
+  private async refreshSummary(): Promise<void> {
+    const requestId = ++this.summaryRequestId;
     const filters = this.filterForm.getRawValue();
     const dates = this.normalizeDateRange(filters.fromDate, filters.toDate);
     const depotId = this.isDepotManager() ? (this.managerDepotId() ?? undefined) : (filters.depot || undefined);
@@ -330,26 +349,122 @@ export class TechnicianActivity {
 
     this.summaryLoading.set(true);
     this.error.set(null);
-    this.reportService.summary({
+    await this.ensureBpuSelections();
+    await this.ensureEmployeeContracts();
+
+    const baseQuery = {
       fromDate: dates.fromDate,
       toDate: dates.toDate,
       technicianId,
       depotId
-    }).subscribe({
-      next: (res) => {
+    };
+
+    const limit = 200;
+    let page = 1;
+    let total = 0;
+    let amount = 0;
+
+    try {
+      do {
+        const res = await firstValueFrom(this.reportService.list({ ...baseQuery, page, limit }));
+        if (requestId !== this.summaryRequestId) return;
         if (!res?.success) {
-          this.error.set('Erreur chargement montant');
-          this.summaryLoading.set(false);
-          return;
+          throw new Error('Erreur chargement montant');
         }
-        this.summaryTotalAmount.set(res.data.totalAmount || 0);
-        this.summaryLoading.set(false);
-      },
-      error: (err) => {
-        this.summaryLoading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement montant'));
+        const items = res.data.items || [];
+        for (const item of items) {
+          amount += this.computeBpuAmount(item);
+        }
+        total = res.data.total ?? (items.length + (page - 1) * limit);
+        page += 1;
+      } while ((page - 1) * limit < total);
+
+      if (requestId !== this.summaryRequestId) return;
+      this.summaryTotalAmount.set(amount);
+    } catch (err) {
+      if (requestId !== this.summaryRequestId) return;
+      this.error.set(this.apiError(err, 'Erreur chargement montant'));
+    } finally {
+      if (requestId !== this.summaryRequestId) return;
+      this.summaryLoading.set(false);
+    }
+  }
+
+  private computeBpuAmount(report: TechnicianReport): number {
+    const prices = this.resolveBpuPrices(report.technician?._id);
+    const p = report.prestations || {};
+    const get = (value?: number) => Number(value || 0);
+    return (
+      get(p.professionnel) * this.getBpuUnit(prices, 'RACPRO_S')
+      + get(p.racProC) * this.getBpuUnit(prices, 'RACPRO_C')
+      + get(p.pavillon) * this.getBpuUnit(prices, 'RACPAV')
+      + get(p.immeuble) * this.getBpuUnit(prices, 'RACIH')
+      + get(p.prestaComplementaire) * this.getBpuUnit(prices, 'PRESTA_COMPL')
+      + get(p.reconnexion) * this.getBpuUnit(prices, 'RECOIP')
+      + get(p.sav) * this.getBpuUnit(prices, 'SAV')
+      + get(p.prestationF8) * this.getBpuUnit(prices, 'REPFOU_PRI')
+    );
+  }
+
+  private getBpuUnit(prices: Map<string, number> | null, code: string): number {
+    if (!prices) return 0;
+    return Number(prices.get(code) || 0);
+  }
+
+  private resolveBpuPrices(technicianId?: string | null): Map<string, number> | null {
+    const type = this.resolveBpuSegment(technicianId);
+    return this.bpuSelections().get(type) || null;
+  }
+
+  private resolveBpuSegment(technicianId?: string | null): string {
+    if (!technicianId) return 'SALARIE';
+    const contract = this.employeeContracts().get(technicianId) || '';
+    if (contract === 'AUTRE') return 'ASSOCIE';
+    if (contract === 'FREELANCE') return 'AUTO';
+    return 'SALARIE';
+  }
+
+  private async ensureBpuSelections(): Promise<void> {
+    if (this.bpuLoaded() || this.loadingBpu()) return;
+    this.loadingBpu.set(true);
+    try {
+      const items = await firstValueFrom(this.bpuSelectionService.list());
+      const map = new Map<string, Map<string, number>>();
+      for (const selection of items || []) {
+        const type = String(selection.type || '').trim().toUpperCase();
+        if (!type) continue;
+        const priceMap = new Map<string, number>();
+        for (const entry of selection.prestations || []) {
+          const code = String(entry.code || '').trim().toUpperCase();
+          if (!code) continue;
+          priceMap.set(code, Number(entry.unitPrice || 0));
+        }
+        map.set(type, priceMap);
       }
-    });
+      this.bpuSelections.set(map);
+      this.bpuLoaded.set(true);
+    } finally {
+      this.loadingBpu.set(false);
+    }
+  }
+
+  private async ensureEmployeeContracts(): Promise<void> {
+    if (this.employeesLoaded() || this.loadingEmployees()) return;
+    this.loadingEmployees.set(true);
+    try {
+      const res = await firstValueFrom(this.hrService.listEmployees({ role: 'TECHNICIEN', page: 1, limit: 2000 }));
+      const map = new Map<string, string>();
+      for (const entry of res.items || []) {
+        const id = entry.user?._id;
+        if (!id) continue;
+        const contract = entry.profile?.contractType || '';
+        map.set(id, contract);
+      }
+      this.employeeContracts.set(map);
+      this.employeesLoaded.set(true);
+    } finally {
+      this.loadingEmployees.set(false);
+    }
   }
 
   private apiError(err: any, fallback: string): string {
