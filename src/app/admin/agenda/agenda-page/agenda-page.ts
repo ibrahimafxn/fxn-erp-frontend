@@ -297,7 +297,16 @@ export class AgendaPage {
     if (!absence?._id || this.updating()) return;
     this.updating.set(true);
     this.absencesService.updateStatus(absence._id, status).subscribe({
-      next: () => {
+      next: (res) => {
+        const updated = res?.data;
+        if (updated?._id) {
+          const nextItems = this.absences().map((item) => {
+            if (item._id !== updated._id) return item;
+            const technicianId = updated.technician?._id || updated.technicianId || item.technicianId;
+            return { ...item, ...updated, technicianId };
+          });
+          this.absences.set(nextItems);
+        }
         this.updating.set(false);
         this.closeConfirm();
         this.refresh();
