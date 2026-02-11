@@ -152,6 +152,41 @@
     overflow-wrap: break-word;
   }
 
+  .employee-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+  }
+
+  .employee-cell .employee-name {
+    font-weight: 600;
+  }
+
+  .employee-cell .avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: .95rem;
+    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+  }
+
+  .employee-cell .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .employees-table th:first-child,
+  .employees-table td:first-child {
+    min-width: 240px;
+  }
+
   .employees-table th:nth-child(2),
   .employees-table td:nth-child(2),
   .employees-table th:nth-child(3),
@@ -383,6 +418,38 @@
     flex-wrap: wrap;
     width: 100%;
 
+    .identity-main {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      min-width: 0;
+    }
+
+    .identity-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .identity-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .identity-text {
+      min-width: 0;
+    }
+
     .name {
       font-weight: 700;
       font-size: 1.1rem;
@@ -396,6 +463,47 @@
       min-width: 0;
       overflow-wrap: anywhere;
     }
+  }
+
+  .doc-identity {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin: 0 0 .8rem;
+    padding: .6rem .8rem;
+    border-radius: .9rem;
+    background: var(--fxn-surface-soft);
+    border: 1px solid var(--fxn-border);
+  }
+
+  .doc-identity .doc-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: .95rem;
+    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .doc-identity .doc-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .doc-identity .doc-text .name {
+    font-weight: 600;
+  }
+
+  .doc-identity .doc-text .meta {
+    color: var(--fxn-text-soft);
+    font-size: .85rem;
   }
 
   .badge {

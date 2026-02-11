@@ -60,12 +60,21 @@
           <div class="info-item">
             <label>Gestionnaire: </label>
             <div class="manager-row">
-              <span class="manager">
-                {{ managerLabel() }}
-                @if (managerEmail()) {
-                  <small>· {{ managerEmail() }}</small>
-                }
-              </span>
+              <div class="manager-info">
+                <div class="manager-avatar" [attr.aria-label]="managerLabel()">
+                  @if (managerAvatarSrc()) {
+                    <img [src]="managerAvatarSrc()" [alt]="managerLabel()" loading="lazy" />
+                  } @else {
+                    <span>{{ managerInitials() || '—' }}</span>
+                  }
+                </div>
+                <span class="manager">
+                  {{ managerLabel() }}
+                  @if (managerEmail()) {
+                    <small>· {{ managerEmail() }}</small>
+                  }
+                </span>
+              </div>
 
               <button class="btn-outline btn-xs" type="button" (click)="openManagerEdit()">
                 Changer

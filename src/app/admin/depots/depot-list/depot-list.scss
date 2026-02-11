@@ -200,6 +200,33 @@
       font-weight: 750;
     }
   }
+
+  .manager-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+  }
+
+  .manager-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: .8rem;
+    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .manager-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 }
 
 /* -------------------------------------------------

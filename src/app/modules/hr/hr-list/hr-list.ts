@@ -16,9 +16,11 @@ import {
   HrHistoryItem,
   HrHistoryResult,
   HrRequirements,
-  LeaveRequest
+  LeaveRequest,
+  User
 } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
+import { resolveCloudinaryAvatarUrl } from '../../../core/utils/avatar-url';
 import { formatPageRange } from '../../../core/utils/pagination';
 
 @Component({
@@ -74,6 +76,20 @@ export class HrList {
   readonly historyTotal = signal(0);
   readonly historyPage = signal(1);
   readonly historyLimit = signal(10);
+
+  avatarSrc(user: User): string {
+    const cacheKey = (user as { updatedAt?: string; lastLoginAt?: string }).updatedAt
+      || (user as { updatedAt?: string; lastLoginAt?: string }).lastLoginAt
+      || '';
+    return resolveCloudinaryAvatarUrl(user.photoUrl, user.avatarUrl, cacheKey);
+  }
+
+  userInitials(user: User): string {
+    const first = user.firstName?.[0] ?? '';
+    const last = user.lastName?.[0] ?? '';
+    const value = `${first}${last}`.toUpperCase();
+    return value || (user.email?.[0] ?? '').toUpperCase();
+  }
 
   readonly docTypes = [
     { value: 'CNI', label: 'CNI' },

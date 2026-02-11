@@ -50,7 +50,18 @@
 
               <td>{{ d.city || '—' }}</td>
               <td>{{ d.phone || '—' }}</td>
-              <td><span class="badge">{{ managerLabel(d) }}</span></td>
+              <td>
+                <div class="manager-cell">
+                  <div class="manager-avatar" [attr.aria-label]="managerLabel(d)">
+                    @if (managerAvatarSrc(d)) {
+                      <img [src]="managerAvatarSrc(d)" [alt]="managerLabel(d)" loading="lazy" />
+                    } @else {
+                      <span>{{ managerInitials(d) || '—' }}</span>
+                    }
+                  </div>
+                  <span class="badge">{{ managerLabel(d) }}</span>
+                </div>
+              </td>
 
               <td>
                 @if (createdAtValue(d)) { {{ createdAtValue(d) | date:'short' }} } @else { — }

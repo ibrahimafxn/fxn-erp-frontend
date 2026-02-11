@@ -74,7 +74,18 @@
             <tbody>
               @for (e of employees(); track e.user._id) {
                 <tr [class.active]="selected()?.user?._id === e.user._id" (click)="selectEmployee(e)">
-                  <td>{{ formatUserName(e.user) }}</td>
+                  <td>
+                    <div class="employee-cell">
+                      <div class="avatar">
+                        @if (avatarSrc(e.user); as avatar) {
+                          <img [src]="avatar" alt="Photo de profil" />
+                        } @else {
+                          <span>{{ userInitials(e.user) }}</span>
+                        }
+                      </div>
+                      <span class="employee-name">{{ formatUserName(e.user) }}</span>
+                    </div>
+                  </td>
                   <td><span class="pill role-pill" [class.tech]="e.user.role === 'TECHNICIEN'">{{ e.user.role || '—' }}</span></td>
                   <td>{{ depotLabel(e.user) }}</td>
                   <td>{{ e.user.phone || '—' }}</td>
@@ -112,18 +123,27 @@
         @if (selected(); as s) {
           <h2 class="section-title"><span class="material-icons notranslate">assignment_ind</span>Dossier employé</h2>
           <div class="identity">
-            <div>
-              <div class="name">{{ formatUserName(s.user) }}</div>
-              <div class="meta">{{ s.user.email }} · {{ depotLabel(s.user) }}</div>
-              @if (requiredDocsForUser(s.user).length) {
-                <div class="requirements">
-                  @for (t of requiredDocsForUser(s.user); track t) {
-                    <span class="pill" [class.ok]="isRequiredDocSatisfied(t)" [class.danger]="!isRequiredDocSatisfied(t)">
-                      {{ docTypeLabel(t) }}
-                    </span>
-                  }
-                </div>
-              }
+            <div class="identity-main">
+              <div class="identity-avatar" [attr.aria-label]="formatUserName(s.user)">
+                @if (avatarSrc(s.user)) {
+                  <img [src]="avatarSrc(s.user)" [alt]="formatUserName(s.user)" loading="lazy" />
+                } @else {
+                  <span>{{ userInitials(s.user) }}</span>
+                }
+              </div>
+              <div class="identity-text">
+                <div class="name">{{ formatUserName(s.user) }}</div>
+                <div class="meta">{{ s.user.email }} · {{ depotLabel(s.user) }}</div>
+                @if (requiredDocsForUser(s.user).length) {
+                  <div class="requirements">
+                    @for (t of requiredDocsForUser(s.user); track t) {
+                      <span class="pill" [class.ok]="isRequiredDocSatisfied(t)" [class.danger]="!isRequiredDocSatisfied(t)">
+                        {{ docTypeLabel(t) }}
+                      </span>
+                    }
+                  </div>
+                }
+              </div>
             </div>
             <span class="badge" [class.ok]="s.compliance?.ok">{{ complianceLabel(s) }}</span>
           </div>
@@ -271,6 +291,19 @@
         }
 
         @if (selected(); as s) {
+          <div class="doc-identity">
+            <div class="doc-avatar" [attr.aria-label]="formatUserName(s.user)">
+              @if (avatarSrc(s.user)) {
+                <img [src]="avatarSrc(s.user)" [alt]="formatUserName(s.user)" loading="lazy" />
+              } @else {
+                <span>{{ userInitials(s.user) }}</span>
+              }
+            </div>
+            <div class="doc-text">
+              <div class="name">{{ formatUserName(s.user) }}</div>
+              <div class="meta">{{ s.user.email }} · {{ depotLabel(s.user) }}</div>
+            </div>
+          </div>
           <form class="doc-form" [formGroup]="docForm">
             <select formControlName="type">
               @for (t of docTypes; track t.value) {
