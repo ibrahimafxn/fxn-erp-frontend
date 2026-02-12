@@ -74,11 +74,13 @@
         <div class="range">{{ rangeLabel() }}</div>
         <button class="btn-icon" type="button" (click)="goNext()"><i class="bi bi-chevron-right"></i></button>
       </div>
-      <div class="view-switch">
-        <button type="button" [class.active]="viewMode() === 'month'" (click)="setView('month')">Mois</button>
-        <button type="button" [class.active]="viewMode() === 'week'" (click)="setView('week')">Semaine</button>
-        <button type="button" [class.active]="viewMode() === 'day'" (click)="setView('day')">Jour</button>
-        <button type="button" [class.active]="showList()" (click)="toggleList()">Liste</button>
+      <div class="calendar-actions">
+        <div class="view-switch">
+          <button type="button" [class.active]="viewMode() === 'month'" (click)="setView('month')">Mois</button>
+          <button type="button" [class.active]="viewMode() === 'week'" (click)="setView('week')">Semaine</button>
+          <button type="button" [class.active]="viewMode() === 'day'" (click)="setView('day')">Jour</button>
+        </div>
+        <button class="btn-outline list-btn" type="button" (click)="toggleList()">Liste</button>
       </div>
     </div>
 
@@ -93,95 +95,76 @@
             <div class="week-day">{{ day }}</div>
           }
           @for (date of monthDays(); track date.toISOString()) {
-            <div class="day-cell" [class.outside]="isOutsideMonth(date)" [class.today]="isToday(date)">
+            <div
+              class="day-cell"
+              [class.outside]="isOutsideMonth(date)"
+              [class.today]="isToday(date)"
+              [class.in-range]="isInFilterRange(date)"
+              [class.range-start]="isFilterRangeStart(date)"
+              [class.range-end]="isFilterRangeEnd(date)"
+            >
               <div class="day-header">
                 <span>{{ date.getDate() }}</span>
               </div>
-              <div class="day-events">
-                @for (absence of absencesForDay(date); track absence._id || absence.startDate + absence.technicianId) {
-                  <div class="event-pill" [class]="statusClass(absence.status)">
-                    <span class="event-type">{{ typeLabel(absence.type) }}</span>
-                    <span class="event-tech">{{ absenceTechnicianLabel(absence) }}</span>
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      } @else {
-        @if (!showList()) {
-          <div class="list-view">
-            @for (absence of visibleAbsences(); track absence._id || absence.startDate + absence.technicianId) {
-              <div class="list-item">
-                <div>
-                  <div class="item-title">{{ technicianLabel(absence.technicianId) }}</div>
-                  <div class="item-sub">{{ typeLabel(absence.type) }} · {{ statusLabel(absence.status) }}</div>
-                </div>
-                <div class="item-dates">
-                  <span>{{ absence.startDate | date:'shortDate' }}</span>
-                  <span>→</span>
-                  <span>{{ absence.endDate | date:'shortDate' }}</span>
-                </div>
-                <div class="item-meta">{{ depotLabel(absence.depot) }}</div>
-                <div class="item-actions">
-                  @if (absence.status === 'EN_ATTENTE') {
-                    <button class="btn-success" type="button" (click)="approveAbsence(absence)" [disabled]="updating()">
-                      Approuver
-                    </button>
-                    <button class="btn-danger" type="button" (click)="refuseAbsence(absence)" [disabled]="updating()">
-                      Refuser
-                    </button>
-                  } @else {
-                    <span class="status-pill" [class]="statusClass(absence.status)">{{ statusLabel(absence.status) }}</span>
+              @if (!isOutsideMonth(date) && (!hasFilterRange() || isInFilterRange(date))) {
+                <div class="day-events">
+                  @for (absence of absencesForDay(date); track absence._id || absence.startDate + absence.technicianId) {
+                    <div class="event-pill" [class]="statusClass(absence.status)" (click)="selectAbsence(absence)">
+                      <span class="event-type">{{ typeLabel(absence.type) }}</span>
+                      <span class="event-tech">{{ absenceTechnicianLabel(absence) }}</span>
+                    </div>
                   }
-                  <button class="btn-primary" type="button" (click)="openEdit(absence)">Modifier</button>
-                  <button class="btn-outline" type="button" (click)="openHistory(absence)">Historique</button>
                 </div>
-              </div>
-            }
-            @if (!visibleAbsences().length) {
-              <div class="state empty">Aucune absence sur la période.</div>
-            }
-          </div>
-        }
-      }
-      @if (showList()) {
-        <div class="list-view list-overlay">
-          @for (absence of visibleAbsences(); track absence._id || absence.startDate + absence.technicianId) {
-            <div class="list-item">
-              <div>
-                <div class="item-title">{{ technicianLabel(absence.technicianId) }}</div>
-                <div class="item-sub">{{ typeLabel(absence.type) }} · {{ statusLabel(absence.status) }}</div>
-              </div>
-              <div class="item-dates">
-                <span>{{ absence.startDate | date:'shortDate' }}</span>
-                <span>→</span>
-                <span>{{ absence.endDate | date:'shortDate' }}</span>
-              </div>
-              <div class="item-meta">{{ depotLabel(absence.depot) }}</div>
-              <div class="item-actions">
-                @if (absence.status === 'EN_ATTENTE') {
-                  <button class="btn-success" type="button" (click)="approveAbsence(absence)" [disabled]="updating()">
-                    Approuver
-                  </button>
-                  <button class="btn-danger" type="button" (click)="refuseAbsence(absence)" [disabled]="updating()">
-                    Refuser
-                  </button>
-                } @else {
-                  <span class="status-pill" [class]="statusClass(absence.status)">{{ statusLabel(absence.status) }}</span>
-                }
-                <button class="btn-primary" type="button" (click)="openEdit(absence)">Modifier</button>
-                <button class="btn-outline" type="button" (click)="openHistory(absence)">Historique</button>
-              </div>
+              }
             </div>
-          }
-          @if (!visibleAbsences().length) {
-            <div class="state empty">Aucune absence sur la période.</div>
           }
         </div>
       }
     }
   </section>
+
+  @if (showList()) {
+    <div class="modal-backdrop" (click)="toggleList()"></div>
+    <div class="modal list-modal">
+      <header>
+        <h2>Liste des absences</h2>
+        <button class="btn-icon" type="button" (click)="toggleList()"><i class="bi bi-x-lg"></i></button>
+      </header>
+      <div class="list-view">
+        @for (absence of visibleAbsences(); track absence._id || absence.startDate + absence.technicianId) {
+          <div class="list-item" [class.active]="selectedAbsence()?._id === absence._id" (click)="selectAbsence(absence)">
+            <div>
+              <div class="item-title">{{ technicianLabel(absence.technicianId) }}</div>
+              <div class="item-sub">{{ typeLabel(absence.type) }} · {{ statusLabel(absence.status) }}</div>
+            </div>
+            <div class="item-dates">
+              <span>{{ absence.startDate | date:'shortDate' }}</span>
+              <span>→</span>
+              <span>{{ absence.endDate | date:'shortDate' }}</span>
+            </div>
+            <div class="item-meta">{{ depotLabel(absence.depot) }}</div>
+            <div class="item-actions">
+              @if (absence.status === 'EN_ATTENTE') {
+                <button class="btn-success" type="button" (click)="$event.stopPropagation(); approveAbsence(absence)" [disabled]="updating()">
+                  Approuver
+                </button>
+                <button class="btn-danger" type="button" (click)="$event.stopPropagation(); refuseAbsence(absence)" [disabled]="updating()">
+                  Refuser
+                </button>
+              } @else {
+                <span class="status-pill" [class]="statusClass(absence.status)">{{ statusLabel(absence.status) }}</span>
+              }
+              <button class="btn-primary" type="button" (click)="$event.stopPropagation(); openEdit(absence)">Modifier</button>
+              <button class="btn-outline" type="button" (click)="$event.stopPropagation(); openHistory(absence)">Historique</button>
+            </div>
+          </div>
+        }
+        @if (!visibleAbsences().length) {
+          <div class="state empty">Aucune absence sur la période.</div>
+        }
+      </div>
+    </div>
+  }
 
   @if (modalOpen()) {
     <div class="modal-backdrop" (click)="closeModal()"></div>

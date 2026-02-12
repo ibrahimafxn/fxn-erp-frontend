@@ -60,6 +60,12 @@ textarea {
   gap: 10px;
 }
 
+.calendar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .calendar-nav {
   display: flex;
   align-items: center;
@@ -88,6 +94,11 @@ textarea {
   background: rgba(10, 16, 29, 0.6);
   border-radius: 999px;
   padding: 4px;
+}
+
+.list-btn {
+  height: 36px;
+  padding: 0 14px;
 }
 
 .view-switch button {
@@ -133,8 +144,31 @@ textarea {
   box-shadow: 0 0 0 1px rgba(88, 123, 255, 0.35);
 }
 
+.day-cell.in-range {
+  background: rgba(72, 136, 255, 0.12);
+  border-color: rgba(88, 123, 255, 0.35);
+}
+
+.day-cell.in-range.range-start,
+.day-cell.in-range.range-end {
+  border-color: rgba(88, 123, 255, 0.6);
+  box-shadow: 0 0 0 1px rgba(88, 123, 255, 0.25);
+}
+
 .day-cell.outside {
   opacity: 0.45;
+}
+
+.day-cell.outside.in-range {
+  opacity: 0.75;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.day-cell.outside .event-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .day-header {
@@ -184,6 +218,10 @@ textarea {
   gap: 10px;
 }
 
+.list-modal {
+  max-width: 1000px;
+}
+
 .list-overlay {
   margin-top: 16px;
   padding-top: 16px;
@@ -198,6 +236,11 @@ textarea {
   border-radius: 12px;
   background: rgba(10, 16, 29, 0.65);
   border: 1px solid rgba(88, 123, 255, 0.15);
+}
+
+.list-item.active {
+  border-color: rgba(88, 123, 255, 0.55);
+  background: rgba(72, 136, 255, 0.12);
 }
 
 .item-title {

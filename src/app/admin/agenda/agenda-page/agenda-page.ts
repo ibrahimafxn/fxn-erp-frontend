@@ -46,6 +46,7 @@ export class AgendaPage {
   readonly confirmTarget = signal<Absence | null>(null);
   readonly confirmStatus = signal<AbsenceStatus>('EN_ATTENTE');
   readonly saveConfirmOpen = signal(false);
+  readonly selectedAbsence = signal<Absence | null>(null);
 
   readonly filterForm = this.fb.nonNullable.group({
     technicianId: this.fb.nonNullable.control(''),
@@ -215,6 +216,13 @@ export class AgendaPage {
           return { ...item, technicianId };
         });
         this.absences.set(normalized);
+        const selected = this.selectedAbsence();
+        if (selected?._id && !normalized.some((item) => item._id === selected._id)) {
+          this.selectedAbsence.set(null);
+        }
+        if (!this.selectedAbsence() && normalized.length === 1) {
+          this.selectedAbsence.set(normalized[0]);
+        }
         this.loading.set(false);
       },
       error: () => {
@@ -317,6 +325,61 @@ export class AgendaPage {
         this.error.set('Erreur mise à jour statut');
       }
     });
+  }
+
+  selectAbsence(absence: Absence): void {
+    this.selectedAbsence.set(absence);
+  }
+
+  private activeRangeKeys(): { start?: string; end?: string } {
+    const filters = this.filterForm.getRawValue();
+    if (filters.fromDate && filters.toDate) {
+      return {
+        start: this.dateKeyFromValue(filters.fromDate),
+        end: this.dateKeyFromValue(filters.toDate)
+      };
+    }
+    return {};
+  }
+
+  private dateKeyFromDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private dateKeyFromValue(value: string | Date): string | undefined {
+    if (!value) return undefined;
+    if (value instanceof Date) {
+      return this.dateKeyFromDate(value);
+    }
+    const raw = String(value);
+    return raw.includes('T') ? raw.split('T')[0] : raw;
+  }
+
+  hasFilterRange(): boolean {
+    const filters = this.filterForm.getRawValue();
+    return Boolean(filters.fromDate && filters.toDate);
+  }
+
+  isInFilterRange(date: Date): boolean {
+    const { start, end } = this.activeRangeKeys();
+    if (!start || !end) return false;
+    const value = this.dateKeyFromDate(date);
+    return value >= start && value <= end;
+  }
+
+  isFilterRangeStart(date: Date): boolean {
+    const { start } = this.activeRangeKeys();
+    if (!start) return false;
+    return this.dateKeyFromDate(date) === start;
+  }
+
+  isFilterRangeEnd(date: Date): boolean {
+    const { end } = this.activeRangeKeys();
+    if (!end) return false;
+    return this.dateKeyFromDate(date) === end;
   }
 
   openHistory(absence: Absence): void {
@@ -432,10 +495,10 @@ export class AgendaPage {
   }
 
   absencesForDay(date: Date): Absence[] {
-    const day = date.toISOString().slice(0, 10);
+    const day = this.dateKeyFromDate(date);
     return this.visibleAbsences().filter((absence) => {
-      const start = absence.startDate?.slice(0, 10);
-      const end = absence.endDate?.slice(0, 10);
+      const start = this.dateKeyFromValue(absence.startDate || '');
+      const end = this.dateKeyFromValue(absence.endDate || '');
       if (!start || !end) return false;
       return day >= start && day <= end;
     });
