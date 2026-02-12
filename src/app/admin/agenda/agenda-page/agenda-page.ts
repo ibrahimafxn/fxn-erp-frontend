@@ -5,6 +5,7 @@ import { Absence, AbsenceHistoryItem, AbsenceStatus, AbsenceType, Depot, Employe
 import { AbsenceService } from '../../../core/services/absence.service';
 import { HrService } from '../../../core/services/hr.service';
 import { DepotService } from '../../../core/services/depot.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 
@@ -24,6 +25,7 @@ export class AgendaPage {
   private absencesService = inject(AbsenceService);
   private hrService = inject(HrService);
   private depotService = inject(DepotService);
+  private authService = inject(AuthService);
   private datePipe = inject(DatePipe);
 
   readonly viewMode = signal<ViewMode>('month');
@@ -47,6 +49,12 @@ export class AgendaPage {
   readonly confirmStatus = signal<AbsenceStatus>('EN_ATTENTE');
   readonly saveConfirmOpen = signal(false);
   readonly selectedAbsence = signal<Absence | null>(null);
+  readonly currentJobTitle = signal<string>('');
+  readonly canDecideAbsence = computed(() => {
+    const raw = this.normalizeTitle(this.currentJobTitle());
+    if (!raw) return false;
+    return raw.includes('president') || raw.includes('responsable rh') || raw.includes('responsable ressources humaines');
+  });
 
   readonly filterForm = this.fb.nonNullable.group({
     technicianId: this.fb.nonNullable.control(''),
@@ -105,6 +113,7 @@ export class AgendaPage {
   constructor() {
     this.loadUsers();
     this.loadDepots();
+    this.loadCurrentProfile();
     this.refresh();
   }
 
@@ -587,10 +596,28 @@ export class AgendaPage {
     });
   }
 
+  private loadCurrentProfile(): void {
+    const current = this.authService.getCurrentUser();
+    if (!current?._id) return;
+    this.hrService.getEmployee(current._id).subscribe({
+      next: (res) => this.currentJobTitle.set(res?.profile?.jobTitle || ''),
+      error: () => this.currentJobTitle.set('')
+    });
+  }
+
   private loadDepots(): void {
     this.depotService.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
       next: (res) => this.depots.set(res.items ?? []),
       error: () => this.depots.set([])
     });
+  }
+
+  private normalizeTitle(value: string): string {
+    return (value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }

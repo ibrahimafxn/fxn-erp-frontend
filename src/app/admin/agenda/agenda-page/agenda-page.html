@@ -144,7 +144,7 @@
             </div>
             <div class="item-meta">{{ depotLabel(absence.depot) }}</div>
             <div class="item-actions">
-              @if (absence.status === 'EN_ATTENTE') {
+              @if (absence.status === 'EN_ATTENTE' && canDecideAbsence()) {
                 <button class="btn-success" type="button" (click)="$event.stopPropagation(); approveAbsence(absence)" [disabled]="updating()">
                   Approuver
                 </button>
