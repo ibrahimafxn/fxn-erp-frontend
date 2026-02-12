@@ -39,6 +39,9 @@
         }
       </select>
 
+      <input type="date" formControlName="createdFrom" aria-label="Création du" />
+      <input type="date" formControlName="createdTo" aria-label="Création au" />
+
       <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
       <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
     </form>
@@ -52,6 +55,26 @@
   } @else if (items().length === 0) {
     <div class="state empty card">Aucun utilisateur trouvé.</div>
   } @else {
+    <div class="card pager-card">
+      <div class="pager pager-top">
+        <div class="pager-left">
+          <div class="page-size">
+            <button type="button" [class.active]="limit() === 10" (click)="setLimit(10)">10</button>
+            <button type="button" [class.active]="limit() === 20" (click)="setLimit(20)">20</button>
+            <button type="button" [class.active]="limit() === 50" (click)="setLimit(50)">50</button>
+            <button type="button" [class.active]="limit() === 100" (click)="setLimit(100)">100</button>
+          </div>
+          <span class="pager-label">Éléments par page</span>
+        </div>
+        <div class="pager-right">
+          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+          <div class="pager-nav">
+            <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i></button>
+            <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="table card">
       <table>
         <thead>
@@ -119,25 +142,6 @@
         </tbody>
       </table>
     </div>
-
-    <footer class="pager pager-fixed">
-      <div class="pager-left">
-        <div class="page-size">
-          <button type="button" [class.active]="limit() === 10" (click)="setLimit(10)">10</button>
-          <button type="button" [class.active]="limit() === 20" (click)="setLimit(20)">20</button>
-          <button type="button" [class.active]="limit() === 50" (click)="setLimit(50)">50</button>
-          <button type="button" [class.active]="limit() === 100" (click)="setLimit(100)">100</button>
-        </div>
-        <span class="pager-label">Éléments par page</span>
-      </div>
-      <div class="pager-right">
-        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-        <div class="pager-nav">
-          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i></button>
-          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i></button>
-        </div>
-      </div>
-    </footer>
   }
   <app-confirm-delete-modal
     [open]="deleteModalOpen()"

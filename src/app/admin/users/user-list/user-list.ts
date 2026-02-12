@@ -60,6 +60,8 @@ export class UserList extends DetailBack {
     q: this.fb.nonNullable.control(''),
     role: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control(''),
+    createdFrom: this.fb.nonNullable.control(''),
+    createdTo: this.fb.nonNullable.control(''),
   });
 
   // derived
@@ -105,6 +107,8 @@ export class UserList extends DetailBack {
       q: v.q.trim() || undefined,
       role: v.role || undefined,
       depot: v.depot || undefined,
+      createdFrom: v.createdFrom || undefined,
+      createdTo: v.createdTo || undefined,
       page: this.page(),
       limit: this.limit(),
     }).subscribe({ error: () => {} });
@@ -116,7 +120,7 @@ export class UserList extends DetailBack {
   }
 
   clearSearch(): void {
-    this.filterForm.setValue({ q: '', role: '', depot: '' });
+    this.filterForm.setValue({ q: '', role: '', depot: '', createdFrom: '', createdTo: '' });
     this.page.set(1);
     this.refresh(true);
   }
@@ -158,7 +162,9 @@ export class UserList extends DetailBack {
     this.userService.exportCsv({
       q: v.q.trim() || undefined,
       role: v.role || undefined,
-      depot: v.depot || undefined
+      depot: v.depot || undefined,
+      createdFrom: v.createdFrom || undefined,
+      createdTo: v.createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.csv`),
       error: () => {}
@@ -170,7 +176,9 @@ export class UserList extends DetailBack {
     this.userService.exportPdf({
       q: v.q.trim() || undefined,
       role: v.role || undefined,
-      depot: v.depot || undefined
+      depot: v.depot || undefined,
+      createdFrom: v.createdFrom || undefined,
+      createdTo: v.createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.pdf`),
       error: () => {}
@@ -182,7 +190,9 @@ export class UserList extends DetailBack {
     this.userService.exportXlsx({
       q: v.q.trim() || undefined,
       role: v.role || undefined,
-      depot: v.depot || undefined
+      depot: v.depot || undefined,
+      createdFrom: v.createdFrom || undefined,
+      createdTo: v.createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.xlsx`),
       error: () => {}

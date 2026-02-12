@@ -107,7 +107,12 @@ export class HrService {
     if (filter?.user) params = params.set('user', filter.user);
     if (filter?.status) params = params.set('status', filter.status);
     return this.http.get<{ success: boolean; data: LeaveRequest[] }>(`${API_BASE}/hr/leaves`, { params })
-      .pipe(map(resp => resp.data));
+      .pipe(map(resp => {
+        const data: any = resp.data as any;
+        if (Array.isArray(data)) return data as LeaveRequest[];
+        if (data && Array.isArray(data.items)) return data.items as LeaveRequest[];
+        return [];
+      }));
   }
 
   createLeave(payload: Partial<LeaveRequest>) {

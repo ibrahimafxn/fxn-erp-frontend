@@ -506,6 +506,28 @@
     font-size: .85rem;
   }
 
+  .pager-card {
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-glass);
+  }
+
+  .pager-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pager-top .pager-left,
+  .pager-top .pager-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
   .badge {
     padding: .25rem .6rem;
     border-radius: 999px;

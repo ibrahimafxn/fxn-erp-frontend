@@ -58,7 +58,33 @@
               <option [value]="c.value">{{ c.label }}</option>
             }
           </select>
+          <select #sortSelect [value]="employeeSort()" (change)="setEmployeeSort(sortSelect.value)">
+            <option value="NAME_ASC">Nom (A → Z)</option>
+            <option value="NAME_DESC">Nom (Z → A)</option>
+            <option value="ROLE_ASC">Rôle</option>
+            <option value="DEPOT_ASC">Dépôt</option>
+          </select>
           <button class="btn-outline" (click)="resetEmployeeFilters()">Réinitialiser</button>
+        </div>
+        <div class="card pager-card">
+          <div class="pager pager-top">
+            <div class="pager-left">
+              <div class="page-size">
+                <button type="button" [class.active]="employeeLimit() === 10" (click)="setEmployeeLimitValue(10)">10</button>
+                <button type="button" [class.active]="employeeLimit() === 20" (click)="setEmployeeLimitValue(20)">20</button>
+                <button type="button" [class.active]="employeeLimit() === 50" (click)="setEmployeeLimitValue(50)">50</button>
+                <button type="button" [class.active]="employeeLimit() === 100" (click)="setEmployeeLimitValue(100)">100</button>
+              </div>
+              <span class="pager-label">Éléments par page</span>
+            </div>
+            <div class="pager-right">
+              <span class="pager-range">{{ pageRange(employeePage(), employeeLimit(), employeeTotal()) }}</span>
+              <div class="pager-nav">
+                <button class="btn-outline" type="button" (click)="prevEmployeePage()" [disabled]="employeePage() <= 1"><i class="bi bi-chevron-left"></i></button>
+                <button class="btn-outline" type="button" (click)="nextEmployeePage()" [disabled]="employeePage() >= employeePageCount()"><i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="table-wrap employees-table">
           <table>
@@ -99,24 +125,6 @@
             </tbody>
           </table>
         </div>
-        <footer class="pager pager-fixed">
-          <div class="pager-left">
-            <div class="page-size">
-              <button type="button" [class.active]="employeeLimit() === 10" (click)="setEmployeeLimitValue(10)">10</button>
-              <button type="button" [class.active]="employeeLimit() === 20" (click)="setEmployeeLimitValue(20)">20</button>
-              <button type="button" [class.active]="employeeLimit() === 50" (click)="setEmployeeLimitValue(50)">50</button>
-              <button type="button" [class.active]="employeeLimit() === 100" (click)="setEmployeeLimitValue(100)">100</button>
-            </div>
-            <span class="pager-label">Éléments par page</span>
-          </div>
-          <div class="pager-right">
-            <span class="pager-range">{{ pageRange(employeePage(), employeeLimit(), employeeTotal()) }}</span>
-            <div class="pager-nav">
-              <button class="btn-outline" type="button" (click)="prevEmployeePage()" [disabled]="employeePage() <= 1"><i class="bi bi-chevron-left"></i></button>
-              <button class="btn-outline" type="button" (click)="nextEmployeePage()" [disabled]="employeePage() >= employeePageCount()"><i class="bi bi-chevron-right"></i></button>
-            </div>
-          </div>
-        </footer>
       </div>
     } @else if (employeeSection() === 'profile') {
       <div class="panel detail" id="hr-employee-profile">
@@ -191,6 +199,26 @@
           </div>
 
           <h3 class="section-title"><span class="material-icons notranslate">history</span>Historique RH</h3>
+          <div class="card pager-card">
+            <div class="pager pager-top">
+              <div class="pager-left">
+                <div class="page-size">
+                  <button type="button" [class.active]="historyLimit() === 10" (click)="setHistoryLimitValue(10)">10</button>
+                  <button type="button" [class.active]="historyLimit() === 20" (click)="setHistoryLimitValue(20)">20</button>
+                  <button type="button" [class.active]="historyLimit() === 50" (click)="setHistoryLimitValue(50)">50</button>
+                  <button type="button" [class.active]="historyLimit() === 100" (click)="setHistoryLimitValue(100)">100</button>
+                </div>
+                <span class="pager-label">Éléments par page</span>
+              </div>
+              <div class="pager-right">
+                <span class="pager-range">{{ pageRange(historyPage(), historyLimit(), historyTotal()) }}</span>
+                <div class="pager-nav">
+                  <button class="btn-outline" type="button" (click)="prevHistoryPage()" [disabled]="historyPage() <= 1"><i class="bi bi-chevron-left"></i></button>
+                  <button class="btn-outline" type="button" (click)="nextHistoryPage()" [disabled]="historyPage() >= historyPageCount()"><i class="bi bi-chevron-right"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -213,24 +241,6 @@
               </tbody>
             </table>
           </div>
-          <footer class="pager pager-fixed">
-            <div class="pager-left">
-              <div class="page-size">
-                <button type="button" [class.active]="historyLimit() === 10" (click)="setHistoryLimitValue(10)">10</button>
-                <button type="button" [class.active]="historyLimit() === 20" (click)="setHistoryLimitValue(20)">20</button>
-                <button type="button" [class.active]="historyLimit() === 50" (click)="setHistoryLimitValue(50)">50</button>
-                <button type="button" [class.active]="historyLimit() === 100" (click)="setHistoryLimitValue(100)">100</button>
-              </div>
-              <span class="pager-label">Éléments par page</span>
-            </div>
-            <div class="pager-right">
-              <span class="pager-range">{{ pageRange(historyPage(), historyLimit(), historyTotal()) }}</span>
-              <div class="pager-nav">
-                <button class="btn-outline" type="button" (click)="prevHistoryPage()" [disabled]="historyPage() <= 1"><i class="bi bi-chevron-left"></i></button>
-                <button class="btn-outline" type="button" (click)="nextHistoryPage()" [disabled]="historyPage() >= historyPageCount()"><i class="bi bi-chevron-right"></i></button>
-              </div>
-            </div>
-          </footer>
         } @else {
           <div class="state">Sélectionner un employé.</div>
         }

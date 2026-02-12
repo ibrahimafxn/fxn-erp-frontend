@@ -6,17 +6,16 @@
     </div>
   </header>
 
-  <div class="section-tabs">
-    <button class="btn-outline" type="button" [class.active]="activeSection() === 'new'" (click)="setSection('new')">
-      Nouvelle réception
-    </button>
-    <button class="btn-outline" type="button" [class.active]="activeSection() === 'history'" (click)="setSection('history')">
-      Historique des réceptions
-    </button>
-  </div>
-
   @if (activeSection() === 'new') {
     <article class="card">
+      <div class="section-tabs">
+        <button class="btn-outline" type="button" [class.active]="activeSection() === 'new'" (click)="setSection('new')">
+          Nouvelle réception
+        </button>
+        <button class="btn-outline" type="button" [class.active]="activeSection() === 'history'" (click)="setSection('history')">
+          Historique des réceptions
+        </button>
+      </div>
       <h2 class="section-title"><span class="material-icons notranslate">inventory_2</span>Nouvelle réception</h2>
       <form class="receipt-form" [formGroup]="form" (ngSubmit)="submit()">
         <div class="form-grid">
@@ -99,7 +98,17 @@
   } @else {
     <article class="card">
       <header class="card-title-row">
-        <h2 class="section-title"><span class="material-icons notranslate">history</span>Historique des réceptions</h2>
+        <div>
+          <div class="section-tabs">
+            <button class="btn-outline" type="button" [class.active]="activeSection() === 'new'" (click)="setSection('new')">
+              Nouvelle réception
+            </button>
+            <button class="btn-outline" type="button" [class.active]="activeSection() === 'history'" (click)="setSection('history')">
+              Historique des réceptions
+            </button>
+          </div>
+          <h2 class="section-title"><span class="material-icons notranslate">history</span>Historique des réceptions</h2>
+        </div>
         <div class="header-actions">
           <button class="btn-outline" type="button" (click)="refreshHistory(true)"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
           <button class="btn-outline" type="button" (click)="exportCsv()"><i class="bi bi-filetype-csv"></i> Exporter CSV</button>
@@ -157,16 +166,40 @@
           <table>
             <thead>
             <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Ressource</th>
-              <th>Quantité</th>
-              <th>Origine</th>
-              <th>Note</th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('date')">
+                  Date <span class="sort-arrow">{{ sortArrow('date') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('type')">
+                  Type <span class="sort-arrow">{{ sortArrow('type') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('resource')">
+                  Ressource <span class="sort-arrow">{{ sortArrow('resource') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('quantity')">
+                  Quantité <span class="sort-arrow">{{ sortArrow('quantity') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('origin')">
+                  Origine <span class="sort-arrow">{{ sortArrow('origin') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-button" type="button" (click)="setSort('note')">
+                  Note <span class="sort-arrow">{{ sortArrow('note') }}</span>
+                </button>
+              </th>
             </tr>
             </thead>
             <tbody>
-              @for (m of historyItems(); track m._id) {
+              @for (m of sortedHistoryItems(); track m._id) {
                 <tr>
                   <td>{{ createdAtText(m) }}</td>
                   <td>{{ m.resourceType }}</td>

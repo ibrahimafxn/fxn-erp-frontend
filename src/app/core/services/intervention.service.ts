@@ -76,6 +76,8 @@ export type InterventionItem = {
   type?: string;
   client?: string;
   statut?: string;
+  commentairesTechnicien?: string;
+  commentairesCloture?: string;
   debut?: string;
   duree?: string;
   clotureHotline?: string;
@@ -83,7 +85,6 @@ export type InterventionItem = {
   debutIntervention?: string;
   creneauPlus2h?: string;
   motifEchec?: string;
-  commentairesTechnicien?: string;
   ville?: string;
   typeLogement?: string;
   actionSav?: string;
@@ -92,9 +93,9 @@ export type InterventionItem = {
   typeOperation?: string;
   typeHabitation?: string;
   priseExistante?: string;
-  recoRacc?: string;
   marque?: string;
   listePrestationsRaw?: string;
+  recoRacc?: string;
   isSuccess?: boolean;
   isFailure?: boolean;
   versionIndex?: number;
@@ -102,6 +103,7 @@ export type InterventionItem = {
   articlesRaw?: string;
   categories?: string[];
   importedAt?: string;
+  osirisRaw?: Record<string, string>;
 };
 
 export type InterventionListResponse = {

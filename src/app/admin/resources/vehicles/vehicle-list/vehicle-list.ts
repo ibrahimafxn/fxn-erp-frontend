@@ -62,6 +62,9 @@ export class VehicleList extends DetailBack {
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control(''),
+    assigned: this.fb.nonNullable.control(''),
+    createdFrom: this.fb.nonNullable.control(''),
+    createdTo: this.fb.nonNullable.control(''),
   });
 
   // Derived
@@ -101,12 +104,16 @@ export class VehicleList extends DetailBack {
   }
 
   refresh(force = false): void {
-    const { q, depot } = this.filterForm.getRawValue();
+    const { q, depot, assigned, createdFrom, createdTo } = this.filterForm.getRawValue();
+    const assignedFilter = (assigned === 'assigned' || assigned === 'unassigned') ? assigned : undefined;
 
     this.svc
       .refresh(force, {
         q: q.trim() || undefined,
         depot: depot || undefined,
+        assigned: assignedFilter,
+        createdFrom: createdFrom || undefined,
+        createdTo: createdTo || undefined,
         page: this.page(),
         limit: this.limit(),
       })
@@ -119,7 +126,7 @@ export class VehicleList extends DetailBack {
   }
 
   clearSearch(): void {
-    this.filterForm.setValue({ q: '', depot: '' });
+    this.filterForm.setValue({ q: '', depot: '', assigned: '', createdFrom: '', createdTo: '' });
     this.page.set(1);
     this.refresh(true);
   }
@@ -159,10 +166,14 @@ export class VehicleList extends DetailBack {
   }
 
   exportCsv(): void {
-    const { q, depot } = this.filterForm.getRawValue();
+    const { q, depot, assigned, createdFrom, createdTo } = this.filterForm.getRawValue();
+    const assignedFilter = (assigned === 'assigned' || assigned === 'unassigned') ? assigned : undefined;
     this.svc.exportCsv({
       q: q.trim() || undefined,
-      depot: depot || undefined
+      depot: depot || undefined,
+      assigned: assignedFilter,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `vehicles-${new Date().toISOString().slice(0, 10)}.csv`),
       error: () => {}
@@ -170,10 +181,14 @@ export class VehicleList extends DetailBack {
   }
 
   exportPdf(): void {
-    const { q, depot } = this.filterForm.getRawValue();
+    const { q, depot, assigned, createdFrom, createdTo } = this.filterForm.getRawValue();
+    const assignedFilter = (assigned === 'assigned' || assigned === 'unassigned') ? assigned : undefined;
     this.svc.exportPdf({
       q: q.trim() || undefined,
-      depot: depot || undefined
+      depot: depot || undefined,
+      assigned: assignedFilter,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `vehicles-${new Date().toISOString().slice(0, 10)}.pdf`),
       error: () => {}

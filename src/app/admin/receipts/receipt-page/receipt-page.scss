@@ -189,6 +189,27 @@
   }
 }
 
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sort-button:hover {
+  color: var(--fxn-primary);
+}
+
+.sort-arrow {
+  font-size: .85rem;
+  opacity: .75;
+}
+
 .meta {
   display: flex;
   align-items: center;

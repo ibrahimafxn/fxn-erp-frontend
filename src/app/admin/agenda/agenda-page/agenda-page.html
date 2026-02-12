@@ -154,7 +154,6 @@
               } @else {
                 <span class="status-pill" [class]="statusClass(absence.status)">{{ statusLabel(absence.status) }}</span>
               }
-              <button class="btn-primary" type="button" (click)="$event.stopPropagation(); openEdit(absence)">Modifier</button>
               <button class="btn-outline" type="button" (click)="$event.stopPropagation(); openHistory(absence)">Historique</button>
             </div>
           </div>

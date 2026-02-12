@@ -55,6 +55,7 @@ export class HrList {
   readonly employeeRole = signal('');
   readonly employeeDepot = signal('');
   readonly employeeCompliance = signal('');
+  readonly employeeSort = signal<'NAME_ASC' | 'NAME_DESC' | 'ROLE_ASC' | 'DEPOT_ASC'>('NAME_ASC');
   readonly docs = signal<EmployeeDoc[]>([]);
   readonly docFilter = signal<'ALL' | 'EXPIRED' | 'EXPIRING'>('ALL');
   readonly expiringDays = 30;
@@ -226,6 +227,7 @@ export class HrList {
         if (useComplianceFilter) {
           items = items.filter((item) => this.complianceStatus(item) === complianceFilter);
         }
+        items = this.sortEmployees(items);
         if (useComplianceFilter) {
           this.employeeAll.set(items);
           this.applyEmployeePagination(items);
@@ -247,6 +249,12 @@ export class HrList {
     this.loadEmployees();
   }
 
+  setEmployeeSort(value: string): void {
+    if (!value) return;
+    this.employeeSort.set(value as any);
+    this.applyEmployeeFilters();
+  }
+
   setEmployeeLimitValue(value: number): void {
     if (!Number.isFinite(value) || value <= 0) return;
     this.employeeLimit.set(value);
@@ -259,6 +267,7 @@ export class HrList {
     this.employeeRole.set('');
     this.employeeDepot.set('');
     this.employeeCompliance.set('');
+    this.employeeSort.set('NAME_ASC');
     this.employeePage.set(1);
     this.loadEmployees();
   }
@@ -332,6 +341,37 @@ export class HrList {
       this.selected.set(null);
       this.docs.set([]);
     }
+  }
+
+  private sortEmployees(items: EmployeeSummary[]): EmployeeSummary[] {
+    const sort = this.employeeSort();
+    if (!sort) return items;
+    const sorted = [...items];
+    const nameOf = (e: EmployeeSummary) => this.normalizeSort(this.formatUserName(e.user));
+    const roleOf = (e: EmployeeSummary) => this.normalizeSort(e.user?.role || '');
+    const depotOf = (e: EmployeeSummary) => this.normalizeSort(this.depotLabel(e.user));
+    sorted.sort((a, b) => {
+      switch (sort) {
+        case 'NAME_DESC':
+          return nameOf(b).localeCompare(nameOf(a), 'fr');
+        case 'ROLE_ASC':
+          return roleOf(a).localeCompare(roleOf(b), 'fr');
+        case 'DEPOT_ASC':
+          return depotOf(a).localeCompare(depotOf(b), 'fr');
+        case 'NAME_ASC':
+        default:
+          return nameOf(a).localeCompare(nameOf(b), 'fr');
+      }
+    });
+    return sorted;
+  }
+
+  private normalizeSort(value: string): string {
+    return (value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
   }
 
   patchProfile(profile: EmployeeProfile | null): void {

@@ -63,7 +63,7 @@
 
   .search {
     display: grid;
-    grid-template-columns: 1.4fr .9fr auto auto;
+    grid-template-columns: 1.4fr .9fr .9fr .7fr .7fr auto auto;
     gap: .6rem;
 
     @media (max-width: 900px) {
@@ -251,6 +251,14 @@
   justify-content: space-between;
   gap: .5rem;
   flex-wrap: wrap;
+}
+
+.pager-card {
+  padding: 0.75rem 1rem;
+}
+
+.pager-top {
+  align-items: center;
 }
 
 /* -------------------------------------------------
