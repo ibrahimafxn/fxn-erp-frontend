@@ -79,6 +79,26 @@
       } @else if (interventions().length === 0) {
         <div class="state empty">Aucune intervention saisie.</div>
       } @else {
+        <div class="card pager-card">
+          <div class="pager pager-top">
+            <div class="pager-left">
+              <div class="page-size">
+                <button type="button" [class.active]="interventionLimit() === 10" (click)="setInterventionLimitValue(10)">10</button>
+                <button type="button" [class.active]="interventionLimit() === 20" (click)="setInterventionLimitValue(20)">20</button>
+                <button type="button" [class.active]="interventionLimit() === 50" (click)="setInterventionLimitValue(50)">50</button>
+                <button type="button" [class.active]="interventionLimit() === 100" (click)="setInterventionLimitValue(100)">100</button>
+              </div>
+              <span class="pager-label">Éléments par page</span>
+            </div>
+            <div class="pager-right">
+              <span class="pager-range">{{ pageRange(interventionPage(), interventionLimit(), interventionTotal()) }}</span>
+              <div class="pager-nav">
+                <button class="btn-outline" type="button" (click)="prevInterventions()" [disabled]="!canPrevInterventions()"><i class="bi bi-chevron-left"></i></button>
+                <button class="btn-outline" type="button" (click)="nextInterventions()" [disabled]="!canNextInterventions()"><i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="table">
           <table>
             <thead>
@@ -118,25 +138,6 @@
             </tbody>
           </table>
         </div>
-
-        <footer class="pager pager-fixed">
-          <div class="pager-left">
-            <div class="page-size">
-              <button type="button" [class.active]="interventionLimit() === 10" (click)="setInterventionLimitValue(10)">10</button>
-              <button type="button" [class.active]="interventionLimit() === 20" (click)="setInterventionLimitValue(20)">20</button>
-              <button type="button" [class.active]="interventionLimit() === 50" (click)="setInterventionLimitValue(50)">50</button>
-              <button type="button" [class.active]="interventionLimit() === 100" (click)="setInterventionLimitValue(100)">100</button>
-            </div>
-            <span class="pager-label">Éléments par page</span>
-          </div>
-          <div class="pager-right">
-            <span class="pager-range">{{ pageRange(interventionPage(), interventionLimit(), interventionTotal()) }}</span>
-            <div class="pager-nav">
-              <button class="btn-outline" type="button" (click)="prevInterventions()" [disabled]="!canPrevInterventions()"><i class="bi bi-chevron-left"></i></button>
-              <button class="btn-outline" type="button" (click)="nextInterventions()" [disabled]="!canNextInterventions()"><i class="bi bi-chevron-right"></i></button>
-            </div>
-          </div>
-        </footer>
       }
     </article>
   </section>

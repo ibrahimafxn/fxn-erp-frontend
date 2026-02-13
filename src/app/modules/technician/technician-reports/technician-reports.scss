@@ -273,6 +273,27 @@
   margin-top: 12px;
 }
 
+.technician-reports .pager-card {
+  padding: 0.75rem 1rem;
+  border-radius: .9rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(12, 18, 30, 0.7);
+  margin-bottom: .75rem;
+}
+
+.technician-reports .pager-top {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.technician-reports .pager-top .pager-left,
+.technician-reports .pager-top .pager-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 900px) {
   .technician-reports .page-header {
     flex-direction: column;
