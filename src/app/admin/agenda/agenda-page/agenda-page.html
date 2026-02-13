@@ -99,7 +99,7 @@
             <div
               class="day-cell"
               [class.outside]="isOutsideMonth(date)"
-              [class.today]="isToday(date)"
+              [class.today]="isToday(date) && !isInFilterRange(date)"
               [class.in-range]="isInFilterRange(date)"
               [class.range-start]="isFilterRangeStart(date)"
               [class.range-end]="isFilterRangeEnd(date)"
