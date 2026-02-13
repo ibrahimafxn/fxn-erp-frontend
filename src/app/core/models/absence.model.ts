@@ -1,7 +1,7 @@
 import { User } from './user.model';
 import { Depot } from './depot.model';
 
-export type AbsenceType = 'CONGE' | 'MALADIE' | 'FORMATION' | 'AUTRE';
+export type AbsenceType = 'CONGE' | 'MALADIE' | 'PERMISSION' | 'FORMATION' | 'AUTRE';
 export type AbsenceStatus = 'EN_ATTENTE' | 'APPROUVE' | 'REFUSE';
 export type HalfDayPeriod = 'AM' | 'PM';
 

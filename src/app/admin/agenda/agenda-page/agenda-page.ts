@@ -513,21 +513,22 @@ export class AgendaPage {
     });
   }
 
-  typeLabel(type: AbsenceType): string {
-    switch (type) {
-      case 'CONGE': return 'Congé';
-      case 'MALADIE': return 'Maladie';
-      case 'FORMATION': return 'Formation';
-      case 'AUTRE': return 'Autre';
-      default: return '—';
-    }
-  }
-
   statusLabel(status: AbsenceStatus): string {
     switch (status) {
       case 'EN_ATTENTE': return 'En attente';
       case 'APPROUVE': return 'Approuvé';
       case 'REFUSE': return 'Refusé';
+      default: return '—';
+    }
+  }
+
+  typeLabel(type: AbsenceType): string {
+    switch (type) {
+      case 'CONGE': return 'Congé';
+      case 'MALADIE': return 'Maladie';
+      case 'PERMISSION': return 'Permission';
+      case 'FORMATION': return 'Formation';
+      case 'AUTRE': return 'Autre';
       default: return '—';
     }
   }

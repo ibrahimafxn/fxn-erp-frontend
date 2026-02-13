@@ -219,6 +219,10 @@ export class AppHeader {
     this.router.navigate(['/technician/resources/vehicles']).then();
   }
 
+  goTechAgenda(): void {
+    this.router.navigate(['/technician/agenda']).then();
+  }
+
   goTechReports(): void {
     this.router.navigate(['/technician/reports']).then();
   }
@@ -297,6 +301,7 @@ export class AppHeader {
       if (url.includes('/resources/vehicles')) return 'Véhicules';
       if (url.includes('/resources/materials')) return 'Matériels';
       if (url.includes('/resources/consumables')) return 'Consommables';
+      if (url.includes('/agenda')) return 'Agenda';
       if (url.includes('/reports')) return 'Rapport quotidien';
       if (url.includes('/revenue')) return "Chiffre d'affaires";
       if (url.includes('/history')) return 'Historique';

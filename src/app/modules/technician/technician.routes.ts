@@ -67,6 +67,12 @@ export const TECHNICIAN_ROUTES: Routes = [
     canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
   },
   {
+    path: 'agenda',
+    loadComponent: () =>
+      import('./technician-agenda/technician-agenda').then(m => m.TechnicianAgenda),
+    canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
+  },
+  {
     path: 'revenue',
     loadComponent: () =>
       import('./technician-revenue/technician-revenue').then(m => m.TechnicianRevenue),
