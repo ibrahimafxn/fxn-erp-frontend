@@ -154,6 +154,25 @@ export class DepotSupplyRequests {
     return item.resourceName || item.resource?.name || '—';
   }
 
+  resourceAvailable(item: SupplyRequest): number | null {
+    const raw =
+      item.resource?.available ??
+      item.resource?.quantity ??
+      item.resource?.stock ??
+      null;
+    if (raw === null || raw === undefined) return null;
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  }
+
+  hasSufficientStock(item: SupplyRequest): boolean {
+    const available = this.resourceAvailable(item);
+    if (available === null) return true;
+    const qty = Number(item.quantity ?? 0);
+    if (!Number.isFinite(qty)) return true;
+    return available >= qty;
+  }
+
   userLabel(item: SupplyRequest): string {
     const user = item.user;
     if (!user) return '—';

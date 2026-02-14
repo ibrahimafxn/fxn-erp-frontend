@@ -4,7 +4,14 @@ export type SupplyRequestType = 'CONSUMABLE' | 'MATERIAL';
 export type SupplyRequest = {
   _id: string;
   resourceType: SupplyRequestType;
-  resource?: { _id: string; name?: string; unit?: string } | null;
+  resource?: {
+    _id: string;
+    name?: string;
+    unit?: string;
+    quantity?: number;
+    stock?: number;
+    available?: number;
+  } | null;
   resourceName?: string;
   quantity: number;
   note?: string;

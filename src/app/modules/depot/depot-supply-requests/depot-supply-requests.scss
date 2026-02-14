@@ -68,6 +68,24 @@
     color: #2563eb;
   }
 
+  .availability {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34d399;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .availability.low {
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+  }
+
   .decision {
     display: flex;
     flex-direction: column;

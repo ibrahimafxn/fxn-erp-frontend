@@ -74,13 +74,14 @@ export class TechnicianActivity {
   });
 
   readonly prestationOptions = [
-    { key: 'professionnel', label: 'Professionnel' },
-    { key: 'pavillon', label: 'Pavillon' },
-    { key: 'immeuble', label: 'Immeuble' },
-    { key: 'prestaComplementaire', label: 'Presta Compl.' },
-    { key: 'reconnexion', label: 'Reconnexion' },
-    { key: 'sav', label: 'SAV' },
-    { key: 'prestationF8', label: 'Prestation F8' }
+    { key: 'professionnel', label: 'Professionnel', className: 'pill-professionnel' },
+    { key: 'pavillon', label: 'Pavillon', className: 'pill-pavillon' },
+    { key: 'immeuble', label: 'Immeuble', className: 'pill-immeuble' },
+    { key: 'racProC', label: 'Professionnel complexe', className: 'pill-pro-c' },
+    { key: 'prestaComplementaire', label: 'Presta Compl.', className: 'pill-complementaire' },
+    { key: 'reconnexion', label: 'Reconnexion', className: 'pill-reconnexion' },
+    { key: 'sav', label: 'SAV', className: 'pill-sav' },
+    { key: 'prestationF8', label: 'Prestation F8', className: 'pill-f8' }
   ] as const;
   readonly bpuSelections = signal(new Map<string, Map<string, number>>());
   readonly employeeContracts = signal(new Map<string, string>());
@@ -307,13 +308,14 @@ export class TechnicianActivity {
     this.sortDirection.set(field === 'date' || field === 'amount' ? 'desc' : 'asc');
   }
 
-  prestationsSummary(report: TechnicianReport): Array<{ key: string; label: string; value: number }> {
+  prestationsSummary(report: TechnicianReport): Array<{ key: string; label: string; value: number; className: string }> {
     const p = report.prestations || {};
     return this.prestationOptions
       .map((option) => ({
         key: option.key,
         label: option.label,
-        value: Number(p[option.key] || 0)
+        value: Number(p[option.key] || 0),
+        className: option.className
       }))
       .filter((item) => item.value > 0);
   }

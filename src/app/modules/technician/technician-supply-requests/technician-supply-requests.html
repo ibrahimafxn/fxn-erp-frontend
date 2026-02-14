@@ -109,12 +109,12 @@
           <tbody>
             @for (item of sortedItems(); track item._id) {
               <tr>
-                <td>{{ formattedDate(item.createdAt) }}</td>
-                <td>{{ resourceLabel(item) }}</td>
-                <td>{{ item.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
-                <td>{{ item.quantity }}</td>
-                <td><span class="status-pill" [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
-                <td>
+                <td data-label="Date">{{ formattedDate(item.createdAt) }}</td>
+                <td data-label="Ressource">{{ resourceLabel(item) }}</td>
+                <td data-label="Type">{{ item.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
+                <td data-label="Quantité">{{ item.quantity }}</td>
+                <td data-label="Statut"><span class="status-pill" [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
+                <td data-label="Commentaire">
                   @if (item.status !== 'PENDING') {
                     <div class="decision">
                       <div class="decision-note">{{ item.decisionNote || '—' }}</div>
@@ -124,7 +124,7 @@
                     —
                   }
                 </td>
-                <td class="actions">
+                <td class="actions" data-label="Actions">
                   @if (item.status === 'PENDING') {
                     <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="editRequest(item)">Modifier</button>
                     <button class="btn-outline btn-xs delete" type="button" title="Supprimer" (click)="openDeleteModal(item)">

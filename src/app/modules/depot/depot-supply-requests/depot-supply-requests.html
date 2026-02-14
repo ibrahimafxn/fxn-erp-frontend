@@ -62,6 +62,7 @@
               <th>Ressource</th>
               <th>Type</th>
               <th>Quantité</th>
+              <th>Disponible</th>
               <th>Statut</th>
               <th>Commentaire</th>
               <th></th>
@@ -75,6 +76,15 @@
                 <td>{{ resourceLabel(item) }}</td>
                 <td>{{ item.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
                 <td>{{ item.quantity }}</td>
+                <td>
+                  @if (resourceAvailable(item) === null) {
+                    —
+                  } @else {
+                    <span class="availability" [class.low]="!hasSufficientStock(item)">
+                      {{ resourceAvailable(item) }}
+                    </span>
+                  }
+                </td>
                 <td><span class="status-pill" [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
                 <td>
                   @if (item.status !== 'PENDING') {
@@ -88,7 +98,13 @@
                 </td>
                 <td class="actions">
                   @if (item.status === 'PENDING') {
-                    <button class="btn-outline btn-xs" type="button" (click)="startDecision(item, 'APPROVED')">Valider</button>
+                    <button
+                      class="btn-outline btn-xs"
+                      type="button"
+                      (click)="startDecision(item, 'APPROVED')"
+                      [disabled]="!hasSufficientStock(item)"
+                      [title]="!hasSufficientStock(item) ? 'Stock insuffisant' : ''"
+                    >Valider</button>
                     <button class="btn-outline btn-xs delete" type="button" (click)="startDecision(item, 'CANCELED')">Annuler</button>
                   }
                 </td>

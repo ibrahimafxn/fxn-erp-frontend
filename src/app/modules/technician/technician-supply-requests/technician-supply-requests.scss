@@ -187,4 +187,121 @@
     font-size: 0.78rem;
     color: var(--fxn-muted, #8a97a8);
   }
+
+  @media (max-width: 900px) {
+    gap: 1.2rem;
+
+    .page-head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .panel-head {
+      align-items: flex-start;
+    }
+
+    .filters {
+      width: 100%;
+    }
+
+    .filters select,
+    .date-filters {
+      flex: 1 1 160px;
+      min-width: 0;
+    }
+
+    .request-panel .form-actions {
+      justify-content: stretch;
+    }
+
+    .request-panel .form-actions button {
+      flex: 1 1 50%;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .request-panel .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .filters {
+      flex-direction: column;
+    }
+
+    .filters select,
+    .date-filters {
+      width: 100%;
+    }
+
+    .table-wrap {
+      overflow: visible;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 0.75rem;
+    }
+
+    thead {
+      display: none;
+    }
+
+    tbody tr {
+      display: block;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 14px;
+      padding: 0.75rem 0.85rem;
+    }
+
+    tbody td {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+      padding: 0.4rem 0;
+      border: none;
+      color: var(--fxn-text, #e2e8f0);
+    }
+
+    tbody td::before {
+      content: attr(data-label);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--fxn-muted, #8a97a8);
+    }
+
+    tbody td.actions {
+      align-items: flex-end;
+      padding-top: 0.6rem;
+    }
+
+    tbody td.actions::before {
+      display: none;
+    }
+
+    .actions {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .page-title {
+      font-size: 1.4rem;
+    }
+
+    .subtitle {
+      font-size: 0.95rem;
+    }
+
+    .request-panel .form-actions {
+      flex-direction: column;
+    }
+
+    .request-panel .form-actions button {
+      width: 100%;
+    }
+  }
 }

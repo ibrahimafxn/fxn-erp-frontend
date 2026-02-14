@@ -109,6 +109,16 @@
               </button>
             </th>
             <th>
+              <button class="sort-button" type="button" (click)="setSort('typeOperation')" [class.is-active]="sortField() === 'typeOperation'">
+                Type opération <span class="sort-arrow">{{ sortArrow('typeOperation') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-button" type="button" (click)="setSort('typeLogement')" [class.is-active]="sortField() === 'typeLogement'">
+                Type logement <span class="sort-arrow">{{ sortArrow('typeLogement') }}</span>
+              </button>
+            </th>
+            <th>
               <button class="sort-button" type="button" (click)="setSort('statut')" [class.is-active]="sortField() === 'statut'">
                 Statut <span class="sort-arrow">{{ sortArrow('statut') }}</span>
               </button>
@@ -126,6 +136,8 @@
               <td data-label="Numero">{{ item.numInter || '—' }}</td>
               <td data-label="Client">{{ item.client || '—' }}</td>
               <td data-label="Type">{{ item.type || '—' }}</td>
+              <td data-label="Type opération">{{ item.typeOperation || '—' }}</td>
+              <td data-label="Type logement">{{ item.typeLogement || '—' }}</td>
               <td data-label="Statut">{{ item.statut || '—' }}</td>
             </tr>
           }
