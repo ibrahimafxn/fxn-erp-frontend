@@ -364,7 +364,17 @@ export class AgendaPage {
       return this.dateKeyFromDate(value);
     }
     const raw = String(value);
-    return raw.includes('T') ? raw.split('T')[0] : raw;
+    if (raw.includes('T')) {
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) {
+        return this.dateKeyFromDate(parsed);
+      }
+      return raw.split('T')[0];
+    }
+    // date-only from input => treat as local date
+    const [year, month, day] = raw.split('-').map(Number);
+    if (!year || !month || !day) return undefined;
+    return this.dateKeyFromDate(new Date(year, month - 1, day));
   }
 
   hasFilterRange(): boolean {

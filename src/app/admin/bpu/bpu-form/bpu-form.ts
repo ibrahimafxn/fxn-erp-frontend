@@ -5,7 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BpuService } from '../../../core/services/bpu.service';
 
-type Segment = 'AUTO' | 'SALARIE' | 'ASSOCIE';
+type Segment = 'AUTO' | 'SALARIE' | 'AUTRE';
 
 @Component({
   standalone: true,

@@ -293,7 +293,7 @@ export class TechnicianActivity {
   reportBpuLabel(report: TechnicianReport): string {
     const type = this.resolveBpuSegment(report.technician?._id);
     if (type === 'AUTO') return 'AUTO';
-    if (type === 'ASSOCIE') return 'AUTRE';
+    if (type === 'AUTRE') return 'AUTRE';
     return 'SALARIE';
   }
 
@@ -302,7 +302,7 @@ export class TechnicianActivity {
     if (!techId) return '';
     const type = this.resolveBpuSegment(techId);
     if (type === 'AUTO') return 'AUTO';
-    if (type === 'ASSOCIE') return 'AUTRE';
+    if (type === 'AUTRE') return 'AUTRE';
     return 'SALARIE';
   });
 
@@ -442,7 +442,7 @@ export class TechnicianActivity {
   private resolveBpuSegment(technicianId?: string | null): string {
     if (!technicianId) return 'SALARIE';
     const contract = this.employeeContracts().get(technicianId) || '';
-    if (contract === 'AUTRE') return 'ASSOCIE';
+    if (contract === 'AUTRE') return 'AUTRE';
     if (contract === 'FREELANCE') return 'AUTO';
     return 'SALARIE';
   }

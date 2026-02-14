@@ -9,7 +9,7 @@ import { BpuSelectionService } from '../../../core/services/bpu-selection.servic
 import { BpuEntry } from '../../../core/models';
 import { downloadBlob } from '../../../core/utils/download';
 
-type Segment = 'AUTO' | 'SALARIE' | 'ASSOCIE';
+type Segment = 'AUTO' | 'SALARIE' | 'AUTRE';
 
 @Component({
   standalone: true,
@@ -46,7 +46,7 @@ export class BpuList {
 
   constructor() {
     const segment = this.route.snapshot.queryParamMap.get('segment');
-    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'ASSOCIE') {
+    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'AUTRE') {
       this.currentSegment.set(segment);
       this.isEditing.set(true);
     }
@@ -58,7 +58,7 @@ export class BpuList {
     this.error.set(null);
     this.success.set(null);
     const segment = this.currentSegment();
-    const items$ = segment === 'ASSOCIE'
+    const items$ = segment === 'AUTRE'
       ? this.bpuService.list(segment).pipe(
           switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
         )

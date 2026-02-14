@@ -45,7 +45,7 @@ export class BpuTypeList {
 
   displayType(type: string | null | undefined): string {
     if (!type) return '—';
-    return type.toUpperCase() === 'ASSOCIE' ? 'AUTRE' : type;
+    return type;
   }
 
   load(): void {
@@ -69,7 +69,7 @@ export class BpuTypeList {
 
   edit(item: BpuType): void {
     const segment = String(item.type || '').trim().toUpperCase();
-    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'ASSOCIE') {
+    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'AUTRE') {
       this.router.navigate(['/admin/bpu/new'], { queryParams: { segment } }).then();
       return;
     }

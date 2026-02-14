@@ -238,6 +238,8 @@ tbody tr:hover {
 }
 
 .pager { display:flex; justify-content: space-between; gap:.75rem; flex-wrap: wrap; }
+.pager .page-size button { margin-right: .35rem; }
+.pager-label { color: var(--access-muted); font-size: .85rem; }
 
 @media (max-width: 1000px) {
   .table.card {

@@ -23,7 +23,8 @@
 
 .toolbar.card,
 .table.card,
-.state.card {
+.state.card,
+.pager.card {
   border-radius: 1rem;
   border: 1px solid var(--fxn-border);
   background: var(--fxn-surface-glass);
@@ -135,7 +136,7 @@ thead th {
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-top: 0.75rem;
+  margin-top: 0;
 }
 
 .pager .page-size button {

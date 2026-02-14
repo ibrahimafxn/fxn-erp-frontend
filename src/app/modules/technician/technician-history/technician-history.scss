@@ -176,9 +176,19 @@
 
 .pager {
   display: flex;
-  justify-content: flex-end;
-  gap: .5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   flex-wrap: wrap;
+}
+
+.pager .page-size button {
+  margin-right: .35rem;
+}
+
+.pager-label {
+  opacity: .75;
+  font-size: .85rem;
 }
 
 @media (max-width: 700px) {
