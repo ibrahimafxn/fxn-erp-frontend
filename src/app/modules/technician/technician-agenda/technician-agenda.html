@@ -42,8 +42,11 @@
       </label>
       <div class="actions full">
         <button class="btn-primary" type="submit" [disabled]="!canSubmit()">
-          @if (saving()) { Envoi… } @else { Envoyer la demande }
+          @if (saving()) { Envoi… } @else { @if (isEditing()) { Mettre à jour } @else { Envoyer la demande } }
         </button>
+        @if (isEditing()) {
+          <button class="btn-outline" type="button" (click)="cancelEdit()">Annuler</button>
+        }
       </div>
     </form>
     @if (success()) {
@@ -106,6 +109,7 @@
               <th>Type</th>
               <th>Statut</th>
               <th>Commentaire</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -115,6 +119,16 @@
                 <td>{{ a.type }}</td>
                 <td><span class="status-pill" [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
                 <td>{{ a.comment || '—' }}</td>
+                <td class="actions">
+                  @if (a.status === 'EN_ATTENTE') {
+                    <button class="btn-outline primary-outline" type="button" (click)="startEdit(a)">
+                      Modifier
+                    </button>
+                    <button class="btn-outline delete" type="button" (click)="deleteAbsence(a)" [disabled]="deletingId() === a._id">
+                      @if (deletingId() === a._id) { Suppression… } @else { Supprimer }
+                    </button>
+                  }
+                </td>
               </tr>
             }
           </tbody>

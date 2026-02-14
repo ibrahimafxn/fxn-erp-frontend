@@ -26,6 +26,8 @@ export class TechnicianAgenda {
   readonly success = signal<string | null>(null);
   readonly absences = signal<Absence[]>([]);
   readonly formValid = signal(false);
+  readonly editTarget = signal<Absence | null>(null);
+  readonly deletingId = signal<string | null>(null);
 
   readonly filterForm = this.fb.nonNullable.group({
     fromDate: this.fb.nonNullable.control(''),
@@ -44,6 +46,7 @@ export class TechnicianAgenda {
   });
 
   readonly canSubmit = computed(() => this.formValid() && !this.saving());
+  readonly isEditing = computed(() => !!this.editTarget());
 
   constructor() {
     this.formValid.set(this.form.valid);
@@ -107,10 +110,14 @@ export class TechnicianAgenda {
       halfDayPeriod: this.form.controls.halfDayPeriod.value,
       comment: this.form.controls.comment.value
     };
-    this.absencesService.create(payload).subscribe({
+    const target = this.editTarget();
+    const request$ = target?._id
+      ? this.absencesService.update(target._id, payload)
+      : this.absencesService.create(payload);
+    request$.subscribe({
       next: () => {
         this.saving.set(false);
-        this.success.set('Demande envoyée.');
+        this.success.set(target?._id ? 'Demande mise à jour.' : 'Demande envoyée.');
         this.form.reset({
           type: 'CONGE',
           startDate: '',
@@ -119,11 +126,12 @@ export class TechnicianAgenda {
           halfDayPeriod: 'AM',
           comment: ''
         });
+        this.editTarget.set(null);
         this.loadAbsences();
       },
       error: () => {
         this.saving.set(false);
-        this.error.set('Erreur envoi demande');
+        this.error.set(target?._id ? 'Erreur mise à jour' : 'Erreur envoi demande');
       }
     });
   }
@@ -137,9 +145,67 @@ export class TechnicianAgenda {
     this.loadAbsences();
   }
 
+  startEdit(absence: Absence): void {
+    if (absence.status && absence.status !== 'EN_ATTENTE') return;
+    this.editTarget.set(absence);
+    this.form.reset({
+      type: absence.type as AbsenceType,
+      startDate: this.dateKeyFromValue(absence.startDate) || '',
+      endDate: this.dateKeyFromValue(absence.endDate) || '',
+      isHalfDay: !!absence.isHalfDay,
+      halfDayPeriod: (absence.halfDayPeriod as 'AM' | 'PM') || 'AM',
+      comment: absence.comment || ''
+    });
+    if (this.form.controls.isHalfDay.value) {
+      this.form.controls.endDate.disable({ emitEvent: false });
+    }
+  }
+
+  cancelEdit(): void {
+    this.editTarget.set(null);
+    this.form.reset({
+      type: 'CONGE',
+      startDate: '',
+      endDate: '',
+      isHalfDay: false,
+      halfDayPeriod: 'AM',
+      comment: ''
+    });
+    this.form.controls.endDate.enable({ emitEvent: false });
+  }
+
+  deleteAbsence(absence: Absence): void {
+    if (!absence?._id || absence.status !== 'EN_ATTENTE' || this.deletingId()) return;
+    if (!confirm('Supprimer cette demande ?')) return;
+    this.deletingId.set(absence._id);
+    this.absencesService.remove(absence._id).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        if (this.editTarget()?._id === absence._id) this.cancelEdit();
+        this.loadAbsences();
+      },
+      error: () => {
+        this.deletingId.set(null);
+        this.error.set('Erreur suppression');
+      }
+    });
+  }
+
   formatDate(value?: string | null): string {
     if (!value) return '—';
     return this.datePipe.transform(value, 'dd/MM/yyyy') || '—';
+  }
+
+  private dateKeyFromValue(value: string | Date): string | undefined {
+    if (!value) return undefined;
+    if (value instanceof Date) {
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, '0');
+      const day = String(value.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    const raw = String(value);
+    return raw.includes('T') ? raw.split('T')[0] : raw;
   }
 
   statusLabel(status?: AbsenceStatus): string {

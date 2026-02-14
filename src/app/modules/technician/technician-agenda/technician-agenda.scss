@@ -95,6 +95,13 @@ textarea {
   border-color: rgba(233, 85, 85, 0.4);
 }
 
+.table .actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
 .state {
   margin-top: 0.75rem;
   padding: 0.8rem 1rem;
