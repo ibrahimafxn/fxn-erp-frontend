@@ -136,12 +136,13 @@ button .fa-brands {
 input[type="date"],
 input[type="datetime-local"] {
   color-scheme: dark;
+  accent-color: #3b82f6;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(1) brightness(1.2);
-  opacity: 0.8;
+  filter: invert(46%) sepia(66%) saturate(427%) hue-rotate(183deg) brightness(96%) contrast(92%);
+  opacity: 0.9;
   cursor: pointer;
 }
 

@@ -42,7 +42,7 @@
       </div>
       <div class="form-actions">
         <button class="btn-outline" type="button" (click)="resetForm()">Réinitialiser</button>
-        <button class="btn-primary" type="submit" [disabled]="loading() || form.invalid">
+        <button class="btn-save" type="submit" [disabled]="loading() || form.invalid">
           @if (editing()) { Mettre à jour } @else { Envoyer }
         </button>
       </div>
@@ -69,6 +69,18 @@
         </select>
         <div class="date-filters">
           <input #onlyDate type="date" [value]="dateFilter()" (change)="setDateFilter(onlyDate.value)" />
+        </div>
+      </div>
+    </div>
+
+    <div class="pager" *ngIf="total() > limit()">
+      <div class="pager-left">
+        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+      </div>
+      <div class="pager-right">
+        <div class="pager-nav">
+          <button class="btn-outline btn-xs" [disabled]="!canPrev()" (click)="prevPage()">Précédent</button>
+          <button class="btn-outline btn-xs" [disabled]="!canNext()" (click)="nextPage()">Suivant</button>
         </div>
       </div>
     </div>
@@ -139,17 +151,6 @@
       </div>
     }
 
-    <div class="pager" *ngIf="total() > limit()">
-      <div class="pager-left">
-        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-      </div>
-      <div class="pager-right">
-        <div class="pager-nav">
-          <button class="btn-outline btn-xs" [disabled]="!canPrev()" (click)="prevPage()">Précédent</button>
-          <button class="btn-outline btn-xs" [disabled]="!canNext()" (click)="nextPage()">Suivant</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <app-confirm-delete-modal

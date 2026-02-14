@@ -116,6 +116,10 @@
   padding: 1rem;
 }
 
+.technician-revenue .list-kpi .kpi-grid {
+  grid-template-columns: 1fr;
+}
+
 .technician-revenue .filters .search {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

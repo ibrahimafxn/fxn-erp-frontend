@@ -8,7 +8,7 @@
 
   <section class="kpi-section">
     <div class="kpi-header">
-      <h2>Résumé</h2>
+      <h2>Résumé Osiris</h2>
       <span class="kpi-meta">{{ todayLabel() }}</span>
     </div>
     @if (summaryLoading()) {
@@ -57,6 +57,18 @@
         <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
       </div>
     </form>
+  </section>
+
+  <section class="card list-kpi">
+    <div class="kpi-grid">
+      <article class="kpi-card kpi-daily">
+        <div class="kpi-info">
+          <div class="kpi-title">Total prestations</div>
+          <div class="kpi-sub">Sur la liste affichée</div>
+        </div>
+        <div class="kpi-value">{{ formatAmount(listTotalAmount()) }}</div>
+      </article>
+    </div>
   </section>
 
   @if (loading()) {

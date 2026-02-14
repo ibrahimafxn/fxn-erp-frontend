@@ -19,11 +19,7 @@
 
   <!-- RIGHT -->
   <div class="right">
-    <div class="lang-switch" role="group" aria-label="Langue" i18n-aria-label="@@header.langAria">
-      <a class="lang-pill" [class.active]="currentLocale() === 'fr'" [href]="localeHref('fr')">FR</a>
-      <span class="sep">/</span>
-      <a class="lang-pill" [class.active]="currentLocale() === 'en'" [href]="localeHref('en')">EN</a>
-    </div>
+    <!-- Lang switch hidden -->
     @if (user()) {
       <!-- USER MENU -->
       <div class="user-menu">

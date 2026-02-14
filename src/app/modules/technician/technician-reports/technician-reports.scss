@@ -389,3 +389,85 @@
     display: none;
   }
 }
+
+@media (max-width: 600px) {
+  .technician-reports {
+    padding: 0.75rem;
+    gap: 14px;
+    max-width: 100%;
+  }
+
+  .technician-reports .card {
+    padding: 0.85rem;
+    border-radius: 14px;
+    min-width: 0;
+  }
+
+  .technician-reports .page-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .technician-reports .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .technician-reports .report-form {
+    gap: 10px;
+  }
+
+  .technician-reports .prestations-list {
+    gap: 8px;
+  }
+
+  .technician-reports .prestations-pill {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .technician-reports .table tr {
+    padding: 10px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .technician-reports .table td {
+    font-size: 0.9rem;
+    min-width: 0;
+  }
+
+  .technician-reports .table td::before {
+    font-size: 0.7rem;
+  }
+
+  .technician-reports .actions {
+    gap: 8px;
+  }
+
+  .technician-reports .pager-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .technician-reports .pager-top .pager-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .technician-reports .table {
+    overflow-x: hidden;
+  }
+
+  .technician-reports .table tbody {
+    width: 100%;
+  }
+
+  .technician-reports .table table {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .technician-reports .actions {
+    flex-wrap: wrap;
+  }
+}

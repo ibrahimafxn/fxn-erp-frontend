@@ -26,27 +26,27 @@
     .field input,
     .field select,
     .field textarea {
-      color: #0f172a;
+      color: var(--fxn-text, #e2e8f0);
+      background: var(--fxn-surface-soft, rgba(15, 23, 42, 0.6));
+      border: 1px solid var(--fxn-border-strong, rgba(148, 163, 184, 0.25));
+      padding: 0.6rem 0.75rem;
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.2);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     }
 
-    .field select,
-    .field input[type='text'],
-    .field input[type='number'],
-    .field textarea {
-      padding: 0.6rem 0.75rem;
-      border-radius: 10px;
-      border: 1px solid var(--fxn-border, #e5e7eb);
-      background: #fff;
-      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    .field input::placeholder,
+    .field textarea::placeholder {
+      color: rgba(226, 232, 240, 0.55);
     }
 
     .field select:focus,
     .field input:focus,
     .field textarea:focus {
       outline: none;
-      border-color: var(--fxn-primary, #2563eb);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      border-color: rgba(96, 165, 250, 0.7);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+      background: rgba(12, 18, 30, 0.8);
     }
 
     .field.full {
@@ -87,41 +87,51 @@
 
   .filters select {
     min-width: 190px;
-    padding: 0.55rem 0.75rem;
-    border-radius: 10px;
-    border: 1px solid var(--fxn-border, #e5e7eb);
-    background: #fff;
+    padding: 0.25rem 0.65rem;
+    min-height: 32px;
+    border-radius: 12px;
+    border: 1px solid var(--fxn-border-strong, rgba(148, 163, 184, 0.25));
+    background: var(--fxn-surface-soft, rgba(15, 23, 42, 0.6));
     font-weight: 600;
-    color: #0f172a;
-    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    color: var(--fxn-text, #e2e8f0);
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.2);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
 
   .filters select:focus {
     outline: none;
-    border-color: var(--fxn-primary, #2563eb);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    border-color: rgba(96, 165, 250, 0.7);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    background: rgba(12, 18, 30, 0.8);
   }
 
   .date-filters {
     display: inline-flex;
     align-items: center;
-    padding: 0.35rem 0.5rem;
-    border-radius: 10px;
-    border: 1px solid var(--fxn-border, #e5e7eb);
-    background: #fff;
-    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+    padding: 0.15rem 0.4rem;
+    min-height: 32px;
+    border-radius: 12px;
+    border: 1px solid var(--fxn-border-strong, rgba(148, 163, 184, 0.25));
+    background: var(--fxn-surface-soft, rgba(15, 23, 42, 0.6));
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.2);
   }
 
   .date-filters input[type='date'] {
     border: none;
     background: transparent;
-    color: #0f172a;
+    color: var(--fxn-text, #e2e8f0);
     font-weight: 600;
+    min-height: 28px;
+    accent-color: #3b82f6;
   }
 
   .date-filters input[type='date']:focus {
     outline: none;
+  }
+
+  .date-filters input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(46%) sepia(66%) saturate(427%) hue-rotate(183deg) brightness(96%) contrast(92%);
+    opacity: 0.9;
   }
 
 
@@ -160,7 +170,19 @@
   .actions {
     display: flex;
     gap: 0.5rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .actions .btn-outline {
+    min-width: 96px;
+    height: 32px;
+    padding: 0 10px;
+  }
+
+  td.actions {
+    vertical-align: middle;
   }
 
   th.sortable {
@@ -216,6 +238,8 @@
 
     .request-panel .form-actions button {
       flex: 1 1 50%;
+      justify-content: center;
+      text-align: center;
     }
   }
 
@@ -231,6 +255,10 @@
     .filters select,
     .date-filters {
       width: 100%;
+      min-height: 32px;
+      height: 40px;
+      padding-top: 0;
+      padding-bottom: 0;
     }
 
     .table-wrap {
@@ -239,6 +267,7 @@
 
     table {
       width: 100%;
+      min-width: 0;
       border-collapse: separate;
       border-spacing: 0 0.75rem;
     }
@@ -273,8 +302,10 @@
     }
 
     tbody td.actions {
-      align-items: flex-end;
+      align-items: stretch;
       padding-top: 0.6rem;
+      display: flex;
+      justify-content: flex-start;
     }
 
     tbody td.actions::before {
@@ -283,7 +314,17 @@
 
     .actions {
       width: 100%;
-      justify-content: flex-end;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 0.6rem;
+      justify-content: flex-start;
+      max-width: 100%;
+    }
+
+    .actions .btn-outline {
+      width: 100%;
+      justify-content: center;
+      max-width: 100%;
     }
   }
 
@@ -302,6 +343,21 @@
 
     .request-panel .form-actions button {
       width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .filters select,
+    .date-filters {
+      min-height: 32px;
+      height: 38px;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .date-filters input[type='date'] {
+      min-height: 28px;
+      height: 34px;
     }
   }
 }

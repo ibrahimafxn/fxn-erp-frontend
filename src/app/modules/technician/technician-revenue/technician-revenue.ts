@@ -35,6 +35,9 @@ export class TechnicianRevenue {
   readonly limit = signal(10);
   readonly total = signal(0);
   readonly pageRange = formatPageRange;
+  readonly listTotalAmount = computed(() =>
+    this.items().reduce((sum, item) => sum + Number(item.amount || 0), 0)
+  );
 
   readonly pageCount = computed(() => {
     const t = this.total();
