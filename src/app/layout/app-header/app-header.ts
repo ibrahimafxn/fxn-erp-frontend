@@ -7,6 +7,7 @@ import { filter } from 'rxjs/operators';
 import { formatPersonName } from '../../core/utils/text-format';
 import { resolveCloudinaryAvatarUrl } from '../../core/utils/avatar-url';
 import { AlertsService } from '../../core/services/alerts.service';
+import { SupplyRequestService } from '../../core/services/supply-request.service';
 
 @Component({
   standalone: true,
@@ -21,6 +22,7 @@ export class AppHeader {
   private router = inject(Router);
   private location = inject(Location);
   private alertsService = inject(AlertsService);
+  private supplyRequestService = inject(SupplyRequestService);
 
   // user
   readonly user = this.auth.user$;
@@ -33,6 +35,8 @@ export class AppHeader {
   readonly pageTitle = signal('Dashboard');
   readonly currentUrl = signal(this.router.url);
   readonly alertsCount = this.alertsService.count;
+  readonly supplyBadgeCount = signal(0);
+  readonly supplyLatestDecidedAt = signal<string | null>(null);
   readonly showDirigeantWelcome = signal(false);
   private welcomeShown = false;
   private welcomeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -53,8 +57,13 @@ export class AppHeader {
         this.menuOpen.set(false);
         this.currentLocale.set(this.detectLocale());
         this.alertsService.refresh();
+        this.refreshSupplyBadge();
+        if (this.router.url.includes('/technician/supply-requests')) {
+          this.markSupplyBadgeSeen();
+        }
       });
     this.alertsService.refresh();
+    this.refreshSupplyBadge();
     effect(() => {
       const user = this.user();
       if (user?.role === 'DIRIGEANT') {
@@ -219,6 +228,10 @@ export class AppHeader {
     this.router.navigate(['/technician/resources/vehicles']).then();
   }
 
+  goTechSupplyRequests(): void {
+    this.router.navigate(['/technician/supply-requests']).then();
+  }
+
   goTechAgenda(): void {
     this.router.navigate(['/technician/agenda']).then();
   }
@@ -235,8 +248,62 @@ export class AppHeader {
     this.router.navigate(['/technician/history']).then();
   }
 
+  goSupplyRequests(): void {
+    this.router.navigate(['/depot/supply-requests']).then();
+  }
+
   logout(): void {
     this.auth.logout(true).subscribe();
+  }
+
+  private refreshSupplyBadge(): void {
+    if (!this.isTechnician()) {
+      this.supplyBadgeCount.set(0);
+      this.supplyLatestDecidedAt.set(null);
+      return;
+    }
+    this.supplyRequestService.summaryMine().subscribe({
+      next: (res) => {
+        const decided = res?.data?.decided ?? 0;
+        const latest = res?.data?.latestDecidedAt ?? null;
+        this.supplyLatestDecidedAt.set(latest);
+        const seenAt = this.loadSupplySeenAt();
+        const latestTs = latest ? new Date(latest).getTime() : 0;
+        const seenTs = seenAt ? new Date(seenAt).getTime() : 0;
+        const shouldShow = latestTs > seenTs;
+        this.supplyBadgeCount.set(shouldShow ? decided : 0);
+      },
+      error: () => {
+        this.supplyBadgeCount.set(0);
+        this.supplyLatestDecidedAt.set(null);
+      }
+    });
+  }
+
+  private markSupplyBadgeSeen(): void {
+    if (!this.isTechnician()) return;
+    const latest = this.supplyLatestDecidedAt();
+    const value = latest || new Date().toISOString();
+    this.persistSupplySeenAt(value);
+    this.supplyBadgeCount.set(0);
+  }
+
+  private loadSupplySeenAt(): string | null {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      return localStorage.getItem('fxn_supply_seen_at');
+    } catch {
+      return null;
+    }
+  }
+
+  private persistSupplySeenAt(value: string): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem('fxn_supply_seen_at', value);
+    } catch {
+      // ignore storage errors
+    }
   }
 
   localeHref(locale: 'fr' | 'en'): string {
@@ -294,6 +361,7 @@ export class AppHeader {
       if (url.includes('/reservations')) return 'Attributions';
       if (url.includes('/receipts')) return 'Réceptions';
       if (url.includes('/alerts/stock')) return 'Alertes';
+      if (url.includes('/supply-requests')) return 'Approvisionnements';
       if (url.includes('/history')) return 'Mouvements';
       return 'Dépôt';
     }
@@ -301,6 +369,7 @@ export class AppHeader {
       if (url.includes('/resources/vehicles')) return 'Véhicules';
       if (url.includes('/resources/materials')) return 'Matériels';
       if (url.includes('/resources/consumables')) return 'Consommables';
+      if (url.includes('/supply-requests')) return 'Approvisionnements';
       if (url.includes('/agenda')) return 'Agenda';
       if (url.includes('/reports')) return 'Rapport quotidien';
       if (url.includes('/revenue')) return "Chiffre d'affaires";

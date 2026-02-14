@@ -156,7 +156,7 @@
         <div class="divider"></div>
 
         <div class="card-actions">
-          <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!hasDepot()"><i class="bi bi-pencil"></i> Modifier</button>
+          <button class="btn-outline edit" type="button" title="Modifier" (click)="edit()" [disabled]="!hasDepot()"><i class="bi bi-pencil"></i> Modifier</button>
         </div>
       </article>
 
@@ -224,7 +224,7 @@
                 </div>
 
                 <div class="mini-right" (click)="$event.stopPropagation()">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="editTechnician(t)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="editTechnician(t)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -262,7 +262,7 @@
                 </div>
 
                 <div class="mini-right">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="$event.stopPropagation(); editMaterial(m)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="$event.stopPropagation(); editMaterial(m)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -300,7 +300,7 @@
                 </div>
 
                 <div class="mini-right">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="$event.stopPropagation(); modifierConsumable(c)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="$event.stopPropagation(); modifierConsumable(c)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -416,7 +416,7 @@
                 </div>
 
                 <div class="mini-right" (click)="$event.stopPropagation()">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="editVehicle(v)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="editVehicle(v)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }

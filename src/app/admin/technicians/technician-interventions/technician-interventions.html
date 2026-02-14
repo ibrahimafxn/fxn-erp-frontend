@@ -174,11 +174,11 @@
         </label>
         <label>
           Du
-          <input type="date" formControlName="fromDate" (change)="applyFilters()" />
+          <input type="date" formControlName="fromDate" />
         </label>
         <label>
           Au
-          <input type="date" formControlName="toDate" (change)="applyFilters()" />
+          <input type="date" formControlName="toDate" />
         </label>
         <div class="filter-kpi">
           <span class="label">Montant total</span>
@@ -226,6 +226,26 @@
     } @else if (interventions().length === 0) {
       <div class="state">Aucune intervention disponible.</div>
     } @else {
+      <div class="card pager-card">
+        <div class="pager pager-top">
+          <div class="pager-left">
+            <div class="page-size">
+              @for (size of limitOptions; track size) {
+                <button type="button" [class.active]="size === limit()" (click)="setLimit(size)">{{ size }}</button>
+              }
+            </div>
+            <span class="pager-label">Éléments par page</span>
+          </div>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+              <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="table-wrapper">
         <table>
           <thead>
@@ -280,23 +300,6 @@
       </div>
     }
 
-    <footer class="pager pager-fixed">
-      <div class="pager-left">
-        <div class="page-size">
-          @for (size of limitOptions; track size) {
-            <button type="button" [class.active]="size === limit()" (click)="setLimit(size)">{{ size }}</button>
-          }
-        </div>
-        <span class="pager-label">Éléments par page</span>
-      </div>
-      <div class="pager-right">
-        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-        <div class="pager-nav">
-          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
-          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
-        </div>
-      </div>
-    </footer>
   </section>
 
   @if (detailOpen() && selectedDetail()) {

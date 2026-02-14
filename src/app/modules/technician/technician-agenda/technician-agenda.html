@@ -41,7 +41,7 @@
         <textarea rows="3" formControlName="comment"></textarea>
       </label>
       <div class="actions full">
-        <button class="btn-primary" type="submit" [disabled]="!canSubmit()">
+        <button class="btn-primary btn-success" type="submit" [disabled]="!canSubmit()">
           @if (saving()) { Envoi… } @else { @if (isEditing()) { Mettre à jour } @else { Envoyer la demande } }
         </button>
         @if (isEditing()) {
@@ -91,7 +91,7 @@
         </select>
       </label>
       <div class="actions">
-        <button class="btn-outline" type="submit">Filtrer</button>
+        <button class="btn-outline btn-success-outline" type="submit">Filtrer</button>
         <button class="btn-outline" type="button" (click)="clearFilters()">Réinitialiser</button>
       </div>
     </form>
@@ -121,10 +121,10 @@
                 <td>{{ a.comment || '—' }}</td>
                 <td class="actions">
                   @if (a.status === 'EN_ATTENTE') {
-                    <button class="btn-outline primary-outline" type="button" (click)="startEdit(a)">
+                    <button class="btn-outline btn-info-outline" type="button" (click)="startEdit(a)">
                       Modifier
                     </button>
-                    <button class="btn-outline delete" type="button" (click)="deleteAbsence(a)" [disabled]="deletingId() === a._id">
+                    <button class="btn-outline delete" type="button" title="Supprimer" (click)="deleteAbsence(a)" [disabled]="deletingId() === a._id">
                       @if (deletingId() === a._id) { Suppression… } @else { Supprimer }
                     </button>
                   }
@@ -137,3 +137,25 @@
     }
   </section>
 </section>
+
+<app-confirm-action-modal
+  [open]="confirmUpdateOpen()"
+  title="Confirmer la mise à jour"
+  description="Souhaitez-vous modifier cette demande d'absence ?"
+  confirmText="Mettre à jour"
+  confirmIcon="fa-solid fa-check"
+  [confirming]="saving()"
+  (cancel)="confirmUpdateOpen.set(false)"
+  (confirm)="confirmUpdate()">
+</app-confirm-action-modal>
+
+<app-confirm-action-modal
+  [open]="confirmDeleteOpen()"
+  title="Confirmer la suppression"
+  description="Souhaitez-vous supprimer cette demande ?"
+  confirmText="Supprimer"
+  confirmIcon="fa-solid fa-trash"
+  [confirming]="deletingId() !== null"
+  (cancel)="confirmDeleteOpen.set(false); confirmDeleteTarget.set(null)"
+  (confirm)="confirmDelete()">
+</app-confirm-action-modal>

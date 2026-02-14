@@ -4,12 +4,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Absence, AbsenceStatus, AbsenceType } from '../../../core/models';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 
 @Component({
   standalone: true,
   selector: 'app-technician-agenda',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmActionModal],
   providers: [DatePipe],
   templateUrl: './technician-agenda.html',
   styleUrls: ['./technician-agenda.scss'],
@@ -28,6 +29,9 @@ export class TechnicianAgenda {
   readonly formValid = signal(false);
   readonly editTarget = signal<Absence | null>(null);
   readonly deletingId = signal<string | null>(null);
+  readonly confirmUpdateOpen = signal(false);
+  readonly confirmDeleteOpen = signal(false);
+  readonly confirmDeleteTarget = signal<Absence | null>(null);
 
   readonly filterForm = this.fb.nonNullable.group({
     fromDate: this.fb.nonNullable.control(''),
@@ -92,6 +96,22 @@ export class TechnicianAgenda {
 
   submit(): void {
     if (this.form.invalid || this.saving()) return;
+    const user = this.authService.getCurrentUser();
+    if (!user?._id) return;
+    if (this.editTarget()?._id) {
+      this.confirmUpdateOpen.set(true);
+      return;
+    }
+    this.executeSubmit();
+  }
+
+  confirmUpdate(): void {
+    if (this.saving()) return;
+    this.confirmUpdateOpen.set(false);
+    this.executeSubmit();
+  }
+
+  private executeSubmit(): void {
     const user = this.authService.getCurrentUser();
     if (!user?._id) return;
     this.saving.set(true);
@@ -176,16 +196,25 @@ export class TechnicianAgenda {
 
   deleteAbsence(absence: Absence): void {
     if (!absence?._id || absence.status !== 'EN_ATTENTE' || this.deletingId()) return;
-    if (!confirm('Supprimer cette demande ?')) return;
+    this.confirmDeleteTarget.set(absence);
+    this.confirmDeleteOpen.set(true);
+  }
+
+  confirmDelete(): void {
+    const absence = this.confirmDeleteTarget();
+    if (!absence?._id || this.deletingId()) return;
+    this.confirmDeleteOpen.set(false);
     this.deletingId.set(absence._id);
     this.absencesService.remove(absence._id).subscribe({
       next: () => {
         this.deletingId.set(null);
         if (this.editTarget()?._id === absence._id) this.cancelEdit();
+        this.confirmDeleteTarget.set(null);
         this.loadAbsences();
       },
       error: () => {
         this.deletingId.set(null);
+        this.confirmDeleteTarget.set(null);
         this.error.set('Erreur suppression');
       }
     });

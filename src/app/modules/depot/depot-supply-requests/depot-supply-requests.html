@@ -1,0 +1,129 @@
+<section class="depot-supply-requests">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Demandes d'approvisionnement</h1>
+      <p class="subtitle">Valider ou annuler les demandes des techniciens avec un commentaire.</p>
+    </div>
+  </div>
+
+  <div class="panel card">
+    <div class="panel-head">
+      <h2 class="section-title">Demandes</h2>
+      <div class="filters">
+        <select #statusSelect [value]="statusFilter()" (change)="setStatusFilter(statusSelect.value)">
+          <option value="">Tous les statuts</option>
+          <option value="PENDING">En attente</option>
+          <option value="APPROVED">Validées</option>
+          <option value="CANCELED">Annulées</option>
+        </select>
+        <select #typeSelect [value]="typeFilter()" (change)="setTypeFilter(typeSelect.value)">
+          <option value="">Tous les types</option>
+          <option value="CONSUMABLE">Consommables</option>
+          <option value="MATERIAL">Matériels</option>
+        </select>
+      </div>
+    </div>
+
+    @if (error()) {
+      <div class="state error">{{ error() }}</div>
+    }
+
+    @if (loading()) {
+      <div class="state">Chargement…</div>
+    } @else if (items().length === 0) {
+      <div class="state">Aucune demande.</div>
+    } @else {
+      <div class="card pager-card">
+        <div class="pager pager-top">
+          <div class="pager-left">
+            <div class="page-size">
+              @for (size of limitOptions; track size) {
+                <button type="button" [class.active]="size === limit()" (click)="setLimit(size)">{{ size }}</button>
+              }
+            </div>
+            <span class="pager-label">Éléments par page</span>
+          </div>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline btn-xs" [disabled]="!canPrev()" (click)="prevPage()">Précédent</button>
+              <button class="btn-outline btn-xs" [disabled]="!canNext()" (click)="nextPage()">Suivant</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Technicien</th>
+              <th>Ressource</th>
+              <th>Type</th>
+              <th>Quantité</th>
+              <th>Statut</th>
+              <th>Commentaire</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item._id) {
+              <tr>
+                <td>{{ formattedDate(item.createdAt) }}</td>
+                <td>{{ userLabel(item) }}</td>
+                <td>{{ resourceLabel(item) }}</td>
+                <td>{{ item.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
+                <td>{{ item.quantity }}</td>
+                <td><span class="status-pill" [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
+                <td>
+                  @if (item.status !== 'PENDING') {
+                    <div class="decision">
+                      <div class="decision-note">{{ item.decisionNote || item.note || '—' }}</div>
+                      <div class="decision-meta">{{ formattedDate(item.decidedAt) }}</div>
+                    </div>
+                  } @else {
+                    {{ item.note || '—' }}
+                  }
+                </td>
+                <td class="actions">
+                  @if (item.status === 'PENDING') {
+                    <button class="btn-outline btn-xs" type="button" (click)="startDecision(item, 'APPROVED')">Valider</button>
+                    <button class="btn-outline btn-xs delete" type="button" (click)="startDecision(item, 'CANCELED')">Annuler</button>
+                  }
+                </td>
+              </tr>
+              @if (decisionOpenId() === item._id) {
+                <tr class="decision-row">
+                  <td colspan="8">
+                    <div class="decision-panel">
+                      <div class="decision-title">
+                        {{ decisionStatus() === 'APPROVED' ? 'Validation' : 'Annulation' }} - commentaire requis
+                      </div>
+                      <textarea
+                        #decisionNote
+                        rows="3"
+                        [value]="decisionComment()"
+                        (input)="updateDecisionComment(decisionNote.value)"
+                        placeholder="Saisir un commentaire"
+                      ></textarea>
+                      <div class="decision-actions">
+                        <button class="btn-outline" type="button" (click)="cancelDecision()">Fermer</button>
+                        <button
+                          class="btn-primary"
+                          type="button"
+                          [disabled]="decidingId() === item._id || !decisionComment().trim()"
+                          (click)="confirmDecision()"
+                        >Confirmer</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>

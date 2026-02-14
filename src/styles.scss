@@ -149,3 +149,45 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
 }
+
+/* Pagination layout (aligned like admin/hr) */
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.pager-left,
+.pager-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pager .page-size {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.pager-card {
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-glass);
+}
+
+.pager .page-size button {
+  border-radius: 0.6rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: transparent;
+  color: var(--fxn-text);
+  padding: 0.35rem 0.65rem;
+  min-width: 44px;
+}
+
+.pager .page-size button.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.6);
+}

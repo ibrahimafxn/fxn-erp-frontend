@@ -359,6 +359,37 @@
     border-collapse: collapse;
     font-size: .96rem;
 
+    .sort-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-transform: inherit;
+      letter-spacing: inherit;
+      cursor: pointer;
+    }
+
+    .sort-button .sort-arrow {
+      min-width: 0.75rem;
+      text-align: center;
+      font-size: 0.7rem;
+      opacity: 0.55;
+    }
+
+    .sort-button:hover,
+    .sort-button.is-active {
+      color: var(--fxn-text);
+    }
+
+    .sort-button.is-active .sort-arrow {
+      opacity: 0.95;
+      color: rgba(147, 197, 253, 0.9);
+    }
+
     th,
     td {
       padding: .85rem .9rem;
@@ -511,6 +542,20 @@
     border-radius: 1rem;
     border: 1px solid var(--fxn-border);
     background: var(--fxn-surface-glass);
+  }
+
+  .pager-card .page-size button {
+    border-radius: 0.6rem;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    background: transparent;
+    color: var(--fxn-text);
+    padding: 0.35rem 0.65rem;
+    min-width: 44px;
+  }
+
+  .pager-card .page-size button.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.6);
   }
 
   .pager-top {
@@ -746,6 +791,22 @@
       box-sizing: border-box;
     }
 
+    .date-field {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+      font-size: .8rem;
+      color: var(--fxn-text-muted);
+    }
+
+    .date-field input[type="date"] {
+      padding-left: 2.2rem;
+      background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 2V5M16 2V5M3 9H21M5 5H19C20.1046 5 21 5.89543 21 7V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V7C3 5.89543 3.89543 5 5 5Z' stroke='%2394A3B8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 0.7rem center;
+      background-size: 18px 18px;
+    }
+
     input:focus,
     select:focus {
       border-color: var(--fxn-primary);
@@ -784,6 +845,17 @@
       background: var(--fxn-surface);
       color: inherit;
     }
+
+    .leaves-actions {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      flex-wrap: wrap;
+
+      select {
+        min-width: 150px;
+      }
+    }
   }
 
   .actions-cell {
@@ -812,6 +884,11 @@
   .state.error {
     background: rgba(255, 92, 124, 0.15);
     border: 1px solid rgba(255, 92, 124, 0.3);
+  }
+
+  .state.success {
+    background: rgba(42, 164, 122, 0.16);
+    border: 1px solid rgba(42, 164, 122, 0.4);
   }
 }
 

@@ -3,10 +3,13 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
+import { AbsenceService } from '../../../core/services/absence.service';
 import { HrService } from '../../../core/services/hr.service';
 import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {
+  Absence,
+  AbsenceStatus,
   Depot,
   DocAlertsSummary,
   EmployeeDoc,
@@ -16,7 +19,6 @@ import {
   HrHistoryItem,
   HrHistoryResult,
   HrRequirements,
-  LeaveRequest,
   User
 } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
@@ -35,6 +37,7 @@ import { formatPageRange } from '../../../core/utils/pagination';
 export class HrList {
   private fb = inject(FormBuilder);
   private hr = inject(HrService);
+  private absences = inject(AbsenceService);
   private auth = inject(AuthService);
   private depotService = inject(DepotService);
   private datePipe = inject(DatePipe);
@@ -43,6 +46,8 @@ export class HrList {
   readonly employeeSection = signal<'employees' | 'profile' | 'documents'>('employees');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly success = signal<string | null>(null);
+  private successTimer: number | null = null;
 
   readonly employees = signal<EmployeeSummary[]>([]);
   readonly employeeAll = signal<EmployeeSummary[]>([]);
@@ -55,10 +60,12 @@ export class HrList {
   readonly employeeRole = signal('');
   readonly employeeDepot = signal('');
   readonly employeeCompliance = signal('');
-  readonly employeeSort = signal<'NAME_ASC' | 'NAME_DESC' | 'ROLE_ASC' | 'DEPOT_ASC'>('NAME_ASC');
+  readonly employeeSort = signal<'NAME_ASC' | 'NAME_DESC' | 'ROLE_ASC' | 'DEPOT_ASC' | 'DOCS_ASC'>('NAME_ASC');
   readonly docs = signal<EmployeeDoc[]>([]);
   readonly docFilter = signal<'ALL' | 'EXPIRED' | 'EXPIRING'>('ALL');
   readonly expiringDays = 30;
+  readonly docPage = signal(1);
+  readonly docLimit = signal(10);
   readonly overlayOpen = signal(false);
   readonly overlayFilter = signal<'EXPIRED' | 'EXPIRING'>('EXPIRED');
   readonly overlayDocs = signal<EmployeeDoc[]>([]);
@@ -66,10 +73,14 @@ export class HrList {
   readonly deleteDocModalOpen = signal(false);
   readonly deletingDocId = signal<string | null>(null);
   readonly pendingDocId = signal<string | null>(null);
+  readonly pendingDoc = signal<EmployeeDoc | null>(null);
   readonly pendingDocLabel = signal<string>('document');
   readonly pendingDocName = signal<string>('');
-  readonly leaves = signal<LeaveRequest[]>([]);
-  readonly leaveStatus = signal<string>('PENDING');
+  readonly leaves = signal<Absence[]>([]);
+  readonly leaveStatus = signal<AbsenceStatus>('EN_ATTENTE');
+  readonly leavePage = signal(1);
+  readonly leaveLimit = signal(10);
+  readonly leaveSort = signal<'EMP_ASC' | 'DEPOT_ASC' | 'TYPE_ASC' | 'PERIOD_ASC' | 'STATUS_ASC'>('PERIOD_ASC');
   readonly depots = signal<Depot[]>([]);
   readonly requirements = signal<HrRequirements | null>(null);
   readonly docAlerts = signal<DocAlertsSummary | null>(null);
@@ -77,6 +88,7 @@ export class HrList {
   readonly historyTotal = signal(0);
   readonly historyPage = signal(1);
   readonly historyLimit = signal(10);
+  readonly historySort = signal<'DATE_DESC' | 'DATE_ASC' | 'ACTION_ASC' | 'AUTHOR_ASC' | 'DETAIL_ASC'>('DATE_DESC');
 
   avatarSrc(user: User): string {
     const cacheKey = (user as { updatedAt?: string; lastLoginAt?: string }).updatedAt
@@ -100,7 +112,7 @@ export class HrList {
     { value: 'ATTESTATION', label: 'Attestation' },
     { value: 'HABILITATION', label: 'Habilitation' }
   ];
-  readonly leaveTypes = ['CONGE', 'MALADIE', 'PERMISSION', 'AUTRE'];
+  readonly leaveTypes = ['CONGE', 'MALADIE', 'PERMISSION', 'FORMATION', 'AUTRE'];
   readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'AUTRE'];
   readonly employeeRoles = [
     { value: '', label: 'Tous les rôles' },
@@ -136,6 +148,22 @@ export class HrList {
     return docs.filter((d) => this.isDocExpiringSoon(d, this.expiringDays));
   });
 
+  readonly docTotal = computed(() => this.filteredDocs().length);
+
+  readonly docPageCount = computed(() => {
+    const total = this.docTotal();
+    const limit = this.docLimit() || 1;
+    return Math.max(1, Math.ceil(total / limit));
+  });
+
+  readonly visibleDocs = computed(() => {
+    const items = this.filteredDocs();
+    const limit = this.docLimit() || 1;
+    const page = this.docPage();
+    const start = (page - 1) * limit;
+    return items.slice(start, start + limit);
+  });
+
   readonly overlayItems = computed(() => {
     const docs = this.overlayDocs();
     if (this.overlayFilter() === 'EXPIRED') {
@@ -144,10 +172,71 @@ export class HrList {
     return docs.filter((d) => this.isDocExpiringSoon(d, this.expiringDays));
   });
 
+  setDocLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.docLimit.set(value);
+    this.docPage.set(1);
+  }
+
+  prevDocPage(): void {
+    const next = Math.max(1, this.docPage() - 1);
+    this.docPage.set(next);
+  }
+
+  nextDocPage(): void {
+    const totalPages = this.docPageCount();
+    const next = Math.min(totalPages, this.docPage() + 1);
+    this.docPage.set(next);
+  }
+
   readonly historyPageCount = computed(() => {
     const total = this.historyTotal();
     const limit = this.historyLimit() || 1;
     return Math.max(1, Math.ceil(total / limit));
+  });
+
+  readonly leaveTotal = computed(() => this.leaves().length);
+
+  readonly leavePageCount = computed(() => {
+    const total = this.leaveTotal();
+    const limit = this.leaveLimit() || 1;
+    return Math.max(1, Math.ceil(total / limit));
+  });
+
+  readonly sortedLeaves = computed(() => {
+    const items = [...this.leaves()];
+    const sort = this.leaveSort();
+    const byText = (value: string) => value.toLowerCase();
+    const compareText = (a: string, b: string) => byText(a).localeCompare(byText(b));
+    const getUser = (l: Absence) => this.formatUserName(this.absenceTechnician(l));
+    const getDepot = (l: Absence) => this.depotLabel(this.absenceTechnician(l));
+    const getType = (l: Absence) => String(l.type || '');
+    const getStatus = (l: Absence) => String(l.status || '');
+    const getPeriod = (l: Absence) => `${l.startDate || ''}|${l.endDate || ''}`;
+    items.sort((a, b) => {
+      switch (sort) {
+        case 'EMP_ASC':
+          return compareText(getUser(a), getUser(b));
+        case 'DEPOT_ASC':
+          return compareText(getDepot(a), getDepot(b));
+        case 'TYPE_ASC':
+          return compareText(getType(a), getType(b));
+        case 'STATUS_ASC':
+          return compareText(getStatus(a), getStatus(b));
+        case 'PERIOD_ASC':
+        default:
+          return compareText(getPeriod(a), getPeriod(b));
+      }
+    });
+    return items;
+  });
+
+  readonly visibleLeaves = computed(() => {
+    const items = this.sortedLeaves();
+    const limit = this.leaveLimit() || 1;
+    const page = this.leavePage();
+    const start = (page - 1) * limit;
+    return items.slice(start, start + limit);
   });
 
   readonly profileForm = this.fb.nonNullable.group({
@@ -205,6 +294,13 @@ export class HrList {
     this.tab.set(next);
   }
 
+  onLeaveStatusChange(value: string): void {
+    const normalized = value as AbsenceStatus;
+    const allowed: AbsenceStatus[] = ['EN_ATTENTE', 'APPROUVE', 'REFUSE'];
+    this.leaveStatus.set(allowed.includes(normalized) ? normalized : 'EN_ATTENTE');
+    this.loadLeaves();
+  }
+
   setEmployeeSection(section: 'employees' | 'profile' | 'documents'): void {
     this.employeeSection.set(section);
   }
@@ -253,6 +349,38 @@ export class HrList {
     if (!value) return;
     this.employeeSort.set(value as any);
     this.applyEmployeeFilters();
+  }
+
+  toggleEmployeeSort(field: 'NAME' | 'ROLE' | 'DEPOT' | 'DOCS'): void {
+    const current = this.employeeSort();
+    let next = current;
+    if (field === 'NAME') {
+      next = current === 'NAME_ASC' ? 'NAME_DESC' : 'NAME_ASC';
+    } else if (field === 'ROLE') {
+      next = 'ROLE_ASC';
+    } else if (field === 'DEPOT') {
+      next = 'DEPOT_ASC';
+    } else if (field === 'DOCS') {
+      next = 'DOCS_ASC';
+    }
+    if (next === current) return;
+    this.employeeSort.set(next);
+    this.applyEmployeeFilters();
+  }
+
+  isEmployeeSort(field: 'NAME' | 'ROLE' | 'DEPOT' | 'DOCS'): boolean {
+    const current = this.employeeSort();
+    if (field === 'NAME') return current === 'NAME_ASC' || current === 'NAME_DESC';
+    if (field === 'ROLE') return current === 'ROLE_ASC';
+    if (field === 'DEPOT') return current === 'DEPOT_ASC';
+    return current === 'DOCS_ASC';
+  }
+
+  employeeSortArrow(field: 'NAME' | 'ROLE' | 'DEPOT' | 'DOCS'): string {
+    const current = this.employeeSort();
+    if (field === 'NAME') return current === 'NAME_DESC' ? '▼' : '▲';
+    if (!this.isEmployeeSort(field)) return '';
+    return '▲';
   }
 
   setEmployeeLimitValue(value: number): void {
@@ -350,6 +478,12 @@ export class HrList {
     const nameOf = (e: EmployeeSummary) => this.normalizeSort(this.formatUserName(e.user));
     const roleOf = (e: EmployeeSummary) => this.normalizeSort(e.user?.role || '');
     const depotOf = (e: EmployeeSummary) => this.normalizeSort(this.depotLabel(e.user));
+    const docsOf = (e: EmployeeSummary) => {
+      const compliance = e.compliance;
+      if (!compliance) return 0;
+      if (compliance.ok) return 0;
+      return Array.isArray(compliance.missing) ? compliance.missing.length : 1;
+    };
     sorted.sort((a, b) => {
       switch (sort) {
         case 'NAME_DESC':
@@ -358,6 +492,8 @@ export class HrList {
           return roleOf(a).localeCompare(roleOf(b), 'fr');
         case 'DEPOT_ASC':
           return depotOf(a).localeCompare(depotOf(b), 'fr');
+        case 'DOCS_ASC':
+          return docsOf(b) - docsOf(a);
         case 'NAME_ASC':
         default:
           return nameOf(a).localeCompare(nameOf(b), 'fr');
@@ -402,6 +538,7 @@ export class HrList {
         );
         this.employees.set(updated);
         this.selectEmployee({ ...current, profile });
+        this.showSuccess('Profil enregistré.');
       },
       error: (err: any) => {
         this.error.set(err?.message || 'Erreur sauvegarde profil');
@@ -440,6 +577,7 @@ export class HrList {
           this.loadEmployees();
           this.loadHistory(current.user._id);
           this.refreshDocAlerts();
+          this.showSuccess('Document ajouté.');
         },
         error: (err: any) => {
           this.error.set(err?.message || 'Erreur ajout document');
@@ -474,6 +612,7 @@ export class HrList {
       next: () => {
         this.deletingDocId.set(null);
         this.docs.set(this.docs().filter((d) => d._id !== doc._id));
+        this.overlayDocs.set(this.overlayDocs().filter((d) => d._id !== doc._id));
         const current = this.selected();
         if (current?.user?._id) {
           this.refreshCompliance(current.user._id);
@@ -481,6 +620,7 @@ export class HrList {
           this.loadHistory(current.user._id);
           this.refreshDocAlerts();
         }
+        this.showSuccess('Document supprimé.');
       },
       error: (err: any) => {
         this.deletingDocId.set(null);
@@ -491,6 +631,7 @@ export class HrList {
 
   openDeleteDocModal(doc: EmployeeDoc): void {
     this.pendingDocId.set(doc._id);
+    this.pendingDoc.set(doc);
     const label = doc.detail || doc.type || 'Document';
     this.pendingDocName.set(label);
     this.pendingDocLabel.set('document');
@@ -501,13 +642,14 @@ export class HrList {
     if (this.confirmingDeleteDoc()) return;
     this.deleteDocModalOpen.set(false);
     this.pendingDocId.set(null);
+    this.pendingDoc.set(null);
     this.pendingDocName.set('');
   }
 
   confirmDeleteDoc(): void {
     const id = this.pendingDocId();
     if (!id) return;
-    const doc = this.docs().find((d) => d._id === id);
+    const doc = this.pendingDoc() || this.docs().find((d) => d._id === id) || this.overlayDocs().find((d) => d._id === id);
     if (!doc) return;
     this.deleteDocModalOpen.set(false);
     this.removeDoc(doc);
@@ -566,11 +708,71 @@ export class HrList {
     this.hr.listHistory({ user: userId, page: this.historyPage(), limit: this.historyLimit() })
       .subscribe({
         next: (result: HrHistoryResult) => {
-          this.history.set(result?.items || []);
+          const items = result?.items || [];
+          this.history.set(this.sortHistory(items));
           this.historyTotal.set(result?.total || 0);
         },
         error: (err: any) => this.error.set(err?.message || 'Erreur chargement historique')
       });
+  }
+
+  private sortHistory(items: HrHistoryItem[]): HrHistoryItem[] {
+    const sort = this.historySort();
+    const list = [...items];
+    const byText = (value: string) => this.normalizeSort(value);
+    const compareText = (a: string, b: string) => byText(a).localeCompare(byText(b), 'fr');
+    const dateVal = (h: HrHistoryItem) => new Date(h.createdAt || 0).getTime();
+    const actionVal = (h: HrHistoryItem) => this.historyActionLabel(h.action);
+    const authorVal = (h: HrHistoryItem) => this.formatUserName(h.actor);
+    const detailVal = (h: HrHistoryItem) => this.historyDetail(h);
+    list.sort((a, b) => {
+      switch (sort) {
+        case 'DATE_ASC':
+          return dateVal(a) - dateVal(b);
+        case 'ACTION_ASC':
+          return compareText(actionVal(a), actionVal(b));
+        case 'AUTHOR_ASC':
+          return compareText(authorVal(a), authorVal(b));
+        case 'DETAIL_ASC':
+          return compareText(detailVal(a), detailVal(b));
+        case 'DATE_DESC':
+        default:
+          return dateVal(b) - dateVal(a);
+      }
+    });
+    return list;
+  }
+
+  toggleHistorySort(field: 'DATE' | 'ACTION' | 'AUTHOR' | 'DETAIL'): void {
+    const current = this.historySort();
+    let next = current;
+    if (field === 'DATE') {
+      next = current === 'DATE_DESC' ? 'DATE_ASC' : 'DATE_DESC';
+    } else if (field === 'ACTION') {
+      next = 'ACTION_ASC';
+    } else if (field === 'AUTHOR') {
+      next = 'AUTHOR_ASC';
+    } else if (field === 'DETAIL') {
+      next = 'DETAIL_ASC';
+    }
+    if (next === current) return;
+    this.historySort.set(next);
+    this.history.set(this.sortHistory(this.history()));
+  }
+
+  isHistorySort(field: 'DATE' | 'ACTION' | 'AUTHOR' | 'DETAIL'): boolean {
+    const current = this.historySort();
+    if (field === 'DATE') return current === 'DATE_DESC' || current === 'DATE_ASC';
+    if (field === 'ACTION') return current === 'ACTION_ASC';
+    if (field === 'AUTHOR') return current === 'AUTHOR_ASC';
+    return current === 'DETAIL_ASC';
+  }
+
+  historySortArrow(field: 'DATE' | 'ACTION' | 'AUTHOR' | 'DETAIL'): string {
+    const current = this.historySort();
+    if (field === 'DATE') return current === 'DATE_ASC' ? '▲' : '▼';
+    if (!this.isHistorySort(field)) return '';
+    return '▲';
   }
 
   refreshDocAlerts(): void {
@@ -578,6 +780,17 @@ export class HrList {
       next: (alerts) => this.docAlerts.set(alerts),
       error: (err: any) => this.error.set(err?.message || 'Erreur chargement alertes docs')
     });
+  }
+
+  private showSuccess(message: string): void {
+    this.success.set(message);
+    if (this.successTimer) {
+      window.clearTimeout(this.successTimer);
+    }
+    this.successTimer = window.setTimeout(() => {
+      this.success.set(null);
+      this.successTimer = null;
+    }, 3000);
   }
 
   prevHistoryPage(): void {
@@ -605,15 +818,43 @@ export class HrList {
 
   loadLeaves(): void {
     const status = this.leaveStatus();
-    this.hr.listLeaves(status ? { status } : undefined).subscribe({
-      next: (items: LeaveRequest[]) => this.leaves.set(items || []),
+    this.leavePage.set(1);
+    this.absences.list(status ? { status } : undefined).subscribe({
+      next: (resp) => this.leaves.set(resp?.data || []),
       error: (err: any) => this.error.set(err?.message || 'Erreur chargement congés')
     });
   }
 
-  decideLeave(leave: LeaveRequest, decision: 'APPROVED' | 'REJECTED'): void {
-    this.hr.decideLeave(leave._id, decision).subscribe({
-      next: (updated: LeaveRequest) => {
+  prevLeavePage(): void {
+    const next = Math.max(1, this.leavePage() - 1);
+    this.leavePage.set(next);
+  }
+
+  nextLeavePage(): void {
+    const totalPages = this.leavePageCount();
+    const next = Math.min(totalPages, this.leavePage() + 1);
+    this.leavePage.set(next);
+  }
+
+  setLeaveLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.leaveLimit.set(value);
+    this.leavePage.set(1);
+  }
+
+  setLeaveSort(value: string): void {
+    const next = value as 'EMP_ASC' | 'DEPOT_ASC' | 'TYPE_ASC' | 'PERIOD_ASC' | 'STATUS_ASC';
+    if (next === this.leaveSort()) return;
+    this.leaveSort.set(next);
+    this.leavePage.set(1);
+  }
+
+  decideLeave(leave: Absence, decision: AbsenceStatus): void {
+    if (!leave?._id) return;
+    this.absences.updateStatus(leave._id, decision).subscribe({
+      next: (resp) => {
+        const updated = resp?.data;
+        if (!updated?._id) return;
         this.leaves.set(this.leaves().map((l) => (l._id === updated._id ? updated : l)));
       },
       error: (err: any) => this.error.set(err?.message || 'Erreur décision congé')
@@ -623,6 +864,40 @@ export class HrList {
   formatUserName(user?: any): string {
     if (!user) return '—';
     return formatPersonName(user.firstName || '', user.lastName || '') || user.email || '—';
+  }
+
+  absenceTechnician(absence: Absence): User | undefined {
+    return (absence.technician as User) || (absence.createdBy as User);
+  }
+
+  absenceTypeLabel(type?: string): string {
+    switch (type) {
+      case 'CONGE':
+        return 'Congé';
+      case 'MALADIE':
+        return 'Maladie';
+      case 'PERMISSION':
+        return 'Permission';
+      case 'FORMATION':
+        return 'Formation';
+      case 'AUTRE':
+        return 'Autre';
+      default:
+        return type || '—';
+    }
+  }
+
+  absenceStatusLabel(status?: AbsenceStatus): string {
+    switch (status) {
+      case 'EN_ATTENTE':
+        return 'En attente';
+      case 'APPROUVE':
+        return 'Approuvé';
+      case 'REFUSE':
+        return 'Refusé';
+      default:
+        return status || '—';
+    }
   }
 
   depotLabel(user?: any): string {

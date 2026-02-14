@@ -17,7 +17,6 @@
   @if (error()) {
     <div class="state error">{{ error() }}</div>
   }
-
   @if (tab() === 'employees') {
     <div class="section-tabs">
       <button class="btn-outline" type="button" [class.active]="employeeSection() === 'employees'" (click)="setEmployeeSection('employees')">
@@ -58,12 +57,6 @@
               <option [value]="c.value">{{ c.label }}</option>
             }
           </select>
-          <select #sortSelect [value]="employeeSort()" (change)="setEmployeeSort(sortSelect.value)">
-            <option value="NAME_ASC">Nom (A → Z)</option>
-            <option value="NAME_DESC">Nom (Z → A)</option>
-            <option value="ROLE_ASC">Rôle</option>
-            <option value="DEPOT_ASC">Dépôt</option>
-          </select>
           <button class="btn-outline" (click)="resetEmployeeFilters()">Réinitialiser</button>
         </div>
         <div class="card pager-card">
@@ -90,11 +83,27 @@
           <table>
             <thead>
               <tr>
-                <th>Nom</th>
-                <th>Rôle</th>
-                <th>Dépôt</th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleEmployeeSort('NAME')" [class.is-active]="isEmployeeSort('NAME')">
+                    Nom <span class="sort-arrow">{{ employeeSortArrow('NAME') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleEmployeeSort('ROLE')" [class.is-active]="isEmployeeSort('ROLE')">
+                    Rôle <span class="sort-arrow">{{ employeeSortArrow('ROLE') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleEmployeeSort('DEPOT')" [class.is-active]="isEmployeeSort('DEPOT')">
+                    Dépôt <span class="sort-arrow">{{ employeeSortArrow('DEPOT') }}</span>
+                  </button>
+                </th>
                 <th>Téléphone</th>
-                <th>Docs</th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleEmployeeSort('DOCS')" [class.is-active]="isEmployeeSort('DOCS')">
+                    Docs <span class="sort-arrow">{{ employeeSortArrow('DOCS') }}</span>
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -118,6 +127,8 @@
                   <td>
                     @if (e.compliance?.ok) {
                       <span class="pill ok">{{ complianceLabel(e) }}</span>
+                    } @else {
+                      <span class="pill danger">NOK</span>
                     }
                   </td>
                 </tr>
@@ -197,6 +208,9 @@
           <div class="actions">
             <button class="btn-save" (click)="saveProfile()"><i class="fa-solid fa-check"></i> Enregistrer</button>
           </div>
+          @if (success()) {
+            <div class="state success">{{ success() }}</div>
+          }
 
           <h3 class="section-title"><span class="material-icons notranslate">history</span>Historique RH</h3>
           <div class="card pager-card">
@@ -223,10 +237,26 @@
             <table>
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Action</th>
-                  <th>Auteur</th>
-                  <th>Détail</th>
+                  <th>
+                    <button class="sort-button" type="button" (click)="toggleHistorySort('DATE')" [class.is-active]="isHistorySort('DATE')">
+                      Date <span class="sort-arrow">{{ historySortArrow('DATE') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="sort-button" type="button" (click)="toggleHistorySort('ACTION')" [class.is-active]="isHistorySort('ACTION')">
+                      Action <span class="sort-arrow">{{ historySortArrow('ACTION') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="sort-button" type="button" (click)="toggleHistorySort('AUTHOR')" [class.is-active]="isHistorySort('AUTHOR')">
+                      Auteur <span class="sort-arrow">{{ historySortArrow('AUTHOR') }}</span>
+                    </button>
+                  </th>
+                  <th>
+                    <button class="sort-button" type="button" (click)="toggleHistorySort('DETAIL')" [class.is-active]="isHistorySort('DETAIL')">
+                      Détail <span class="sort-arrow">{{ historySortArrow('DETAIL') }}</span>
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -279,6 +309,7 @@
                         <th>Type</th>
                         <th>Expiration</th>
                         <th>Document</th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -289,6 +320,17 @@
                           <td>{{ formatDate(d.expiryDate) }}</td>
                           <td>
                             <button type="button" class="doc-link" (click)="openDoc(d)">Ouvrir PDF</button>
+                          </td>
+                          <td data-label="Action">
+                            <button
+                              class="btn-outline btn-xs delete"
+                              type="button"
+                              title="Supprimer"
+                              [disabled]="deletingDocId() === d._id"
+                              (click)="openDeleteDocModal(d)"
+                            ><i class="fa-solid fa-trash"></i>
+                              @if (deletingDocId() === d._id) { Suppression… }
+                            </button>
                           </td>
                         </tr>
                       }
@@ -333,9 +375,33 @@
             } @else {
               <input type="text" formControlName="detail" placeholder="Détail (optionnel)" />
             }
-            <input type="date" formControlName="expiryDate" />
+            <label class="date-field">
+              <span>Date d'expiration</span>
+              <input type="date" formControlName="expiryDate" />
+            </label>
             <button class="btn-outline" type="button" (click)="addDoc(docFileInput)"><i class="bi bi-plus"></i> Ajouter</button>
           </form>
+
+          <div class="card pager-card">
+            <div class="pager pager-top">
+              <div class="pager-left">
+                <div class="page-size">
+                  <button type="button" [class.active]="docLimit() === 10" (click)="setDocLimitValue(10)">10</button>
+                  <button type="button" [class.active]="docLimit() === 20" (click)="setDocLimitValue(20)">20</button>
+                  <button type="button" [class.active]="docLimit() === 50" (click)="setDocLimitValue(50)">50</button>
+                  <button type="button" [class.active]="docLimit() === 100" (click)="setDocLimitValue(100)">100</button>
+                </div>
+                <span class="pager-label">Éléments par page</span>
+              </div>
+              <div class="pager-right">
+                <span class="pager-range">{{ pageRange(docPage(), docLimit(), docTotal()) }}</span>
+                <div class="pager-nav">
+                  <button class="btn-outline" type="button" (click)="prevDocPage()" [disabled]="docPage() <= 1"><i class="bi bi-chevron-left"></i></button>
+                  <button class="btn-outline" type="button" (click)="nextDocPage()" [disabled]="docPage() >= docPageCount()"><i class="bi bi-chevron-right"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div class="table-wrap docs-table-wrap" id="hr-documents">
             <table>
@@ -349,7 +415,7 @@
                 </tr>
               </thead>
               <tbody>
-                @for (d of filteredDocs(); track d._id) {
+                @for (d of visibleDocs(); track d._id) {
                   <tr [class.doc-valid]="isDocValid(d)" [class.doc-expired]="isDocExpired(d)">
                     <td data-label="Type">{{ d.type }}</td>
                     <td data-label="Détail">{{ d.detail || '—' }}</td>
@@ -361,6 +427,7 @@
                       <button
                         class="btn-outline btn-xs delete"
                         type="button"
+                        title="Supprimer"
                         [disabled]="deletingDocId() === d._id"
                         (click)="openDeleteDocModal(d)"
                       ><i class="fa-solid fa-trash"></i> 
@@ -391,12 +458,40 @@
     <div class="panel">
       <div class="leaves-header">
         <h2 class="section-title"><span class="material-icons notranslate">event_available</span>Demandes de congés</h2>
-        <select #statusSelect [value]="leaveStatus()" (change)="leaveStatus.set(statusSelect.value); loadLeaves()">
-          <option value="PENDING">En attente</option>
-          <option value="APPROVED">Approuvées</option>
-          <option value="REJECTED">Rejetées</option>
-          <option value="CANCELED">Annulées</option>
-        </select>
+        <div class="leaves-actions">
+          <select #statusSelect [value]="leaveStatus()" (change)="onLeaveStatusChange(statusSelect.value)">
+            <option value="EN_ATTENTE">En attente</option>
+            <option value="APPROUVE">Approuvées</option>
+            <option value="REFUSE">Refusées</option>
+          </select>
+          <select #sortSelect [value]="leaveSort()" (change)="setLeaveSort(sortSelect.value)">
+            <option value="PERIOD_ASC">Période</option>
+            <option value="EMP_ASC">Employé</option>
+            <option value="DEPOT_ASC">Dépôt</option>
+            <option value="TYPE_ASC">Type</option>
+            <option value="STATUS_ASC">Statut</option>
+          </select>
+        </div>
+      </div>
+      <div class="card pager-card">
+        <div class="pager pager-top">
+          <div class="pager-left">
+            <div class="page-size">
+              <button type="button" [class.active]="leaveLimit() === 10" (click)="setLeaveLimitValue(10)">10</button>
+              <button type="button" [class.active]="leaveLimit() === 20" (click)="setLeaveLimitValue(20)">20</button>
+              <button type="button" [class.active]="leaveLimit() === 50" (click)="setLeaveLimitValue(50)">50</button>
+              <button type="button" [class.active]="leaveLimit() === 100" (click)="setLeaveLimitValue(100)">100</button>
+            </div>
+            <span class="pager-label">Éléments par page</span>
+          </div>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(leavePage(), leaveLimit(), leaveTotal()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline" type="button" (click)="prevLeavePage()" [disabled]="leavePage() <= 1"><i class="bi bi-chevron-left"></i></button>
+              <button class="btn-outline" type="button" (click)="nextLeavePage()" [disabled]="leavePage() >= leavePageCount()"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="table-wrap">
         <table>
@@ -406,22 +501,24 @@
               <th>Dépôt</th>
               <th>Type</th>
               <th>Période</th>
+              <th>Commentaire</th>
               <th>Statut</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            @for (l of leaves(); track l._id) {
+            @for (l of visibleLeaves(); track l._id) {
               <tr>
-                <td>{{ formatUserName(l.user) }}</td>
-                <td>{{ depotLabel(l.user) }}</td>
-                <td>{{ l.type }}</td>
+                <td>{{ formatUserName(absenceTechnician(l)) }}</td>
+                <td>{{ depotLabel(absenceTechnician(l)) }}</td>
+                <td>{{ absenceTypeLabel(l.type) }}</td>
                 <td>{{ formatDate(l.startDate) }} → {{ formatDate(l.endDate) }}</td>
-                <td>{{ l.status }}</td>
+                <td>{{ l.comment || '—' }}</td>
+                <td>{{ absenceStatusLabel(l.status) }}</td>
                 <td class="actions-cell">
-                  @if (canApprove() && l.status === 'PENDING') {
-                    <button class="btn-primary btn-xs" (click)="decideLeave(l, 'APPROVED')">Approuver</button>
-                    <button class="btn-danger btn-xs" (click)="decideLeave(l, 'REJECTED')">Rejeter</button>
+                  @if (canApprove() && l.status === 'EN_ATTENTE') {
+                    <button class="btn-primary btn-xs" (click)="decideLeave(l, 'APPROUVE')">Approuver</button>
+                    <button class="btn-danger btn-xs" (click)="decideLeave(l, 'REFUSE')">Rejeter</button>
                   }
                 </td>
               </tr>

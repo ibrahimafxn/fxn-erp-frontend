@@ -16,6 +16,8 @@ import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
 
+type SortField = 'date' | 'technician' | 'depot' | 'amount';
+
 @Component({
   selector: 'app-technician-activity',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,6 +63,8 @@ export class TechnicianActivity {
   });
   readonly canPrevInterventions = computed(() => this.interventionPage() > 1);
   readonly canNextInterventions = computed(() => this.interventionPage() < this.interventionPageCount());
+  readonly sortField = signal<SortField>('date');
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
 
   readonly filterForm = this.fb.nonNullable.group({
     technicianId: this.fb.nonNullable.control(''),
@@ -83,6 +87,31 @@ export class TechnicianActivity {
   readonly bpuLoaded = signal(false);
   readonly employeesLoaded = signal(false);
   readonly selectedTechnicianId = signal('');
+  readonly sortedInterventions = computed(() => {
+    const items = [...this.interventions()];
+    const field = this.sortField();
+    const dir = this.sortDirection();
+    const factor = dir === 'asc' ? 1 : -1;
+    const byText = (value: string) => value.toLowerCase();
+    const compareText = (a: string, b: string) => byText(a).localeCompare(byText(b));
+    items.sort((a, b) => {
+      switch (field) {
+        case 'technician':
+          return factor * compareText(this.technicianName(a), this.technicianName(b));
+        case 'depot':
+          return factor * compareText(this.depotName(a), this.depotName(b));
+        case 'amount':
+          return factor * ((this.reportAmount(a) || 0) - (this.reportAmount(b) || 0));
+        case 'date':
+        default: {
+          const aTime = new Date(a.reportDate || 0).getTime();
+          const bTime = new Date(b.reportDate || 0).getTime();
+          return factor * (aTime - bTime);
+        }
+      }
+    });
+    return items;
+  });
 
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly managerDepotId = computed(() => {
@@ -262,6 +291,20 @@ export class TechnicianActivity {
     const depot = report.depot;
     if (!depot?.name) return '—';
     return formatDepotName(depot.name);
+  }
+
+  sortArrow(field: SortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortDirection() === 'asc' ? '▲' : '▼';
+  }
+
+  setSort(field: SortField): void {
+    if (this.sortField() === field) {
+      this.sortDirection.update((dir) => (dir === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    this.sortField.set(field);
+    this.sortDirection.set(field === 'date' || field === 'amount' ? 'desc' : 'asc');
   }
 
   prestationsSummary(report: TechnicianReport): Array<{ key: string; label: string; value: number }> {

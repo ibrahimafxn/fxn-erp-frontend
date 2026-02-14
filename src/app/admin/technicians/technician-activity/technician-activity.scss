@@ -111,6 +111,22 @@
   vertical-align: top;
 }
 
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sort-arrow {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
 .note {
   max-width: 220px;
   color: var(--fxn-text-muted);

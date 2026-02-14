@@ -54,6 +54,19 @@
       </div>
     </form>
 
+    <div class="kpi-row">
+      <div class="kpi-card kpi-ttc">
+        <span class="label">Total TTC</span>
+        <span class="value">{{ formatAmount(totalTtc()) }}</span>
+        <span class="hint">Basé sur les commandes filtrées.</span>
+      </div>
+      <div class="kpi-card kpi-tva">
+        <span class="label">Total TVA</span>
+        <span class="value">{{ formatAmount(totalTva()) }}</span>
+        <span class="hint">Basé sur les commandes filtrées.</span>
+      </div>
+    </div>
+
     @if (importLoading()) {
       <div class="state loading">Import PDF en cours…</div>
     } @else if (importError()) {

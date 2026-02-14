@@ -237,8 +237,18 @@ tbody tr:hover {
   background: rgba(90, 105, 130, 0.08);
 }
 
-.pager { display:flex; justify-content: space-between; gap:.75rem; flex-wrap: wrap; }
-.pager .page-size button { margin-right: .35rem; }
+.pager { display:flex; justify-content: space-between; align-items: center; gap:12px; }
+.pager-left,
+.pager-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pager .page-size {
+  display: inline-flex;
+  gap: .35rem;
+}
 .pager-label { color: var(--access-muted); font-size: .85rem; }
 
 @media (max-width: 1000px) {

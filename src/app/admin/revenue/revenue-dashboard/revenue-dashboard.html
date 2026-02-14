@@ -279,8 +279,8 @@
                 @if (item.updatedBy) { · {{ authorLabel(item.updatedBy) }} }
               </td>
               <td class="actions" data-label="Actions">
-                <button class="btn-outline edit" type="button" (click)="startEdit(item)"><i class="bi bi-pencil"></i> Modifier</button>
-                <button class="btn-outline delete" type="button" (click)="openDeleteModal(item)"><i class="fa-solid fa-trash"></i> Supprimer</button>
+                <button class="btn-outline edit" type="button" title="Modifier" (click)="startEdit(item)"><i class="bi bi-pencil"></i> Modifier</button>
+                <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal(item)"><i class="fa-solid fa-trash"></i> Supprimer</button>
               </td>
             </tr>
           }

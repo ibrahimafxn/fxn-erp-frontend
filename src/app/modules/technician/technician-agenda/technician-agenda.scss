@@ -119,6 +119,37 @@ textarea {
   border-color: rgba(16, 185, 129, 0.35);
 }
 
+.btn-success {
+  background: rgba(42, 164, 122, 0.2);
+  border: 1px solid rgba(42, 164, 122, 0.6);
+  color: #bff7dc;
+}
+
+.btn-success:hover {
+  background: rgba(42, 164, 122, 0.3);
+  border-color: rgba(42, 164, 122, 0.85);
+}
+
+.btn-success-outline {
+  border-color: rgba(42, 164, 122, 0.6);
+  color: #bff7dc;
+}
+
+.btn-success-outline:hover {
+  border-color: rgba(42, 164, 122, 0.85);
+  background: rgba(42, 164, 122, 0.12);
+}
+
+.btn-info-outline {
+  border-color: rgba(72, 136, 255, 0.6);
+  color: #c2d7ff;
+}
+
+.btn-info-outline:hover {
+  border-color: rgba(72, 136, 255, 0.9);
+  background: rgba(72, 136, 255, 0.15);
+}
+
 @media (max-width: 900px) {
   .form-card .request-form,
   .list-card .filters {

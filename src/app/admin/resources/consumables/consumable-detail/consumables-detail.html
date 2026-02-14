@@ -57,8 +57,8 @@
         </div>
         @if (!isDepotManager() && !isReadOnly()) {
           <div class="actions">
-            <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!consumable()"><i class="bi bi-pencil"></i> Modifier</button>
-            <button class="btn-outline delete" type="button" (click)="openDeleteModal()" [disabled]="deleting() || !consumable()">
+            <button class="btn-outline edit" type="button" title="Modifier" (click)="edit()" [disabled]="!consumable()"><i class="bi bi-pencil"></i> Modifier</button>
+            <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal()" [disabled]="deleting() || !consumable()">
               <i class="fa-solid fa-trash"></i> Supprimer
             </button>
           </div>
@@ -128,10 +128,6 @@
       }
 
       <article class="card history-card">
-        <div class="card-title-row">
-          <h2>Historique (entrées/sorties)</h2>
-        </div>
-
         @if (historyLoading()) {
           <div class="state loading">Chargement historique…</div>
         } @else if (historyError()) {
@@ -139,21 +135,74 @@
         } @else if (historyItems().length === 0) {
           <div class="state empty">Aucun historique.</div>
         } @else {
+          <div class="card pager-card">
+            <div class="pager pager-top">
+              <div class="pager-left">
+                <div class="page-size">
+                  <button type="button" [class.active]="historyLimit() === 10" (click)="setHistoryLimitValue(10)">10</button>
+                  <button type="button" [class.active]="historyLimit() === 20" (click)="setHistoryLimitValue(20)">20</button>
+                  <button type="button" [class.active]="historyLimit() === 50" (click)="setHistoryLimitValue(50)">50</button>
+                  <button type="button" [class.active]="historyLimit() === 100" (click)="setHistoryLimitValue(100)">100</button>
+                </div>
+                <span class="pager-label">Éléments par page</span>
+              </div>
+              <div class="pager-right">
+                <span class="pager-range">{{ pageRange(historyPage(), historyLimit(), historyTotal()) }}</span>
+                <div class="pager-nav">
+                  <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()"><i class="bi bi-chevron-left"></i></button>
+                  <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()"><i class="bi bi-chevron-right"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-title-row">
+            <h2>Historique (entrées/sorties)</h2>
+          </div>
+
           <div class="table">
             <table>
               <thead>
               <tr>
-                <th>Date</th>
-                <th>Action</th>
-                <th>Quantité</th>
-                <th>Auteur</th>
-                <th>Technicien</th>
-                <th>Dépôt</th>
-                <th>Note</th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleHistorySort('DATE')" [class.is-active]="isHistorySort('DATE')">
+                    Date <span class="sort-arrow">{{ historySortArrow('DATE') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleHistorySort('ACTION')" [class.is-active]="isHistorySort('ACTION')">
+                    Action <span class="sort-arrow">{{ historySortArrow('ACTION') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleHistorySort('QTY')" [class.is-active]="isHistorySort('QTY')">
+                    Quantité <span class="sort-arrow">{{ historySortArrow('QTY') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleHistorySort('AUTHOR')" [class.is-active]="isHistorySort('AUTHOR')">
+                    Auteur <span class="sort-arrow">{{ historySortArrow('AUTHOR') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleHistorySort('TECH')" [class.is-active]="isHistorySort('TECH')">
+                    Technicien <span class="sort-arrow">{{ historySortArrow('TECH') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleHistorySort('DEPOT')" [class.is-active]="isHistorySort('DEPOT')">
+                    Dépôt <span class="sort-arrow">{{ historySortArrow('DEPOT') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="toggleHistorySort('NOTE')" [class.is-active]="isHistorySort('NOTE')">
+                    Note <span class="sort-arrow">{{ historySortArrow('NOTE') }}</span>
+                  </button>
+                </th>
               </tr>
               </thead>
               <tbody>
-                @for (it of historyItems(); track it._id) {
+                @for (it of sortedHistoryItems(); track it._id) {
                   <tr>
                     <td>
                       @if (createdAtValue(it)) { {{ createdAtValue(it) | date:'short' }} } @else { — }
@@ -169,25 +218,6 @@
               </tbody>
             </table>
           </div>
-
-          <footer class="pager pager-fixed">
-            <div class="pager-left">
-              <div class="page-size">
-                <button type="button" [class.active]="historyLimit() === 10" (click)="setHistoryLimitValue(10)">10</button>
-                <button type="button" [class.active]="historyLimit() === 20" (click)="setHistoryLimitValue(20)">20</button>
-                <button type="button" [class.active]="historyLimit() === 50" (click)="setHistoryLimitValue(50)">50</button>
-                <button type="button" [class.active]="historyLimit() === 100" (click)="setHistoryLimitValue(100)">100</button>
-              </div>
-              <span class="pager-label">Éléments par page</span>
-            </div>
-            <div class="pager-right">
-              <span class="pager-range">{{ pageRange(historyPage(), historyLimit(), historyTotal()) }}</span>
-              <div class="pager-nav">
-                <button class="btn-outline" type="button" (click)="prevHistory()" [disabled]="!canPrevHistory()"><i class="bi bi-chevron-left"></i></button>
-                <button class="btn-outline" type="button" (click)="nextHistory()" [disabled]="!canNextHistory()"><i class="bi bi-chevron-right"></i></button>
-              </div>
-            </div>
-          </footer>
         }
       </article>
     </section>

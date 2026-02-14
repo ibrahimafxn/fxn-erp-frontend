@@ -67,6 +67,12 @@ export class OrdersPage {
     if (!preview) return 0;
     return preview.lines.reduce((sum, line) => sum + Number(line.totalTva ?? 0), 0);
   });
+  readonly totalTva = computed(() =>
+    this.items().reduce((sum, order) => sum + this.tvaAmount(order), 0)
+  );
+  readonly totalTtc = computed(() =>
+    this.items().reduce((sum, order) => sum + this.displayAmount(order), 0)
+  );
 
   readonly pageCount = computed(() => {
     const t = this.total();

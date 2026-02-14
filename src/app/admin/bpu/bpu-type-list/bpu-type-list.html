@@ -43,12 +43,13 @@
               </td>
               <td class="actions" data-label="Actions">
                 <div class="actions-group">
-                  <button class="btn-outline edit" type="button" (click)="edit(item)" [disabled]="loading() || deletingId() !== null">
+                  <button class="btn-outline edit" type="button" title="Modifier" (click)="edit(item)" [disabled]="loading() || deletingId() !== null">
                     <i class="bi bi-pencil"></i> Modifier
                   </button>
                   <button
                     class="btn-outline delete"
                     type="button"
+                    title="Supprimer"
                     [disabled]="loading() || deletingId() !== null"
                     (click)="openDeleteModal(item)"
                   >
