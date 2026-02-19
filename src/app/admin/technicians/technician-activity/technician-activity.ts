@@ -51,6 +51,15 @@ export class TechnicianActivity {
   readonly loadingBpu = signal(false);
   readonly loadingEmployees = signal(false);
   readonly error = signal<string | null>(null);
+  readonly initialLoading = computed(() =>
+    this.reservationsLoading()
+    || this.interventionsLoading()
+    || this.summaryLoading()
+    || this.loadingUsers()
+    || this.loadingDepots()
+    || this.loadingBpu()
+    || this.loadingEmployees()
+  );
 
   readonly interventionPage = signal(1);
   readonly interventionLimit = signal(20);

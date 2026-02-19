@@ -470,6 +470,24 @@ thead th {
   background: rgba(12, 18, 30, 0.8);
 }
 
+.sort-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.sort-indicator {
+  font-size: .75rem;
+  opacity: .6;
+}
+
 tbody td {
   padding: .55rem .6rem;
   border-bottom: 1px solid var(--fxn-border);

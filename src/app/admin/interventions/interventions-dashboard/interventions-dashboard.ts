@@ -365,6 +365,7 @@ export class InterventionsDashboard {
   });
 
   readonly hasData = computed(() => this.summaryItems().length > 0 || Boolean(this.latestImport()));
+  readonly initialLoading = computed(() => this.loading() && !this.error());
   readonly canEditRates = computed(() => this.auth.hasRole([Role.ADMIN, Role.DIRIGEANT]));
   readonly pageCount = computed(() => {
     const t = this.totalItems();

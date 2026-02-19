@@ -4,6 +4,17 @@
   } @else if (rateError()) {
     <div class="toast toast-error" role="status">{{ rateError() }}</div>
   }
+  @if (initialLoading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des interventions…</strong>
+          <span>Récupération des données en cours.</span>
+        </div>
+      </div>
+    </div>
+  }
   @if (!viewCleared()) {
 
 

@@ -1,12 +1,20 @@
 import {TestBed} from '@angular/core/testing';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {RouterTestingModule} from '@angular/router/testing';
+import {signal} from '@angular/core';
 import {App} from './app';
+import {AuthService} from './core/services/auth.service';
+import {Role} from './core/models/roles.model';
 
 describe('App', () => {
   beforeEach(async () => {
+    const mockAuth = {
+      user$: signal({ _id: '1', firstName: 'Test', email: 'test@test.local', role: Role.ADMIN }),
+      getUserRole: () => Role.ADMIN
+    };
     await TestBed.configureTestingModule({
       imports: [App, HttpClientTestingModule, RouterTestingModule],
+      providers: [{ provide: AuthService, useValue: mockAuth }]
     }).compileComponents();
   });
 

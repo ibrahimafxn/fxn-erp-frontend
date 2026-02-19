@@ -5,6 +5,9 @@
   padding: 1.25rem;
   display: grid;
   gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* -------------------------------------------------
@@ -52,6 +55,9 @@
   border: 1px solid rgba(255, 255, 255, .08);
   border-radius: 1rem;
   padding: 1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* -------------------------------------------------
@@ -154,6 +160,9 @@
 .table {
   padding: 0;
   overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 
   table {
     width: 100%;
@@ -168,6 +177,24 @@
     padding: .85rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, .08);
     white-space: nowrap;
+  }
+
+  .sort-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+  }
+
+  .sort-indicator {
+    font-size: .75rem;
+    opacity: .6;
   }
 
   tbody td {
@@ -330,6 +357,10 @@
 }
 
 @media (max-width: 700px) {
+  .vehicles-list {
+    padding: 1rem;
+  }
+
   .vehicle-card .vehicle-grid {
     grid-template-columns: 1fr;
   }

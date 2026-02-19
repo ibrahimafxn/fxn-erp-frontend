@@ -117,11 +117,31 @@
       <table>
           <thead>
           <tr>
-            <th>Véhicule</th>
-            <th>Plaque</th>
-            <th>État</th>
-            <th>Assignation</th>
-            <th>Création</th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('title')">
+                Véhicule <span class="sort-indicator">{{ sortIndicator('title') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('plate')">
+                Plaque <span class="sort-indicator">{{ sortIndicator('plate') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('state')">
+                État <span class="sort-indicator">{{ sortIndicator('state') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('assigned')">
+                Assignation <span class="sort-indicator">{{ sortIndicator('assigned') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('createdAt')">
+                Création <span class="sort-indicator">{{ sortIndicator('createdAt') }}</span>
+              </button>
+            </th>
             @if (canDeclareBreakdown()) {
               <th class="actions">Actions</th>
             }
@@ -129,7 +149,7 @@
           </thead>
 
           <tbody>
-            @for (v of items(); track trackById($index, v)) {
+            @for (v of sortedItems(); track trackById($index, v)) {
               <tr class="row" (click)="openDetail(v)">
                 <td class="main" data-label="Véhicule">
                   <div class="name">{{ title(v) }}</div>

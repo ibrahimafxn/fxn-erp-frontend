@@ -64,13 +64,13 @@
         <tbody>
           @for (d of items(); track trackById($index, d)) {
             <tr class="row" (click)="openDetail(d)">
-              <td class="main">
+              <td class="main" data-label="Dépôt">
                 <div class="name">{{ depotName(d) }}</div>
               </td>
 
-              <td>{{ d.city || '—' }}</td>
-              <td>{{ d.phone || '—' }}</td>
-              <td>
+              <td data-label="Ville">{{ d.city || '—' }}</td>
+              <td data-label="Téléphone">{{ d.phone || '—' }}</td>
+              <td data-label="Gestionnaire">
                 <div class="manager-cell">
                   <div class="manager-avatar" [attr.aria-label]="managerLabel(d)">
                     @if (managerAvatarSrc(d)) {
@@ -83,22 +83,24 @@
                 </div>
               </td>
 
-              <td>
+              <td data-label="Création">
                 @if (createdAtValue(d)) { {{ createdAtValue(d) | date:'short' }} } @else { — }
               </td>
 
-              <td class="actions" (click)="$event.stopPropagation()">
+              <td class="actions" data-label="Actions" (click)="$event.stopPropagation()">
                 <div class="actions-group">
-                  <button class="btn-outline edit" type="button" title="Modifier" (click)="edit(d)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline edit" type="button" title="Modifier" aria-label="Modifier" (click)="edit(d)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
 
                   <button
                     class="btn-outline delete"
                     type="button"
                     title="Supprimer"
+                    aria-label="Supprimer"
                     [disabled]="deletingId() === d._id"
                     (click)="openDeleteModal(d)"
-                  ><i class="fa-solid fa-trash"></i> 
-                    @if (deletingId() === d._id) { Suppression… } @else { Supprimer }
+                  ><i class="fa-solid fa-trash"></i>
                   </button>
                 </div>
               </td>

@@ -1,4 +1,15 @@
 <section class="users-list">
+  @if (initialLoading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des utilisateurs…</strong>
+          <span>Récupération des données en cours.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header">
     <div>
       <h1>Utilisateurs</h1>
