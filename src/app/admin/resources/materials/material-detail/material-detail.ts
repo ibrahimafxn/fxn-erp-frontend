@@ -48,6 +48,45 @@ export class MaterialDetail extends DetailBack {
   readonly historyLimit = signal(10);
   readonly pageRange = formatPageRange;
   readonly historyItems = computed<AttributionHistoryItem[]>(() => this.history()?.items ?? []);
+  readonly historySort = signal<'DATE_DESC' | 'DATE_ASC' | 'ACTION_ASC' | 'QTY_ASC' | 'AUTHOR_ASC' | 'TECH_ASC' | 'DEPOT_ASC' | 'NOTE_ASC'>('DATE_DESC');
+  readonly sortedHistoryItems = computed<AttributionHistoryItem[]>(() => {
+    const items = [...this.historyItems()];
+    const sort = this.historySort();
+    const byText = (value: string) => this.normalizeSort(value);
+    const compareText = (a: string, b: string) => byText(a).localeCompare(byText(b), 'fr');
+    const dateVal = (it: AttributionHistoryItem) => {
+      const raw = this.createdAtValue(it);
+      return raw ? new Date(raw).getTime() : 0;
+    };
+    const qtyVal = (it: AttributionHistoryItem) => Number(it?.attribution?.quantity ?? 1);
+    const actionVal = (it: AttributionHistoryItem) => this.actionLabel(it?.attribution?.action);
+    const authorVal = (it: AttributionHistoryItem) => this.authorLabel(it);
+    const techVal = (it: AttributionHistoryItem) => this.toUserLabel(it);
+    const depotVal = (it: AttributionHistoryItem) => this.depotLabel(it);
+    const noteVal = (it: AttributionHistoryItem) => this.noteLabel(it);
+    items.sort((a, b) => {
+      switch (sort) {
+        case 'DATE_ASC':
+          return dateVal(a) - dateVal(b);
+        case 'ACTION_ASC':
+          return compareText(actionVal(a), actionVal(b));
+        case 'QTY_ASC':
+          return qtyVal(a) - qtyVal(b);
+        case 'AUTHOR_ASC':
+          return compareText(authorVal(a), authorVal(b));
+        case 'TECH_ASC':
+          return compareText(techVal(a), techVal(b));
+        case 'DEPOT_ASC':
+          return compareText(depotVal(a), depotVal(b));
+        case 'NOTE_ASC':
+          return compareText(noteVal(a), noteVal(b));
+        case 'DATE_DESC':
+        default:
+          return dateVal(b) - dateVal(a);
+      }
+    });
+    return items;
+  });
   readonly historyTotal = computed(() => this.history()?.total ?? 0);
   readonly historyPageCount = computed(() => {
     const t = this.historyTotal();
@@ -242,6 +281,29 @@ export class MaterialDetail extends DetailBack {
     if (!Number.isFinite(value) || value <= 0) return;
     this.historyLimit.set(value);
     this.loadHistory(true);
+  }
+
+  toggleHistorySort(field: 'DATE' | 'ACTION' | 'QTY' | 'AUTHOR' | 'TECH' | 'DEPOT' | 'NOTE'): void {
+    const current = this.historySort();
+    const next =
+      current === `${field}_ASC`
+        ? 'DATE_DESC'
+        : `${field}_ASC`;
+    this.historySort.set(next as typeof current);
+  }
+
+  isHistorySort(field: 'DATE' | 'ACTION' | 'QTY' | 'AUTHOR' | 'TECH' | 'DEPOT' | 'NOTE'): boolean {
+    return this.historySort().startsWith(field);
+  }
+
+  historySortArrow(field: 'DATE' | 'ACTION' | 'QTY' | 'AUTHOR' | 'TECH' | 'DEPOT' | 'NOTE'): string {
+    const current = this.historySort();
+    if (!current.startsWith(field)) return '';
+    return current.endsWith('ASC') ? '▲' : '▼';
+  }
+
+  private normalizeSort(value?: string | null): string {
+    return String(value ?? '').trim().toLowerCase();
   }
 
   actionLabel(action?: string): string {

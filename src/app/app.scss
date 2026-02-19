@@ -4,3 +4,39 @@ main.app-content {
   width: 100%;
   overflow-x: clip;
 }
+
+.app-footer {
+  margin-top: 2rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--fxn-border);
+  background: var(--fxn-surface);
+  color: var(--fxn-text-muted);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.app-footer .footer-left {
+  font-weight: 600;
+  color: var(--fxn-text);
+  justify-self: start;
+}
+
+.app-footer .footer-center {
+  justify-self: center;
+  font-weight: 600;
+  color: var(--fxn-text-muted);
+}
+
+.app-footer .footer-right {
+  justify-self: end;
+}
+
+@media (max-width: 700px) {
+  .app-footer {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+}

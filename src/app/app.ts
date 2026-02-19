@@ -4,6 +4,8 @@ import {RouterOutlet} from '@angular/router';
 import {AppHeader} from './layout/app-header/app-header';
 import {AuthService} from './core/services/auth.service';
 import {Role} from './core/models/roles.model';
+import { environment } from './environments/environment';
+import packageJson from '../../package.json';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +21,8 @@ export class App implements AfterViewInit, OnDestroy {
 
   protected readonly title = signal('fxn-erp-frontend');
   readonly showHeader = computed(() => Boolean(this.auth.user$()));
+  readonly currentYear = new Date().getFullYear();
+  readonly appVersion = packageJson.version ?? '—';
 
   private readonly themeEffect = effect(() => {
     const role = this.auth.getUserRole();

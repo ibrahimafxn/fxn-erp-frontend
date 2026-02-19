@@ -66,6 +66,137 @@
     </div>
   </header>
 
+  <section class="prestations-block" *ngIf="stats() as s">
+    <div class="section-header">
+      <h2>Prestations</h2>
+      <p>Visualisation claire des volumes hebdomadaire et mensuel.</p>
+    </div>
+
+    <div class="prestations-grid">
+      <article class="prestations-chart">
+        <div class="prestations-head">
+          <div>
+            <div class="prestations-title">Répartition des prestations</div>
+            <div class="prestations-subtitle">
+              @if (prestationsTypesRange(); as r) {
+                Du {{ r.from }} au {{ r.to }}
+              } @else {
+                Derniers 30 jours
+              }
+            </div>
+          </div>
+          @if (prestationsTypes().length) {
+            <div class="prestations-pill">Total {{ formatCount(prestationsTypesTotal()) }}</div>
+          }
+        </div>
+        @if (prestationsTypes().length) {
+          <div class="prestations-donut">
+            <div class="donut-chart" role="img" aria-label="Répartition des prestations par type">
+              <svg class="donut-svg" viewBox="0 0 220 220" aria-hidden="true">
+                <circle class="donut-ring" cx="110" cy="110" r="90"></circle>
+                @for (item of prestationsDonut().segments; track item.key) {
+                  <circle
+                    class="donut-segment"
+                    cx="110"
+                    cy="110"
+                    r="90"
+                    [attr.stroke]="item.color"
+                    [attr.stroke-dasharray]="item.dashArray"
+                    [attr.stroke-dashoffset]="item.dashOffset"
+                  >
+                    <title>{{ item.label }} : {{ formatCount(item.value) }} ({{ formatPercent(item.share) }})</title>
+                  </circle>
+                }
+              </svg>
+              <div class="donut-hole">
+                <div class="donut-total">{{ formatCount(prestationsDonut().total) }}</div>
+                <div class="donut-label">Total</div>
+              </div>
+            </div>
+            <div class="donut-legend">
+              @for (item of prestationsDonut().segments; track item.key) {
+                <div
+                  class="legend-item"
+                  [style.--legend-color]="item.color"
+                  [attr.title]="item.label + ' : ' + formatCount(item.value)"
+                >
+                  <span class="legend-swatch" [style.background]="item.color"></span>
+                  <span class="legend-label">{{ item.label }}</span>
+                  <span class="legend-value">{{ formatCount(item.value) }}</span>
+                  <span class="legend-share">{{ formatPercent(item.share) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <div class="types-empty">Aucune prestation pour la période.</div>
+        }
+      </article>
+
+      <div class="prestations-side">
+        <article class="prestations-summary">
+          <div class="summary-item">
+            <span class="label">Cette semaine</span>
+            <span class="value">{{ formatCount(s.prestationsWeek ?? 0) }}</span>
+            <span class="hint">Prestations réalisées</span>
+            @if (prestationsTypesMini().length) {
+              <div class="mini-kpis">
+                @for (item of prestationsTypesMini(); track item.key) {
+                  <div
+                    class="mini-kpi"
+                    [style.--mini-color]="item.color"
+                    [attr.title]="item.label + ' : ' + formatCount(item.value)"
+                  >
+                    <span class="mini-dot" [style.background]="item.color"></span>
+                    <span class="mini-label">{{ item.label }}</span>
+                    <span class="mini-value">{{ formatCount(item.value) }}</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          <div class="summary-item accent">
+            <span class="label">Ce mois-ci</span>
+            <span class="value">{{ formatCount(s.prestationsMonth ?? 0) }}</span>
+            <span class="hint">Total mensuel</span>
+          </div>
+        </article>
+
+        <article class="prestations-trend">
+          <div class="trend-head">
+            <div>
+              <div class="trend-title">Tendance 7 jours</div>
+              <div class="trend-subtitle">Derniers jours</div>
+            </div>
+            @if (prestationsTrend().length) {
+              <div class="trend-total">Total {{ formatCount(prestationsTrendTotal()) }}</div>
+            }
+          </div>
+
+          @if (prestationsTrend().length) {
+            <div class="trend-canvas">
+              @for (item of prestationsTrend(); track item.key) {
+                <div
+                  class="trend-bar"
+                  [class.empty]="!item.value"
+                  [style.--bar-height]="item.percent"
+                  [attr.title]="item.tooltip + ' : ' + formatCount(item.value)"
+                >
+                  <div class="trend-value">{{ formatCount(item.value) }}</div>
+                  <div class="trend-fill"></div>
+                  <div class="trend-label">{{ item.label }}</div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="trend-empty">Données à connecter</div>
+          }
+        </article>
+      </div>
+    </div>
+
+  </section>
+
   <section class="ops-block">
     <div class="section-header">
       <h2>Opérations</h2>
@@ -246,8 +377,5 @@
         </tbody>
       </table>
     </div>
-  </section>
-  <section class="empty-state" *ngIf="!recentHistory().length && !loading()">
-    <p>Aucun mouvement récent. Lance un premier mouvement pour alimenter le journal.</p>
   </section>
 </section>

@@ -184,19 +184,72 @@ th {
   color: var(--fxn-text-muted);
 }
 
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.sort-button .sort-arrow {
+  min-width: 0.75rem;
+  text-align: center;
+  font-size: 0.7rem;
+  opacity: 0.55;
+}
+
+.sort-button:hover,
+.sort-button.is-active {
+  color: var(--fxn-text);
+}
+
+.sort-button.is-active .sort-arrow {
+  opacity: 0.95;
+  color: rgba(147, 197, 253, 0.9);
+}
+
 td.note {
   max-width: 320px;
   color: var(--fxn-text-muted);
 }
 
-.pager {
-  display: flex;
-  justify-content: flex-end;
-  gap: .5rem;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-top: .75rem;
+.pager-card {
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-glass);
 }
+
+.history-pager-card {
+  margin-bottom: .75rem;
+}
+
+.pager-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.pager-top .pager-left,
+.pager-top .pager-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pager .page-size button {
+  margin-right: .35rem;
+}
+
 
 .state {
   padding: .9rem 1rem;

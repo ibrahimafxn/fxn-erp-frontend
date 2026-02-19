@@ -1,6 +1,6 @@
 // dashboard.ts
 
-import { Component, computed, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import {CommonModule, DatePipe} from '@angular/common';
 import {Router, RouterModule} from '@angular/router';
 import {AdminService} from '../../core/services/admin.service';
@@ -20,6 +20,28 @@ export class Dashboard implements OnInit {
   readonly adminService = inject(AdminService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private readonly numberFormat = new Intl.NumberFormat('fr-FR');
+  private readonly donutRadius = 90;
+  private readonly donutCircumference = 2 * Math.PI * this.donutRadius;
+  private readonly donutPalette = [
+    '#6BA4FF',
+    '#2BD4A8',
+    '#8B5CF6',
+    '#F59E0B',
+    '#38BDF8',
+    '#F97316',
+    '#22C55E',
+    '#E879F9',
+    '#94A3B8',
+    '#34D399',
+    '#60A5FA',
+    '#F43F5E'
+  ];
+
+  readonly prestationsTrend = signal<{ key: string; label: string; tooltip: string; value: number; percent: number }[]>([]);
+  readonly prestationsTypes = signal<{ key: string; label: string; value: number; percent: number; color: string }[]>([]);
+  readonly prestationsTypesWeek = signal<{ key: string; label: string; value: number; percent: number; color: string }[]>([]);
+  readonly prestationsTypesRange = signal<{ from: string; to: string } | null>(null);
 
   // On réexpose les signals du service pour les templates
   readonly stats = this.adminService.stats;       // Signal<DashboardStats | null>
@@ -33,6 +55,73 @@ export class Dashboard implements OnInit {
     return list.slice(0, 10);
   });
 
+  readonly prestationsSeries = computed(() => {
+    const stats = this.stats();
+    const week = Number(stats?.prestationsWeek ?? 0);
+    const month = Number(stats?.prestationsMonth ?? 0);
+    const max = Math.max(week, month, 1);
+    return [
+      {
+        key: 'week',
+        label: 'Semaine',
+        value: week,
+        percent: Math.round((week / max) * 100)
+      },
+      {
+        key: 'month',
+        label: 'Mois',
+        value: month,
+        percent: Math.round((month / max) * 100)
+      }
+    ];
+  });
+
+  readonly prestationsDelta = computed(() => {
+    const stats = this.stats();
+    const week = Number(stats?.prestationsWeek ?? 0);
+    const month = Number(stats?.prestationsMonth ?? 0);
+    if (!month) return null;
+    return Math.round((week / month) * 100);
+  });
+
+  readonly prestationsTrendTotal = computed(() =>
+    this.prestationsTrend().reduce((sum, item) => sum + item.value, 0)
+  );
+
+  readonly prestationsTypesTotal = computed(() =>
+    this.prestationsTypes().reduce((sum, item) => sum + item.value, 0)
+  );
+  readonly prestationsTypesMini = computed(() =>
+    this.prestationsTypesWeek().slice(0, 4)
+  );
+  readonly prestationsDonut = computed(() => {
+    const items = this.prestationsTypes();
+    const total = items.reduce((sum, item) => sum + item.value, 0);
+    if (!items.length || total <= 0) {
+      return { total: 0, segments: [], gradient: 'conic-gradient(#1f2a3d 0 100%)' };
+    }
+    let acc = 0;
+    const segments = items.map((item) => {
+      const share = (item.value / total) * 100;
+      const start = acc;
+      acc += share;
+      const length = (share / 100) * this.donutCircumference;
+      const dashArray = `${length} ${this.donutCircumference - length}`;
+      const dashOffset = this.donutCircumference * (1 - start / 100);
+      return { ...item, share, start, end: acc };
+    });
+    const enrichedSegments = segments.map((seg) => {
+      const length = (seg.share / 100) * this.donutCircumference;
+      const dashArray = `${length} ${this.donutCircumference - length}`;
+      const dashOffset = this.donutCircumference * (1 - seg.start / 100);
+      return { ...seg, dashArray, dashOffset };
+    });
+    const gradient = `conic-gradient(${segments
+      .map((seg) => `${seg.color} ${seg.start.toFixed(2)}% ${seg.end.toFixed(2)}%`)
+      .join(', ')})`;
+    return { total, segments: enrichedSegments, gradient };
+  });
+
   readonly isDirigeant = computed(() => this.auth.getUserRole() === Role.DIRIGEANT);
   readonly canManageAccess = computed(() => {
     const role = this.auth.getUserRole();
@@ -43,6 +132,39 @@ export class Dashboard implements OnInit {
   ngOnInit(): void {
     // Charge les stats du dashboard au chargement de la page
     this.adminService.loadDashboardStats();
+
+    this.adminService.getWeeklyPrestationsTrend(7).subscribe({
+      next: (res) => {
+        const days = res?.days ?? [];
+        const rangeEnd = res?.range?.to;
+        this.prestationsTrend.set(this.mapTrendDays(days, 7, rangeEnd));
+      },
+      error: () => {
+        this.prestationsTrend.set([]);
+      }
+    });
+
+    this.adminService.getPrestationsTypesSummary(30).subscribe({
+      next: (res) => {
+        const items = res?.items ?? [];
+        this.prestationsTypesRange.set(res?.range ?? null);
+        this.prestationsTypes.set(this.mapTypesSummary(items));
+      },
+      error: () => {
+        this.prestationsTypes.set([]);
+        this.prestationsTypesRange.set(null);
+      }
+    });
+
+    this.adminService.getPrestationsTypesSummary(7).subscribe({
+      next: (res) => {
+        const items = res?.items ?? [];
+        this.prestationsTypesWeek.set(this.mapTypesSummary(items));
+      },
+      error: () => {
+        this.prestationsTypesWeek.set([]);
+      }
+    });
 
     // Charge l'historique global (tu peux rajouter des filtres plus tard)
     this.adminService.refreshHistory({}, true).subscribe({
@@ -127,5 +249,115 @@ export class Dashboard implements OnInit {
 
   trackHistory(index: number, item: HistoryItem): string {
     return (item as any).id || `${index}`;
+  }
+
+  formatCount(value: number | null | undefined): string {
+    const safeValue = Math.max(0, Number(value ?? 0));
+    return this.numberFormat.format(safeValue);
+  }
+
+  formatPercent(value: number | null | undefined): string {
+    const safeValue = Number.isFinite(value as number) ? Number(value) : 0;
+    return `${safeValue.toFixed(1).replace('.', ',')}%`;
+  }
+
+  private mapTrendDays(days: { date: string; count: number }[], span = 7, rangeEnd?: string) {
+    const normalizedSpan = Math.max(1, Math.min(30, Math.floor(span)));
+    const countsByDate = new Map<string, number>();
+    for (const item of days) {
+      const key = this.toLocalDateKey(this.parseLocalDate(item.date));
+      countsByDate.set(key, Number(item.count ?? 0));
+    }
+
+    const dates: string[] = [];
+    const endDate = rangeEnd ? this.parseLocalDate(rangeEnd) : new Date();
+    for (let offset = normalizedSpan - 1; offset >= 0; offset -= 1) {
+      const date = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() - offset);
+      dates.push(this.toLocalDateKey(date));
+    }
+
+    const values = dates.map(dateKey => countsByDate.get(dateKey) ?? 0);
+    const max = Math.max(...values, 1);
+
+    return dates.map((dateKey, index) => {
+      const date = new Date(dateKey);
+      const label = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+      const tooltip = date.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'short' });
+      const value = values[index] ?? 0;
+      return {
+        key: dateKey,
+        label,
+        tooltip,
+        value,
+        percent: Math.round((value / max) * 100)
+      };
+    });
+  }
+
+  private toLocalDateKey(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private mapTypesSummary(items: { key: string; count: number }[]) {
+    const ordered = items
+      .filter(item => {
+        if (!item.key) return false;
+        const key = item.key.toLowerCase();
+        const normalized = key.replace(/[_\s-]/g, '');
+        if (normalized.startsWith('cablepav')) return false;
+        if (normalized === 'clem') return false;
+        return key !== 'autre' && key !== 'other';
+      })
+      .sort((a, b) => b.count - a.count);
+    const max = Math.max(...ordered.map(item => item.count), 1);
+    return ordered.map((item, index) => ({
+      key: item.key,
+      label: this.formatTypeLabel(item.key),
+      value: item.count,
+      percent: Math.round((item.count / max) * 100),
+      color: this.donutPalette[index % this.donutPalette.length]
+    }));
+  }
+
+  private formatTypeLabel(key: string): string {
+    const map: Record<string, string> = {
+      racProS: 'RAC PRO S',
+      racProC: 'RAC PRO C',
+      racPavillon: 'RAC PAV',
+      racImmeuble: 'RAC IMMEUBLE',
+      racF8: 'RAC IMMEUBLE',
+      refrac: 'REFRAC',
+      reconnexion: 'RECO',
+      clem: 'CLEM',
+      prestaCompl: 'PRESTA COMPL',
+      deprise: 'DEPRISE',
+      demo: 'DEMO',
+      sav: 'SAV',
+      savExp: 'SAV EXP',
+      refcDgr: 'REFC DGR',
+      racAutre: 'RAC AUTRE',
+      cablePav1: 'CABLE PAV 1',
+      cablePav2: 'CABLE PAV 2',
+      cablePav3: 'CABLE PAV 3',
+      cablePav4: 'CABLE PAV 4',
+      cablePavOther: 'CABLE PAV SL'
+    };
+
+    if (map[key]) return map[key];
+    return key.replace(/_/g, ' ').toUpperCase();
+  }
+
+  private parseLocalDate(value: string | undefined): Date {
+    if (!value) return new Date();
+    const parts = value.split('-').map(Number);
+    if (parts.length === 3 && parts.every(Number.isFinite)) {
+      const [year, month, day] = parts;
+      return new Date(year, month - 1, day);
+    }
+    const fallback = new Date(value);
+    return Number.isNaN(fallback.getTime()) ? new Date() : fallback;
   }
 }

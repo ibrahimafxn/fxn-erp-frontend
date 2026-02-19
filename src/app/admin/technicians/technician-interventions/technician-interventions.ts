@@ -139,6 +139,7 @@ export class TechnicianInterventions {
   readonly limit = signal(20);
   readonly detailOpen = signal(false);
   readonly selectedDetail = signal<InterventionItem | null>(null);
+  readonly initialLoading = signal(true);
 
   private readonly detailFields: InterventionDetailField[] = [
     { key: '_id', label: 'ID' },
@@ -316,13 +317,16 @@ export class TechnicianInterventions {
         this.filterLoading.set(false);
         if (res?.success) {
           this.filters.set(this.ensureCablePavTypes(res.data));
+          this.markInitialLoadComplete();
           return;
         }
         this.filtersError.set('Impossible de charger les filtres des interventions.');
+        this.markInitialLoadComplete();
       },
       error: (err) => {
         this.filterLoading.set(false);
         this.filtersError.set(this.apiError(err, 'Impossible de charger les filtres des interventions.'));
+        this.markInitialLoadComplete();
       }
     });
   }
@@ -395,10 +399,12 @@ export class TechnicianInterventions {
               this.total.set(total);
               this.statsDataset.set(fullStatsItems);
               this.tableLoading.set(false);
+              this.markInitialLoadComplete();
             },
             error: (err) => {
               this.tableLoading.set(false);
               this.tableError.set(this.apiError(err, 'Impossible de charger les interventions.'));
+              this.markInitialLoadComplete();
             }
           });
           return;
@@ -410,10 +416,12 @@ export class TechnicianInterventions {
         this.total.set(total);
         this.updateStatsDataset(statsSource, total, pagedQuery);
         this.tableLoading.set(false);
+        this.markInitialLoadComplete();
       },
       error: (err) => {
         this.tableLoading.set(false);
         this.tableError.set(this.apiError(err, 'Impossible de charger les interventions.'));
+        this.markInitialLoadComplete();
       }
     });
   }
@@ -426,16 +434,26 @@ export class TechnicianInterventions {
         if (!res?.success) {
           this.summaryTotals.set(null);
           this.summaryLoading.set(false);
+          this.markInitialLoadComplete();
           return;
         }
         this.summaryTotals.set(res.data.totals || null);
         this.summaryLoading.set(false);
+        this.markInitialLoadComplete();
       },
       error: () => {
         this.summaryTotals.set(null);
         this.summaryLoading.set(false);
+        this.markInitialLoadComplete();
       }
     });
+  }
+
+  private markInitialLoadComplete(): void {
+    if (!this.initialLoading()) return;
+    if (!this.filterLoading() && !this.summaryLoading() && !this.tableLoading()) {
+      this.initialLoading.set(false);
+    }
   }
 
   private buildQuery(options?: { includePagination?: boolean }): InterventionSummaryQuery {

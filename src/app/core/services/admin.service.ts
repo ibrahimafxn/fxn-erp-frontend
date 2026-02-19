@@ -27,6 +27,17 @@ export interface DashboardStats {
   // autres stats si nécessaire
 }
 
+export interface WeeklyPrestationsTrend {
+  days: { date: string; count: number }[];
+  total?: number;
+  range?: { from: string; to: string };
+}
+
+export interface PrestationsTypesSummary {
+  items: { key: string; count: number }[];
+  total?: number;
+  range?: { from: string; to: string };
+}
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private baseUrl = `${environment.apiBaseUrl}/admin`;
@@ -58,6 +69,8 @@ export class AdminService {
   private _depotsRequest$?: Observable<Depot[]>;
   private _resourcesRequest$?: Observable<Resource[]>;
   private _historyRequest$?: Observable<HistoryItem[]>;
+  private _weeklyPrestationsTrendRequest$?: Observable<WeeklyPrestationsTrend>;
+  private _prestationsTypesSummaryRequests = new Map<string, Observable<PrestationsTypesSummary>>();
 
   constructor(private http: HttpClient) {}
 
@@ -86,6 +99,36 @@ export class AdminService {
       }),
       tap(() => this._loading.set(false))
     ).subscribe();
+  }
+
+  getWeeklyPrestationsTrend(days = 7, force = false): Observable<WeeklyPrestationsTrend> {
+    if (!force && this._weeklyPrestationsTrendRequest$) return this._weeklyPrestationsTrendRequest$;
+    const params = new HttpParams().set('days', String(days));
+    const req$ = this.http.get<WeeklyPrestationsTrend>(
+      `${environment.apiBaseUrl}/admin/prestations/weekly-trend`,
+      { params }
+    ).pipe(
+      catchError(err => this.handleError(err)),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+    this._weeklyPrestationsTrendRequest$ = req$;
+    return req$;
+  }
+
+  getPrestationsTypesSummary(days = 30, force = false): Observable<PrestationsTypesSummary> {
+    const key = `days:${days}`;
+    const cached = this._prestationsTypesSummaryRequests.get(key);
+    if (!force && cached) return cached;
+    const params = new HttpParams().set('days', String(days));
+    const req$ = this.http.get<PrestationsTypesSummary>(
+      `${environment.apiBaseUrl}/admin/prestations/types-summary`,
+      { params }
+    ).pipe(
+      catchError(err => this.handleError(err)),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+    this._prestationsTypesSummaryRequests.set(key, req$);
+    return req$;
   }
 
   // -----------------------------
