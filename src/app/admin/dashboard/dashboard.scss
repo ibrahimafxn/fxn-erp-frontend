@@ -889,6 +889,37 @@
     color: var(--dash-muted);
   }
 
+  .trend-types {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.55rem;
+    font-size: 0.68rem;
+    color: var(--dash-muted);
+  }
+
+  .trend-types-label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    color: rgba(226, 232, 240, 0.82);
+  }
+
+  .trend-types-list {
+    font-weight: 600;
+    color: rgba(226, 232, 240, 0.95);
+  }
+
+  .trend-types-more {
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.2);
+    color: rgba(226, 232, 240, 0.85);
+    font-size: 0.62rem;
+    letter-spacing: 0.02em;
+  }
+
   .trend-total {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -919,7 +950,7 @@
     align-content: end;
     gap: 0.3rem;
     height: 100%;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto 1fr auto auto;
   }
 
   .trend-value {
@@ -934,19 +965,79 @@
     width: 100%;
     align-self: end;
     height: max(10px, calc(var(--bar-height) * 1%));
+    max-height: 100%;
     border-radius: 10px;
     background: linear-gradient(180deg, rgba(56, 189, 248, 0.95), rgba(34, 197, 94, 0.95));
     box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.12), 0 10px 18px rgba(6, 12, 22, 0.35);
+    position: relative;
+    overflow: hidden;
+    padding: 0.25rem 0.3rem 0.35rem;
+    display: flex;
+    align-items: stretch;
   }
 
   .trend-bar:not(.empty) .trend-fill {
     height: max(16px, calc((var(--bar-height) * 0.85 + 15) * 1%));
+    max-height: 100%;
   }
 
   .trend-bar.empty .trend-fill {
     height: 4px;
     opacity: 0.35;
   }
+
+  .trend-stack {
+    position: absolute;
+    inset: 0.3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+
+  .trend-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: max(6px, calc(var(--seg-height) * 1%));
+    border-radius: 999px;
+    box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.18);
+    padding: 0 4px;
+    overflow: hidden;
+  }
+
+  .trend-seg-label {
+    font-size: 0.5rem;
+    font-weight: 700;
+    color: rgba(8, 12, 20, 0.95);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+  }
+
+  .trend-legend {
+    width: 100%;
+    font-size: 0.55rem;
+    line-height: 1.1;
+    color: rgba(7, 10, 18, 0.95);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    text-align: center;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    z-index: 1;
+    align-self: flex-end;
+  }
+
 
   .trend-bar.empty .trend-value {
     color: rgba(226, 232, 240, 0.5);
@@ -959,6 +1050,25 @@
     letter-spacing: 0.06em;
     line-height: 1;
     height: 14px;
+  }
+
+  .trend-types-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.18rem;
+    min-height: 10px;
+  }
+
+  .trend-types-row.empty {
+    opacity: 0.25;
+  }
+
+  .trend-type-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6);
   }
 
   .trend-empty {
@@ -1400,4 +1510,51 @@
       border-radius: .9rem;
     }
   }
+}
+
+.page-loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 20, 0.45);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(6px);
+  z-index: 50;
+}
+
+.page-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(88, 123, 255, 0.35);
+  background: rgba(12, 18, 30, 0.9);
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+}
+
+.page-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.page-loading-text strong {
+  color: #fff;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(88, 123, 255, 0.3);
+  border-top-color: #6ba4ff;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

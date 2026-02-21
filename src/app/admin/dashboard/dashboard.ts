@@ -38,7 +38,15 @@ export class Dashboard implements OnInit {
     '#F43F5E'
   ];
 
-  readonly prestationsTrend = signal<{ key: string; label: string; tooltip: string; value: number; percent: number }[]>([]);
+  readonly prestationsTrend = signal<{
+    key: string;
+    label: string;
+    tooltip: string;
+    value: number;
+    percent: number;
+    primaryTypeLabel?: string;
+    types?: { key: string; label: string; shortLabel: string; count: number; percent: number; color: string }[];
+  }[]>([]);
   readonly prestationsTypes = signal<{ key: string; label: string; value: number; percent: number; color: string }[]>([]);
   readonly prestationsTypesWeek = signal<{ key: string; label: string; value: number; percent: number; color: string }[]>([]);
   readonly prestationsTypesRange = signal<{ from: string; to: string } | null>(null);
@@ -93,6 +101,12 @@ export class Dashboard implements OnInit {
   );
   readonly prestationsTypesMini = computed(() =>
     this.prestationsTypesWeek().slice(0, 4)
+  );
+  readonly prestationsTrendTypes = computed(() =>
+    this.prestationsTypesWeek().map(item => item.label).filter(Boolean)
+  );
+  readonly prestationsTrendTypesShort = computed(() =>
+    this.prestationsTrendTypes().slice(0, 4)
   );
   readonly prestationsDonut = computed(() => {
     const items = this.prestationsTypes();
@@ -261,12 +275,60 @@ export class Dashboard implements OnInit {
     return `${safeValue.toFixed(1).replace('.', ',')}%`;
   }
 
-  private mapTrendDays(days: { date: string; count: number }[], span = 7, rangeEnd?: string) {
+  formatTrendLegend(types?: { key: string; label: string }[]): string {
+    if (!types?.length) return '';
+    const preferred = [
+      { keys: ['racpros', 'racpro s', 'racpros'], labelMatch: 'RAC PRO S' },
+      { keys: ['racproc', 'racpro c', 'racproc'], labelMatch: 'RAC PRO C' },
+      { keys: ['racpav', 'racpavillon', 'rac pav'], labelMatch: 'RAC PAV' },
+      { keys: ['racih', 'racimmeuble', 'rac immeuble', 'racf8'], labelMatch: 'RAC IMMEUBLE' },
+      { keys: ['reco', 'reconnexion'], labelMatch: 'RECO' },
+      { keys: ['sav'], labelMatch: 'SAV' },
+      { keys: ['presta_compl', 'prestacompl', 'presta compl'], labelMatch: 'PRESTA COMPL' }
+    ];
+
+    const byKey = new Map(
+      types.map(type => [this.normalizeKey(type.key), type.label])
+    );
+    const byLabel = new Map(
+      types.map(type => [this.normalizeKey(type.label), type.label])
+    );
+
+    const picks: string[] = [];
+    const pickedLabels = new Set<string>();
+    for (const pref of preferred) {
+      const matchKey = pref.keys.find(key => byKey.has(this.normalizeKey(key))) ||
+        pref.keys.find(key => byLabel.has(this.normalizeKey(key)));
+      if (matchKey) {
+        const label = byKey.get(this.normalizeKey(matchKey)) || byLabel.get(this.normalizeKey(matchKey));
+        if (label) {
+          const normalizedLabel = this.normalizeKey(label);
+          if (!pickedLabels.has(normalizedLabel)) {
+            picks.push(label);
+            pickedLabels.add(normalizedLabel);
+          }
+        }
+      }
+    }
+
+    if (picks.length) return picks.join(' · ');
+    return types.slice(0, 3).map(type => type.label).join(' · ');
+  }
+
+  private mapTrendDays(
+    days: { date: string; count: number; types?: { key: string; count: number }[] }[],
+    span = 7,
+    rangeEnd?: string
+  ) {
     const normalizedSpan = Math.max(1, Math.min(30, Math.floor(span)));
     const countsByDate = new Map<string, number>();
+    const typesByDate = new Map<string, { key: string; count: number }[]>();
     for (const item of days) {
       const key = this.toLocalDateKey(this.parseLocalDate(item.date));
       countsByDate.set(key, Number(item.count ?? 0));
+      if (item.types?.length) {
+        typesByDate.set(key, item.types);
+      }
     }
 
     const dates: string[] = [];
@@ -283,15 +345,71 @@ export class Dashboard implements OnInit {
       const date = new Date(dateKey);
       const label = date.toLocaleDateString('fr-FR', { weekday: 'short' });
       const tooltip = date.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'short' });
-      const value = values[index] ?? 0;
+      let value = values[index] ?? 0;
+      const rawTypes = (typesByDate.get(dateKey) || [])
+        .slice()
+        .filter((type) => {
+          const key = String(type.key || '').toLowerCase();
+          return key && key !== 'autre' && key !== 'other' && key !== 'clem';
+        })
+        .sort((a, b) => b.count - a.count);
+      const mergedByLabel = new Map<string, { key: string; label: string; count: number }>();
+      for (const type of rawTypes) {
+        const label = this.formatTypeLabel(type.key);
+        const labelKey = this.normalizeKey(label);
+        const existing = mergedByLabel.get(labelKey);
+        if (existing) {
+          existing.count += Number(type.count || 0);
+        } else {
+          mergedByLabel.set(labelKey, {
+            key: type.key,
+            label,
+            count: Number(type.count || 0)
+          });
+        }
+      }
+      const types = Array.from(mergedByLabel.values())
+        .sort((a, b) => b.count - a.count)
+        .map((type) => ({
+          ...type,
+          color: this.pickTypeColor(type.label),
+          percent: 0,
+          shortLabel: this.shortTypeLabel(type.label)
+        }));
+      const totalTypes = types.reduce((sum, type) => sum + Number(type.count || 0), 0) || 0;
+      if (types.length && totalTypes > 0) {
+        value = totalTypes;
+      }
+      let percentSum = 0;
+      for (const type of types) {
+        type.percent = totalTypes
+          ? Math.max(0, Math.round((Number(type.count || 0) / totalTypes) * 100))
+          : 0;
+        percentSum += type.percent;
+      }
+      if (types.length && percentSum !== 100) {
+        types[0].percent = Math.max(0, types[0].percent + (100 - percentSum));
+      }
+      const primaryTypeLabel = types[0]?.label;
+      const typesLabel = types.length
+        ? ` • ${types.map(type => `${type.label} (${this.formatCount(type.count)})`).join(', ')}`
+        : '';
       return {
         key: dateKey,
         label,
-        tooltip,
+        tooltip: `${tooltip}${typesLabel}`,
         value,
-        percent: Math.round((value / max) * 100)
+        percent: Math.round((value / max) * 100),
+        primaryTypeLabel,
+        types
       };
     });
+  }
+
+  private normalizeKey(value: string | undefined | null): string {
+    return String(value || '')
+      .toLowerCase()
+      .replace(/[_\s-]/g, '');
   }
 
   private toLocalDateKey(date: Date): string {
@@ -348,6 +466,41 @@ export class Dashboard implements OnInit {
 
     if (map[key]) return map[key];
     return key.replace(/_/g, ' ').toUpperCase();
+  }
+
+  private shortTypeLabel(label: string): string {
+    const raw = String(label || '').trim();
+    if (!raw) return '';
+    const normalized = this.normalizeKey(raw);
+    const map: Record<string, string> = {
+      pros: 'PS',
+      proc: 'PC',
+      racpav: 'PAV',
+      racpavillon: 'PAV',
+      racih: 'IMM',
+      racimmeuble: 'IMM',
+      prestacompl: 'PRESTA',
+      presta_compl: 'PRESTA',
+      recoip: 'RECO',
+      reconnexion: 'RECO',
+      sav: 'SAV'
+    };
+    if (map[normalized]) return map[normalized];
+    const words = raw.split(/\s+/).filter(Boolean);
+    if (words.length === 1) {
+      return raw.slice(0, 6).toUpperCase();
+    }
+    const initials = words.map(w => w[0]).join('');
+    return initials.slice(0, 4).toUpperCase();
+  }
+
+  private pickTypeColor(key: string): string {
+    if (!key) return this.donutPalette[0];
+    let hash = 0;
+    for (let i = 0; i < key.length; i += 1) {
+      hash = (hash * 31 + key.charCodeAt(i)) % 2147483647;
+    }
+    return this.donutPalette[Math.abs(hash) % this.donutPalette.length];
   }
 
   private parseLocalDate(value: string | undefined): Date {

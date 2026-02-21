@@ -28,7 +28,7 @@ export interface DashboardStats {
 }
 
 export interface WeeklyPrestationsTrend {
-  days: { date: string; count: number }[];
+  days: { date: string; count: number; types?: { key: string; count: number }[] }[];
   total?: number;
   range?: { from: string; to: string };
 }

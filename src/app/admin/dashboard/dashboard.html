@@ -1,4 +1,15 @@
 <section class="admin-dashboard">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="hero">
     <div class="hero-text">
       <span class="hero-badge">ERP FXN · ERT Technologies</span>
@@ -183,7 +194,35 @@
                   [attr.title]="item.tooltip + ' : ' + formatCount(item.value)"
                 >
                   <div class="trend-value">{{ formatCount(item.value) }}</div>
-                  <div class="trend-fill"></div>
+                  <div class="trend-fill">
+                    @if (item.types?.length) {
+                      <div class="trend-stack">
+                        @for (type of item.types; track type.key) {
+                          <span
+                            class="trend-seg"
+                            [style.--seg-height]="type.percent"
+                            [style.background]="type.color"
+                            [attr.title]="type.label + ' : ' + formatCount(type.count)"
+                          >
+                            <span class="trend-seg-label">{{ type.shortLabel }} {{ formatCount(type.count) }}</span>
+                          </span>
+                        }
+                      </div>
+                    }
+                  </div>
+                  @if (item.types?.length) {
+                    <div class="trend-types-row">
+                      @for (type of (item.types?.slice(0, 4) ?? []); track type.key) {
+                        <span
+                          class="trend-type-dot"
+                          [style.background]="type.color"
+                          [attr.title]="type.label + ' : ' + formatCount(type.count)"
+                        ></span>
+                      }
+                    </div>
+                  } @else {
+                    <div class="trend-types-row empty"></div>
+                  }
                   <div class="trend-label">{{ item.label }}</div>
                 </div>
               }
