@@ -197,3 +197,12 @@ body.theme-technicien {
   --fxn-bg-glow-1: rgba(139, 153, 179, 0.22);
   --fxn-bg-glow-2: rgba(32, 36, 48, 0.55);
 }
+
+body.ui-compact {
+  --fxn-space-md: 0.75rem;
+  --fxn-space-lg: 1.1rem;
+  --fxn-space-xl: 1.6rem;
+  --fxn-radius-lg: 16px;
+  --fxn-radius-xl: 22px;
+  --fxn-pager-fixed-height: 48px;
+}

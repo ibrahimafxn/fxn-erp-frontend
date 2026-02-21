@@ -21,7 +21,7 @@ import { DepotStats } from '../../../core/models/depotStats.model';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatResourceName } from '../../../core/utils/text-format';
-import { resolveCloudinaryAvatarUrl } from '../../../core/utils/avatar-url';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 
 @Component({
   standalone: true,
@@ -223,7 +223,7 @@ export class DepotDetail extends DetailBack{
     const cacheKey = (m as { updatedAt?: string; lastLoginAt?: string }).updatedAt
       || (m as { updatedAt?: string; lastLoginAt?: string }).lastLoginAt
       || '';
-    return resolveCloudinaryAvatarUrl((m as { photoUrl?: string }).photoUrl, (m as { avatarUrl?: string }).avatarUrl, cacheKey);
+    return resolveUserAvatarUrl(m as { photoUrl?: string; avatarUrl?: string; preferences?: { avatar?: string | null } }, cacheKey);
   }
 
   managerInitials(): string {

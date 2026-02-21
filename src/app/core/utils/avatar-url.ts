@@ -25,3 +25,34 @@ export const resolveCloudinaryAvatarUrl = (
   if (!cloudinary) return '';
   return withCacheBuster(cloudinary, cacheKey);
 };
+
+const AVATAR_PRESETS = new Set([
+  '10491830',
+  '35480b05',
+  '9306614',
+  '9334178',
+  '9434619',
+  '9720027',
+  '9720029',
+  '9963629',
+  'd2090ffb',
+  'voir',
+  'admin-voir'
+]);
+
+export const resolveAvatarPreset = (value?: string | null): string => {
+  if (!value) return '';
+  if (!AVATAR_PRESETS.has(value)) return '';
+  if (value === 'voir') return `assets/avatars/voir.gif`;
+  if (value === 'admin-voir') return `assets/avatars/admin/voir.gif`;
+  return `assets/avatars/${value}.jpg`;
+};
+
+export const resolveUserAvatarUrl = (
+  user?: { photoUrl?: string | null; avatarUrl?: string | null; preferences?: { avatar?: string | null } } | null,
+  cacheKey?: string | number | null
+): string => {
+  const preset = resolveAvatarPreset(user?.preferences?.avatar ?? null);
+  if (preset) return preset;
+  return resolveCloudinaryAvatarUrl(user?.photoUrl, user?.avatarUrl, cacheKey);
+};

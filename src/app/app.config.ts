@@ -73,6 +73,12 @@ export const AppConfig = {
       loadComponent: () =>
         import('./modules/auth/profile/profile').then(m => m.Profile)
     },
+    {
+      path: 'preferences',
+      canActivate: [AuthGuard],
+      loadComponent: () =>
+        import('./modules/preferences/preferences').then(m => m.Preferences)
+    },
 
     {
       path: '',

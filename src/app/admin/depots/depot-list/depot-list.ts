@@ -11,7 +11,7 @@ import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-dele
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
-import { resolveCloudinaryAvatarUrl } from '../../../core/utils/avatar-url';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 
 @Component({
   standalone: true,
@@ -201,7 +201,7 @@ export class DepotList extends DetailBack {
     if (!m || typeof m !== 'object' || !('_id' in m)) return '';
     const obj = m as { photoUrl?: string; avatarUrl?: string; updatedAt?: string; lastLoginAt?: string };
     const cacheKey = obj.updatedAt || obj.lastLoginAt || '';
-    return resolveCloudinaryAvatarUrl(obj.photoUrl, obj.avatarUrl, cacheKey);
+    return resolveUserAvatarUrl(obj as { photoUrl?: string; avatarUrl?: string; preferences?: { avatar?: string | null } }, cacheKey);
   }
 
   managerInitials(d: Depot): string {

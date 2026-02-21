@@ -1,11 +1,11 @@
 import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
-import { CommonModule, Location } from '@angular/common';
+import {CommonModule, Location, NgOptimizedImage} from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService, AuthUser } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
 import { formatPersonName } from '../../core/utils/text-format';
-import { resolveCloudinaryAvatarUrl } from '../../core/utils/avatar-url';
+import { resolveUserAvatarUrl } from '../../core/utils/avatar-url';
 import { AlertsService } from '../../core/services/alerts.service';
 import { SupplyRequestService } from '../../core/services/supply-request.service';
 
@@ -13,7 +13,7 @@ import { SupplyRequestService } from '../../core/services/supply-request.service
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-header',
-  imports: [CommonModule, RouterModule, MatButtonModule],
+  imports: [CommonModule, RouterModule, MatButtonModule, NgOptimizedImage],
   templateUrl: './app-header.html',
   styleUrls: ['./app-header.scss'],
 })
@@ -95,7 +95,7 @@ export class AppHeader {
     const cacheKey = (u as { updatedAt?: string; lastLoginAt?: string } | null)?.updatedAt
       || (u as { updatedAt?: string; lastLoginAt?: string } | null)?.lastLoginAt
       || '';
-    return resolveCloudinaryAvatarUrl(u?.photoUrl, u?.avatarUrl, cacheKey);
+    return resolveUserAvatarUrl(u, cacheKey);
   });
 
   readonly roleLabel = computed(() => {
@@ -155,6 +155,10 @@ export class AppHeader {
 
   goProfile(): void {
     this.router.navigate(['/profile']);
+  }
+
+  goPreferences(): void {
+    this.router.navigate(['/preferences']);
   }
 
   goUserAccess(): void {
@@ -381,6 +385,7 @@ export class AppHeader {
     if (url.includes('/users')) return 'Utilisateurs';
     if (url.includes('/hr')) return 'Ressources humaines';
     if (url.includes('/security/user-access')) return 'Accès connexion';
+    if (url.includes('/preferences')) return 'Préférences';
     if (url.includes('/reservations/materials')) return 'Attributions matériels';
     if (url.includes('/reservations')) return 'Attributions';
     if (url.includes('/receipts')) return 'Réceptions';
@@ -402,4 +407,6 @@ export class AppHeader {
     const path = window.location.pathname || '';
     return path === '/en' || path.startsWith('/en/') ? 'en' : 'fr';
   }
+
+
 }

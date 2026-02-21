@@ -9,6 +9,7 @@ import {
   EmployeeListResult,
   EmployeeProfile,
   EmployeeSummary,
+  Payslip,
   HrHistoryResult,
   HrRequirements,
   LeaveRequest
@@ -55,6 +56,52 @@ export class HrService {
   upsertProfile(userId: string, payload: Partial<EmployeeProfile>) {
     return this.http.put<{ success: boolean; data: EmployeeProfile }>(`${API_BASE}/hr/employees/${userId}/profile`, payload)
       .pipe(map(resp => resp.data));
+  }
+
+  generatePayslipPdf(
+    userId: string,
+    payload: {
+      month?: number;
+      year?: number;
+      periodStart?: string;
+      periodEnd?: string;
+      hoursWorked?: number;
+      hourlyRate?: number;
+      overtimeHours?: number;
+      baseSalary: number;
+      fraisKm?: number;
+      deductions?: number;
+      employeeContrib?: number;
+      employerContrib?: number;
+      panierRepas?: number;
+    }
+  ) {
+    return this.http.post(`${API_BASE}/hr/employees/${userId}/payslip/pdf`, payload, { responseType: 'blob' });
+  }
+
+  listPayslips(userId: string, filter?: { page?: number; limit?: number; month?: number; year?: number }) {
+    let params = new HttpParams();
+    if (filter?.page) params = params.set('page', String(filter.page));
+    if (filter?.limit) params = params.set('limit', String(filter.limit));
+    if (filter?.month) params = params.set('month', String(filter.month));
+    if (filter?.year) params = params.set('year', String(filter.year));
+    return this.http.get<{ success: boolean; data: { items: Payslip[]; total: number; page: number; limit: number } }>(
+      `${API_BASE}/hr/employees/${userId}/payslips`,
+      { params }
+    ).pipe(map(resp => resp.data));
+  }
+
+  downloadPayslip(userId: string, payslipId: string) {
+    return this.http.get(`${API_BASE}/hr/employees/${userId}/payslips/${payslipId}/pdf`, { responseType: 'blob' });
+  }
+
+  exportPayslipsXlsx(userId: string, filter?: { page?: number; limit?: number; month?: number; year?: number }) {
+    let params = new HttpParams();
+    if (filter?.page) params = params.set('page', String(filter.page));
+    if (filter?.limit) params = params.set('limit', String(filter.limit));
+    if (filter?.month) params = params.set('month', String(filter.month));
+    if (filter?.year) params = params.set('year', String(filter.year));
+    return this.http.get(`${API_BASE}/hr/employees/${userId}/payslips/export/xlsx`, { params, responseType: 'blob' as const });
   }
 
   addDocument(payload: Partial<EmployeeDoc> | FormData) {

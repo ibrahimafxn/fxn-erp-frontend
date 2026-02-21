@@ -79,7 +79,7 @@
       <footer class="card-actions">
         <button class="btn-outline edit" type="button" title="Modifier" (click)="edit(u)"><i class="bi bi-pencil"></i> Modifier</button>
 
-        <button class="btn-outline delete" type="button" title="Supprimer" [disabled]="deleting()" (click)="delete(u)"><i class="fa-solid fa-trash"></i> 
+        <button class="btn-outline delete" type="button" [title]="deleteDisabledReason() || 'Supprimer'" [disabled]="deleting() || !canDelete()" (click)="delete(u)"><i class="fa-solid fa-trash"></i> 
           @if (deleting()) { Suppression… } @else { Supprimer }
         </button>
       </footer>

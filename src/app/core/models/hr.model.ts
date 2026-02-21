@@ -42,6 +42,26 @@ export type EmployeeListResult = {
   items: EmployeeSummary[];
 };
 
+export type Payslip = {
+  _id: string;
+  user: User | string;
+  month?: number | null;
+  year?: number | null;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  hoursWorked?: number | null;
+  hourlyRate?: number | null;
+  overtimeHours?: number | null;
+  baseSalary: number;
+  fraisKm?: number | null;
+  deductions?: number | null;
+  employeeContrib?: number | null;
+  employerContrib?: number | null;
+  panierRepas: number;
+  createdBy?: User | string | null;
+  createdAt?: string;
+};
+
 export type HrRequirements = {
   typesByRole: Record<string, string[]>;
   typeLabels: Record<string, string>;

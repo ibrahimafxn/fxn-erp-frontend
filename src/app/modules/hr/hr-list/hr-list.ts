@@ -7,6 +7,7 @@ import { AbsenceService } from '../../../core/services/absence.service';
 import { HrService } from '../../../core/services/hr.service';
 import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 import {
   Absence,
   AbsenceStatus,
@@ -16,20 +17,23 @@ import {
   EmployeeListResult,
   EmployeeProfile,
   EmployeeSummary,
+  Payslip,
   HrHistoryItem,
   HrHistoryResult,
   HrRequirements,
   User
 } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
-import { resolveCloudinaryAvatarUrl } from '../../../core/utils/avatar-url';
+import { downloadBlob } from '../../../core/utils/download';
+import { Role } from '../../../core/models/roles.model';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 import { formatPageRange } from '../../../core/utils/pagination';
 
 @Component({
   selector: 'app-hr-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal, ConfirmActionModal],
   providers: [DatePipe],
   templateUrl: './hr-list.html',
   styleUrl: './hr-list.scss',
@@ -94,7 +98,7 @@ export class HrList {
     const cacheKey = (user as { updatedAt?: string; lastLoginAt?: string }).updatedAt
       || (user as { updatedAt?: string; lastLoginAt?: string }).lastLoginAt
       || '';
-    return resolveCloudinaryAvatarUrl(user.photoUrl, user.avatarUrl, cacheKey);
+    return resolveUserAvatarUrl(user, cacheKey);
   }
 
   userInitials(user: User): string {
@@ -248,6 +252,42 @@ export class HrList {
     emergencyName: this.fb.nonNullable.control(''),
     emergencyPhone: this.fb.nonNullable.control(''),
     notes: this.fb.nonNullable.control('')
+  });
+  readonly payslipForm = this.fb.nonNullable.group({
+    month: this.fb.nonNullable.control(new Date().getMonth() + 1, [Validators.required, Validators.min(1), Validators.max(12)]),
+    year: this.fb.nonNullable.control(new Date().getFullYear(), [Validators.required, Validators.min(2000), Validators.max(2100)]),
+    hoursWorked: this.fb.nonNullable.control(0, [Validators.min(0)]),
+    hourlyRate: this.fb.nonNullable.control(0, [Validators.min(0)]),
+    overtimeHours: this.fb.nonNullable.control(0, [Validators.min(0)]),
+    baseSalary: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+    fraisKm: this.fb.nonNullable.control(0, [Validators.min(0)]),
+    deductions: this.fb.nonNullable.control(0, [Validators.min(0)]),
+    employeeContrib: this.fb.nonNullable.control(0, [Validators.min(0)]),
+    employerContrib: this.fb.nonNullable.control(0, [Validators.min(0)]),
+    panierRepas: this.fb.nonNullable.control(0, [Validators.min(0)])
+  });
+  readonly payslipLoading = signal(false);
+  readonly payslipConfirmOpen = signal(false);
+  readonly exportConfirmOpen = signal(false);
+  readonly payslipExportLoading = signal(false);
+  readonly payslipError = signal<string | null>(null);
+  readonly payslipList = signal<Payslip[]>([]);
+  readonly payslipListLoading = signal(false);
+  readonly payslipListError = signal<string | null>(null);
+  readonly payslipTotal = signal(0);
+  readonly payslipPage = signal(1);
+  readonly payslipLimit = signal(5);
+  readonly payslipMonth = signal<number | ''>('');
+  readonly payslipYear = signal<number | ''>('');
+  readonly payslipPageCount = computed(() => {
+    const limit = this.payslipLimit() || 1;
+    return Math.max(1, Math.ceil(this.payslipTotal() / limit));
+  });
+  readonly payslipMonthOptions = Array.from({ length: 12 }, (_, idx) => idx + 1);
+  readonly payslipYearOptions = Array.from({ length: 11 }, (_, idx) => 2026 + idx);
+  readonly canGeneratePayslip = computed(() => {
+    const role = this.auth.user$()?.role;
+    return role === Role.ADMIN || role === Role.DIRIGEANT;
   });
 
   readonly docForm = this.fb.nonNullable.group({
@@ -431,6 +471,8 @@ export class HrList {
     this.selected.set(item);
     this.employeeSection.set('profile');
     this.overlayOpen.set(false);
+    this.payslipError.set(null);
+    this.payslipListError.set(null);
     this.patchProfile(item.profile || null);
     this.scrollToProfile();
     const userId = item.user?._id || '';
@@ -438,6 +480,13 @@ export class HrList {
     this.hr.listDocs({ user: userId }).subscribe((docs: EmployeeDoc[]) => this.docs.set(docs || []));
     this.refreshCompliance(userId);
     this.loadHistory(userId);
+    this.loadPayslips(userId);
+  }
+
+  openPayslipFor(item: EmployeeSummary): void {
+    this.selectEmployee(item);
+    this.setEmployeeSection('profile');
+    this.scrollToPayslip();
   }
 
   private applyEmployeePagination(items: EmployeeSummary[]): void {
@@ -464,10 +513,16 @@ export class HrList {
       if (!hasSelected) {
         this.selected.set(null);
         this.docs.set([]);
+        this.payslipList.set([]);
+        this.payslipTotal.set(0);
+        this.payslipPage.set(1);
       }
     } else {
       this.selected.set(null);
       this.docs.set([]);
+      this.payslipList.set([]);
+      this.payslipTotal.set(0);
+      this.payslipPage.set(1);
     }
   }
 
@@ -544,6 +599,187 @@ export class HrList {
         this.error.set(err?.message || 'Erreur sauvegarde profil');
       }
     });
+  }
+
+  openPayslipConfirm(): void {
+    if (this.payslipLoading()) return;
+    this.payslipConfirmOpen.set(true);
+  }
+
+  closePayslipConfirm(): void {
+    if (this.payslipLoading()) return;
+    this.payslipConfirmOpen.set(false);
+  }
+
+  confirmGeneratePayslip(): void {
+    this.payslipConfirmOpen.set(false);
+    this.generatePayslip();
+  }
+
+  generatePayslip(): void {
+    const current = this.selected();
+    if (!current?.user?._id) return;
+    if (this.payslipForm.invalid) {
+      this.payslipForm.markAllAsTouched();
+      return;
+    }
+    const raw = this.payslipForm.getRawValue();
+    let baseSalary = Number(raw.baseSalary || 0);
+    if (!baseSalary && raw.hoursWorked && raw.hourlyRate) {
+      baseSalary = Number(raw.hoursWorked) * Number(raw.hourlyRate);
+    }
+    const payload = {
+      month: Number(raw.month),
+      year: Number(raw.year),
+      hoursWorked: raw.hoursWorked ? Number(raw.hoursWorked) : undefined,
+      hourlyRate: raw.hourlyRate ? Number(raw.hourlyRate) : undefined,
+      overtimeHours: raw.overtimeHours ? Number(raw.overtimeHours) : undefined,
+      baseSalary,
+      fraisKm: Number(raw.fraisKm || 0),
+      deductions: Number(raw.deductions || 0),
+      employeeContrib: Number(raw.employeeContrib || 0),
+      employerContrib: Number(raw.employerContrib || 0),
+      panierRepas: raw.panierRepas ? Number(raw.panierRepas) : undefined
+    };
+    this.payslipLoading.set(true);
+    this.payslipError.set(null);
+    this.hr.generatePayslipPdf(current.user._id, payload).subscribe({
+      next: (blob: Blob) => {
+        const name = this.formatUserName(current.user).replace(/\s+/g, '_') || 'employe';
+        const fileName = `fiche_paie_${name}_${String(payload.month).padStart(2, '0')}-${payload.year}.pdf`;
+        downloadBlob(blob, fileName);
+        this.payslipLoading.set(false);
+        this.loadPayslips(current.user._id);
+      },
+      error: (err: any) => {
+        this.payslipLoading.set(false);
+        this.payslipError.set(err?.error?.message || 'Erreur génération fiche de paie');
+      }
+    });
+  }
+
+  loadPayslips(userId: string): void {
+    this.payslipListLoading.set(true);
+    this.payslipListError.set(null);
+    this.hr.listPayslips(userId, {
+      page: this.payslipPage(),
+      limit: this.payslipLimit(),
+      month: this.payslipMonth() || undefined,
+      year: this.payslipYear() || undefined
+    }).subscribe({
+      next: (result) => {
+        this.payslipList.set(result?.items || []);
+        this.payslipTotal.set(result?.total || 0);
+        this.payslipPage.set(result?.page || 1);
+        this.payslipListLoading.set(false);
+      },
+      error: (err: any) => {
+        this.payslipListLoading.set(false);
+        this.payslipListError.set(err?.error?.message || 'Erreur chargement fiches de paie');
+      }
+    });
+  }
+
+  setPayslipLimit(limit: number): void {
+    this.payslipLimit.set(limit);
+    this.payslipPage.set(1);
+    const userId = this.selected()?.user?._id;
+    if (userId) this.loadPayslips(userId);
+  }
+
+  setPayslipMonth(value: string): void {
+    const parsed = Number(value);
+    this.payslipMonth.set(Number.isFinite(parsed) && parsed > 0 ? parsed : '');
+    this.payslipPage.set(1);
+    const userId = this.selected()?.user?._id;
+    if (userId) this.loadPayslips(userId);
+  }
+
+  setPayslipYear(value: string): void {
+    const parsed = Number(value);
+    this.payslipYear.set(Number.isFinite(parsed) && parsed > 0 ? parsed : '');
+    this.payslipPage.set(1);
+    const userId = this.selected()?.user?._id;
+    if (userId) this.loadPayslips(userId);
+  }
+
+  prevPayslipPage(): void {
+    if (this.payslipPage() <= 1) return;
+    this.payslipPage.set(this.payslipPage() - 1);
+    const userId = this.selected()?.user?._id;
+    if (userId) this.loadPayslips(userId);
+  }
+
+  nextPayslipPage(): void {
+    const totalPages = Math.max(1, Math.ceil(this.payslipTotal() / this.payslipLimit()));
+    if (this.payslipPage() >= totalPages) return;
+    this.payslipPage.set(this.payslipPage() + 1);
+    const userId = this.selected()?.user?._id;
+    if (userId) this.loadPayslips(userId);
+  }
+
+  downloadPayslip(slip: Payslip): void {
+    const userId = this.selected()?.user?._id;
+    if (!userId || !slip?._id) return;
+    this.hr.downloadPayslip(userId, slip._id).subscribe({
+      next: (blob: Blob) => {
+        const name = this.formatUserName(this.selected()?.user as User).replace(/\s+/g, '_') || 'employe';
+        const period = this.formatPayslipPeriod(slip).replace(/\s+/g, '_').replace(/[/:]/g, '-');
+        const fileName = `fiche_paie_${name}_${period || 'periode'}.pdf`;
+        downloadBlob(blob, fileName);
+      },
+      error: (err: any) => {
+        this.payslipListError.set(err?.error?.message || 'Erreur téléchargement fiche de paie');
+      }
+    });
+  }
+
+  openExportConfirm(): void {
+    if (this.payslipExportLoading()) return;
+    this.exportConfirmOpen.set(true);
+  }
+
+  closeExportConfirm(): void {
+    if (this.payslipExportLoading()) return;
+    this.exportConfirmOpen.set(false);
+  }
+
+  confirmExportPayslips(): void {
+    this.exportConfirmOpen.set(false);
+    this.exportPayslipsXlsx();
+  }
+
+  exportPayslipsXlsx(): void {
+    const userId = this.selected()?.user?._id;
+    if (!userId) return;
+    this.payslipExportLoading.set(true);
+    this.hr.exportPayslipsXlsx(userId, {
+      page: this.payslipPage(),
+      limit: this.payslipLimit(),
+      month: this.payslipMonth() || undefined,
+      year: this.payslipYear() || undefined
+    }).subscribe({
+      next: (blob: Blob) => {
+        const name = this.formatUserName(this.selected()?.user as User).replace(/\s+/g, '_') || 'employe';
+        const fileName = `fiches_paie_${name}_${String(this.payslipPage())}-${String(this.payslipLimit())}.xlsx`;
+        downloadBlob(blob, fileName);
+        this.payslipExportLoading.set(false);
+      },
+      error: (err: any) => {
+        this.payslipExportLoading.set(false);
+        this.payslipListError.set(err?.error?.message || 'Erreur export Excel');
+      }
+    });
+  }
+
+  formatPayslipPeriod(slip: Payslip): string {
+    if (slip.month && slip.year) {
+      return `${String(slip.month).padStart(2, '0')}/${slip.year}`;
+    }
+    const start = slip.periodStart ? this.datePipe.transform(slip.periodStart, 'dd/MM/yyyy') : '';
+    const end = slip.periodEnd ? this.datePipe.transform(slip.periodEnd, 'dd/MM/yyyy') : '';
+    const range = `${start || ''}${start || end ? ' - ' : ''}${end || ''}`.trim();
+    return range || 'periode';
   }
 
   onDocFileChange(event: Event): void {
@@ -1010,6 +1246,13 @@ export class HrList {
   private scrollToProfile(): void {
     setTimeout(() => {
       const el = document.getElementById('hr-employee-profile');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  }
+
+  private scrollToPayslip(): void {
+    setTimeout(() => {
+      const el = document.getElementById('hr-payslip');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 0);
   }

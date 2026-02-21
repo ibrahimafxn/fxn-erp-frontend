@@ -1,12 +1,13 @@
 // src/app/core/services/auth.service.ts
 
 import {inject, Injectable, signal} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {Observable, of, ReplaySubject, throwError} from 'rxjs';
 import {catchError, filter, map, take, tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {Role} from '../models/roles.model';
+import { UserPreferences } from '../models';
 
 /**
  * Représentation du user renvoyé par le backend.
@@ -25,6 +26,7 @@ export interface AuthUser {
   assignedVehicle?: string | null;
   mfaEnabled?: boolean;
   passwordExpiresAt?: string | Date | null;
+  preferences?: UserPreferences;
 }
 
 /**
@@ -39,9 +41,6 @@ export interface LoginResponse {
   message?: string;
 }
 
-const LS_KEY_ACCESS = 'fxn_access_token';
-const LS_KEY_USER = 'fxn_user';
-const LS_KEY_CSRF = 'fxn_csrf_token';
 
 @Injectable({
   providedIn: 'root'
@@ -54,18 +53,10 @@ export class AuthService {
   private apiBase = (environment.apiBaseUrl || '').replace(/\/+$/, '');
 
   /**
-   * Token d'accès courant (également persisté en localStorage pour
-   * que l'utilisateur reste connecté après refresh de la page).
-   */
-  private accessToken: string | null = this.loadAccessTokenFromStorage();
-  private csrfToken: string | null = this.loadCsrfTokenFromStorage();
-
-  /**
    * User courant sous forme de signal.
-   * - source : localStorage au démarrage
-   * - lecture : this.user$() dans le code / template
+   * - en mémoire uniquement (aucune persistance locale)
    */
-  private readonly _user = signal<AuthUser | null>(this.loadUserFromStorage());
+  private readonly _user = signal<AuthUser | null>(null);
   /** Signal readonly exposé au reste de l'app */
   readonly user$ = this._user.asReadonly();
 
@@ -75,88 +66,15 @@ export class AuthService {
    * - les autres appels à refreshToken() s'abonnent à refreshSubject
    */
   private refreshInProgress = false;
-  private refreshSubject = new ReplaySubject<string | null>(1);
+  private refreshSubject = new ReplaySubject<boolean | null>(1);
 
   // ─────────────────────────────────────────────
   // Helpers de persistance locale
   // ─────────────────────────────────────────────
 
-  private loadAccessTokenFromStorage(): string | null {
-    if (typeof localStorage === 'undefined') return null;
-    try {
-      return localStorage.getItem(LS_KEY_ACCESS);
-    } catch {
-      return null;
-    }
-  }
-
-  private loadUserFromStorage(): AuthUser | null {
-    if (typeof localStorage === 'undefined') return null;
-    try {
-      const raw = localStorage.getItem(LS_KEY_USER);
-      return raw ? (JSON.parse(raw) as AuthUser) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  private loadCsrfTokenFromStorage(): string | null {
-    if (typeof localStorage === 'undefined') return null;
-    try {
-      return localStorage.getItem(LS_KEY_CSRF);
-    } catch {
-      return null;
-    }
-  }
-
-  private persistAccessToken(token: string | null): void {
-    this.accessToken = token;
-    if (typeof localStorage === 'undefined') return;
-    try {
-      if (token) {
-        localStorage.setItem(LS_KEY_ACCESS, token);
-      } else {
-        localStorage.removeItem(LS_KEY_ACCESS);
-      }
-    } catch {
-      // on ignore les erreurs de stockage
-    }
-  }
-
   private persistUser(user: AuthUser | null): void {
     // maj du signal
     this._user.set(user);
-
-    // persistance locale
-    if (typeof localStorage === 'undefined') return;
-    try {
-      if (user) {
-        localStorage.setItem(LS_KEY_USER, JSON.stringify(user));
-      } else {
-        localStorage.removeItem(LS_KEY_USER);
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }
-
-  private persistCsrfToken(token: string | null): void {
-    this.csrfToken = token;
-    if (typeof localStorage === 'undefined') return;
-    try {
-      if (token) {
-        localStorage.setItem(LS_KEY_CSRF, token);
-      } else {
-        localStorage.removeItem(LS_KEY_CSRF);
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }
-
-  private buildCsrfHeaders(): HttpHeaders {
-    if (!this.csrfToken) return new HttpHeaders();
-    return new HttpHeaders({ 'X-XSRF-TOKEN': this.csrfToken });
   }
 
   // ─────────────────────────────────────────────
@@ -166,10 +84,6 @@ export class AuthService {
   /**
    * Retourne le token d'accès courant (utilisé par l'interceptor).
    */
-  getAccessToken(): string | null {
-    return this.accessToken;
-  }
-
   /**
    * Retourne le user courant (ou null si non connecté).
    * Utilise le signal interne.
@@ -184,7 +98,7 @@ export class AuthService {
    * tentera un refresh.
    */
   isAuthenticated(): boolean {
-    return !!this.accessToken;
+    return !!this.user$();
   }
 
   /**
@@ -206,6 +120,13 @@ export class AuthService {
     const current = this._user();
     if (!current) return;
     this.persistUser({ ...current, ...patch });
+  }
+
+  bootstrapSession(): void {
+    this.refreshToken().subscribe({
+      next: () => {},
+      error: () => {}
+    });
   }
 
   // ─────────────────────────────────────────────
@@ -231,14 +152,8 @@ export class AuthService {
       })
       .pipe(
         tap(resp => {
-          if (resp?.accessToken) {
-            this.persistAccessToken(resp.accessToken);
-            if (resp.csrfToken) {
-              this.persistCsrfToken(resp.csrfToken);
-            }
-            if (resp.user) {
-              this.persistUser(resp.user);
-            }
+          if (resp?.user) {
+            this.persistUser(resp.user);
           }
         })
       );
@@ -258,8 +173,7 @@ export class AuthService {
   logout(redirect = true): Observable<any> {
     const logout$ = this.http
       .post(`${this.apiBase}/auth/logout`, {}, {
-        withCredentials: true,
-        headers: this.buildCsrfHeaders()
+        withCredentials: true
       })
       .pipe(
         catchError(() => {
@@ -269,11 +183,9 @@ export class AuthService {
       );
 
     // Nettoyage côté front immédiat
-    this.persistAccessToken(null);
     this.persistUser(null);
-    this.persistCsrfToken(null);
     this.refreshInProgress = false;
-    this.refreshSubject = new ReplaySubject<string | null>(1);
+    this.refreshSubject = new ReplaySubject<boolean | null>(1);
 
     if (redirect) {
       logout$.subscribe(() => this.router.navigate(['/login']));
@@ -303,12 +215,13 @@ export class AuthService {
    *
    * Si le refresh échoue, l'interceptor appellera logout() puis relancera l'erreur.
    */
-  refreshToken(): Observable<string> {
+  refreshToken(): Observable<void> {
     // Si un refresh est déjà en cours, on s'abonne au résultat
     if (this.refreshInProgress) {
       return this.refreshSubject.asObservable().pipe(
-        filter((token): token is string => !!token),
-        take(1)
+        filter((ok): ok is boolean => ok === true),
+        take(1),
+        map(() => undefined)
       );
     }
 
@@ -316,31 +229,20 @@ export class AuthService {
 
     const refresh$ = this.http
       .post<LoginResponse>(`${this.apiBase}/auth/refresh`, {}, {
-        withCredentials: true,
-        headers: this.buildCsrfHeaders()
+        withCredentials: true
       })
       .pipe(
         tap(resp => {
-          if (!resp || !resp.accessToken) {
-            throw new Error('Réponse refresh invalide : accessToken manquant');
-          }
-          // Mise à jour côté front
-          this.persistAccessToken(resp.accessToken);
-          if (resp.csrfToken) {
-            this.persistCsrfToken(resp.csrfToken);
+          if (!resp) {
+            throw new Error('Réponse refresh invalide');
           }
           if (resp.user) {
             this.persistUser(resp.user);
           }
           // on envoie le nouveau token aux abonnés
-          this.refreshSubject.next(resp.accessToken);
+          this.refreshSubject.next(true);
         }),
-        map(resp => {
-          if (!resp?.accessToken) {
-            throw new Error('Réponse refresh invalide : accessToken manquant');
-          }
-          return resp.accessToken;
-        }),
+        map(() => undefined),
         catchError(err => {
           // En cas d'échec du refresh, on avertit les abonnés avec null
           this.refreshSubject.next(null);
@@ -351,11 +253,11 @@ export class AuthService {
           next: () => {
             this.refreshInProgress = false;
             // on recrée un nouveau ReplaySubject pour le prochain cycle
-            this.refreshSubject = new ReplaySubject<string | null>(1);
+            this.refreshSubject = new ReplaySubject<boolean | null>(1);
           },
           error: () => {
             this.refreshInProgress = false;
-            this.refreshSubject = new ReplaySubject<string | null>(1);
+            this.refreshSubject = new ReplaySubject<boolean | null>(1);
           }
         })
       );

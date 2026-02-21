@@ -1,0 +1,115 @@
+<section class="preferences-page">
+  <header class="preferences-hero">
+    <div class="hero-title">
+      <span class="material-icons notranslate">tune</span>
+      <div>
+        <div class="hero-label">Préférences</div>
+        <h1>Apparence & style</h1>
+        <p>Personnalisez le thème et la densité de l'interface.</p>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <button type="button" class="btn-outline" (click)="resetAll()">
+        <span class="material-icons notranslate">restart_alt</span>
+        Réinitialiser
+      </button>
+    </div>
+  </header>
+
+  <section class="preferences-grid">
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">palette</span>Thème</div>
+      <div class="card-subtitle">Choisissez un thème d'interface.</div>
+      <div class="option-grid">
+        @for (option of themeOptions(); track option.value) {
+          <button
+            type="button"
+            class="option-btn"
+            [class.active]="theme() === option.value"
+            (click)="selectTheme(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+            <div class="option-desc">{{ option.desc }}</div>
+          </button>
+        }
+      </div>
+      <div class="option-hint">Le mode automatique applique le thème lié à votre rôle.</div>
+    </article>
+
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">density_medium</span>Densité</div>
+      <div class="card-subtitle">Ajustez l'espacement et la compacité.</div>
+      <div class="option-grid">
+        @for (option of densityOptions; track option.value) {
+          <button
+            type="button"
+            class="option-btn"
+            [class.active]="density() === option.value"
+            (click)="selectDensity(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+            <div class="option-desc">{{ option.desc }}</div>
+          </button>
+        }
+      </div>
+      <div class="option-hint">La densité compacte réduit les espacements globaux.</div>
+    </article>
+
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">motion_photos_on</span>Animations</div>
+      <div class="card-subtitle">Activez ou réduisez les animations.</div>
+      <div class="option-grid">
+        @for (option of motionOptions; track option.value) {
+          <button
+            type="button"
+            class="option-btn"
+            [class.active]="motion() === option.value"
+            (click)="selectMotion(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+            <div class="option-desc">{{ option.desc }}</div>
+          </button>
+        }
+      </div>
+      <div class="option-hint">La réduction des animations améliore le confort visuel.</div>
+    </article>
+
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">face</span>Avatar</div>
+      <div class="card-subtitle">Choisissez un avatar par défaut.</div>
+      <div class="avatar-grid">
+        <button
+          type="button"
+          class="avatar-btn"
+          [class.active]="avatar() === null"
+          (click)="selectAvatar(null)">
+          <span class="material-icons notranslate">person</span>
+          <span>Aucun</span>
+        </button>
+        @for (option of avatarOptions; track option.value) {
+          <button
+            type="button"
+            class="avatar-btn"
+            [class.active]="avatar() === option.value"
+            (click)="selectAvatar(option.value)">
+            <img [src]="option.src" [alt]="option.label" />
+            <span>{{ option.label }}</span>
+          </button>
+        }
+      </div>
+      @if (isAdmin()) {
+        <div class="admin-avatar-label">Avatars admin</div>
+        <div class="avatar-grid">
+          @for (option of adminAvatarOptions; track option.value) {
+            <button
+              type="button"
+              class="avatar-btn admin"
+              [class.active]="avatar() === option.value"
+              (click)="selectAvatar(option.value)">
+              <img [src]="option.src" [alt]="option.label" />
+              <span>{{ option.label }}</span>
+            </button>
+          }
+        </div>
+      }
+      <div class="option-hint">L'avatar sélectionné est prioritaire sur la photo de profil.</div>
+    </article>
+  </section>
+</section>

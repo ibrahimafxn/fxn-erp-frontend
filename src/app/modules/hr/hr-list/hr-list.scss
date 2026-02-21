@@ -1,3 +1,50 @@
+.page-loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 20, 0.45);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(6px);
+  z-index: 50;
+}
+
+.page-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(88, 123, 255, 0.35);
+  background: rgba(12, 18, 30, 0.9);
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+}
+
+.page-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.page-loading-text strong {
+  color: #fff;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(88, 123, 255, 0.3);
+  border-top-color: #6ba4ff;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .hr-page {
   display: grid;
   gap: 1.25rem;
@@ -738,6 +785,123 @@
       border-color: var(--fxn-primary);
       box-shadow: var(--fxn-ring);
     }
+  }
+
+  .payslip-card {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .payslip-form {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    @media (max-width: 980px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 700px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .payslip-list-card {
+    margin-top: 0.75rem;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .payslip-list-card .card-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  .payslip-toolbar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+    align-items: end;
+
+    @media (max-width: 980px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 700px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .payslip-filter {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .payslip-filter select,
+  .payslip-filter input {
+    border-radius: .75rem;
+    border: 1px solid var(--fxn-border);
+    padding: .5rem .65rem;
+    background: var(--fxn-surface);
+    color: inherit;
+    transition: border-color .2s ease, box-shadow .2s ease;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .payslip-filter select:focus,
+  .payslip-filter input:focus {
+    border-color: var(--fxn-primary);
+    box-shadow: var(--fxn-ring);
+  }
+
+  .payslip-filter.size .page-size {
+    justify-content: flex-start;
+  }
+
+  .payslip-details td {
+    padding-top: 0;
+  }
+
+  .payslip-details .details-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.5rem;
+    background: rgba(10, 18, 32, 0.55);
+    border: 1px solid var(--fxn-border);
+    border-radius: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .payslip-details .details-grid span {
+    display: block;
+    color: var(--fxn-text-muted);
+    font-size: 0.75rem;
+    margin-bottom: 0.2rem;
+  }
+
+  @media (max-width: 980px) {
+    .payslip-details .details-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .payslip-details .details-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .payslip-pager {
+    margin-top: 0.25rem;
+  }
+
+  .payslip-pager-top {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
   }
 
   .actions {

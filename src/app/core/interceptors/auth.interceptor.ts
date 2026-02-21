@@ -4,24 +4,37 @@ import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest}
 import {Observable, throwError} from 'rxjs';
 import {catchError, switchMap} from 'rxjs/operators';
 import {AuthService} from '../services/auth.service';
-import {Router} from '@angular/router';
 import {environment} from '../../environments/environment';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private auth = inject(AuthService);
-  private router = inject(Router);
+  private readCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    const cookies = document.cookie ? document.cookie.split(';') : [];
+    for (const cookie of cookies) {
+      const [key, ...rest] = cookie.trim().split('=');
+      if (key === name) {
+        return decodeURIComponent(rest.join('='));
+      }
+    }
+    return null;
+  }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     // 1) Ne pas toucher les requêtes vers des domaines externes
     const apiBase = environment.apiBaseUrl?.replace(/\/+$/, '') || '';
     const isApiReq = !req.url.startsWith('http') || req.url.startsWith(apiBase);
 
-    // 2) N'ajouter le header que pour les requêtes API internes
-    const token = isApiReq ? this.auth.getAccessToken() : null;
+    // 2) Pour les requêtes API internes : avecCredentials + CSRF pour les mutations
     let authReq = req;
-    if (token) {
-      authReq = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
+    if (isApiReq) {
+      const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase());
+      const csrfToken = isMutation ? this.readCookie('XSRF-TOKEN') : null;
+      const headers = csrfToken && !req.headers.has('X-XSRF-TOKEN')
+        ? req.headers.set('X-XSRF-TOKEN', csrfToken)
+        : req.headers;
+      authReq = req.clone({ headers, withCredentials: true });
     }
 
     // 3) Passer la requête
@@ -40,19 +53,7 @@ export class AuthInterceptor implements HttpInterceptor {
 
           // tenter refresh (AuthService doit mutualiser les requêtes)
           return this.auth.refreshToken().pipe(
-            switchMap((newToken: string) => {
-              if (!newToken) {
-                // pas de token => logout
-                this.auth.logout(true);
-                return throwError(() => err);
-              }
-              const retryReq = req.clone({
-                setHeaders: {
-                  Authorization: `Bearer ${newToken}`
-                }
-              });
-              return next.handle(retryReq);
-            }),
+            switchMap(() => next.handle(authReq)),
             catchError(refreshErr => {
               // refresh KO -> logout et rethrow
               this.auth.logout(true);

@@ -1,4 +1,15 @@
 <section class="depot-detail">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <!-- HEADER -->
   <header class="page-header card">
     <div class="header-left">
@@ -24,9 +35,7 @@
   </header>
 
   <!-- STATES -->
-  @if (loading()) {
-    <div class="state loading card">Chargement du dépôt…</div>
-  } @else if (error()) {
+  @if (error()) {
     <div class="state error card">
       <strong>Erreur :</strong> {{ error() }}
     </div>

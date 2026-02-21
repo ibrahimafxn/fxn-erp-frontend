@@ -14,7 +14,7 @@ import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { downloadBlob } from '../../../core/utils/download';
 import { formatPageRange } from '../../../core/utils/pagination';
-import { resolveCloudinaryAvatarUrl } from '../../../core/utils/avatar-url';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 
 @Component({
   standalone: true,
@@ -98,7 +98,7 @@ export class UserList extends DetailBack {
   }
 
   avatarSrc(u: User): string {
-    return resolveCloudinaryAvatarUrl(u.photoUrl, u.avatarUrl, (u as { updatedAt?: string }).updatedAt || '');
+    return resolveUserAvatarUrl(u, (u as { updatedAt?: string }).updatedAt || '');
   }
 
   refresh(force = false): void {

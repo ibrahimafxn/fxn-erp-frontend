@@ -25,6 +25,7 @@ export * from './movement-list-result.model';
 export * from './user.model';
 export * from './user-list-result.model';
 export * from './user-lite.model';
+export * from './user-preferences.model';
 
 export * from './vehicle.model';
 export * from './vehicle-list-result.model';

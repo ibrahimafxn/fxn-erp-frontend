@@ -1,4 +1,15 @@
 <section class="hr-page">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header">
     <div>
       <h1><span class="material-icons notranslate">diversity_3</span>Ressources humaines</h1>
@@ -79,11 +90,11 @@
             </div>
           </div>
         </div>
-        <div class="table-wrap employees-table">
-          <table>
-            <thead>
-              <tr>
-                <th>
+    <div class="table-wrap employees-table">
+      <table>
+        <thead>
+          <tr>
+            <th>
                   <button class="sort-button" type="button" (click)="toggleEmployeeSort('NAME')" [class.is-active]="isEmployeeSort('NAME')">
                     Nom <span class="sort-arrow">{{ employeeSortArrow('NAME') }}</span>
                   </button>
@@ -98,17 +109,20 @@
                     Dépôt <span class="sort-arrow">{{ employeeSortArrow('DEPOT') }}</span>
                   </button>
                 </th>
-                <th>Téléphone</th>
-                <th>
-                  <button class="sort-button" type="button" (click)="toggleEmployeeSort('DOCS')" [class.is-active]="isEmployeeSort('DOCS')">
-                    Docs <span class="sort-arrow">{{ employeeSortArrow('DOCS') }}</span>
-                  </button>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (e of employees(); track e.user._id) {
-                <tr [class.active]="selected()?.user?._id === e.user._id" (click)="selectEmployee(e)">
+            <th>Téléphone</th>
+            <th>
+              <button class="sort-button" type="button" (click)="toggleEmployeeSort('DOCS')" [class.is-active]="isEmployeeSort('DOCS')">
+                Docs <span class="sort-arrow">{{ employeeSortArrow('DOCS') }}</span>
+              </button>
+            </th>
+            @if (canGeneratePayslip()) {
+              <th>Paie</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of employees(); track e.user._id) {
+            <tr [class.active]="selected()?.user?._id === e.user._id" (click)="selectEmployee(e)">
                   <td>
                     <div class="employee-cell">
                       <div class="avatar">
@@ -123,19 +137,26 @@
                   </td>
                   <td><span class="pill role-pill" [class.tech]="e.user.role === 'TECHNICIEN'">{{ e.user.role || '—' }}</span></td>
                   <td>{{ depotLabel(e.user) }}</td>
-                  <td>{{ e.user.phone || '—' }}</td>
+                <td>{{ e.user.phone || '—' }}</td>
+                <td>
+                  @if (e.compliance?.ok) {
+                    <span class="pill ok">{{ complianceLabel(e) }}</span>
+                  } @else {
+                    <span class="pill danger">NOK</span>
+                  }
+                </td>
+                @if (canGeneratePayslip()) {
                   <td>
-                    @if (e.compliance?.ok) {
-                      <span class="pill ok">{{ complianceLabel(e) }}</span>
-                    } @else {
-                      <span class="pill danger">NOK</span>
-                    }
+                    <button class="btn-outline" type="button" (click)="$event.stopPropagation(); openPayslipFor(e)">
+                      <i class="fa-solid fa-file-pdf"></i> Paie
+                    </button>
                   </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
       </div>
     } @else if (employeeSection() === 'profile') {
       <div class="panel detail" id="hr-employee-profile">
@@ -210,6 +231,179 @@
           </div>
           @if (success()) {
             <div class="state success">{{ success() }}</div>
+          }
+
+          @if (canGeneratePayslip()) {
+            <h3 class="section-title"><span class="material-icons notranslate">payments</span>Fiche de paie</h3>
+            <div class="card payslip-card" id="hr-payslip">
+              <form class="form-grid payslip-form" [formGroup]="payslipForm">
+                <div class="field">
+                  <label>Mois</label>
+                  <input type="number" min="1" max="12" formControlName="month" />
+                </div>
+                <div class="field">
+                  <label>Année</label>
+                  <input type="number" min="2000" max="2100" formControlName="year" />
+                </div>
+                <div class="field">
+                  <label>Heures travaillées</label>
+                  <input type="number" min="0" formControlName="hoursWorked" />
+                </div>
+                <div class="field">
+                  <label>Taux horaire</label>
+                  <input type="number" min="0" formControlName="hourlyRate" />
+                </div>
+                <div class="field">
+                  <label>Heures supplémentaires</label>
+                  <input type="number" min="0" formControlName="overtimeHours" />
+                </div>
+                <div class="field">
+                  <label>Salaire de base</label>
+                  <input type="number" min="0" formControlName="baseSalary" />
+                </div>
+                <div class="field">
+                  <label>Frais kilométriques</label>
+                  <input type="number" min="0" formControlName="fraisKm" />
+                </div>
+                <div class="field">
+                  <label>Retenues</label>
+                  <input type="number" min="0" formControlName="deductions" />
+                </div>
+                <div class="field">
+                  <label>Cotisations salariales</label>
+                  <input type="number" min="0" formControlName="employeeContrib" />
+                </div>
+                <div class="field">
+                  <label>Cotisations patronales</label>
+                  <input type="number" min="0" formControlName="employerContrib" />
+                </div>
+                <div class="field">
+                  <label>Panier repas</label>
+                  <input type="number" min="0" formControlName="panierRepas" />
+                </div>
+              </form>
+              <div class="actions">
+                <button class="btn-outline" type="button" title="À VENIR..." disabled>
+                  <i class="fa-solid fa-file-pdf"></i> Générer PDF
+                </button>
+              </div>
+              @if (payslipError()) {
+                <div class="state error">{{ payslipError() }}</div>
+              }
+            </div>
+
+            <div class="card payslip-list-card">
+              <div class="card-header">
+                <h4>Historique fiches de paie</h4>
+              </div>
+              <div class="payslip-toolbar">
+                <div class="payslip-filter">
+                  <label>Mois</label>
+                  <select [value]="payslipMonth()" (change)="setPayslipMonth($any($event.target).value)">
+                    <option value="">Tous</option>
+                    @for (month of payslipMonthOptions; track month) {
+                      <option [value]="month">{{ month }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="payslip-filter">
+                  <label>Année</label>
+                  <select [value]="payslipYear()" (change)="setPayslipYear($any($event.target).value)">
+                    <option value="">Toutes</option>
+                    @for (year of payslipYearOptions; track year) {
+                      <option [value]="year">{{ year }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="payslip-filter size">
+                  <label>Par page</label>
+                  <div class="page-size">
+                    <button type="button" [class.active]="payslipLimit() === 5" (click)="setPayslipLimit(5)">5</button>
+                    <button type="button" [class.active]="payslipLimit() === 10" (click)="setPayslipLimit(10)">10</button>
+                    <button type="button" [class.active]="payslipLimit() === 20" (click)="setPayslipLimit(20)">20</button>
+                  </div>
+                </div>
+                <div class="payslip-filter export">
+                  <label>Export</label>
+                  <button class="btn-outline" type="button" (click)="openExportConfirm()" [disabled]="payslipExportLoading()">
+                    <i class="fa-solid fa-file-excel"></i> Excel
+                  </button>
+                </div>
+              </div>
+              @if (payslipListLoading()) {
+                <div class="state">Chargement...</div>
+              } @else if (payslipListError()) {
+                <div class="state error">{{ payslipListError() }}</div>
+              } @else if (!payslipList().length) {
+                <div class="state">Aucune fiche de paie enregistrée.</div>
+              } @else {
+                <div class="pager payslip-pager payslip-pager-top">
+                  <div class="pager-left">
+                    <span class="pager-label">{{ pageRange(payslipPage(), payslipLimit(), payslipTotal()) }}</span>
+                  </div>
+                  <div class="pager-right">
+                    <button class="btn-outline" type="button" (click)="prevPayslipPage()" [disabled]="payslipPage() <= 1"><i class="bi bi-chevron-left"></i></button>
+                    <button class="btn-outline" type="button" (click)="nextPayslipPage()" [disabled]="payslipPage() >= payslipPageCount()"><i class="bi bi-chevron-right"></i></button>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Période</th>
+                        <th>Heures</th>
+                        <th>Taux</th>
+                        <th>Salaire de base</th>
+                        <th>Cotisations</th>
+                        <th>Panier repas</th>
+                        <th>Créée le</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (slip of payslipList(); track slip._id) {
+                        <tr>
+                          <td>{{ formatPayslipPeriod(slip) }}</td>
+                          <td>{{ slip.hoursWorked ?? '—' }}</td>
+                          <td>{{ slip.hourlyRate ? (slip.hourlyRate | number) : '—' }}</td>
+                          <td>{{ slip.baseSalary | number }}</td>
+                          <td>
+                            {{ (slip.employeeContrib || 0) + (slip.employerContrib || 0) | number }}
+                          </td>
+                          <td>{{ slip.panierRepas | number }}</td>
+                          <td>{{ slip.createdAt | date: 'shortDate' }}</td>
+                          <td>
+                            <button class="btn-outline" type="button" (click)="downloadPayslip(slip)">
+                              <i class="fa-solid fa-download"></i> Télécharger
+                            </button>
+                          </td>
+                        </tr>
+                        <tr class="payslip-details">
+                          <td colspan="8">
+                            <div class="details-grid">
+                              <div><span>Heures sup</span>{{ slip.overtimeHours || 0 }}</div>
+                              <div><span>Frais km</span>{{ (slip.fraisKm || 0) | number }}</div>
+                              <div><span>Retenues</span>{{ (slip.deductions || 0) | number }}</div>
+                              <div><span>Cotis. salariales</span>{{ (slip.employeeContrib || 0) | number }}</div>
+                              <div><span>Cotis. patronales</span>{{ (slip.employerContrib || 0) | number }}</div>
+                            </div>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="pager payslip-pager">
+                  <div class="pager-left">
+                    <span class="pager-label">{{ pageRange(payslipPage(), payslipLimit(), payslipTotal()) }}</span>
+                  </div>
+                  <div class="pager-right">
+                    <button class="btn-outline" type="button" (click)="prevPayslipPage()" [disabled]="payslipPage() <= 1"><i class="bi bi-chevron-left"></i></button>
+                    <button class="btn-outline" type="button" (click)="nextPayslipPage()" [disabled]="payslipPage() >= payslipPageCount()"><i class="bi bi-chevron-right"></i></button>
+                  </div>
+                </div>
+              }
+            </div>
           }
 
           <h3 class="section-title"><span class="material-icons notranslate">history</span>Historique RH</h3>
@@ -449,6 +643,26 @@
             (cancel)="closeDeleteDocModal()"
             (confirm)="confirmDeleteDoc()">
           </app-confirm-delete-modal>
+
+          <app-confirm-action-modal
+            [open]="payslipConfirmOpen()"
+            title="Confirmer la génération"
+            message="Confirmer la génération de la fiche de paie en PDF ?"
+            confirmText="Générer PDF"
+            [confirming]="payslipLoading()"
+            (cancel)="closePayslipConfirm()"
+            (confirm)="confirmGeneratePayslip()">
+          </app-confirm-action-modal>
+
+          <app-confirm-action-modal
+            [open]="exportConfirmOpen()"
+            title="Confirmer l’export"
+            message="Confirmer l’export Excel des fiches de paie ?"
+            confirmText="Exporter Excel"
+            [confirming]="payslipExportLoading()"
+            (cancel)="closeExportConfirm()"
+            (confirm)="confirmExportPayslips()">
+          </app-confirm-action-modal>
         } @else {
           <div class="state">Sélectionner un employé.</div>
         }
