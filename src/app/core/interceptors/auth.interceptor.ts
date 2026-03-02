@@ -24,13 +24,13 @@ export class AuthInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     // 1) Ne pas toucher les requêtes vers des domaines externes
     const apiBase = environment.apiBaseUrl?.replace(/\/+$/, '') || '';
-    const isApiReq = !req.url.startsWith('http') || req.url.startsWith(apiBase);
+    const isApiReq = this.isApiRequest(req.url, apiBase);
 
     // 2) Pour les requêtes API internes : avecCredentials + CSRF pour les mutations
     let authReq = req;
     if (isApiReq) {
       const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(req.method.toUpperCase());
-      const csrfToken = isMutation ? this.readCookie('XSRF-TOKEN') : null;
+      const csrfToken = isMutation ? (this.readCookie('XSRF-TOKEN') || this.auth.getCsrfToken()) : null;
       const headers = csrfToken && !req.headers.has('X-XSRF-TOKEN')
         ? req.headers.set('X-XSRF-TOKEN', csrfToken)
         : req.headers;
@@ -66,5 +66,28 @@ export class AuthInterceptor implements HttpInterceptor {
         return throwError(() => err);
       })
     );
+  }
+
+  private isApiRequest(url: string, apiBase: string): boolean {
+    // relative URL -> API interne
+    if (!url.startsWith('http')) return true;
+
+    // si apiBase non défini, ne pas deviner
+    if (!apiBase) return false;
+
+    // match direct (inclut /api)
+    if (url.startsWith(apiBase)) return true;
+
+    // fallback: même origin + même prefix /api (tolérant aux variations)
+    try {
+      const reqUrl = new URL(url);
+      const baseUrl = new URL(apiBase);
+      if (reqUrl.origin !== baseUrl.origin) return false;
+      const basePath = baseUrl.pathname.replace(/\/+$/, '');
+      if (!basePath) return false;
+      return reqUrl.pathname.startsWith(basePath);
+    } catch {
+      return false;
+    }
   }
 }

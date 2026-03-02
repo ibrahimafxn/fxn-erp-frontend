@@ -51,6 +51,9 @@ export class AuthService {
 
   /** Base URL de l'API, sans slash final */
   private apiBase = (environment.apiBaseUrl || '').replace(/\/+$/, '');
+  /** Token CSRF en mémoire (fallback quand le cookie n'est pas lisible) */
+  private csrfToken: string | null = null;
+  private readonly csrfStorageKey = 'fxn_csrf_token';
 
   /**
    * User courant sous forme de signal.
@@ -68,6 +71,10 @@ export class AuthService {
   private refreshInProgress = false;
   private refreshSubject = new ReplaySubject<boolean | null>(1);
 
+  constructor() {
+    this.restoreCsrfToken();
+  }
+
   // ─────────────────────────────────────────────
   // Helpers de persistance locale
   // ─────────────────────────────────────────────
@@ -75,6 +82,30 @@ export class AuthService {
   private persistUser(user: AuthUser | null): void {
     // maj du signal
     this._user.set(user);
+  }
+  private setCsrfToken(token?: string | null): void {
+    this.csrfToken = token || null;
+    try {
+      if (typeof sessionStorage === 'undefined') return;
+      if (this.csrfToken) {
+        sessionStorage.setItem(this.csrfStorageKey, this.csrfToken);
+      } else {
+        sessionStorage.removeItem(this.csrfStorageKey);
+      }
+    } catch {
+      // ignore storage errors (private mode, blocked, etc.)
+    }
+  }
+  private restoreCsrfToken(): void {
+    try {
+      if (typeof sessionStorage === 'undefined') return;
+      const stored = sessionStorage.getItem(this.csrfStorageKey);
+      if (stored) {
+        this.csrfToken = stored;
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
 
   // ─────────────────────────────────────────────
@@ -90,6 +121,9 @@ export class AuthService {
    */
   getCurrentUser(): AuthUser | null {
     return this.user$();
+  }
+  getCsrfToken(): string | null {
+    return this.csrfToken;
   }
 
   /**
@@ -155,6 +189,9 @@ export class AuthService {
           if (resp?.user) {
             this.persistUser(resp.user);
           }
+          if (resp?.csrfToken) {
+            this.setCsrfToken(resp.csrfToken);
+          }
         })
       );
   }
@@ -184,6 +221,7 @@ export class AuthService {
 
     // Nettoyage côté front immédiat
     this.persistUser(null);
+    this.setCsrfToken(null);
     this.refreshInProgress = false;
     this.refreshSubject = new ReplaySubject<boolean | null>(1);
 
@@ -238,6 +276,9 @@ export class AuthService {
           }
           if (resp.user) {
             this.persistUser(resp.user);
+          }
+          if (resp.csrfToken) {
+            this.setCsrfToken(resp.csrfToken);
           }
           // on envoie le nouveau token aux abonnés
           this.refreshSubject.next(true);
