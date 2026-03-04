@@ -360,6 +360,7 @@ export class Dashboard implements OnInit {
             normalized !== 'autre' &&
             normalized !== 'other' &&
             normalized !== 'clem' &&
+            !normalized.startsWith('cablepav') &&
             normalized !== 'savexp';
         })
         .sort((a, b) => b.count - a.count);
