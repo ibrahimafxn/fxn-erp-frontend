@@ -186,6 +186,8 @@ export class Preferences implements OnInit {
   }
 
   private updatePreferences(patch: Partial<UserPreferences>, rollback: UserPreferences): void {
+    const optimistic: UserPreferences = { ...rollback, ...patch };
+    this.auth.updateCurrentUser({ preferences: optimistic });
     this.preferencesApi.updateMyPreferences(patch).subscribe({
       next: (prefs) => {
         this.applyPreferences(prefs);
@@ -193,6 +195,7 @@ export class Preferences implements OnInit {
       },
       error: () => {
         this.applyPreferences(rollback);
+        this.auth.updateCurrentUser({ preferences: rollback });
       }
     });
   }

@@ -322,10 +322,13 @@ export class Dashboard implements OnInit {
   ) {
     const normalizedSpan = Math.max(1, Math.min(30, Math.floor(span)));
     const countsByDate = new Map<string, number>();
+    const hasCountByDate = new Map<string, boolean>();
     const typesByDate = new Map<string, { key: string; count: number }[]>();
     for (const item of days) {
       const key = this.toLocalDateKey(this.parseLocalDate(item.date));
+      const hasCount = item.count !== undefined && item.count !== null;
       countsByDate.set(key, Number(item.count ?? 0));
+      hasCountByDate.set(key, hasCount);
       if (item.types?.length) {
         typesByDate.set(key, item.types);
       }
@@ -346,11 +349,18 @@ export class Dashboard implements OnInit {
       const label = date.toLocaleDateString('fr-FR', { weekday: 'short' });
       const tooltip = date.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'short' });
       let value = values[index] ?? 0;
-      const rawTypes = (typesByDate.get(dateKey) || [])
+      const rawTypesAll = typesByDate.get(dateKey) || [];
+      const totalTypesAll = rawTypesAll.reduce((sum, type) => sum + Number(type.count || 0), 0);
+      const rawTypes = rawTypesAll
         .slice()
         .filter((type) => {
-          const key = String(type.key || '').toLowerCase();
-          return key && key !== 'autre' && key !== 'other' && key !== 'clem';
+          const key = String(type.key || '');
+          const normalized = this.normalizeKey(key);
+          return normalized &&
+            normalized !== 'autre' &&
+            normalized !== 'other' &&
+            normalized !== 'clem' &&
+            normalized !== 'savexp';
         })
         .sort((a, b) => b.count - a.count);
       const mergedByLabel = new Map<string, { key: string; label: string; count: number }>();
@@ -377,8 +387,9 @@ export class Dashboard implements OnInit {
           shortLabel: this.shortTypeLabel(type.label)
         }));
       const totalTypes = types.reduce((sum, type) => sum + Number(type.count || 0), 0) || 0;
-      if (types.length && totalTypes > 0) {
-        value = totalTypes;
+      const hasCount = hasCountByDate.get(dateKey) ?? false;
+      if (!hasCount && totalTypesAll > 0) {
+        value = totalTypesAll;
       }
       let percentSum = 0;
       for (const type of types) {
