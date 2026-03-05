@@ -19,6 +19,10 @@ thead {
   z-index: 1;
 }
 
+body.theme-default thead th {
+  color: var(--fxn-primary);
+}
+
 tbody tr {
   border-top: 1px solid var(--fxn-border);
 }

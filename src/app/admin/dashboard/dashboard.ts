@@ -99,9 +99,33 @@ export class Dashboard implements OnInit {
   readonly prestationsTypesTotal = computed(() =>
     this.prestationsTypes().reduce((sum, item) => sum + item.value, 0)
   );
-  readonly prestationsTypesMini = computed(() =>
-    this.prestationsTypesWeek().slice(0, 4)
-  );
+  readonly prestationsTypesMini = computed(() => {
+    const items = this.prestationsTypesWeek();
+    if (!items.length) return [];
+    const colorByKey = new Map(
+      this.prestationsTypes().map(item => [this.normalizeKey(item.key), item.color])
+    );
+    const preferredKeys = ['racpros', 'racf8'];
+    const picks: typeof items = [];
+    const used = new Set<string>();
+    for (const pref of preferredKeys) {
+      const match = items.find(item => this.normalizeKey(item.key) === pref);
+      if (match) {
+        const color = colorByKey.get(this.normalizeKey(match.key));
+        picks.push(color ? { ...match, color } : match);
+        used.add(this.normalizeKey(match.key));
+      }
+    }
+    for (const item of items) {
+      const key = this.normalizeKey(item.key);
+      if (used.has(key)) continue;
+      const color = colorByKey.get(key);
+      picks.push(color ? { ...item, color } : item);
+      used.add(key);
+      if (picks.length >= 6) break;
+    }
+    return picks.slice(0, 6);
+  });
   readonly prestationsTrendTypes = computed(() =>
     this.prestationsTypesWeek().map(item => item.label).filter(Boolean)
   );
@@ -438,7 +462,6 @@ export class Dashboard implements OnInit {
         const key = item.key.toLowerCase();
         const normalized = key.replace(/[_\s-]/g, '');
         if (normalized.startsWith('cablepav')) return false;
-        if (normalized === 'clem') return false;
         return key !== 'autre' && key !== 'other';
       })
       .sort((a, b) => b.count - a.count);
@@ -458,7 +481,7 @@ export class Dashboard implements OnInit {
       racProC: 'RAC PRO C',
       racPavillon: 'RAC PAV',
       racImmeuble: 'RAC IMMEUBLE',
-      racF8: 'RAC IMMEUBLE',
+      racF8: 'PRESTATION F8',
       refrac: 'REFRAC',
       reconnexion: 'RECO',
       clem: 'CLEM',

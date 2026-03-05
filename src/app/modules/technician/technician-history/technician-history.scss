@@ -140,6 +140,11 @@
     white-space: nowrap;
   }
 
+  body.theme-default & thead th {
+    color: #3b82f6;
+    opacity: .95;
+  }
+
   tbody td {
     padding: .85rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, .06);

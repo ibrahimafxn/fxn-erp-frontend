@@ -32,6 +32,11 @@ export class App implements AfterViewInit, OnDestroy {
   readonly showHeader = computed(() =>
     Boolean(this.auth.user$()) && !this.isLoginRoute(this.routeUrl())
   );
+  readonly showHeidiOverlay = computed(() => {
+    const user = this.auth.user$();
+    if (!user || user.role !== Role.ADMIN) return false;
+    return this.isAdminDashboardRoute(this.routeUrl());
+  });
   readonly currentYear = new Date().getFullYear();
   readonly appVersion = packageJson.version ?? '—';
   constructor() {
@@ -140,6 +145,11 @@ export class App implements AfterViewInit, OnDestroy {
   private isLoginRoute(url: string): boolean {
     const clean = (url || '').split('?')[0].split('#')[0].toLowerCase();
     return clean === '/login' || clean.endsWith('/auth/login') || clean.includes('/login');
+  }
+
+  private isAdminDashboardRoute(url: string): boolean {
+    const clean = (url || '').split('?')[0].split('#')[0].toLowerCase();
+    return clean === '/admin' || clean === '/admin/dashboard';
   }
 
   private applyButtonTones(): void {

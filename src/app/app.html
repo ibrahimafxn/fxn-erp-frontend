@@ -2,6 +2,10 @@
   <app-header />
 }
 
+@if (showHeidiOverlay()) {
+  <div class="user-gif-overlay" aria-hidden="true"></div>
+}
+
 <main class="app-content">
   <router-outlet />
 </main>

@@ -175,6 +175,11 @@
     white-space: nowrap;
   }
 
+  body.theme-default & thead th {
+    color: #3b82f6;
+    opacity: .95;
+  }
+
   .sort-btn {
     display: inline-flex;
     align-items: center;

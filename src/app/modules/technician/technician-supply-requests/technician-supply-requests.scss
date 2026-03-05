@@ -185,6 +185,11 @@
     vertical-align: middle;
   }
 
+  body.theme-default & thead th {
+    color: #3b82f6;
+    opacity: 0.95;
+  }
+
   th.sortable {
     cursor: pointer;
     user-select: none;

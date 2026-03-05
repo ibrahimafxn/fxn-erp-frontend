@@ -66,6 +66,15 @@
                       <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span><span i18n="@@header.menu.techHistory">Historique</span></button>
                     </div>
                   </div>
+
+                  <div class="menu-group account-group">
+                    <div class="section-label" i18n="@@header.section.account">Compte</div>
+                    <div class="section-items">
+                      <button mat-button (click)="goPreferences()"><span class="material-icons notranslate">tune</span><span i18n="@@header.menu.preferences">Préférences</span></button>
+                      <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span><span i18n="@@header.menu.profile">Mon profil</span></button>
+                      <button mat-button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span i18n="@@header.menu.logout">Déconnexion</span></button>
+                    </div>
+                  </div>
                 }
 
               </div>

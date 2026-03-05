@@ -189,6 +189,11 @@
   z-index: 1;
 }
 
+body.theme-default .technician-revenue th {
+  color: #3b82f6;
+  opacity: .95;
+}
+
 .technician-revenue .note {
   max-width: 320px;
   color: rgba(255, 255, 255, 0.72);

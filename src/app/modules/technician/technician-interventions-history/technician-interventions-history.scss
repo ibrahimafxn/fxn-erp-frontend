@@ -88,6 +88,11 @@ thead th {
   letter-spacing: 0.08em;
 }
 
+body.theme-default .technician-interventions-history thead th {
+  color: #3b82f6;
+  opacity: 0.95;
+}
+
 .row-closed td {
   color: #7ee787;
 }

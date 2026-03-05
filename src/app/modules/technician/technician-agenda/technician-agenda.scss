@@ -102,6 +102,11 @@ textarea {
   white-space: nowrap;
 }
 
+body.theme-default .technician-agenda thead th {
+  color: #3b82f6;
+  opacity: 0.95;
+}
+
 .state {
   margin-top: 0.75rem;
   padding: 0.8rem 1rem;

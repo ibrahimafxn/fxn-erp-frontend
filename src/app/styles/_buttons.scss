@@ -189,6 +189,11 @@ button.btn-tone-neutral {
   color: var(--fxn-text);
 }
 
+body.theme-default button.btn-outline:has(.bi-search),
+body.theme-default button.btn-outline.primary:has(.bi-search) {
+  color: var(--fxn-primary);
+}
+
 button.btn-tone-export-pdf {
   background: linear-gradient(120deg, #ffffff, #f87171);
   border-color: rgba(248, 113, 113, 0.55);

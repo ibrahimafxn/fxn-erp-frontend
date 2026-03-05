@@ -226,6 +226,11 @@
   border-collapse: collapse;
 }
 
+body.theme-default .technician-reports thead th {
+  color: #3b82f6;
+  opacity: 0.95;
+}
+
 .technician-reports th,
 .technician-reports td {
   padding: 12px 10px;
@@ -233,7 +238,7 @@
 
 .technician-reports .note {
   max-width: 420px;
-  color: rgba(255, 255, 255, 0.75);
+  color: inherit;
 }
 
 .technician-reports .prestations-cell {

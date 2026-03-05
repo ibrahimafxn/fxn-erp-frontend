@@ -157,6 +157,11 @@
     white-space: nowrap;
   }
 
+  body.theme-default & thead th {
+    color: var(--fxn-primary);
+    opacity: 0.9;
+  }
+
   .sort-btn {
     display: inline-flex;
     align-items: center;
@@ -172,6 +177,10 @@
 
   .sort-btn:hover {
     color: rgba(255, 255, 255, 0.9);
+  }
+
+  body.theme-default & .sort-btn:hover {
+    color: var(--fxn-primary-strong);
   }
 
   .sort-indicator {

@@ -112,8 +112,7 @@ export class Preferences implements OnInit {
     { value: '9720027', label: 'Avatar 6', src: 'assets/avatars/9720027.jpg' },
     { value: '9720029', label: 'Avatar 7', src: 'assets/avatars/9720029.jpg' },
     { value: '9963629', label: 'Avatar 8', src: 'assets/avatars/9963629.jpg' },
-    { value: 'd2090ffb', label: 'Avatar 9', src: 'assets/avatars/d2090ffb.jpg' },
-    { value: 'voir', label: 'Avatar GIF', src: 'assets/avatars/voir.gif' }
+    { value: 'd2090ffb', label: 'Avatar 9', src: 'assets/avatars/d2090ffb.jpg' }
   ];
 
   readonly adminAvatarOptions: AvatarOption[] = [

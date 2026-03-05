@@ -94,7 +94,7 @@
           </button>
         }
       </div>
-      @if (isAdmin()) {
+      @if (isAdmin() && adminAvatarOptions.length) {
         <div class="admin-avatar-label">Avatars admin</div>
         <div class="avatar-grid">
           @for (option of adminAvatarOptions; track option.value) {
