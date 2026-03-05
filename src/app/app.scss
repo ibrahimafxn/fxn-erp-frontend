@@ -8,7 +8,7 @@ main.app-content {
 .user-gif-overlay {
   position: fixed;
   inset: 0;
-  background: url('https://media1.tenor.com/m/DeGavwOm_TQAAAAC/rawgamer914.gif') center / cover no-repeat;
+  background: url('/assets/overlays/rawgamer914.gif') center / cover no-repeat;
   opacity: 0.5;
   pointer-events: none;
   z-index: 2;
