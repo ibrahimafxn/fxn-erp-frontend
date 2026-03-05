@@ -462,6 +462,7 @@ export class Dashboard implements OnInit {
         const key = item.key.toLowerCase();
         const normalized = key.replace(/[_\s-]/g, '');
         if (normalized.startsWith('cablepav')) return false;
+        if (normalized === 'clem') return false;
         return key !== 'autre' && key !== 'other';
       })
       .sort((a, b) => b.count - a.count);
