@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 1rem;
 }
 
 .technician-dashboard .page-header {
@@ -342,5 +343,11 @@ body.theme-default .technician-dashboard .kpi-header h2 {
 
   .technician-dashboard .action-card {
     padding: 14px;
+  }
+}
+
+@media (min-width: 900px) {
+  .technician-dashboard {
+    padding: 1.25rem;
   }
 }

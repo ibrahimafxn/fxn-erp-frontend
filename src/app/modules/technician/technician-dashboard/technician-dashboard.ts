@@ -91,6 +91,10 @@ export class TechnicianDashboard {
     this.router.navigate(['/technician/reports']).then();
   }
 
+  goCharges(): void {
+    this.router.navigate(['/technician/charges']).then();
+  }
+
   goHistory(): void {
     this.router.navigate(['/technician/history']).then();
   }

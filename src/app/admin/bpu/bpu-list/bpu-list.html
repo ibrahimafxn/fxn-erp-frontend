@@ -2,7 +2,13 @@
   <header class="page-header">
     <div>
       <h1>BPU prestations</h1>
-      <p class="subtitle">Bordereau des prix unitaires (global).</p>
+      <p class="subtitle">
+        @if (isTechnician()) {
+          Bordereau des prix unitaires (personnel).
+        } @else {
+          Bordereau des prix unitaires (global).
+        }
+      </p>
     </div>
     <div class="header-actions">
       <button class="btn-outline" type="button" (click)="goBack()">
@@ -13,14 +19,18 @@
   </header>
 
   <section class="toolbar card">
-    <label>
-      Type BPU
-      <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
-        <option value="AUTO">AUTO-ENTREPRENEUR</option>
-        <option value="SALARIE">SALARIE</option>
-                <option value="AUTRE">AUTRE</option>
-      </select>
-    </label>
+    @if (isTechnician()) {
+      <div class="toolbar-label">PBU personnalisé</div>
+    } @else {
+      <label>
+        Type BPU
+        <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
+          <option value="AUTO">AUTO-ENTREPRENEUR</option>
+          <option value="SALARIE">SALARIE</option>
+          <option value="AUTRE">AUTRE</option>
+        </select>
+      </label>
+    }
   </section>
 
   @if (success()) {
@@ -38,19 +48,21 @@
       <table>
         <thead>
         <tr>
-          <th class="select-col select-all">
-            <label class="select-all-label">
-              <input
-                class="select-box"
-                type="checkbox"
-                [checked]="allSelected()"
-                [disabled]="loading() || saving()"
-                (change)="toggleSelectAll()"
-                aria-label="Tout sélectionner"
-              />
-              <span>Tout</span>
-            </label>
-          </th>
+          @if (!isTechnician()) {
+            <th class="select-col select-all">
+              <label class="select-all-label">
+                <input
+                  class="select-box"
+                  type="checkbox"
+                  [checked]="allSelected()"
+                  [disabled]="loading() || saving()"
+                  (change)="toggleSelectAll()"
+                  aria-label="Tout sélectionner"
+                />
+                <span>Tout</span>
+              </label>
+            </th>
+          }
           <th>
             <button class="sort-btn" type="button" (click)="toggleSortPrestation()">
               Prestation <span class="sort-indicator">{{ sortIndicator() }}</span>
@@ -63,15 +75,17 @@
         <tbody>
           @for (item of sortedItems(); track item._id || item.code) {
             <tr>
-              <td data-label="Sélection" class="select-col">
-                <input
-                  class="select-box"
-                  type="checkbox"
-                  [checked]="isSelected(item)"
-                  [disabled]="loading() || saving()"
-                  (change)="toggleSelection(item)"
-                />
-              </td>
+              @if (!isTechnician()) {
+                <td data-label="Sélection" class="select-col">
+                  <input
+                    class="select-box"
+                    type="checkbox"
+                    [checked]="isSelected(item)"
+                    [disabled]="loading() || saving()"
+                    (change)="toggleSelection(item)"
+                  />
+                </td>
+              }
               <td data-label="Prestation">
                 {{ item.prestation || '—' }}
               </td>
@@ -116,3 +130,22 @@
     </footer>
   }
 </section>
+
+@if (confirmOpen()) {
+  <div class="modal-backdrop" (click)="closeConfirm()"></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Confirmer la validation</div>
+        <div class="modal-sub">Le BPU sera sauvegardé pour vos prestations.</div>
+      </div>
+      <button class="btn-outline" type="button" [disabled]="saving()" (click)="closeConfirm()">Annuler</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-outline" type="button" [disabled]="saving()" (click)="closeConfirm()">Retour</button>
+      <button class="btn-primary" type="button" [disabled]="saving()" (click)="confirmSave()">
+        @if (saving()) { Enregistrement… } @else { Valider }
+      </button>
+    </div>
+  </div>
+}

@@ -1,7 +1,57 @@
 .bpu-page {
-  padding: 1.25rem;
+  padding: 1rem;
   display: grid;
   gap: 1rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 18, 0.65);
+  z-index: 2000;
+}
+
+.modal-card {
+  position: fixed;
+  inset: 20% 18% auto 18%;
+  background: var(--fxn-surface-glass);
+  border: 1px solid var(--fxn-border);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  z-index: 2001;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.modal-sub {
+  color: var(--fxn-text-muted);
+  font-size: .9rem;
+}
+
+.modal-actions {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .modal-card {
+    inset: 18% 8% auto 8%;
+  }
 }
 
 .page-header {
@@ -269,7 +319,7 @@ tbody tr:hover {
 
 @media (max-width: 700px) {
   .bpu-page {
-    padding: 1rem;
+    padding: 0.9rem;
   }
 
   .table.card {
@@ -284,6 +334,10 @@ tbody tr:hover {
   th {
     display: block;
     width: 100%;
+  }
+
+  table {
+    min-width: 0;
   }
 
   thead {
@@ -302,6 +356,8 @@ tbody tr:hover {
     border-radius: 0.9rem;
     border: 1px solid var(--fxn-border);
     background: var(--fxn-surface-soft);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   tbody td {
@@ -321,4 +377,14 @@ tbody tr:hover {
     text-transform: uppercase;
   }
 
+  tbody td input {
+    width: 100%;
+  }
+
+}
+
+@media (min-width: 900px) {
+  .bpu-page {
+    padding: 1.25rem;
+  }
 }

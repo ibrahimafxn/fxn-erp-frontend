@@ -85,9 +85,21 @@ export const TECHNICIAN_ROUTES: Routes = [
     canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
   },
   {
+    path: 'charges',
+    loadComponent: () =>
+      import('./technician-charges/technician-charges').then(m => m.TechnicianCharges),
+    canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
+  },
+  {
     path: 'history',
     loadComponent: () =>
       import('./technician-history/technician-history').then(m => m.TechnicianHistory),
+    canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
+  },
+  {
+    path: 'bpu',
+    loadComponent: () =>
+      import('../../admin/bpu/bpu-list/bpu-list').then(m => m.BpuList),
     canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
   },
   {

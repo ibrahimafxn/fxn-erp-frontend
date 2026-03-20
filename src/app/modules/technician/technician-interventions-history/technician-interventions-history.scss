@@ -1,5 +1,5 @@
 .technician-interventions-history {
-  padding: 1.25rem;
+  padding: 1rem;
   display: grid;
   gap: 1.25rem;
 }
@@ -156,7 +156,7 @@ body.theme-default .technician-interventions-history thead th {
 
 @media (max-width: 700px) {
   .technician-interventions-history {
-    padding: 1rem;
+    padding: 0.9rem;
   }
 
   .page-header {
@@ -253,5 +253,11 @@ body.theme-default .technician-interventions-history thead th {
   .pager {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (min-width: 900px) {
+  .technician-interventions-history {
+    padding: 1.25rem;
   }
 }

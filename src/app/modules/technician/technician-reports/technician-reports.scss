@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding: 1rem;
 }
 
 .technician-reports .subtitle {
@@ -474,5 +475,11 @@ body.theme-default .technician-reports thead th {
 
   .technician-reports .actions {
     flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 900px) {
+  .technician-reports {
+    padding: 1.25rem;
   }
 }

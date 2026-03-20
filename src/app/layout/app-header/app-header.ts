@@ -248,6 +248,14 @@ export class AppHeader {
     this.router.navigate(['/technician/revenue']).then();
   }
 
+  goTechCharges(): void {
+    this.router.navigate(['/technician/charges']).then();
+  }
+
+  goTechBpu(): void {
+    this.router.navigate(['/technician/bpu']).then();
+  }
+
   goTechHistory(): void {
     this.router.navigate(['/technician/history']).then();
   }
@@ -377,6 +385,8 @@ export class AppHeader {
       if (url.includes('/agenda')) return 'Agenda';
       if (url.includes('/reports')) return 'Rapport quotidien';
       if (url.includes('/revenue')) return "Chiffre d'affaires";
+      if (url.includes('/charges')) return 'Charges';
+      if (url.includes('/bpu')) return 'BPU prestations';
       if (url.includes('/history')) return 'Historique';
       return 'Technicien';
     }

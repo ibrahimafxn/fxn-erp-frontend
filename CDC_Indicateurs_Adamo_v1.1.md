@@ -120,6 +120,37 @@ ICS = (Interventions avec technicien 100% conforme à la date / Total interventi
 
 ---
 
+## 3. Module Charges & Bénéfice Technicien (ajout)
+
+### 3.1 Objectif
+Permettre à chaque technicien de saisir ses charges mensuelles (ex. véhicule, loyer, essence, assurances, matériels, consommables) et de visualiser l’évolution de son **Bénéfice** mensuel, calculé comme **CA mensuel – charges mensuelles**.
+
+### 3.2 Périmètre fonctionnel
+- **Charges technicien** (privées) :
+  - Création, modification, suppression.
+  - Liste paginée et filtrable par mois/année.
+- **Bénéfice** :
+  - Tableau mensuel avec **CA**, **charges**, **bénéfice**.
+  - Sélection d’une année (par défaut : année en cours).
+
+### 3.3 Données minimales (charge)
+- `type` : véhicule, loyer, essence, assurance, matériel, consommable, autre
+- `montant` : nombre (≥ 0)
+- `mois` : format `YYYY-MM`
+- `note` : texte libre (optionnel)
+
+### 3.4 Règles d’accès
+- Le technicien voit uniquement ses propres charges.
+- Admin/Dirigeant peuvent consulter l’ensemble (vue globale/filtrée).
+
+### 3.5 Calcul
+```
+Bénéfice (mois M) = CA(M) – Σ Charges(M)
+```
+
+
+---
+
 ### 2.4 I‑4 — Taux d’Occupation Réelle vs Planifiée (TOR)
 **Définition**: écart entre horaire planifié et réel, et entre durée planifiée et durée réelle.
 

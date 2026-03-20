@@ -115,11 +115,13 @@
           <tbody>
             @for (a of absences(); track a._id || a.startDate) {
               <tr>
-                <td>{{ formatDate(a.startDate) }} → {{ formatDate(a.endDate) }}</td>
-                <td>{{ a.type }}</td>
-                <td><span class="status-pill" [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span></td>
-                <td>{{ a.comment || '—' }}</td>
-                <td class="actions">
+                <td data-label="Période">{{ formatDate(a.startDate) }} → {{ formatDate(a.endDate) }}</td>
+                <td data-label="Type">{{ a.type }}</td>
+                <td data-label="Statut">
+                  <span class="status-pill" [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span>
+                </td>
+                <td data-label="Commentaire">{{ a.comment || '—' }}</td>
+                <td data-label="Actions" class="actions">
                   @if (a.status === 'EN_ATTENTE') {
                     <button class="btn-outline btn-info-outline" type="button" (click)="startEdit(a)">
                       Modifier

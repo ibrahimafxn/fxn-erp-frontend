@@ -199,6 +199,13 @@ export class TechnicianSupplyRequests {
     this.loadRequests(true);
   }
 
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
+    this.page.set(1);
+    this.loadRequests(true);
+  }
+
   loadRequests(force = false): void {
     this.loading.set(true);
     this.error.set(null);

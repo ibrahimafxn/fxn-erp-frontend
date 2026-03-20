@@ -6,7 +6,9 @@ import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { BpuService } from '../../../core/services/bpu.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { BpuEntry } from '../../../core/models';
+import { Role } from '../../../core/models/roles.model';
 import { downloadBlob } from '../../../core/utils/download';
 
 type Segment = 'AUTO' | 'SALARIE' | 'AUTRE';
@@ -24,6 +26,7 @@ export class BpuList {
   private route = inject(ActivatedRoute);
   private bpuService = inject(BpuService);
   private bpuSelectionService = inject(BpuSelectionService);
+  private auth = inject(AuthService);
 
   readonly items = signal<BpuEntry[]>([]);
   readonly loading = signal(false);
@@ -35,6 +38,8 @@ export class BpuList {
   readonly sortDir = signal<'asc' | 'desc'>('asc');
   readonly selectedCodes = signal<Set<string>>(new Set());
   readonly editedPrices = signal<Map<string, number>>(new Map());
+  readonly isTechnician = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
+  readonly confirmOpen = signal(false);
 
   readonly sortedItems = computed(() => {
     const dir = this.sortDir();
@@ -69,9 +74,14 @@ export class BpuList {
     }).subscribe({
       next: ({ items, selections }) => {
         const uniqueItems = this.uniqueItems(items);
-        this.items.set(uniqueItems);
-        const selection = selections.find((item) => item.type === segment);
-        const availableCodes = new Set(uniqueItems.map((item) => item.code).filter(Boolean) as string[]);
+        const visibleItems = this.isTechnician()
+          ? uniqueItems.filter((item) => !this.isCablePavCode(item.code))
+          : uniqueItems;
+        this.items.set(visibleItems);
+        const selection = this.isTechnician()
+          ? selections.find((item) => String(item.type || '').trim().toUpperCase() === 'DEFAULT_RATES')
+          : selections.find((item) => item.type === segment);
+        const availableCodes = new Set(visibleItems.map((item) => item.code).filter(Boolean) as string[]);
         const selected = new Set<string>();
         const edited = new Map<string, number>();
         for (const entry of selection?.prestations || []) {
@@ -80,7 +90,11 @@ export class BpuList {
           selected.add(code);
           edited.set(code, Number(entry.unitPrice || 0));
         }
-        this.selectedCodes.set(selected);
+        if (this.isTechnician()) {
+          this.selectedCodes.set(new Set(availableCodes));
+        } else {
+          this.selectedCodes.set(selected);
+        }
         this.editedPrices.set(edited);
         this.loading.set(false);
       },
@@ -120,10 +134,15 @@ export class BpuList {
       window.history.back();
       return;
     }
+    if (this.isTechnician()) {
+      this.router.navigate(['/technician']).then();
+      return;
+    }
     this.router.navigate(['/admin/bpu']).then();
   }
 
   toggleSelection(item: BpuEntry): void {
+    if (this.isTechnician()) return;
     const code = item.code;
     if (!code) return;
     const next = new Set(this.selectedCodes());
@@ -142,11 +161,13 @@ export class BpuList {
   }
 
   allSelected(): boolean {
+    if (this.isTechnician()) return this.items().length > 0;
     const items = this.items().filter((item) => item.code);
     return items.length > 0 && items.every((item) => this.selectedCodes().has(item.code));
   }
 
   toggleSelectAll(): void {
+    if (this.isTechnician()) return;
     const items = this.items().filter((item) => item.code);
     const next = new Set<string>();
     const shouldSelectAll = !this.allSelected();
@@ -182,6 +203,7 @@ export class BpuList {
   }
 
   hasSelection(): boolean {
+    if (this.isTechnician()) return this.items().length > 0;
     return this.selectedCodes().size > 0;
   }
 
@@ -190,7 +212,16 @@ export class BpuList {
       this.error.set('Veuillez sélectionner au moins une prestation.');
       return;
     }
-    const type = this.currentSegment();
+    this.confirmOpen.set(true);
+  }
+
+  closeConfirm(): void {
+    this.confirmOpen.set(false);
+  }
+
+  confirmSave(): void {
+    this.confirmOpen.set(false);
+    const type = this.isTechnician() ? 'DEFAULT_RATES' : this.currentSegment();
     const selected = this.items().filter((item) => item.code && this.selectedCodes().has(item.code));
     const prestations = selected
       .map((item) => ({
@@ -212,7 +243,11 @@ export class BpuList {
         this.saving.set(false);
         this.selectedCodes.set(new Set());
         this.success.set('BPU enregistré avec succès.');
-        this.router.navigate(['/admin/bpu'], { queryParams: { saved: '1' } }).then();
+        if (this.isTechnician()) {
+          this.router.navigate(['/technician/bpu'], { queryParams: { saved: '1' } }).then();
+        } else {
+          this.router.navigate(['/admin/bpu'], { queryParams: { saved: '1' } }).then();
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
@@ -269,6 +304,14 @@ export class BpuList {
 
   isVioletPill(code?: string): boolean {
     return code === 'CABLE_PAV_1' || code === 'CABLE_PAV_2' || code === 'CABLE_PAV_3' || code === 'CABLE_PAV_4';
+  }
+
+  private isCablePavCode(code?: string): boolean {
+    return code === 'CABLE_PAV_1'
+      || code === 'CABLE_PAV_2'
+      || code === 'CABLE_PAV_3'
+      || code === 'CABLE_PAV_4'
+      || code === 'CABLE_PAV_SL';
   }
 
   private apiError(err: HttpErrorResponse, fallback: string): string {

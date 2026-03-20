@@ -1,0 +1,174 @@
+<section class="technician-charges">
+  <header class="page-header">
+    <div>
+      <h1>Charges</h1>
+      <p class="subtitle">Saisir vos charges et suivre votre bénéfice mensuel.</p>
+    </div>
+  </header>
+
+  <section class="card benefit-card">
+    <div class="benefit-head">
+      <h2>Bénéfice mensuel</h2>
+      <div class="year-select">
+        <label>Mois</label>
+        <input type="month" [value]="selectedMonth()" (change)="setMonthSelection($any($event.target).value)" />
+      </div>
+    </div>
+
+    @if (benefitLoading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (benefitError()) {
+      <div class="state error">Erreur : {{ benefitError() }}</div>
+    } @else {
+      <div class="benefit-kpis">
+        <article class="kpi">
+          <div class="label">CA</div>
+          <div class="value">{{ formatAmount(monthlySummary().ca) }}</div>
+        </article>
+        <article class="kpi">
+          <div class="label">Charges</div>
+          <div class="value">{{ formatAmount(monthlySummary().charges) }}</div>
+        </article>
+        <article class="kpi">
+          <div class="label">Bénéfice</div>
+          <div class="value">{{ formatAmount(monthlySummary().benefit) }}</div>
+        </article>
+      </div>
+
+      <div class="table card-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Mois</th>
+              <th>CA</th>
+              <th>Charges</th>
+              <th>Bénéfice</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of benefitRows(); track row.month) {
+              <tr>
+                <td data-label="Mois">{{ row.label }}</td>
+                <td data-label="CA">{{ formatAmount(row.ca) }}</td>
+                <td data-label="Charges">{{ formatAmount(row.charges) }}</td>
+                <td data-label="Bénéfice">{{ formatAmount(row.benefit) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="card form-card">
+    <h2>@if (editing()) { Modifier une charge } @else { Nouvelle charge }</h2>
+    <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Type
+        <select formControlName="type">
+          @for (t of chargeTypes; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Mois
+        <input type="month" formControlName="month" />
+      </label>
+      <label>
+        Montant
+        <input type="number" min="0" step="0.01" formControlName="amount" />
+      </label>
+      <label class="full">
+        Note
+        <textarea rows="2" formControlName="note" placeholder="Ex: assurance annuelle, entretien…"></textarea>
+      </label>
+      <div class="actions full">
+        <button class="btn-outline" type="button" (click)="resetForm()">Réinitialiser</button>
+        <button class="btn-primary" type="submit" [disabled]="loading() || form.invalid">
+          @if (editing()) { Mettre à jour } @else { Enregistrer }
+        </button>
+      </div>
+    </form>
+    @if (error()) {
+      <div class="state error">{{ error() }}</div>
+    }
+  </section>
+
+  <section class="card list-card">
+    <div class="list-head">
+      <h2>Mes charges</h2>
+      <div class="filters">
+        <select #typeSelect [value]="typeFilter()" (change)="setTypeFilter(typeSelect.value)">
+          <option value="">Tous les types</option>
+          @for (t of chargeTypes; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+        <input type="month" [value]="monthFilter()" (change)="setMonthFilter($any($event.target).value)" />
+      </div>
+    </div>
+
+    <div class="pager" *ngIf="total() > limit()">
+      <div class="pager-left">
+        <div class="page-size">
+          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+        </div>
+        <span class="pager-label">Éléments par page</span>
+      </div>
+      <div class="pager-right">
+        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+        <div class="pager-nav">
+          <button class="btn-outline btn-xs" [disabled]="!canPrev()" (click)="prevPage()">Précédent</button>
+          <button class="btn-outline btn-xs" [disabled]="!canNext()" (click)="nextPage()">Suivant</button>
+        </div>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (items().length === 0) {
+      <div class="state empty">Aucune charge.</div>
+    } @else {
+      <div class="table card-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Mois</th>
+              <th>Montant</th>
+              <th>Note</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item._id) {
+              <tr>
+                <td data-label="Type">{{ chargeTypeLabel(item.type) }}</td>
+                <td data-label="Mois">{{ item.month }}</td>
+                <td data-label="Montant">{{ formatAmount(item.amount) }}</td>
+                <td data-label="Note">{{ item.note || '—' }}</td>
+                <td data-label="Actions" class="actions">
+                  <button class="btn-outline btn-xs" type="button" (click)="editCharge(item)">Modifier</button>
+                  <button class="btn-outline btn-xs delete" type="button" (click)="openDeleteModal(item)">Supprimer</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    entityLabel="la charge"
+    [entityName]="pendingDelete()?.type || ''"
+    [entityId]="pendingDelete()?._id || null"
+    [confirming]="deletingId() === pendingDelete()?._id"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()">
+  </app-confirm-delete-modal>
+</section>

@@ -5,6 +5,7 @@ export * from './attribution-history.model';
 export * from './bpu.model';
 export * from './bpu-type.model';
 export * from './bpu-selection.model';
+export * from './charge.model';
 export * from './absence.model';
 
 export * from './consumable.model';
