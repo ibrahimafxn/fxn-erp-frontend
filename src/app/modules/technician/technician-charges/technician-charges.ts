@@ -6,6 +6,7 @@ import { ChargeService } from '../../../core/services/charge.service';
 import { TechnicianReportService } from '../../../core/services/technician-report.service';
 import { Charge, ChargeType } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 import { formatPageRange } from '../../../core/utils/pagination';
 
 type BenefitRow = {
@@ -20,7 +21,7 @@ type BenefitRow = {
   selector: 'app-technician-charges',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal, ConfirmActionModal],
   providers: [DatePipe],
   templateUrl: './technician-charges.html',
   styleUrl: './technician-charges.scss'
@@ -43,6 +44,8 @@ export class TechnicianCharges {
   readonly deleteModalOpen = signal(false);
   readonly pendingDelete = signal<Charge | null>(null);
   readonly deletingId = signal<string | null>(null);
+  readonly confirmUpdateOpen = signal(false);
+  readonly pendingUpdatePayload = signal<{ type: ChargeType; amount: number; month: string; note?: string } | null>(null);
 
   readonly benefitLoading = signal(false);
   readonly benefitError = signal<string | null>(null);
@@ -100,26 +103,14 @@ export class TechnicianCharges {
       this.form.markAllAsTouched();
       return;
     }
-    this.loading.set(true);
-    this.error.set(null);
-    const payload = this.form.getRawValue();
     const current = this.editing();
-    const request$ = current?._id
-      ? this.charges.update(current._id, payload)
-      : this.charges.create(payload);
-    request$.subscribe({
-      next: () => {
-        this.loading.set(false);
-        this.editing.set(null);
-        this.resetForm();
-        this.loadCharges(true);
-        this.loadBenefit(true);
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur sauvegarde charge'));
-      }
-    });
+    const payload = this.form.getRawValue();
+    if (current?._id) {
+      this.pendingUpdatePayload.set(payload);
+      this.confirmUpdateOpen.set(true);
+      return;
+    }
+    this.runSave(payload, current?._id);
   }
 
   resetForm(): void {
@@ -135,6 +126,22 @@ export class TechnicianCharges {
       amount: item.amount,
       note: item.note || ''
     });
+  }
+
+  closeConfirmUpdate(): void {
+    this.confirmUpdateOpen.set(false);
+    this.pendingUpdatePayload.set(null);
+  }
+
+  confirmUpdate(): void {
+    const current = this.editing();
+    const payload = this.pendingUpdatePayload();
+    if (!current?._id || !payload) {
+      this.closeConfirmUpdate();
+      return;
+    }
+    this.closeConfirmUpdate();
+    this.runSave(payload, current._id);
   }
 
   openDeleteModal(item: Charge): void {
@@ -161,6 +168,25 @@ export class TechnicianCharges {
       error: (err) => {
         this.deletingId.set(null);
         this.error.set(this.apiError(err, 'Erreur suppression charge'));
+      }
+    });
+  }
+
+  private runSave(payload: { type: ChargeType; amount: number; month: string; note?: string }, id?: string): void {
+    this.loading.set(true);
+    this.error.set(null);
+    const request$ = id ? this.charges.update(id, payload) : this.charges.create(payload);
+    request$.subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.editing.set(null);
+        this.resetForm();
+        this.loadCharges(true);
+        this.loadBenefit(true);
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(this.apiError(err, 'Erreur sauvegarde charge'));
       }
     });
   }

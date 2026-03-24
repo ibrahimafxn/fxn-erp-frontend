@@ -6,60 +6,6 @@
     </div>
   </header>
 
-  <section class="card benefit-card">
-    <div class="benefit-head">
-      <h2>Bénéfice mensuel</h2>
-      <div class="year-select">
-        <label>Mois</label>
-        <input type="month" [value]="selectedMonth()" (change)="setMonthSelection($any($event.target).value)" />
-      </div>
-    </div>
-
-    @if (benefitLoading()) {
-      <div class="state loading">Chargement…</div>
-    } @else if (benefitError()) {
-      <div class="state error">Erreur : {{ benefitError() }}</div>
-    } @else {
-      <div class="benefit-kpis">
-        <article class="kpi">
-          <div class="label">CA</div>
-          <div class="value">{{ formatAmount(monthlySummary().ca) }}</div>
-        </article>
-        <article class="kpi">
-          <div class="label">Charges</div>
-          <div class="value">{{ formatAmount(monthlySummary().charges) }}</div>
-        </article>
-        <article class="kpi">
-          <div class="label">Bénéfice</div>
-          <div class="value">{{ formatAmount(monthlySummary().benefit) }}</div>
-        </article>
-      </div>
-
-      <div class="table card-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Mois</th>
-              <th>CA</th>
-              <th>Charges</th>
-              <th>Bénéfice</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of benefitRows(); track row.month) {
-              <tr>
-                <td data-label="Mois">{{ row.label }}</td>
-                <td data-label="CA">{{ formatAmount(row.ca) }}</td>
-                <td data-label="Charges">{{ formatAmount(row.charges) }}</td>
-                <td data-label="Bénéfice">{{ formatAmount(row.benefit) }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  </section>
-
   <section class="card form-card">
     <h2>@if (editing()) { Modifier une charge } @else { Nouvelle charge }</h2>
     <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
@@ -92,6 +38,60 @@
     </form>
     @if (error()) {
       <div class="state error">{{ error() }}</div>
+    }
+  </section>
+
+  <section class="card benefit-card">
+    <div class="benefit-head">
+      <h2>Bénéfice mensuel</h2>
+      <div class="year-select">
+        <label>Mois</label>
+        <input type="month" [value]="selectedMonth()" (change)="setMonthSelection($any($event.target).value)" />
+      </div>
+    </div>
+
+    @if (benefitLoading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (benefitError()) {
+      <div class="state error">Erreur : {{ benefitError() }}</div>
+    } @else {
+      <div class="benefit-kpis">
+        <article class="kpi kpi-ca">
+          <div class="label">CA</div>
+          <div class="value">{{ formatAmount(monthlySummary().ca) }}</div>
+        </article>
+        <article class="kpi kpi-charges">
+          <div class="label">Charges</div>
+          <div class="value">{{ formatAmount(monthlySummary().charges) }}</div>
+        </article>
+        <article class="kpi kpi-benefit">
+          <div class="label">Bénéfice</div>
+          <div class="value">{{ formatAmount(monthlySummary().benefit) }}</div>
+        </article>
+      </div>
+
+      <div class="table card-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Mois</th>
+              <th>CA</th>
+              <th>Charges</th>
+              <th>Bénéfice</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of benefitRows(); track row.month) {
+              <tr>
+                <td data-label="Mois">{{ row.label }}</td>
+                <td data-label="CA">{{ formatAmount(row.ca) }}</td>
+                <td data-label="Charges">{{ formatAmount(row.charges) }}</td>
+                <td data-label="Bénéfice">{{ formatAmount(row.benefit) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
   </section>
 
@@ -171,4 +171,15 @@
     (cancel)="closeDeleteModal()"
     (confirm)="confirmDelete()">
   </app-confirm-delete-modal>
+
+  <app-confirm-action-modal
+    [open]="confirmUpdateOpen()"
+    title="Confirmer la modification"
+    message="Souhaitez-vous enregistrer ces modifications ?"
+    confirmText="Mettre à jour"
+    cancelText="Annuler"
+    [confirming]="loading()"
+    (cancel)="closeConfirmUpdate()"
+    (confirm)="confirmUpdate()">
+  </app-confirm-action-modal>
 </section>

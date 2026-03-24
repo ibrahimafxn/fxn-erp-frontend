@@ -1,5 +1,6 @@
 .technician-charges {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
   padding: 1rem;
 }
@@ -26,6 +27,18 @@
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.form-card {
+  order: 1;
+}
+
+.benefit-card {
+  order: 2;
+}
+
+.list-card {
+  order: 3;
 }
 
 .year-select {
@@ -55,6 +68,21 @@
   border-radius: 0.9rem;
   border: 1px solid rgba(148, 163, 184, 0.2);
   background: rgba(15, 23, 42, 0.6);
+}
+
+.benefit-kpis .kpi.kpi-ca {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: linear-gradient(135deg, rgba(16, 64, 32, 0.95), rgba(15, 40, 28, 0.85));
+}
+
+.benefit-kpis .kpi.kpi-charges {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: linear-gradient(135deg, rgba(74, 17, 20, 0.95), rgba(52, 14, 16, 0.85));
+}
+
+.benefit-kpis .kpi.kpi-benefit {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: linear-gradient(135deg, rgba(82, 54, 12, 0.95), rgba(52, 36, 9, 0.85));
 }
 
 .benefit-kpis .label {
