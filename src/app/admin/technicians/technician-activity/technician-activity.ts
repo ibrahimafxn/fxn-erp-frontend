@@ -97,6 +97,16 @@ export class TechnicianActivity {
   readonly bpuLoaded = signal(false);
   readonly employeesLoaded = signal(false);
   readonly selectedTechnicianId = signal('');
+  readonly customBpuLoading = signal(false);
+  readonly hasCustomBpu = signal(false);
+  readonly selectedTechnicianLabel = computed(() => {
+    const techId = this.selectedTechnicianId();
+    if (!techId) return '';
+    const match = this.users().find((u) => u._id === techId);
+    if (!match) return '';
+    const parts = [match.firstName, match.lastName].filter(Boolean);
+    return parts.join(' ').trim();
+  });
   readonly sortedInterventions = computed(() => {
     const items = [...this.interventions()];
     const field = this.sortField();
@@ -140,9 +150,13 @@ export class TechnicianActivity {
     this.refreshAll();
 
     this.selectedTechnicianId.set(this.filterForm.controls.technicianId.value || '');
+    this.loadSelectedTechnicianBpu();
     this.filterForm.controls.technicianId.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe((value) => this.selectedTechnicianId.set(value || ''));
+      .subscribe((value) => {
+        this.selectedTechnicianId.set(value || '');
+        this.loadSelectedTechnicianBpu();
+      });
   }
 
   refreshAll(): void {
@@ -354,6 +368,10 @@ export class TechnicianActivity {
   readonly selectedBpuLabel = computed(() => {
     const techId = this.selectedTechnicianId();
     if (!techId) return '';
+    if (this.hasCustomBpu()) {
+      const label = this.selectedTechnicianLabel();
+      return label ? `Suivi - ${label}` : 'Suivi';
+    }
     const type = this.resolveBpuSegment(techId);
     if (type === 'AUTO') return 'AUTO';
     if (type === 'AUTRE') return 'AUTRE';
@@ -523,6 +541,25 @@ export class TechnicianActivity {
     } finally {
       this.loadingBpu.set(false);
     }
+  }
+
+  private loadSelectedTechnicianBpu(): void {
+    const techId = this.selectedTechnicianId();
+    if (!techId) {
+      this.hasCustomBpu.set(false);
+      return;
+    }
+    this.customBpuLoading.set(true);
+    this.bpuSelectionService.list({ owner: techId }).subscribe({
+      next: (items) => {
+        this.hasCustomBpu.set((items || []).length > 0);
+        this.customBpuLoading.set(false);
+      },
+      error: () => {
+        this.hasCustomBpu.set(false);
+        this.customBpuLoading.set(false);
+      }
+    });
   }
 
   private async ensureEmployeeContracts(): Promise<void> {

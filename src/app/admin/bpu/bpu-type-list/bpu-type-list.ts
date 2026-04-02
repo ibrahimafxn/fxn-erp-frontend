@@ -4,6 +4,10 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BpuType } from '../../../core/models';
 import { BpuTypeService } from '../../../core/services/bpu-type.service';
+import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
+import { UserService } from '../../../core/services/user.service';
+import { Role } from '../../../core/models/roles.model';
+import { User } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
@@ -18,11 +22,22 @@ export class BpuTypeList {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private svc = inject(BpuTypeService);
+  private bpuSelectionService = inject(BpuSelectionService);
+  private userService = inject(UserService);
 
   readonly items = signal<BpuType[]>([]);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
+  readonly technicians = signal<User[]>([]);
+  readonly techniciansLoading = signal(false);
+  readonly techniciansError = signal<string | null>(null);
+  readonly personalizedOwnerIds = signal<Set<string>>(new Set());
+  readonly activePersonalizedTechnicians = computed(() => {
+    const ids = this.personalizedOwnerIds();
+    if (!ids.size) return [];
+    return this.technicians().filter((tech) => ids.has(tech._id) && tech.authEnabled !== false);
+  });
 
   readonly deleteModalOpen = signal(false);
   readonly pendingDeleteId = signal<string | null>(null);
@@ -41,6 +56,8 @@ export class BpuTypeList {
       this.success.set('BPU enregistré avec succès.');
     }
     this.load();
+    this.loadTechnicians();
+    this.loadPersonalizedOwners();
   }
 
   displayType(type: string | null | undefined): string {
@@ -59,6 +76,43 @@ export class BpuTypeList {
       error: (err: HttpErrorResponse) => {
         this.error.set(this.apiError(err, 'Erreur chargement BPU'));
         this.loading.set(false);
+      }
+    });
+  }
+
+  loadTechnicians(): void {
+    this.techniciansLoading.set(true);
+    this.techniciansError.set(null);
+    this.userService.refreshUsers(true, { role: Role.TECHNICIEN, limit: 1000 }).subscribe({
+      next: (result) => {
+        const list = [...(result?.items || [])];
+        list.sort((a, b) => {
+          const nameA = `${a.lastName || ''} ${a.firstName || ''}`.trim().toLowerCase();
+          const nameB = `${b.lastName || ''} ${b.firstName || ''}`.trim().toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+        this.technicians.set(list);
+        this.techniciansLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.techniciansError.set(this.apiError(err, 'Erreur chargement techniciens'));
+        this.techniciansLoading.set(false);
+      }
+    });
+  }
+
+  loadPersonalizedOwners(): void {
+    this.bpuSelectionService.list({ owner: 'all' }).subscribe({
+      next: (items) => {
+        const owners = new Set<string>();
+        for (const entry of items || []) {
+          if (!entry?.owner) continue;
+          owners.add(String(entry.owner));
+        }
+        this.personalizedOwnerIds.set(owners);
+      },
+      error: () => {
+        this.personalizedOwnerIds.set(new Set());
       }
     });
   }

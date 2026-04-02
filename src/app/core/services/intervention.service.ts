@@ -3,6 +3,44 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export type BpuAnalysisStats = {
+  totalLines: number;
+  linesWithArticles: number;
+  totalArticleOccurrences: number;
+  matchedOccurrences: number;
+  unknownOccurrences: number;
+  matchRate: number;
+  uniqueMatchedCodes: number;
+  uniqueUnknownCodes: number;
+};
+
+export type BpuAnalysisAdminInfo = {
+  code: string;
+  source: 'BPU' | 'PRESTATION';
+  label: string;
+  unitPrice: number | null;
+  segment?: string;
+};
+
+export type BpuAnalysisSuggestion = {
+  code: string;
+  label: string;
+  distance: number;
+};
+
+export type BpuAnalysisUnknownEntry = {
+  count: number;
+  suggestions: BpuAnalysisSuggestion[];
+  rawExamples: string[];
+};
+
+export type BpuAnalysisReport = {
+  stats: BpuAnalysisStats;
+  unknownCodes: Record<string, BpuAnalysisUnknownEntry>;
+  notSeenInCsv: BpuAnalysisAdminInfo[];
+  analyzedAt: string;
+};
+
 export type InterventionSummaryItem = {
   technician: string;
   total: number;
@@ -395,6 +433,12 @@ export class InterventionService {
     return this.http.get(`${this.baseUrl}/imports/${id}/download`, { responseType: 'blob' });
   }
 
+  getBpuAnalysis(id: string): Observable<{ success: boolean; data: BpuAnalysisReport | null; message?: string }> {
+    return this.http.get<{ success: boolean; data: BpuAnalysisReport | null; message?: string }>(
+      `${this.baseUrl}/imports/${id}/bpu-analysis`
+    );
+  }
+
   listImportTickets(
     query: InterventionImportTicketQuery = {}
   ): Observable<{ success: boolean; data: InterventionImportTicketResponse }> {
@@ -441,6 +485,13 @@ export class InterventionService {
 
   resetAll(): Observable<{ success: boolean; data: { deleted: number } }> {
     return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/reset`);
+  }
+
+  formatVersions(): Observable<{ success: boolean; data: { backfilled: number; skipped: number } }> {
+    return this.http.post<{ success: boolean; data: { backfilled: number; skipped: number } }>(
+      `${this.baseUrl}/format-versions`,
+      {}
+    );
   }
 
   importInvoices(files: File[]): Observable<{ success: boolean; data?: unknown; message?: string }> {

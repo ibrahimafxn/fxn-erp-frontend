@@ -4,56 +4,6 @@
   gap: 1rem;
 }
 
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 10, 18, 0.65);
-  z-index: 2000;
-}
-
-.modal-card {
-  position: fixed;
-  inset: 20% 18% auto 18%;
-  background: var(--fxn-surface-glass);
-  border: 1px solid var(--fxn-border);
-  border-radius: 1rem;
-  padding: 1.25rem;
-  z-index: 2001;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
-}
-
-.modal-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.modal-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.modal-sub {
-  color: var(--fxn-text-muted);
-  font-size: .9rem;
-}
-
-.modal-actions {
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  gap: .75rem;
-  justify-content: flex-end;
-}
-
-@media (max-width: 900px) {
-  .modal-card {
-    inset: 18% 8% auto 8%;
-  }
-}
-
 .page-header {
   display: flex;
   align-items: flex-start;
@@ -95,6 +45,98 @@
   display: grid;
   gap: .6rem;
 
+  .toolbar-label {
+    font-size: .85rem;
+    color: var(--fxn-text-muted);
+  }
+
+  .toolbar-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .35rem .6rem;
+    border-radius: .75rem;
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    background: rgba(59, 130, 246, 0.12);
+    color: #dbeafe;
+    font-size: .85rem;
+    font-weight: 600;
+  }
+
+  .toolbar-copy {
+    width: fit-content;
+  }
+
+  .personalized-box {
+    display: grid;
+    gap: .4rem;
+  }
+
+  .personalized-title {
+    font-size: .8rem;
+    color: var(--fxn-text-muted);
+  }
+
+  .personalized-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+  }
+
+  .personalized-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+  }
+
+  .personalized-chip {
+    padding: .25rem .55rem;
+    border-radius: .65rem;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface);
+    font-size: .78rem;
+    color: var(--fxn-text-soft);
+    cursor: pointer;
+  }
+
+  .btn-icon.subtle {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(15, 23, 42, 0.35);
+    color: rgba(226, 232, 240, 0.75);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .btn-icon.subtle i {
+    font-size: 0.85rem;
+  }
+
+  .btn-icon.subtle:hover:not(:disabled) {
+    border-color: rgba(148, 163, 184, 0.55);
+    color: #e2e8f0;
+  }
+
+  .btn-icon.subtle.danger {
+    border-color: rgba(248, 113, 113, 0.35);
+    color: rgba(248, 113, 113, 0.8);
+  }
+
+  .btn-icon.subtle.danger:hover:not(:disabled) {
+    border-color: rgba(248, 113, 113, 0.7);
+    color: #fecaca;
+    background: rgba(248, 113, 113, 0.1);
+  }
+
+  .personalized-empty {
+    font-size: .8rem;
+    color: var(--fxn-text-muted);
+  }
+
   label {
     display: grid;
     gap: .35rem;
@@ -115,6 +157,15 @@
     border-color: var(--fxn-primary);
     box-shadow: var(--fxn-ring);
   }
+
+  .toolbar-help {
+    font-size: .75rem;
+    color: var(--fxn-text-muted);
+
+    &.error {
+      color: var(--fxn-danger);
+    }
+  }
 }
 
 .state {
@@ -124,6 +175,7 @@
   background: var(--fxn-surface-glass);
   &.error { background: var(--fxn-danger-soft); }
   &.ok { background: rgba(0,255,120,.10); }
+  &.warning { background: rgba(234, 179, 8, 0.18); }
 }
 
 .table.card {
@@ -134,6 +186,7 @@
 .actions-footer {
   display: flex;
   justify-content: flex-end;
+  gap: .6rem;
 }
 
 .table-title {
@@ -217,6 +270,12 @@ tbody td input {
   color: inherit;
 }
 
+.code-input {
+  width: 140px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
 tbody tr {
   transition: background .2s ease;
   cursor: pointer;
@@ -224,6 +283,17 @@ tbody tr {
 
 tbody tr:hover {
   background: var(--fxn-primary-soft);
+}
+
+.new-row {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.new-label {
+  font-size: .75rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--fxn-text-muted);
 }
 
 .mono {

@@ -5,12 +5,13 @@ import { Absence, AbsenceStatus, AbsenceType } from '../../../core/models';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   standalone: true,
   selector: 'app-technician-agenda',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, ConfirmActionModal],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmActionModal, TechnicianMobileNav],
   providers: [DatePipe],
   templateUrl: './technician-agenda.html',
   styleUrls: ['./technician-agenda.scss'],

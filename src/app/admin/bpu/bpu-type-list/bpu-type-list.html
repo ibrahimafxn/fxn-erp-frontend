@@ -6,6 +6,12 @@
     </div>
 
     <div class="header-actions">
+      <button class="btn-outline" type="button" routerLink="/admin/bpu/osiris-mappings">
+        <i class="bi bi-link-45deg"></i> Mappings OSIRIS
+      </button>
+      <button class="btn-outline" type="button" routerLink="/admin/bpu/analyze-articles">
+        <i class="bi bi-search"></i> Analyser articles OSIRIS
+      </button>
       <button class="btn-primary" type="button" (click)="createNew()" [disabled]="loading() || deletingId() !== null">
         <i class="bi bi-plus"></i> Nouveau
       </button>
@@ -64,6 +70,23 @@
       </table>
     </div>
   }
+
+  <section class="card personalized-card">
+    <div class="personalized-title">Techniciens avec BPU personnalisé actif</div>
+    @if (techniciansLoading()) {
+      <div class="personalized-empty">Chargement…</div>
+    } @else if (techniciansError()) {
+      <div class="personalized-empty error">{{ techniciansError() }}</div>
+    } @else if (activePersonalizedTechnicians().length === 0) {
+      <div class="personalized-empty">Aucun technicien actif.</div>
+    } @else {
+      <div class="personalized-list">
+        @for (tech of activePersonalizedTechnicians(); track tech._id) {
+          <span class="personalized-chip">{{ tech.firstName }} {{ tech.lastName }}</span>
+        }
+      </div>
+    }
+  </section>
 
   <app-confirm-delete-modal
     [open]="deleteModalOpen()"

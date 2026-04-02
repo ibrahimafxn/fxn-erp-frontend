@@ -89,6 +89,14 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./orders/order-detail/order-detail').then(m => m.OrderDetail)
   },
   {
+    path: 'suppliers',
+    loadComponent: () => import('./suppliers/supplier-list/supplier-list').then(m => m.SupplierList)
+  },
+  {
+    path: 'suppliers/:id/detail',
+    loadComponent: () => import('./suppliers/supplier-detail/supplier-detail').then(m => m.SupplierDetail)
+  },
+  {
     path: 'alerts/stock',
     loadComponent: () => import('./alerts/stock-alerts/stock-alerts').then(m => m.StockAlerts)
   },
@@ -123,6 +131,14 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'bpu/prestations/new',
     loadComponent: () => import('./bpu/bpu-form/bpu-form').then(m => m.BpuForm)
+  },
+  {
+    path: 'bpu/analyze-articles',
+    loadComponent: () => import('./bpu/bpu-analyzer/bpu-analyzer').then(m => m.BpuAnalyzer)
+  },
+  {
+    path: 'bpu/osiris-mappings',
+    loadComponent: () => import('./bpu/osiris-mappings/osiris-mappings').then(m => m.OsirisMappings)
   },
   {
     path: 'revenue',
@@ -273,6 +289,25 @@ export const ADMIN_ROUTES: Routes = [
     path: 'technicians/interventions',
     loadComponent: () =>
       import('./technicians/technician-interventions/technician-interventions').then(m => m.TechnicianInterventions)
+  },
+
+  // -----------------------------
+  // PRESTATIONS
+  // -----------------------------
+  {
+    path: 'prestations',
+    loadComponent: () =>
+      import('./prestations/prestation-list/prestation-list').then(m => m.PrestationList)
+  },
+  {
+    path: 'prestations/new',
+    loadComponent: () =>
+      import('./prestations/prestation-form/prestation-form').then(m => m.PrestationForm)
+  },
+  {
+    path: 'prestations/:id/edit',
+    loadComponent: () =>
+      import('./prestations/prestation-form/prestation-form').then(m => m.PrestationForm)
   }
 
   // Optionnel (on fera après)

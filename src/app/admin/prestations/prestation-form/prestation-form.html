@@ -1,0 +1,89 @@
+<section class="prestation-form">
+  <header class="page-header card">
+    <div>
+      <h1>{{ title() }}</h1>
+      <p class="subtitle">
+        @if (isCreate()) { Créer un nouveau code article et sa désignation. }
+        @else { Modifier les informations de la prestation. }
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="back()">
+        <i class="bi bi-arrow-left"></i> Annuler
+      </button>
+      <button class="btn-save" type="button" (click)="submit()" [disabled]="!canSubmit()">
+        <i class="fa-solid fa-check"></i>
+        @if (saving()) { Enregistrement… } @else { Enregistrer }
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="status loading">Chargement…</div>
+  }
+
+  @if (!loading() && error()) {
+    <div class="status error">
+      <strong>Erreur :</strong> {{ error() }}
+    </div>
+  }
+
+  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+
+      <!-- CODE ARTICLE -->
+      <div class="field">
+        <label>Code article *</label>
+        <input
+          formControlName="code"
+          type="text"
+          placeholder="Ex : RECOIP"
+          style="text-transform: uppercase" />
+
+        @if (fe('code')) {
+          <small class="hint error">{{ fe('code') }}</small>
+        } @else if (form.controls.code.touched && form.controls.code.invalid) {
+          <small class="hint error">Le code article est requis.</small>
+        } @else {
+          <small class="hint">Sera automatiquement mis en majuscules. Doit être unique.</small>
+        }
+      </div>
+
+      <!-- PRIX -->
+      <div class="field">
+        <label>Prix (optionnel)</label>
+        <div class="input-group">
+          <input
+            formControlName="prix"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Ex : 30" />
+          <span class="input-suffix">€</span>
+        </div>
+
+        @if (fe('prix')) {
+          <small class="hint error">{{ fe('prix') }}</small>
+        } @else {
+          <small class="hint">Laisser vide si le prix n'est pas fixé.</small>
+        }
+      </div>
+
+      <!-- DÉSIGNATION -->
+      <div class="field col-2">
+        <label>Désignation *</label>
+        <input
+          formControlName="designation"
+          type="text"
+          placeholder="Ex : Reconnexion" />
+
+        @if (fe('designation')) {
+          <small class="hint error">{{ fe('designation') }}</small>
+        } @else if (form.controls.designation.touched && form.controls.designation.invalid) {
+          <small class="hint error">La désignation est requise (min 2 caractères).</small>
+        }
+      </div>
+
+    </div>
+  </form>
+</section>

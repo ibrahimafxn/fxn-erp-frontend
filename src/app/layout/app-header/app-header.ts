@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import {CommonModule, Location, NgOptimizedImage} from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -50,7 +51,7 @@ export class AppHeader {
   constructor() {
     this.currentLocale.set(this.detectLocale());
     this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
+      .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed())
       .subscribe(() => {
         this.currentUrl.set(this.router.url);
         this.pageTitle.set(this.computeTitle(this.router.url));
@@ -131,6 +132,7 @@ export class AppHeader {
   readonly materialReservationsLink = computed(() => '/admin/reservations/materials');
   readonly receiptsLink = computed(() => (this.isDepotManager() ? '/depot/receipts' : '/admin/receipts'));
   readonly ordersLink = computed(() => '/admin/orders');
+  readonly suppliersLink = computed(() => '/admin/suppliers');
   readonly stockAlertsLink = computed(() => (this.isDepotManager() ? '/depot/alerts/stock' : '/admin/alerts/stock'));
 
   /* ---------------------------
@@ -212,6 +214,10 @@ export class AppHeader {
     this.router.navigate([this.ordersLink()]).then();
   }
 
+  goSuppliers(): void {
+    this.router.navigate([this.suppliersLink()]).then();
+  }
+
   goStockAlerts(): void {
     this.router.navigate([this.stockAlertsLink()]).then();
   }
@@ -258,6 +264,10 @@ export class AppHeader {
 
   goTechHistory(): void {
     this.router.navigate(['/technician/history']).then();
+  }
+
+  goTechDocuments(): void {
+    this.router.navigate(['/technician/documents']).then();
   }
 
   goSupplyRequests(): void {
@@ -388,6 +398,7 @@ export class AppHeader {
       if (url.includes('/charges')) return 'Charges';
       if (url.includes('/bpu')) return 'BPU prestations';
       if (url.includes('/history')) return 'Historique';
+      if (url.includes('/documents')) return 'Documents';
       return 'Technicien';
     }
     if (url.includes('/unauthorized')) return 'Accès refusé';
@@ -401,6 +412,7 @@ export class AppHeader {
     if (url.includes('/receipts')) return 'Réceptions';
     if (url.includes('/orders/new')) return 'Nouvelle commande';
     if (url.includes('/orders')) return 'Commandes';
+    if (url.includes('/suppliers')) return 'Fournisseurs';
     if (url.includes('/alerts/stock')) return 'Alertes';
     if (url.includes('/interventions/import')) return 'Import interventions';
     if (url.includes('/interventions')) return 'Interventions';

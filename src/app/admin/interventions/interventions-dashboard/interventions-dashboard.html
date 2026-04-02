@@ -201,6 +201,39 @@
     </section>
   }
 
+  @if (canEditRates()) {
+    <section class="admin-tools card">
+      <div class="admin-tools-head">
+        <div>
+          <h2><span class="material-icons notranslate">build</span>Outils admin</h2>
+          <p>Actions de maintenance sur les données MongoDB.</p>
+        </div>
+      </div>
+      <div class="admin-tools-body">
+        <div class="admin-tool-row">
+          <div class="admin-tool-info">
+            <strong>Formater intervention.versions</strong>
+            <span>Crée les documents InterventionVersion manquants pour toutes les interventions sans historique de version.</span>
+          </div>
+          <button
+            class="btn-outline"
+            type="button"
+            (click)="runFormatVersions()"
+            [disabled]="formatVersionsLoading()"
+          >
+            <span class="material-icons notranslate" aria-hidden="true">data_object</span>
+            @if (formatVersionsLoading()) { Formatage… } @else { Formater versions }
+          </button>
+        </div>
+        @if (formatVersionsError()) {
+          <p class="state error">{{ formatVersionsError() }}</p>
+        } @else if (formatVersionsResult()) {
+          <p class="state ok">{{ formatVersionsResult() }}</p>
+        }
+      </div>
+    </section>
+  }
+
   } @else {
     <div class="state hint card">Affichage réinitialisé. Utilise les filtres ou un import pour recharger.</div>
   }

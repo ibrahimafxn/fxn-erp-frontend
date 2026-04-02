@@ -5,12 +5,13 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { InterventionItem, InterventionService } from '../../../core/services/intervention.service';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-technician-interventions-history',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TechnicianMobileNav],
   templateUrl: './technician-interventions-history.html',
   styleUrls: ['./technician-interventions-history.scss']
 })

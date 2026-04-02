@@ -1,0 +1,266 @@
+/* ============================================================
+   TECHNICIAN DOCUMENTS — Mobile-first
+   Base = 375px+  |  md = 600px+  |  lg = 900px+
+   ============================================================ */
+
+.technician-documents {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.9rem;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+.technician-documents .page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.technician-documents .page-header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.technician-documents .subtitle {
+  margin: 0;
+  color: var(--fxn-text-muted);
+  font-size: 0.875rem;
+}
+
+.technician-documents .header-actions .btn-outline {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+}
+
+/* ── Card base ───────────────────────────────────────────── */
+.technician-documents .card {
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-glass);
+  padding: 1rem;
+}
+
+/* ── States ──────────────────────────────────────────────── */
+.technician-documents .state {
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-glass);
+}
+
+.technician-documents .state.error {
+  background: var(--fxn-danger-soft);
+}
+
+/* ── Status badges ───────────────────────────────────────── */
+.technician-documents .status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.technician-documents .status-valid {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.technician-documents .status-expiring {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.technician-documents .status-expired {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ── Table: card display on mobile ──────────────────────── */
+.technician-documents .table {
+  padding: 0;
+}
+
+.technician-documents table {
+  display: block;
+  width: 100%;
+}
+
+.technician-documents thead {
+  display: none;
+}
+
+.technician-documents tbody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Chaque ligne = une carte à 2 colonnes :
+   col 1 (gauche)  : Document + Détail
+   col 2 (droite)  : Statut + Expiration + bouton Ouvrir */
+.technician-documents tbody tr {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem 0.75rem;
+  align-items: start;
+  border: 1px solid var(--fxn-border);
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
+  background: var(--fxn-surface);
+}
+
+/* Document (col 1, ligne 1) */
+.technician-documents tbody td[data-label='Document'] {
+  grid-column: 1;
+  grid-row: 1;
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0;
+}
+
+/* Détail (col 1, ligne 2) */
+.technician-documents tbody td[data-label='Détail'] {
+  grid-column: 1;
+  grid-row: 2;
+  display: block;
+  font-size: 0.82rem;
+  color: var(--fxn-text-muted);
+  padding: 0;
+}
+
+/* Statut (col 2, ligne 1) */
+.technician-documents tbody td[data-label='Statut'] {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding: 0;
+}
+
+/* Expiration (col 2, ligne 2) */
+.technician-documents tbody td[data-label='Expiration'] {
+  grid-column: 2;
+  grid-row: 2;
+  display: block;
+  font-size: 0.82rem;
+  color: var(--fxn-text-muted);
+  text-align: right;
+  padding: 0;
+}
+
+/* Action (pleine largeur, ligne 3) */
+.technician-documents tbody td[data-label='Action'] {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.25rem 0 0;
+  border-top: 1px solid var(--fxn-border);
+  margin-top: 0.25rem;
+}
+
+.technician-documents tbody td[data-label='Action'] .btn-outline {
+  min-height: 40px;
+  padding: 0 1rem;
+}
+
+/* Masquer les pseudo-labels (on gère la mise en page par grid positions) */
+.technician-documents tbody td::before {
+  display: none;
+}
+
+/* ── Responsive: 600px — header row + bouton auto ────────── */
+@media (min-width: 600px) {
+  .technician-documents .page-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .technician-documents .header-actions .btn-outline {
+    width: auto;
+    min-height: 40px;
+  }
+
+  /* Restore table */
+  .technician-documents .table {
+    overflow-x: auto;
+  }
+
+  .technician-documents table {
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 0;
+    min-width: 560px;
+    width: 100%;
+  }
+
+  .technician-documents thead {
+    display: table-header-group;
+  }
+
+  .technician-documents thead th {
+    text-align: left;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.8rem;
+    color: var(--fxn-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .technician-documents tbody {
+    display: table-row-group;
+    flex-direction: unset;
+    gap: 0;
+  }
+
+  .technician-documents tbody tr {
+    display: table-row;
+    grid-template-columns: unset;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+
+  .technician-documents tbody td[data-label='Document'],
+  .technician-documents tbody td[data-label='Détail'],
+  .technician-documents tbody td[data-label='Statut'],
+  .technician-documents tbody td[data-label='Expiration'],
+  .technician-documents tbody td[data-label='Action'] {
+    display: table-cell;
+    grid-column: unset;
+    grid-row: unset;
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid var(--fxn-border);
+    vertical-align: middle;
+    text-align: left;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    border-top: none;
+    margin-top: 0;
+    justify-content: flex-start;
+  }
+}
+
+/* ── Responsive: 900px — Desktop ────────────────────────── */
+@media (min-width: 900px) {
+  .technician-documents {
+    padding: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+}

@@ -1,20 +1,89 @@
+/* ============================================================
+   TECHNICIAN REVENUE — Mobile-first
+   Base = 375px+  |  sm = 480px+  |  md = 600px+  |  lg = 900px+
+   ============================================================ */
+
 .technician-revenue {
-  padding: 1rem;
+  padding: 0.9rem;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   display: grid;
   gap: 1rem;
 }
 
+/* ── Page header ──────────────────────────────────────────── */
 .technician-revenue .page-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.technician-revenue .page-header h1 {
+  margin: 0;
+  font-size: 1.3rem;
 }
 
 .technician-revenue .subtitle {
   color: rgba(255, 255, 255, 0.72);
+  font-size: 0.875rem;
 }
 
+/* ── Card ────────────────────────────────────────────────── */
+.technician-revenue .card {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--fxn-border);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+/* ── BPU info ────────────────────────────────────────────── */
+.technician-revenue .bpu-info {
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.technician-revenue .bpu-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.technician-revenue .bpu-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.technician-revenue .bpu-sub {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.82rem;
+}
+
+.technician-revenue .bpu-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(15, 23, 42, 0.65);
+  font-size: 0.78rem;
+  color: rgba(226, 232, 240, 0.9);
+  white-space: nowrap;
+}
+
+.technician-revenue .bpu-pill.active {
+  border-color: rgba(46, 207, 154, 0.4);
+  background: rgba(46, 207, 154, 0.15);
+  color: #dcfce7;
+}
+
+.technician-revenue .bpu-error {
+  color: var(--fxn-danger);
+  font-size: 0.85rem;
+}
+
+/* ── KPI section ─────────────────────────────────────────── */
 .technician-revenue .kpi-section {
   display: grid;
   gap: 10px;
@@ -26,12 +95,13 @@
 
 .technician-revenue .kpi-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .technician-revenue .kpi-header h2 {
   font-size: 0.95rem;
+  margin: 0;
 }
 
 .technician-revenue .kpi-meta {
@@ -39,14 +109,15 @@
   color: rgba(148, 163, 184, 0.85);
 }
 
+/* KPI grid: 1 col → 3 col at 480px */
 .technician-revenue .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .technician-revenue .kpi-card {
-  padding: 10px 12px;
+  padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid rgba(56, 189, 248, 0.14);
   background: linear-gradient(135deg, rgba(12, 18, 30, 0.92), rgba(15, 23, 42, 0.82));
@@ -54,12 +125,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-}
-
-.technician-revenue .kpi-info {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  min-height: 60px;
 }
 
 .technician-revenue .kpi-card.kpi-daily {
@@ -77,6 +143,29 @@
   background: linear-gradient(135deg, rgba(79, 52, 10, 0.95), rgba(52, 36, 9, 0.85));
 }
 
+.technician-revenue .kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.technician-revenue .kpi-title {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.85);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.technician-revenue .kpi-sub {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.technician-revenue .kpi-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
 .technician-revenue .kpi-card.kpi-daily .kpi-title,
 .technician-revenue .kpi-card.kpi-daily .kpi-sub,
 .technician-revenue .kpi-card.kpi-weekly .kpi-title,
@@ -92,199 +181,254 @@
   color: #f8fafc;
 }
 
-.technician-revenue .kpi-title {
-  font-size: 0.75rem;
-  color: rgba(148, 163, 184, 0.85);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.technician-revenue .kpi-value {
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.technician-revenue .kpi-sub {
-  font-size: 0.72rem;
-  color: rgba(148, 163, 184, 0.7);
-}
-
-.technician-revenue .card {
-  background: rgba(0, 0, 0, .05);
-  border: 1px solid rgba(255, 255, 255, .08);
-  border-radius: 1rem;
-  padding: 1rem;
-}
-
-.technician-revenue .list-kpi .kpi-grid {
-  grid-template-columns: 1fr;
-}
-
+/* ── Filters ─────────────────────────────────────────────── */
 .technician-revenue .filters .search {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: .6rem;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
   align-items: end;
 }
 
 .technician-revenue label {
   display: grid;
-  gap: .3rem;
-  font-size: .85rem;
-  opacity: .85;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  opacity: 0.85;
 }
 
 .technician-revenue input {
   width: 100%;
-  padding: .6rem .75rem;
-  border-radius: .75rem;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.18);
+  padding: 0.7rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.18);
   color: inherit;
+  min-height: 44px;
 }
 
 .technician-revenue .filters .actions {
   display: flex;
-  gap: .5rem;
-  justify-content: flex-end;
+  gap: 0.5rem;
   grid-column: 1 / -1;
-  flex-wrap: wrap;
 }
 
+.technician-revenue .filters .actions .btn-outline {
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 44px;
+}
+
+/* ── List KPI (total) ────────────────────────────────────── */
+.technician-revenue .list-kpi .kpi-grid {
+  grid-template-columns: 1fr;
+}
+
+/* ── States ───────────────────────────────────────────────── */
 .technician-revenue .state {
-  padding: .9rem 1rem;
+  padding: 0.9rem 1rem;
   border-radius: 1rem;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .technician-revenue .state.error {
-  background: rgba(255,0,60,.14);
+  background: rgba(255, 0, 60, 0.14);
 }
 
+/* ── Table: card display on mobile ──────────────────────── */
 .technician-revenue .table {
   padding: 0;
-  overflow-x: auto;
 }
 
+/* display: block obligatoire pour que les overrides sur thead/tbody/tr soient fiables */
 .technician-revenue table {
+  display: block;
   width: 100%;
-  border-collapse: collapse;
-  min-width: 720px;
 }
 
-.technician-revenue th,
-.technician-revenue td {
-  padding: .75rem .9rem;
-  text-align: left;
-  border-bottom: 1px solid rgba(255,255,255,.08);
+.technician-revenue thead {
+  display: none;
 }
 
-.technician-revenue th {
-  font-size: .8rem;
-  opacity: .75;
-  background: rgba(12, 20, 35, 0.65);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+.technician-revenue tbody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Grille 2 colonnes : Date|Montant puis Interventions|Commentaire */
+.technician-revenue tbody tr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 0.75rem;
+  border: 1px solid var(--fxn-border);
+  border-radius: 14px;
+  padding: 0.65rem 0.85rem;
+  background: var(--fxn-surface);
+}
+
+.technician-revenue tbody td {
+  display: block;
+  padding: 0.2rem 0;
+  font-size: 0.9rem;
+}
+
+.technician-revenue tbody td::before {
+  content: attr(data-label);
+  display: block;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.technician-revenue .note {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* ── Pager ───────────────────────────────────────────────── */
+.technician-revenue .pager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.technician-revenue .pager .pager-left,
+.technician-revenue .pager .pager-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.technician-revenue .pager .page-size button {
+  margin-right: 0.35rem;
+  min-height: 36px;
+  min-width: 36px;
+}
+
+.technician-revenue .pager-label {
+  font-size: 0.85rem;
+  opacity: 0.75;
 }
 
 body.theme-default .technician-revenue th {
   color: #3b82f6;
-  opacity: .95;
+  opacity: 0.95;
 }
 
-.technician-revenue .note {
-  max-width: 320px;
-  color: rgba(255, 255, 255, 0.72);
-}
-
-.technician-revenue .pager {
-  display: flex;
-  justify-content: space-between;
-  gap: .75rem;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 900px) {
+/* ── Responsive: 480px — KPI 3 cols ─────────────────────── */
+@media (min-width: 480px) {
   .technician-revenue .kpi-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 700px) {
-  .technician-revenue {
-    padding: 0.9rem;
+    grid-template-columns: repeat(3, 1fr);
   }
 
-  .technician-revenue .page-header {
+  .technician-revenue .kpi-card {
     flex-direction: column;
     align-items: flex-start;
+    min-height: 80px;
   }
 
-  .technician-revenue .filters .actions {
-    justify-content: stretch;
+  .technician-revenue .kpi-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* ── Responsive: 600px — Tablet ─────────────────────────── */
+@media (min-width: 600px) {
+  .technician-revenue .filters .search {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 
   .technician-revenue .filters .actions .btn-outline {
-    flex: 1 1 auto;
+    flex: 0 1 auto;
+    min-height: 40px;
+  }
+
+  .technician-revenue .filters .actions {
+    justify-content: flex-end;
+  }
+
+  /* Restore table */
+  .technician-revenue .table {
+    overflow-x: auto;
   }
 
   .technician-revenue table {
-    min-width: 0;
-  }
-
-  .technician-revenue table,
-  .technician-revenue thead,
-  .technician-revenue tbody,
-  .technician-revenue tr,
-  .technician-revenue td,
-  .technician-revenue th {
-    display: block;
-    width: 100%;
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 0;
+    min-width: 580px;
   }
 
   .technician-revenue thead {
-    display: none;
+    display: table-header-group;
+  }
+
+  .technician-revenue th {
+    font-size: 0.8rem;
+    opacity: 0.75;
+    background: rgba(12, 20, 35, 0.65);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 0.75rem 0.9rem;
+    text-align: left;
+    border-bottom: 1px solid var(--fxn-border);
   }
 
   .technician-revenue tbody {
-    display: grid;
-    gap: .75rem;
+    display: table-row-group;
+    flex-direction: unset;
+    gap: 0;
   }
 
-  .technician-revenue tr {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    padding: .6rem .7rem;
-    background: rgba(10, 16, 28, 0.6);
+  .technician-revenue tbody tr {
+    display: table-row;
+    grid-template-columns: unset;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
   }
 
-  .technician-revenue td {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: .75rem;
-    padding: .4rem 0;
-    border-bottom: none;
+  .technician-revenue tbody td {
+    display: table-cell;
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid var(--fxn-border);
+    vertical-align: middle;
+    overflow: unset;
+    text-overflow: unset;
   }
 
-  .technician-revenue td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 600px) {
-  .technician-revenue .pager-label {
+  .technician-revenue tbody td::before {
     display: none;
   }
+
+  .technician-revenue .pager {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
 }
 
+/* ── Responsive: 900px — Desktop ────────────────────────── */
 @media (min-width: 900px) {
   .technician-revenue {
     padding: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .technician-revenue .table {
+    overflow-x: auto;
+  }
+
+  .technician-revenue .note {
+    max-width: 320px;
   }
 }

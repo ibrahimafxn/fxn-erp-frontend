@@ -92,11 +92,12 @@
   }
 
   .hero-kpis {
+    grid-area: kpis;
     display: grid;
     grid-template-columns: repeat(2, minmax(140px, 1fr));
     gap: 0.6rem;
     margin-top: 1.2rem;
-    max-width: 320px;
+    max-width: 100%;
     padding: 0.6rem;
     border-radius: 1.1rem;
     background: rgba(8, 12, 22, 0.35);
@@ -104,11 +105,12 @@
   }
 
   .hero-foot {
-    display: flex;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 1.25rem;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      "kpis admin"
+      "actions actions";
+    gap: 1.25rem 1.5rem;
     margin-top: 0.4rem;
   }
 
@@ -136,6 +138,7 @@
   }
 
   .hero-admin {
+    grid-area: admin;
     display: grid;
     gap: 0.5rem;
     margin-top: 1.2rem;
@@ -203,6 +206,7 @@
   }
 
   .hero-actions {
+    grid-area: actions;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
@@ -322,6 +326,21 @@
       border-color: rgba(120, 214, 255, 0.75);
       background: linear-gradient(135deg, rgba(20, 34, 58, 0.98), rgba(10, 18, 34, 0.95));
       transform: translateY(-2px) scale(1.01);
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .hero-foot {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        "kpis"
+        "admin"
+        "actions";
+    }
+
+    .hero-kpis,
+    .hero-admin {
+      margin-top: 0.8rem;
     }
   }
 

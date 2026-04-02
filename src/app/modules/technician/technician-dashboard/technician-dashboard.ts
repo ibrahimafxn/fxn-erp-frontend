@@ -10,12 +10,13 @@ import {
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { TechnicianReportService } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-technician-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TechnicianMobileNav],
   templateUrl: './technician-dashboard.html',
   styleUrl: './technician-dashboard.scss'
 })

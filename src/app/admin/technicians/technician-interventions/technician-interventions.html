@@ -295,7 +295,7 @@
                 <td>{{ item.numInter || '—' }}</td>
                 <td>{{ formatTechnicianName(item) }}</td>
                 <td>{{ item.region || '—' }}</td>
-                <td>{{ item.type || '—' }}</td>
+                <td>{{ displayType(item) }}</td>
                 <td>
                   <span class="status-pill" [ngClass]="statusClass(item)">
                     {{ item.statut || '—' }}

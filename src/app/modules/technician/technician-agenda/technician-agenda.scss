@@ -1,76 +1,99 @@
+/* ============================================================
+   TECHNICIAN AGENDA — Mobile-first
+   Base = 375px+  |  md = 600px+  |  lg = 900px+
+   ============================================================ */
+
 .technician-agenda {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 1rem;
+  gap: 1rem;
+  padding: 0.9rem;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
 
-.page-header {
+.technician-agenda .page-header {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.subtitle {
-  opacity: 0.75;
+.technician-agenda .page-header h1 {
+  margin: 0;
+  font-size: 1.3rem;
 }
 
-.card {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.technician-agenda .subtitle {
+  margin: 0;
+  opacity: 0.75;
+  font-size: 0.875rem;
+}
+
+/* ── Card ────────────────────────────────────────────────── */
+.technician-agenda .card {
+  border: 1px solid var(--fxn-border);
   border-radius: 1rem;
   background: rgba(12, 18, 30, 0.7);
   padding: 1rem;
 }
 
-.form-card .request-form,
-.list-card .filters {
+/* ── Form: single column on mobile ──────────────────────── */
+.technician-agenda .form-card .request-form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
   align-items: end;
 }
 
-label {
+.technician-agenda label {
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-size: 0.85rem;
 }
 
-input,
-select,
-textarea {
+.technician-agenda input,
+.technician-agenda select,
+.technician-agenda textarea {
   background: rgba(10, 16, 29, 0.85);
   border: 1px solid rgba(88, 123, 255, 0.25);
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 10px;
   color: #fff;
+  min-height: 44px;
+  width: 100%;
 }
 
-.inline {
+.technician-agenda .inline {
   flex-direction: row;
   align-items: center;
   gap: 10px;
 }
 
-.full {
+.technician-agenda .inline input[type='checkbox'] {
+  width: auto;
+  min-height: auto;
+}
+
+.technician-agenda .full {
   grid-column: 1 / -1;
 }
 
-.actions {
+.technician-agenda .actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
+.technician-agenda .actions .btn-primary,
+.technician-agenda .actions .btn-outline,
+.technician-agenda .actions .btn-success {
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 44px;
 }
 
-.status-pill {
+/* ── Status pills ────────────────────────────────────────── */
+.technician-agenda .status-pill {
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.6rem;
@@ -80,26 +103,143 @@ textarea {
   font-weight: 600;
 }
 
-.status-ok {
+.technician-agenda .status-ok {
   background: rgba(42, 164, 122, 0.2);
   border-color: rgba(42, 164, 122, 0.45);
 }
 
-.status-pending {
+.technician-agenda .status-pending {
   background: rgba(255, 187, 84, 0.2);
   border-color: rgba(255, 187, 84, 0.4);
 }
 
-.status-refused {
+.technician-agenda .status-refused {
   background: rgba(233, 85, 85, 0.2);
   border-color: rgba(233, 85, 85, 0.4);
 }
 
-.table .actions {
+/* ── List card ───────────────────────────────────────────── */
+.technician-agenda .list-card .filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.technician-agenda .list-card .filters .actions {
+  grid-column: 1 / -1;
+}
+
+.technician-agenda .list-header {
   display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  white-space: nowrap;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.technician-agenda .list-header .meta {
+  font-size: 0.85rem;
+  color: var(--fxn-text-muted);
+}
+
+/* ── States ───────────────────────────────────────────────── */
+.technician-agenda .state {
+  margin-top: 0.75rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--fxn-border);
+  background: rgba(12, 18, 30, 0.7);
+}
+
+.technician-agenda .state.error {
+  background: var(--fxn-danger-soft);
+}
+
+.technician-agenda .state.success {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+/* ── Table: card display on mobile ──────────────────────── */
+.technician-agenda .table {
+  padding: 0;
+}
+
+.technician-agenda .table table {
+  display: block;
+  width: 100%;
+}
+
+.technician-agenda .table thead {
+  display: none;
+}
+
+.technician-agenda .table tbody {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* Carte 2 colonnes : Période (full width) / Type | Statut / Commentaire (full width) / Actions */
+.technician-agenda .table tbody tr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 0.75rem;
+  border: 1px solid var(--fxn-border);
+  border-radius: 14px;
+  padding: 0.65rem 0.85rem;
+  background: var(--fxn-surface);
+}
+
+.technician-agenda .table td {
+  display: block;
+  padding: 0.2rem 0;
+  border-bottom: none;
+  font-size: 0.9rem;
+}
+
+.technician-agenda .table td::before {
+  content: attr(data-label);
+  display: block;
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.7);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+/* Période : pleine largeur, date de début → fin */
+.technician-agenda .table td[data-label='Période'] {
+  grid-column: 1 / -1;
+  font-weight: 600;
+}
+
+/* Commentaire : pleine largeur */
+.technician-agenda .table td[data-label='Commentaire'] {
+  grid-column: 1 / -1;
+  font-size: 0.82rem;
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.technician-agenda .table td.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.4rem;
+  margin-top: 0.2rem;
+  border-top: 1px solid var(--fxn-border);
+}
+
+.technician-agenda .table td.actions::before {
+  display: none;
+}
+
+.technician-agenda .table td.actions .btn-outline,
+.technician-agenda .table td.actions .delete {
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 40px;
 }
 
 body.theme-default .technician-agenda thead th {
@@ -107,124 +247,138 @@ body.theme-default .technician-agenda thead th {
   opacity: 0.95;
 }
 
-.state {
-  margin-top: 0.75rem;
-  padding: 0.8rem 1rem;
-  border-radius: 0.8rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(12, 18, 30, 0.7);
-}
-
-.state.error {
-  background: var(--fxn-danger-soft);
-}
-
-.state.success {
-  background: rgba(16, 185, 129, 0.18);
-  border-color: rgba(16, 185, 129, 0.35);
-}
-
-.btn-success {
+/* ── Button styles ───────────────────────────────────────── */
+.technician-agenda .btn-success {
   background: rgba(42, 164, 122, 0.2);
   border: 1px solid rgba(42, 164, 122, 0.6);
   color: #bff7dc;
 }
 
-.btn-success:hover {
+.technician-agenda .btn-success:hover {
   background: rgba(42, 164, 122, 0.3);
   border-color: rgba(42, 164, 122, 0.85);
 }
 
-.btn-success-outline {
+.technician-agenda .btn-success-outline {
   border-color: rgba(42, 164, 122, 0.6);
   color: #bff7dc;
 }
 
-.btn-success-outline:hover {
-  border-color: rgba(42, 164, 122, 0.85);
-  background: rgba(42, 164, 122, 0.12);
-}
-
-.btn-info-outline {
+.technician-agenda .btn-info-outline {
   border-color: rgba(72, 136, 255, 0.6);
   color: #c2d7ff;
 }
 
-.btn-info-outline:hover {
-  border-color: rgba(72, 136, 255, 0.9);
-  background: rgba(72, 136, 255, 0.15);
-}
-
-@media (max-width: 900px) {
-  .form-card .request-form,
-  .list-card .filters {
-    grid-template-columns: 1fr;
+/* ── Responsive: 600px — Tablet ─────────────────────────── */
+@media (min-width: 600px) {
+  .technician-agenda .form-card .request-form {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .list-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-}
-
-@media (max-width: 700px) {
-  .technician-agenda {
-    padding: 0.9rem;
+  .technician-agenda .list-card .filters {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .table {
+  .technician-agenda .actions .btn-primary,
+  .technician-agenda .actions .btn-outline,
+  .technician-agenda .actions .btn-success {
+    flex: 0 1 auto;
+  }
+
+  .technician-agenda .list-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Restore table */
+  .technician-agenda .table table {
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 0;
+    min-width: 560px;
+  }
+
+  .technician-agenda .table thead {
+    display: table-header-group;
+  }
+
+  .technician-agenda .table thead th {
+    text-align: left;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.8rem;
+    color: var(--fxn-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--fxn-border);
+  }
+
+  .technician-agenda .table tbody {
+    display: table-row-group;
+    gap: 0;
+  }
+
+  .technician-agenda .table tbody tr {
+    display: table-row;
+    grid-template-columns: unset;
+    border-radius: 0;
     padding: 0;
+    background: transparent;
+    border: none;
   }
 
-  .table table,
-  .table thead,
-  .table tbody,
-  .table tr,
-  .table td {
-    display: block;
-    width: 100%;
+  .technician-agenda .table td {
+    display: table-cell;
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    vertical-align: middle;
+    overflow: unset;
+    text-overflow: unset;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
   }
 
-  .table thead {
+  .technician-agenda .table td[data-label='Période'],
+  .technician-agenda .table td[data-label='Commentaire'] {
+    grid-column: unset;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+  }
+
+  .technician-agenda .table td::before {
     display: none;
   }
 
-  .table tbody {
-    display: grid;
-    gap: 0.75rem;
+  .technician-agenda .table td.actions {
+    grid-column: unset;
+    display: table-cell;
+    border-top: none;
+    margin-top: 0;
+    justify-content: flex-end;
+    white-space: nowrap;
+    padding: 0.75rem 0.9rem;
   }
 
-  .table tr {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    padding: 0.6rem 0.7rem;
-    background: rgba(10, 16, 28, 0.6);
-  }
-
-  .table td {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.2rem;
-    padding: 0.4rem 0;
-    border-bottom: none;
-  }
-
-  .table td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: rgba(148, 163, 184, 0.8);
-    font-size: 12px;
-  }
-
-  .table td.actions {
-    align-items: stretch;
+  .technician-agenda .table td.actions .btn-outline {
+    flex: 0 0 auto;
+    min-height: 36px;
   }
 }
 
+/* ── Responsive: 900px — Desktop ────────────────────────── */
 @media (min-width: 900px) {
   .technician-agenda {
     padding: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .technician-agenda .list-card .filters {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .technician-agenda .table {
+    overflow-x: auto;
   }
 }

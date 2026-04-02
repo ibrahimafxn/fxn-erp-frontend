@@ -8,6 +8,7 @@ import { Charge, ChargeType } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 type BenefitRow = {
   month: string;
@@ -21,7 +22,7 @@ type BenefitRow = {
   selector: 'app-technician-charges',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal, ConfirmActionModal],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal, ConfirmActionModal, TechnicianMobileNav],
   providers: [DatePipe],
   templateUrl: './technician-charges.html',
   styleUrl: './technician-charges.scss'

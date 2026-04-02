@@ -296,17 +296,6 @@ export class AdminService {
 
   getHistorySignal(): Signal<HistoryItem[]> { return this.history; }
 
-  exportHistoryExcel(filter?: { userId?: string; depotId?: string; type?: string; fromDate?: string; toDate?: string }): Observable<Blob> {
-    let params = new HttpParams();
-    if (filter?.userId) params = params.set('userId', filter.userId);
-    if (filter?.depotId) params = params.set('depotId', filter.depotId);
-    if (filter?.type) params = params.set('type', filter.type);
-    if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
-    if (filter?.toDate) params = params.set('toDate', filter.toDate);
-
-    return this.http.get(`${this.baseUrl}/history/export`, { params, responseType: 'blob' });
-  }
-
   // -----------------------------
   // Utilitaires
   // -----------------------------

@@ -1,0 +1,95 @@
+<section class="supplier-detail">
+  <header class="page-header">
+    <div>
+      <h1>Détail fournisseur</h1>
+      <p class="subtitle">Informations et commandes associées.</p>
+    </div>
+    <button class="btn-back" type="button" (click)="backToList()"><i class="bi bi-arrow-left"></i> Fournisseurs</button>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement...</div>
+  } @else if (error()) {
+    <div class="state error card">{{ error() }}</div>
+  } @else if (!supplier()) {
+    <div class="state empty card">Aucune donnée.</div>
+  } @else {
+    <article class="card">
+      <h2 class="section-title"><span class="material-icons notranslate">storefront</span>Fournisseur</h2>
+      <div class="grid">
+        <div>
+          <div class="label">Nom</div>
+          <div class="value">{{ supplier()?.name }}</div>
+        </div>
+        <div>
+          <div class="label">Créé le</div>
+          <div class="value">{{ supplier()?.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2 class="section-title"><span class="material-icons notranslate">receipt_long</span>Commandes liées</h2>
+
+      @if (ordersLoading()) {
+        <div class="state loading">Chargement...</div>
+      } @else if (ordersError()) {
+        <div class="state error">{{ ordersError() }}</div>
+      } @else if (orders().length === 0) {
+        <div class="state empty">Aucune commande associée.</div>
+      } @else {
+        <div class="table">
+          <table>
+            <thead>
+            <tr>
+              <th>Référence</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Montant HT</th>
+              <th>Livraison</th>
+              <th></th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (order of orders(); track order._id) {
+                <tr>
+                  <td>{{ order.reference }}</td>
+                  <td>{{ order.date | date:'dd/MM/yyyy' }}</td>
+                  <td>{{ order.status }}</td>
+                  <td>{{ formatCurrency(order.amount) }}</td>
+                  <td>{{ formatCurrency(order.deliveryFee ?? 0) }}</td>
+                  <td class="actions-cell">
+                    <button class="btn-outline" type="button" (click)="openOrder(order)"><i class="bi bi-box-arrow-up-right"></i></button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="pager">
+          <div class="pager-left">
+            <div class="page-size">
+              <button type="button" [class.active]="limit() === 10" (click)="setLimit(10)">10</button>
+              <button type="button" [class.active]="limit() === 20" (click)="setLimit(20)">20</button>
+              <button type="button" [class.active]="limit() === 50" (click)="setLimit(50)">50</button>
+              <button type="button" [class.active]="limit() === 100" (click)="setLimit(100)">100</button>
+            </div>
+            <span class="pager-label">Éléments par page</span>
+          </div>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(page(), limit(), ordersTotal()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </footer>
+      }
+    </article>
+  }
+</section>

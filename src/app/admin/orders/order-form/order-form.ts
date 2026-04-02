@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -44,6 +45,7 @@ export class OrderForm {
     status: this.fb.nonNullable.control('En cours', [Validators.required]),
     amount: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     tvaAmount: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+    deliveryFee: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     notes: this.fb.nonNullable.control(''),
     lines: this.fb.array([this.buildLine()])
   });
@@ -51,10 +53,10 @@ export class OrderForm {
   constructor() {
     this.loadResources();
     this.loadClients();
-    this.lines.valueChanges.subscribe(() => {
+    this.lines.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.syncAmounts();
     });
-    this.form.get('client')?.valueChanges.subscribe((value) => {
+    this.form.get('client')?.valueChanges.pipe(takeUntilDestroyed()).subscribe((value) => {
       this.syncClientList(String(value || '').trim());
     });
     if (this.isEdit()) {
@@ -127,7 +129,8 @@ export class OrderForm {
   }
 
   ttcAmount(): number {
-    return this.linesTotal() + this.tvaAmount();
+    const delivery = Number(this.form.get('deliveryFee')?.value ?? 0);
+    return this.linesTotal() + this.tvaAmount() + (Number.isFinite(delivery) ? delivery : 0);
   }
 
   formatCurrency(value?: number | string | null): string {
@@ -157,6 +160,7 @@ export class OrderForm {
       status: raw.status.trim(),
       amount: this.linesTotal(),
       tvaAmount: this.tvaAmount(),
+      deliveryFee: Number(raw.deliveryFee ?? 0),
       notes: raw.notes.trim() || undefined,
       lines: (raw.lines || []).map((line) => ({
         resourceId: String(line["resourceId"] || '').trim(),
@@ -223,6 +227,7 @@ export class OrderForm {
           date: this.toDateInput(order.date),
           status: order.status || '',
           notes: order.notes || '',
+          deliveryFee: Number(order.deliveryFee ?? 0),
           tvaAmount: hasSavedTva
             ? this.round2(savedTva)
             : this.round2(this.computeTvaFromLines(order.lines || []))

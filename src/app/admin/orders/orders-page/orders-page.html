@@ -6,6 +6,19 @@
     </div>
     <div class="header-actions">
       <label class="import-client">
+        Dépôt
+        <select
+          [value]="selectedDepotId()"
+          [disabled]="importLoading() || (isDepotManager() && !!managerDepotId())"
+          (change)="onDepotSelect($event)"
+        >
+          <option value="">Sélectionner</option>
+          @for (d of depots(); track d._id) {
+            <option [value]="d._id">{{ d.name }}</option>
+          }
+        </select>
+      </label>
+      <label class="import-client">
         Fournisseur
         <input
           #importClientInput
@@ -16,11 +29,11 @@
           (input)="importClient.set(importClientInput.value)"
         />
       </label>
-      <label class="btn-outline file-upload" [class.disabled]="importLoading() || !importClient().trim()">
+      <label class="btn-outline file-upload" [class.disabled]="importLoading() || !importClient().trim() || !selectedDepotId()">
         <input
           type="file"
           accept="application/pdf"
-          [disabled]="importLoading() || !importClient().trim()"
+          [disabled]="importLoading() || !importClient().trim() || !selectedDepotId()"
           (change)="importPdf($event)"
         />
         <i class="bi bi-upload"></i> Importer PDF
@@ -37,7 +50,7 @@
     <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
       <label>
         Recherche
-        <input type="text" formControlName="q" placeholder="Reference ou client" [disabled]="importLoading()" (input)="search()" />
+        <input type="text" formControlName="q" placeholder="Référence ou fournisseur" [disabled]="importLoading()" (input)="search()" />
       </label>
       <label>
         Statut
@@ -91,7 +104,7 @@
             </th>
             <th>
               <button class="sort-button" type="button" (click)="setSort('client')">
-                Client <span class="sort-arrow">{{ sortArrow('client') }}</span>
+                Fournisseur <span class="sort-arrow">{{ sortArrow('client') }}</span>
               </button>
             </th>
             <th>
@@ -114,6 +127,11 @@
                 TVA <span class="sort-arrow">{{ sortArrow('tva') }}</span>
               </button>
             </th>
+            <th>
+              <button class="sort-button" type="button" (click)="setSort('delivery')">
+                Frais livraison <span class="sort-arrow">{{ sortArrow('delivery') }}</span>
+              </button>
+            </th>
             <th></th>
           </tr>
           </thead>
@@ -134,7 +152,20 @@
                 <td>
                   <span class="tva-pill">{{ formatAmount(tvaAmount(order)) }}</span>
                 </td>
+                <td>
+                  <span class="tva-pill">{{ formatAmount(order.deliveryFee ?? 0) }}</span>
+                </td>
                 <td class="actions-cell">
+                  @if (pdfUrl(order)) {
+                    <a
+                      class="btn-outline"
+                      title="Facture PDF"
+                      [href]="pdfUrl(order)"
+                      target="_blank"
+                      rel="noopener"
+                      (click)="$event.stopPropagation()"
+                    ><i class="bi bi-file-earmark-pdf"></i></a>
+                  }
                   <button class="btn-outline" type="button" title="Dépôt" (click)="$event.stopPropagation(); openDetail(order)"><i class="bi bi-box-seam"></i></button>
                   <button class="btn-outline edit" type="button" title="Modifier" (click)="$event.stopPropagation(); openEdit(order)"><i class="bi bi-pencil"></i></button>
                   <button class="btn-outline delete" type="button" title="Supprimer" (click)="$event.stopPropagation(); openDeleteModal(order)"><i class="fa-solid fa-trash"></i></button>
@@ -191,6 +222,28 @@
       <button class="btn-outline" type="button" [disabled]="importLoading()" (click)="closeImportModal()">Fermer</button>
     </div>
 
+    <div class="import-fields">
+      <label>
+        Référence
+        <input type="text" [value]="preview.reference" (input)="updatePreviewField('reference', $any($event.target).value)" />
+      </label>
+      <label>
+        Fournisseur
+        <input type="text" [value]="preview.client" (input)="updatePreviewField('client', $any($event.target).value)" />
+      </label>
+      <label>
+        Date
+        <input type="date" [value]="preview.date | date:'yyyy-MM-dd'" (input)="updatePreviewField('date', $any($event.target).value)" />
+      </label>
+      <label>
+        Frais de livraison
+        <input type="number" min="0" step="0.01" [value]="preview.deliveryFee ?? 0" (input)="updatePreviewField('deliveryFee', $any($event.target).value)" />
+      </label>
+      @if (previewPdfUrl()) {
+        <a class="btn-outline" [href]="previewPdfUrl()" target="_blank" rel="noopener">Ouvrir la facture PDF</a>
+      }
+    </div>
+
     @if (preview.errors.length) {
       <div class="state error">
         Certaines lignes n'ont pas été reconnues. Corrige les articles avant validation.
@@ -206,6 +259,7 @@
       <table>
         <thead>
         <tr>
+          <th>Ressource</th>
           <th>Désignation</th>
           <th>Description</th>
           <th>Quantité</th>
@@ -218,10 +272,26 @@
         <tbody>
           @for (line of preview.lines; track line.designation + line.name) {
             <tr>
-              <td>{{ line.designation || line.name }}</td>
-              <td>{{ line.description || '—' }}</td>
-              <td>{{ line.quantity }}</td>
-              <td>{{ line.unitPrice | number:'1.2-2' }}</td>
+              <td>
+                <select [value]="line.resourceId || ''" (change)="onPreviewResourceChange($index, $event)">
+                  <option value="">Non défini</option>
+                  @for (res of resources(); track res._id) {
+                    <option [value]="res._id">{{ resourceLabel(res) }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <input type="text" [value]="line.designation || line.name" (input)="updatePreviewLine($index, { designation: $any($event.target).value })" />
+              </td>
+              <td>
+                <input type="text" [value]="line.description || ''" (input)="updatePreviewLine($index, { description: $any($event.target).value })" />
+              </td>
+              <td>
+                <input type="number" min="1" [value]="line.quantity" (input)="updatePreviewLine($index, { quantity: $any($event.target).value })" />
+              </td>
+              <td>
+                <input type="number" min="0" step="0.01" [value]="line.unitPrice" (input)="updatePreviewLine($index, { unitPrice: $any($event.target).value })" />
+              </td>
               <td>{{ line.totalHt ?? line.total | number:'1.2-2' }}</td>
               <td>{{ line.totalTva ?? 0 | number:'1.2-2' }}</td>
               <td>{{ line.totalTtc ?? 0 | number:'1.2-2' }}</td>

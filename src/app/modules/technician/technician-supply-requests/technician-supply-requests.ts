@@ -8,12 +8,13 @@ import { SupplyRequestService } from '../../../core/services/supply-request.serv
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { SupplyRequest, SupplyRequestStatus, SupplyRequestType } from '../../../core/models';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-technician-supply-requests',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal, TechnicianMobileNav],
   providers: [DatePipe],
   templateUrl: './technician-supply-requests.html',
   styleUrl: './technician-supply-requests.scss'

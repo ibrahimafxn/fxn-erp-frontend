@@ -1,0 +1,54 @@
+/* Bottom navigation — visible on mobile only */
+.tech-mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  height: 64px;
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--fxn-surface-glass);
+  border-top: 1px solid var(--fxn-border-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-decoration: none;
+  color: var(--fxn-text-muted);
+  padding: 6px 4px;
+  min-height: 44px;
+  transition: color 0.18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item.active {
+  color: var(--fxn-primary);
+}
+
+.nav-item .material-icons {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+/* Hide on desktop */
+@media (min-width: 900px) {
+  .tech-mobile-nav {
+    display: none;
+  }
+}

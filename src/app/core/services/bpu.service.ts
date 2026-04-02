@@ -81,6 +81,13 @@ export class BpuService {
     );
   }
 
+  updateCode(id: string, code: string): Observable<BpuEntry> {
+    return this.http.put<ApiResponse<BpuEntry>>(`${this.baseUrl}/${id}`, { code }).pipe(
+      map((resp) => resp.data),
+      catchError((err: HttpErrorResponse) => throwError(() => err))
+    );
+  }
+
   importCsv(file: File, segment: 'AUTO' | 'SALARIE' | 'AUTRE'): Observable<{ imported: number; created?: number; updated?: number; skipped?: number }> {
     const formData = new FormData();
     formData.append('file', file);

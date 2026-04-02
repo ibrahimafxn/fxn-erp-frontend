@@ -8,6 +8,7 @@ import { Depot } from '../../../core/models';
 import { DepotService } from '../../../core/services/depot.service';
 import { formatDepotName } from '../../../core/utils/text-format';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { environment } from '../../../environments/environment';
 
 @Component({
   standalone: true,
@@ -23,6 +24,7 @@ export class OrderDetail {
   private location = inject(Location);
   private orders = inject(OrderService);
   private depotsSvc = inject(DepotService);
+  private readonly apiRoot = (environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -68,6 +70,14 @@ export class OrderDetail {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount);
+  }
+
+  pdfUrl(order: Order | null | undefined): string | null {
+    const raw = order?.invoicePdfUrl || '';
+    if (!raw) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    const prefix = raw.startsWith('/') ? '' : '/';
+    return `${this.apiRoot}${prefix}${raw}`;
   }
 
   depotOptionLabel(d: Depot): string {

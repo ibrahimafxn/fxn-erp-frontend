@@ -30,11 +30,23 @@
     border: 1px solid var(--fxn-border-strong);
   }
 
+  select {
+    min-width: 180px;
+    background: #000;
+    color: #fff;
+    border: 1px solid var(--fxn-border-strong);
+  }
+
   input::placeholder {
     color: rgba(255, 255, 255, 0.65);
   }
 
   input:focus {
+    border-color: var(--fxn-primary-border);
+    box-shadow: var(--fxn-ring);
+  }
+
+  select:focus {
     border-color: var(--fxn-primary-border);
     box-shadow: var(--fxn-ring);
   }
@@ -320,8 +332,40 @@ td {
   justify-content: flex-end;
 }
 
+.import-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 1rem;
+
+  label {
+    display: grid;
+    gap: 6px;
+  }
+
+  input {
+    border-radius: var(--fxn-radius-sm);
+    border: 1px solid var(--fxn-border-strong);
+    background: var(--fxn-surface-soft);
+    color: var(--fxn-text);
+    padding: 10px 12px;
+    font: inherit;
+  }
+}
+
 .modal-table {
   margin-top: 0;
+}
+
+.modal-table input,
+.modal-table select {
+  width: 100%;
+  border-radius: var(--fxn-radius-sm);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
+  color: var(--fxn-text);
+  padding: 8px 10px;
+  font: inherit;
 }
 
 @media (max-width: 900px) {

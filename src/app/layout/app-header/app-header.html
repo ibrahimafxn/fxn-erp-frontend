@@ -66,8 +66,29 @@
                       <button mat-button (click)="goTechCharges()"><span class="material-icons notranslate">receipt_long</span><span>Charges</span></button>
                       <button mat-button (click)="goTechBpu()"><span class="material-icons notranslate">price_check</span><span i18n="@@header.menu.bpu">BPU prestations</span></button>
                       <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span><span i18n="@@header.menu.techHistory">Historique</span></button>
-                    </div>
+                      <button mat-button (click)="goTechDocuments()"><span class="material-icons notranslate">description</span><span>Documents</span></button>
                   </div>
+                  </div>
+
+                  @if (canManageAccess() || canViewHr()) {
+                    <div class="menu-group admin-group">
+                      <div class="section-label">Administration</div>
+                      <div class="section-items">
+                        @if (canManageAccess()) {
+                          <button mat-button (click)="goUserAccess()">
+                            <span class="material-icons notranslate">vpn_key</span>
+                            <span>Accès connexion</span>
+                          </button>
+                        }
+                        @if (canViewHr()) {
+                          <button mat-button (click)="goHr()">
+                            <span class="material-icons notranslate">badge</span>
+                            <span>Ressources humaines</span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
 
                   <div class="menu-group account-group">
                     <div class="section-label" i18n="@@header.section.account">Compte</div>
@@ -92,6 +113,7 @@
                         }
                         @if (canManageAccess()) {
                           <button mat-button (click)="goOrders()"><span class="material-icons notranslate">receipt_long</span><span i18n="@@header.menu.orders">Commandes</span></button>
+                          <button mat-button (click)="goSuppliers()"><span class="material-icons notranslate">storefront</span><span>Fournisseurs</span></button>
                         }
                         @if (canViewMovements()) {
                           <button mat-button (click)="goStockAlerts()">

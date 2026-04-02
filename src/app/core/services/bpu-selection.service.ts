@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -13,16 +13,27 @@ export class BpuSelectionService {
 
   constructor(private http: HttpClient) {}
 
-  create(payload: { type: string; prestations: { code: string; unitPrice: number }[] }): Observable<BpuSelection> {
+  create(payload: { type: string; prestations: { code: string; unitPrice: number }[]; owner?: string | null }): Observable<BpuSelection> {
     return this.http.post<ApiResponse<BpuSelection>>(this.baseUrl, payload).pipe(
       map((resp) => resp.data),
       catchError((err: HttpErrorResponse) => throwError(() => err))
     );
   }
 
-  list(): Observable<BpuSelection[]> {
-    return this.http.get<ApiResponse<BpuSelection[]>>(this.baseUrl).pipe(
+  list(params?: { owner?: string | null }): Observable<BpuSelection[]> {
+    let httpParams = new HttpParams();
+    if (params && 'owner' in params) {
+      httpParams = httpParams.set('owner', params.owner ?? 'null');
+    }
+    return this.http.get<ApiResponse<BpuSelection[]>>(this.baseUrl, { params: httpParams }).pipe(
       map((resp) => resp.data || []),
+      catchError((err: HttpErrorResponse) => throwError(() => err))
+    );
+  }
+
+  delete(id: string): Observable<void> {
+    return this.http.delete<ApiResponse<{ id: string }>>(`${this.baseUrl}/${id}`).pipe(
+      map(() => void 0),
       catchError((err: HttpErrorResponse) => throwError(() => err))
     );
   }

@@ -10,8 +10,9 @@ import {
   InterventionSummaryQuery,
   InterventionTotals
 } from '../../../core/services/intervention.service';
+import { BpuService } from '../../../core/services/bpu.service';
 import { InterventionRates, InterventionRatesService } from '../../../core/services/intervention-rates.service';
-import { User, Role } from '../../../core/models';
+import { BpuEntry, User, Role } from '../../../core/models';
 import { UserService } from '../../../core/services/user.service';
 import { hasRacpavInArticles, isRacihSuccess, isRacpavSuccess } from '../../../core/utils/intervention-prestations';
 import { formatPersonName } from '../../../core/utils/text-format';
@@ -86,12 +87,17 @@ const ARTICLE_TYPE_LABELS = [
   { label: 'RECO', marker: 'RECOIP' },
   { label: 'CLEM', marker: 'CLEM' },
   { label: 'SAV', marker: 'SAV' },
+  { label: 'SAV EXP', marker: 'SAV_EXP' },
   { label: 'CABLE PAV 1', marker: 'CABLE_PAV_1' },
   { label: 'CABLE PAV 2', marker: 'CABLE_PAV_2' },
   { label: 'CABLE PAV 3', marker: 'CABLE_PAV_3' },
   { label: 'CABLE PAV 4', marker: 'CABLE_PAV_4' },
   { label: 'PRESTA COMPL', marker: 'PRESTA_COMPL' },
-  { label: 'PRESTA F8', marker: 'REPFOU_PRI' }
+  { label: 'PRESTA F8', marker: 'REPFOU_PRI' },
+  { label: 'DEPLPRISE', marker: 'DEPLPRISE' },
+  { label: 'DEMO', marker: 'DEMO' },
+  { label: 'REFRAC', marker: 'REFRAC' },
+  { label: 'REFC DGR', marker: 'REFC_DGR' }
 ];
 const ARTICLE_TYPE_BY_CODE = new Map([
   ['RACPRO_S', 'PRO S'],
@@ -103,6 +109,11 @@ const ARTICLE_TYPE_BY_CODE = new Map([
   ['PRESTA_COMPL', 'PRESTA COMPL'],
   ['REPFOU_PRI', 'PRESTA F8'],
   ['SAV', 'SAV'],
+  ['SAV_EXP', 'SAV EXP'],
+  ['DEPLPRISE', 'DEPLPRISE'],
+  ['DEMO', 'DEMO'],
+  ['REFRAC', 'REFRAC'],
+  ['REFC_DGR', 'REFC DGR'],
   ['CABLE_PAV_1', 'CABLE PAV 1'],
   ['CABLE_PAV_2', 'CABLE PAV 2'],
   ['CABLE_PAV_3', 'CABLE PAV 3'],
@@ -120,6 +131,7 @@ const REQUIRED_TYPE_LABELS = ['RECOIP'];
 })
 export class TechnicianInterventions {
   private svc = inject(InterventionService);
+  private bpuService = inject(BpuService);
   private ratesService = inject(InterventionRatesService);
   private userService = inject(UserService);
   private fb = inject(FormBuilder);
@@ -130,6 +142,10 @@ export class TechnicianInterventions {
   readonly technicians = signal<User[]>([]);
   readonly summaryLoading = signal(false);
   readonly summaryTotals = signal<InterventionTotals | null>(null);
+  readonly bpuCodes = signal<Set<string>>(new Set());
+  readonly bpuAutoEntries = signal<BpuEntry[]>([]);
+  readonly bpuLoading = signal(false);
+  readonly bpuError = signal<string | null>(null);
 
   readonly tableLoading = signal(false);
   readonly tableError = signal<string | null>(null);
@@ -225,6 +241,7 @@ export class TechnicianInterventions {
     this.loadTechnicians();
     this.loadInterventions();
     this.loadSummary();
+    this.loadAutoBpu();
     this.ratesService.refresh().subscribe();
   }
 
@@ -327,6 +344,27 @@ export class TechnicianInterventions {
         this.filterLoading.set(false);
         this.filtersError.set(this.apiError(err, 'Impossible de charger les filtres des interventions.'));
         this.markInitialLoadComplete();
+      }
+    });
+  }
+
+  private loadAutoBpu(): void {
+    this.bpuLoading.set(true);
+    this.bpuError.set(null);
+    this.bpuService.list('AUTO').subscribe({
+      next: (items) => {
+        this.bpuAutoEntries.set(items || []);
+        const codes = new Set(
+          (items || [])
+            .map((entry) => this.normalizeToken(entry.code).replace(/[^A-Z0-9_]/g, ''))
+            .filter(Boolean)
+        );
+        this.bpuCodes.set(codes);
+        this.bpuLoading.set(false);
+      },
+      error: (err) => {
+        this.bpuLoading.set(false);
+        this.bpuError.set(this.apiError(err, 'Erreur chargement BPU AUTO'));
       }
     });
   }
@@ -882,18 +920,43 @@ export class TechnicianInterventions {
       }
     }
     uniqueTopTypes.sort((a, b) => b.count - a.count);
+    const bpuEntries = this.bpuAutoEntries();
+    const bpuCodes = this.bpuCodes();
+    const applyBpuFilter = bpuCodes.size > 0 && bpuEntries.length > 0;
+    const bpuTopTypes = applyBpuFilter
+      ? bpuEntries.map((entry) => ({
+          label: this.normalizeTypeLabel(entry.code),
+          count: types.get(this.normalizeToken(entry.code).replace(/[^A-Z0-9_]/g, '')) ?? 0
+        }))
+      : [];
+    const filteredBpuTopTypes = applyBpuFilter && allowedType
+      ? bpuTopTypes.filter((entry) => {
+          const normalizedEntry = this.normalizeToken(entry.label);
+          const normalizedAllowed = this.normalizeToken(this.normalizeTypeLabel(allowedType));
+          return normalizedEntry === normalizedAllowed;
+        })
+      : bpuTopTypes;
+    filteredBpuTopTypes.sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return String(a.label).localeCompare(String(b.label));
+    });
+    const bpuOnlyTopTypes = applyBpuFilter ? filteredBpuTopTypes : null;
+    const bpuFilteredTopTypes = applyBpuFilter
+      ? uniqueTopTypes.filter((entry) => bpuCodes.has(this.labelToBpuCode(entry.label)))
+      : uniqueTopTypes;
     const filteredTopTypes = allowedType
-      ? uniqueTopTypes
-      : uniqueTopTypes.filter((entry) => !this.isRaccType(entry.label) && !this.isPavLabel(entry.label));
+      ? bpuFilteredTopTypes
+      : bpuFilteredTopTypes.filter((entry) => !this.isRaccType(entry.label) && !this.isPavLabel(entry.label));
     const allowedLabel = allowedType ? this.normalizeTypeLabel(allowedType) : '';
     const normalizedAllowed = this.normalizeToken(allowedType);
     const normalizedAllowedLabel = this.normalizeToken(allowedLabel);
-    const finalTopTypes = allowedType
+    const computedTopTypes = allowedType
       ? filteredTopTypes.filter((entry) => {
           const normalizedEntry = this.normalizeToken(entry.label);
           return normalizedEntry === normalizedAllowed || normalizedEntry === normalizedAllowedLabel;
         })
       : filteredTopTypes;
+    const finalTopTypes = bpuOnlyTopTypes ?? computedTopTypes;
     const ALWAYS_STATUSES = ['ECHEC TERMINE', 'ECHEC', 'ANNULEE', 'A COMPLETER'];
     for (const label of ALWAYS_STATUSES) {
       if (!statuses.has(label)) statuses.set(label, 0);
@@ -1027,6 +1090,11 @@ export class TechnicianInterventions {
     return `${hours} h ${remainder} min`;
   }
 
+  displayType(item: InterventionItem): string {
+    const label = this.normalizeTypeLabel(this.canonicalType(item.type, item));
+    return label || '—';
+  }
+
   private updateStatsDataset(items: InterventionItem[], totalCount: number, lastQuery: InterventionSummaryQuery): void {
     const safeTotal = Number.isFinite(totalCount) ? totalCount : items.length;
     if (!safeTotal) {
@@ -1077,7 +1145,7 @@ export class TechnicianInterventions {
           return direction * (Number.isFinite(diff) ? diff : 0);
         }
         case 'type':
-          return direction * compare(a.type, b.type);
+          return direction * compare(this.displayType(a), this.displayType(b));
         case 'statut':
           return direction * compare(a.statut, b.statut);
         case 'duree': {
@@ -1196,12 +1264,21 @@ export class TechnicianInterventions {
     if (isRacihSuccess(item?.statut, item?.articlesRaw)) {
       return 'RACIH';
     }
+    const isSfrB2b = this.isSfrB2bMarque(item?.marque);
     if (
       statusNormalized.includes('CLOTURE')
       && statusNormalized.includes('TERMINEE')
       && (articlesNormalized.includes('RECOIP') || normalizedType === 'RECO')
+      && !isSfrB2b
     ) {
       return 'RECOIP';
+    }
+    if (
+      statusNormalized.includes('CLOTURE')
+      && statusNormalized.includes('TERMINEE')
+      && isSfrB2b
+    ) {
+      return 'RACPRO_S';
     }
     if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
       return 'RACPRO_S';
@@ -1219,6 +1296,7 @@ export class TechnicianInterventions {
     if (
       (normalizedType.includes('PRESTA') && normalizedType.includes('COMPL'))
       || articlesNormalized.includes('PRESTA_COMPL')
+      || prestationsNormalized.includes('PRESTA_COMPL')
     ) {
       return 'PRESTA_COMPL';
     }
@@ -1230,13 +1308,24 @@ export class TechnicianInterventions {
     ) {
       return 'REPFOU_PRI';
     }
-    if (normalizedTypeCollapsed === 'REFC_DGR' || statusNormalized.includes('REFC_DGR')) {
+    if (normalizedTypeCollapsed === 'REFC_DGR' || statusNormalized.includes('REFC_DGR') || prestationsNormalized.includes('REFC_DGR')) {
       return 'REFC_DGR';
     }
-    if (normalizedTypeCollapsed === 'DEPLPRISE' || articlesNormalized.includes('DEPLPRISE')) {
+    if (normalizedTypeCollapsed === 'DEPLPRISE' || articlesNormalized.includes('DEPLPRISE') || prestationsNormalized.includes('DEPLPRISE')) {
       return 'DEPLPRISE';
     }
-    if (normalizedTypeCollapsed === 'REFRAC' || articlesNormalized.includes('REFRAC')) {
+    if (normalizedTypeCollapsed === 'DEMO' || articlesNormalized.includes('DEMO') || prestationsNormalized.includes('DEMO')) {
+      return 'DEMO';
+    }
+    if (
+      normalizedTypeCollapsed === 'SAV_EXP'
+      || normalizedTypeCollapsed === 'SAV EXP'
+      || articlesNormalized.includes('SAV_EXP')
+      || prestationsNormalized.includes('SAV_EXP')
+    ) {
+      return 'SAV_EXP';
+    }
+    if (normalizedTypeCollapsed === 'REFRAC' || articlesNormalized.includes('REFRAC') || prestationsNormalized.includes('REFRAC')) {
       return 'REFRAC';
     }
     if (
@@ -1304,7 +1393,8 @@ export class TechnicianInterventions {
         types.push('RACIH');
       }
     }
-    if (this.hasCode(item.articlesRaw, 'RECOIP') || typeNormalized === 'RECO') {
+    const isSfrB2b = this.isSfrB2bMarque(item.marque);
+    if ((this.hasCode(item.articlesRaw, 'RECOIP') || typeNormalized === 'RECO') && !isSfrB2b) {
       types.push('RECOIP');
     }
     if (statusNormalized.includes('RACPRO_S') || marqueNormalized.includes('B2B')) {
@@ -1316,10 +1406,23 @@ export class TechnicianInterventions {
     if (this.hasCode(item.articlesRaw, 'SAV') || typeNormalized === 'SAV') {
       types.push('SAV');
     }
+    if (
+      this.hasCode(item.articlesRaw, 'SAV_EXP')
+      || this.hasCode(item.listePrestationsRaw, 'SAV_EXP')
+      || typeNormalized === 'SAV EXP'
+      || typeNormalized === 'SAV_EXP'
+    ) {
+      types.push('SAV_EXP');
+    }
     if (this.hasCode(item.articlesRaw, 'CLEM')) {
       types.push('CLEM');
     }
-    if (typeNormalized === 'PRESTA COMPL' || this.hasCode(item.articlesRaw, 'PRESTA_COMP') || this.hasCode(item.articlesRaw, 'PRESTA_COMPL')) {
+    if (
+      typeNormalized === 'PRESTA COMPL'
+      || this.hasCode(item.articlesRaw, 'PRESTA_COMP')
+      || this.hasCode(item.articlesRaw, 'PRESTA_COMPL')
+      || this.hasCode(item.listePrestationsRaw, 'PRESTA_COMPL')
+    ) {
       types.push('PRESTA_COMPL');
     }
     if (this.hasCode(item.articlesRaw, 'REPFOU_PRI') || commentsNormalized.includes('F8')) {
@@ -1336,6 +1439,23 @@ export class TechnicianInterventions {
     }
     if (this.hasCode(item.articlesRaw, 'CABLE_PAV_4')) {
       types.push('CABLE_PAV_4');
+    }
+    if (this.hasCode(item.articlesRaw, 'DEPLPRISE') || this.hasCode(item.listePrestationsRaw, 'DEPLPRISE') || typeNormalized === 'DEPLPRISE') {
+      types.push('DEPLPRISE');
+    }
+    if (this.hasCode(item.articlesRaw, 'DEMO') || this.hasCode(item.listePrestationsRaw, 'DEMO') || typeNormalized === 'DEMO') {
+      types.push('DEMO');
+    }
+    if (this.hasCode(item.articlesRaw, 'REFRAC') || this.hasCode(item.listePrestationsRaw, 'REFRAC') || typeNormalized === 'REFRAC') {
+      types.push('REFRAC');
+    }
+    if (
+      this.hasCode(item.articlesRaw, 'REFC_DGR')
+      || this.hasCode(item.listePrestationsRaw, 'REFC_DGR')
+      || typeNormalized === 'REFC DGR'
+      || typeNormalized === 'REFC_DGR'
+    ) {
+      types.push('REFC_DGR');
     }
     return types;
   }
@@ -1362,6 +1482,9 @@ export class TechnicianInterventions {
       ['REFCDGR', 'REFC_DGR'],
       ['DEPLPRISE', 'DEPLPRISE'],
       ['REFRAC', 'REFRAC'],
+      ['DEMO', 'DEMO'],
+      ['SAVEXP', 'SAV_EXP'],
+      ['SAV_EXP', 'SAV_EXP'],
       ['CABLE_PAV_1', 'CABLE_PAV_1'],
       ['CABLE_PAV_2', 'CABLE_PAV_2'],
       ['CABLE_PAV_3', 'CABLE_PAV_3'],
@@ -1381,12 +1504,42 @@ export class TechnicianInterventions {
     if (normalized === 'RACPRO_S') return 'PRO S';
     if (normalized === 'RACPRO_C') return 'PRO C';
     if (normalized === 'REPFOU_PRI') return 'PRESTA F8';
+    if (normalized === 'PRESTA_COMPL') return 'PRESTA COMPL';
     if (normalized === 'IMM' || normalized === 'RACIH') return 'RACIH';
     if (normalized === 'CABLE_PAV_1') return 'CABLE PAV 1';
     if (normalized === 'CABLE_PAV_2') return 'CABLE PAV 2';
     if (normalized === 'CABLE_PAV_3') return 'CABLE PAV 3';
     if (normalized === 'CABLE_PAV_4') return 'CABLE PAV 4';
+    if (normalized === 'SAV_EXP') return 'SAV EXP';
+    if (normalized === 'REFC_DGR') return 'REFC DGR';
     return label;
+  }
+
+  private labelToBpuCode(label: string): string {
+    const normalized = this.normalizeToken(label).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+    const map = new Map([
+      ['PRO S', 'RACPRO_S'],
+      ['PRO C', 'RACPRO_C'],
+      ['RACPAV', 'RACPAV'],
+      ['RACIH', 'RACIH'],
+      ['RECO', 'RECOIP'],
+      ['RECOIP', 'RECOIP'],
+      ['CLEM', 'CLEM'],
+      ['SAV', 'SAV'],
+      ['SAV EXP', 'SAV_EXP'],
+      ['PRESTA COMPL', 'PRESTA_COMPL'],
+      ['PRESTA F8', 'REPFOU_PRI'],
+      ['DEPLPRISE', 'DEPLPRISE'],
+      ['DEMO', 'DEMO'],
+      ['REFRAC', 'REFRAC'],
+      ['REFC DGR', 'REFC_DGR'],
+      ['CABLE PAV 1', 'CABLE_PAV_1'],
+      ['CABLE PAV 2', 'CABLE_PAV_2'],
+      ['CABLE PAV 3', 'CABLE_PAV_3'],
+      ['CABLE PAV 4', 'CABLE_PAV_4']
+    ]);
+    if (map.has(normalized)) return map.get(normalized)!;
+    return normalized.replace(/\s+/g, '_');
   }
 
   private isRaccType(label: string): boolean {
@@ -1472,6 +1625,9 @@ export class TechnicianInterventions {
   }
 
   private formatDetailValueByKey(key: keyof InterventionItem, value: unknown): string {
+    if (key === 'type') {
+      return this.displayType(this.selectedDetail() as InterventionItem);
+    }
     if (key === 'listePrestationsRaw') {
       return this.formatPrestationsRaw(value);
     }
@@ -1555,6 +1711,13 @@ export class TechnicianInterventions {
       .trim();
   }
 
+  private isSfrB2bMarque(value?: string | null): boolean {
+    const normalized = this.normalizeToken(value ?? '');
+    if (!normalized) return false;
+    if (normalized.includes('SFR B2B')) return true;
+    return normalized.replace(/\s+/g, '').includes('SFRB2B');
+  }
+
   private resolveSuccessPrestations(item: InterventionItem): string[] {
     if (!this.isClosedTerminated(item.statut)) return [];
     const typeNormalized = this.normalizeToken(item.type).replace(/-/g, ' ').trim();
@@ -1568,11 +1731,18 @@ export class TechnicianInterventions {
     if (isRacihSuccess(item.statut, item.articlesRaw)) {
       matches.push('RACIH');
     }
+    const isSfrB2b = this.isSfrB2bMarque(item.marque);
     if (
-      articlesNormalized.includes('RECOIP')
-      || typeNormalized === 'RECO'
+      !isSfrB2b
+      && (
+        articlesNormalized.includes('RECOIP')
+        || typeNormalized === 'RECO'
+      )
     ) {
       matches.push('RECOIP');
+    }
+    if (isSfrB2b) {
+      matches.push('RACPRO_S');
     }
     if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
       matches.push('RACPRO_S');

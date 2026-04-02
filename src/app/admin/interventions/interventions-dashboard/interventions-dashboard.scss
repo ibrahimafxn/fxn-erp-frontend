@@ -1410,3 +1410,67 @@ tbody td:first-child {
     transform: translateY(0);
   }
 }
+
+.admin-tools {
+  .admin-tools-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 .2rem;
+    }
+
+    p {
+      margin: 0;
+      font-size: .8rem;
+      opacity: .6;
+    }
+  }
+
+  .admin-tools-body {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+  }
+
+  .admin-tool-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid rgba(88, 123, 255, 0.15);
+    background: rgba(255, 255, 255, .02);
+
+    .admin-tool-info {
+      display: flex;
+      flex-direction: column;
+      gap: .2rem;
+      font-size: .85rem;
+
+      strong {
+        font-weight: 600;
+      }
+
+      span {
+        opacity: .6;
+        font-size: .78rem;
+      }
+    }
+
+    button {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+  }
+}

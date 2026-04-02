@@ -1,7 +1,7 @@
 // main.ts
 import {bootstrapApplication} from '@angular/platform-browser';
 import {provideRouter} from '@angular/router';
-import {provideHttpClient, withInterceptorsFromDi} from '@angular/common/http';
+import {provideHttpClient, withInterceptors} from '@angular/common/http';
 import {inject} from '@vercel/analytics';
 
 import {App} from './app/app';
@@ -15,10 +15,10 @@ inject();
 bootstrapApplication(App, {
   providers: [
     provideRouter(AppConfig.routes),
-    provideHttpClient(withInterceptorsFromDi()), // Angular injecte tous les interceptors fournis
-    ...AppConfig.providers, provideServiceWorker('ngsw-worker.js', {
-            enabled: !isDevMode(),
-            registrationStrategy: 'registerWhenStable:30000'
-          }),
+    provideHttpClient(withInterceptors(AppConfig.interceptors)),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000'
+    }),
   ]
 }).catch(err => console.error(err));

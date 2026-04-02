@@ -22,7 +22,7 @@
           <div class="value">{{ order()?.reference }}</div>
         </div>
         <div>
-          <div class="label">Client</div>
+          <div class="label">Fournisseur</div>
           <div class="value">{{ order()?.client }}</div>
         </div>
         <div>
@@ -36,6 +36,18 @@
         <div>
           <div class="label">Montant</div>
           <div class="value">{{ formatCurrency(order()?.amount) }}</div>
+        </div>
+        <div>
+          <div class="label">Frais de livraison</div>
+          <div class="value">{{ formatCurrency(order()?.deliveryFee ?? 0) }}</div>
+        </div>
+        <div>
+          <div class="label">Facture PDF</div>
+          @if (pdfUrl(order())) {
+            <a class="btn-outline" [href]="pdfUrl(order())" target="_blank" rel="noopener">Ouvrir</a>
+          } @else {
+            <div class="value">—</div>
+          }
         </div>
         <div class="full">
           <div class="label">Notes</div>

@@ -6,6 +6,25 @@
     </div>
   </header>
 
+  <section class="card bpu-info">
+    <div class="bpu-head">
+      <div>
+        <div class="bpu-title">BPU appliqué</div>
+        <div class="bpu-sub">Le CA utilise votre BPU personnalisé si présent, sinon le BPU global.</div>
+      </div>
+      @if (bpuLoading()) {
+        <span class="bpu-pill">Chargement…</span>
+      } @else if (hasPersonalizedBpu()) {
+        <span class="bpu-pill active">Personnalisé</span>
+      } @else {
+        <span class="bpu-pill">Par défaut</span>
+      }
+    </div>
+    @if (bpuError()) {
+      <div class="bpu-error">{{ bpuError() }}</div>
+    }
+  </section>
+
   <section class="kpi-section">
     <div class="kpi-header">
       <h2>Résumé Osiris</h2>
@@ -78,6 +97,25 @@
   } @else if (items().length === 0) {
     <div class="state empty card">Aucune prestation sur la période.</div>
   } @else {
+    <footer class="pager">
+      <div class="pager-left">
+        <div class="page-size">
+          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+        </div>
+        <span class="pager-label">Éléments par page</span>
+      </div>
+      <div class="pager-right">
+        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+        <div class="pager-nav">
+          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </footer>
+
     <div class="table card">
       <table>
         <thead>
@@ -100,24 +138,7 @@
         </tbody>
       </table>
     </div>
-
-    <footer class="pager pager-fixed">
-      <div class="pager-left">
-        <div class="page-size">
-          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
-          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
-          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
-          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
-        </div>
-        <span class="pager-label">Éléments par page</span>
-      </div>
-      <div class="pager-right">
-        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-        <div class="pager-nav">
-          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
-          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
-        </div>
-      </div>
-    </footer>
   }
 </section>
+
+<app-technician-mobile-nav></app-technician-mobile-nav>

@@ -1,0 +1,50 @@
+<section class="technician-documents">
+  <header class="page-header">
+    <div>
+      <h1>Mes documents</h1>
+      <p class="subtitle">Consultez et ouvrez vos documents personnels.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="load()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (docs().length === 0) {
+    <div class="state empty card">Aucun document disponible.</div>
+  } @else {
+    <div class="table card">
+      <table>
+        <thead>
+          <tr>
+            <th>Document</th>
+            <th>Détail</th>
+            <th>Expiration</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (doc of docs(); track doc._id) {
+            <tr>
+              <td data-label="Document">{{ doc.type }}</td>
+              <td data-label="Détail">{{ docLabel(doc) }}</td>
+              <td data-label="Expiration">{{ doc.expiryDate ? (doc.expiryDate | date:'shortDate') : '—' }}</td>
+              <td data-label="Statut">
+                <span class="status" [ngClass]="statusClass(doc)">{{ statusLabel(doc) }}</span>
+              </td>
+              <td data-label="Action">
+                <button class="btn-outline" type="button" (click)="openDoc(doc)">Ouvrir</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<app-technician-mobile-nav></app-technician-mobile-nav>
