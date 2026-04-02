@@ -20,6 +20,7 @@
 .technician-revenue .page-header h1 {
   margin: 0;
   font-size: 1.3rem;
+  font-family: var(--fxn-font-display);
 }
 
 .technician-revenue .subtitle {
@@ -316,7 +317,7 @@
 }
 
 body.theme-default .technician-revenue th {
-  color: #3b82f6;
+  color: var(--fxn-primary);
   opacity: 0.95;
 }
 

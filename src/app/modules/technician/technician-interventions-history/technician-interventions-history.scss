@@ -21,6 +21,7 @@
 .technician-interventions-history .page-header h1 {
   margin: 0;
   font-size: 1.3rem;
+  font-family: var(--fxn-font-display);
 }
 
 .technician-interventions-history .page-header .subtitle {
@@ -221,7 +222,7 @@
 }
 
 body.theme-default .technician-interventions-history thead th {
-  color: #3b82f6;
+  color: var(--fxn-primary);
   opacity: 0.95;
 }
 

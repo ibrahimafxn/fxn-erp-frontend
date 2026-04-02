@@ -31,6 +31,20 @@
 
 .nav-item.active {
   color: var(--fxn-primary);
+  position: relative;
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 28px;
+  border-radius: 10px;
+  background: var(--fxn-primary-soft);
+  pointer-events: none;
 }
 
 .nav-item .material-icons {

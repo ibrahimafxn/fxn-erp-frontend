@@ -14,6 +14,7 @@
 .technician-reports .page-header h1 {
   margin: 0;
   font-size: 1.3rem;
+  font-family: var(--fxn-font-display);
 }
 
 .technician-reports .subtitle {
@@ -89,7 +90,7 @@
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(96, 165, 250, 0.25);
+  border: 1px solid var(--fxn-primary-border);
   background: linear-gradient(180deg, rgba(8, 12, 20, 0.96), rgba(12, 18, 30, 0.92));
   color: #e8f1ff;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -105,8 +106,8 @@
 .technician-reports input:focus,
 .technician-reports textarea:focus {
   outline: none;
-  border-color: rgba(96, 165, 250, 0.65);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  border-color: var(--fxn-primary-border);
+  box-shadow: 0 0 0 3px var(--fxn-primary-soft);
   background: linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(12, 20, 34, 0.95));
 }
 
@@ -159,7 +160,7 @@
   align-items: center;
   padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(96, 165, 250, 0.5);
+  border: 1px solid var(--fxn-primary-border);
   background: rgba(15, 23, 42, 0.9);
   color: #e6efff;
   font-weight: 600;
@@ -244,7 +245,7 @@
   margin-bottom: 14px;
   padding: 12px;
   border-radius: 14px;
-  border: 1px solid rgba(96, 165, 250, 0.2);
+  border: 1px solid var(--fxn-primary-soft);
   background: linear-gradient(135deg, rgba(10, 16, 28, 0.75), rgba(12, 20, 34, 0.5));
 }
 
@@ -399,7 +400,7 @@
   gap: 5px;
   padding: 3px 7px;
   border-radius: 999px;
-  border: 1px solid rgba(96, 165, 250, 0.35);
+  border: 1px solid var(--fxn-primary-border);
   background: rgba(15, 23, 42, 0.6);
   font-size: 11px;
   width: fit-content;
@@ -411,7 +412,7 @@
 }
 
 body.theme-default .technician-reports thead th {
-  color: #3b82f6;
+  color: var(--fxn-primary);
   opacity: 0.95;
 }
 

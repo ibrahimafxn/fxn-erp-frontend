@@ -85,8 +85,8 @@
   .field input:focus,
   .field textarea:focus {
     outline: none;
-    border-color: rgba(96, 165, 250, 0.7);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    border-color: var(--fxn-primary-border);
+    box-shadow: 0 0 0 3px var(--fxn-primary-soft);
     background: rgba(12, 18, 30, 0.8);
   }
 
@@ -147,8 +147,8 @@
 
   .filters select:focus {
     outline: none;
-    border-color: rgba(96, 165, 250, 0.7);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+    border-color: var(--fxn-primary-border);
+    box-shadow: 0 0 0 3px var(--fxn-primary-soft);
     background: rgba(12, 18, 30, 0.8);
   }
 
@@ -164,7 +164,7 @@
     color: var(--fxn-text, #e2e8f0);
     font-weight: 600;
     min-height: 28px;
-    accent-color: #3b82f6;
+    accent-color: var(--fxn-primary);
     width: 100%;
   }
 
@@ -242,9 +242,9 @@
   }
 
   .page-size button.active {
-    background: rgba(59, 130, 246, 0.2);
-    border-color: rgba(59, 130, 246, 0.6);
-    color: #bfdbfe;
+    background: var(--fxn-primary-soft);
+    border-color: var(--fxn-primary-border);
+    color: var(--fxn-primary);
   }
 
   .pager-label {
@@ -363,7 +363,7 @@
   }
 
   body.theme-default & thead th {
-    color: #3b82f6;
+    color: var(--fxn-primary);
     opacity: 0.95;
   }
 
