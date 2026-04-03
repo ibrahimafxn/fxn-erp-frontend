@@ -6,9 +6,17 @@
     </div>
 
     @if (showBackButton()) {
-      <button class="btn-back header-back" type="button" (click)="back()">
+      <button
+        class="btn-back header-back"
+        [class.icon-only]="isTechnician()"
+        type="button"
+        (click)="back()"
+        aria-label="Retour"
+      >
         <i class="bi bi-arrow-left"></i>
-        <span i18n="@@header.back">Retour</span>
+        @if (!isTechnician()) {
+          <span i18n="@@header.back">Retour</span>
+        }
       </button>
     }
 

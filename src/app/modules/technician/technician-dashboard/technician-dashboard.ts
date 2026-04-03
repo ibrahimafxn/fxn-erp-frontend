@@ -145,11 +145,9 @@ export class TechnicianDashboard {
         this.importBatch.set(batch);
         const today = this.startOfToday();
         const todayStr = this.formatDateInput(today);
-        const summary$ = this.interventions.importSummaryTechnician({
-          ...(batch?._id ? { importBatchId: batch._id } : {}),
-          fromDate: todayStr,
-          toDate: todayStr
-        });
+        const summary$ = batch?._id
+          ? this.interventions.importSummaryTechnician({ importBatchId: batch._id })
+          : this.interventions.importSummaryTechnician({ fromDate: todayStr, toDate: todayStr });
         if (!batch?._id) {
           summary$.subscribe({
             next: (summaryRes) => {

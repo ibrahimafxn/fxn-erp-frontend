@@ -37,6 +37,7 @@ export class App implements AfterViewInit, OnDestroy {
     if (!user || user.role !== Role.ADMIN) return false;
     return this.isAdminDashboardRoute(this.routeUrl());
   });
+  readonly isTechnician = computed(() => this.auth.user$()?.role === Role.TECHNICIEN);
   readonly currentYear = new Date().getFullYear();
   readonly appVersion = packageJson.version ?? '—';
   constructor() {

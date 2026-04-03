@@ -5,6 +5,10 @@ main.app-content {
   overflow-x: clip;
 }
 
+body.theme-technicien main.app-content {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+
 .user-gif-overlay {
   position: fixed;
   inset: 0;
@@ -33,6 +37,10 @@ main.app-content {
   font-size: 0.85rem;
 }
 
+body.theme-technicien .app-footer {
+  margin-bottom: calc(64px + env(safe-area-inset-bottom));
+}
+
 .app-footer .footer-left {
   font-weight: 600;
   color: var(--fxn-text);
@@ -53,5 +61,36 @@ main.app-content {
   .app-footer {
     grid-template-columns: 1fr;
     align-items: flex-start;
+  }
+
+  body.theme-technicien .app-footer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    gap: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    white-space: nowrap;
+  }
+
+  body.theme-technicien .app-footer .footer-left,
+  body.theme-technicien .app-footer .footer-center,
+  body.theme-technicien .app-footer .footer-right {
+    white-space: nowrap;
+  }
+
+  body.theme-technicien .app-footer .footer-right {
+    margin-left: 0;
+  }
+
+  body.theme-technicien .app-footer .footer-left {
+    margin-right: 0;
+  }
+
+  body.theme-technicien .app-footer .footer-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
   }
 }

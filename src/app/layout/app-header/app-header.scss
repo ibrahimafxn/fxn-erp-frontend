@@ -68,6 +68,24 @@
   box-shadow: none;
 }
 
+.header-back.icon-only {
+  padding: 0.45rem;
+  min-width: 36px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-back.icon-only span {
+  display: none;
+}
+
+.header-back.icon-only .bi {
+  margin-right: 0;
+  font-size: 1rem;
+}
+
 /* RIGHT */
 
 .right {

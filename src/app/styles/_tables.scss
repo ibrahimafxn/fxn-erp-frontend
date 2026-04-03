@@ -141,3 +141,108 @@ tbody tr:hover {
     min-width: 700px;
   }
 }
+
+@media (max-width: 700px) {
+  body.theme-technicien .table,
+  body.theme-technicien .table-wrap,
+  body.theme-technicien .table-wrapper,
+  body.theme-technicien .table-scroll,
+  body.theme-technicien .card-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.theme-technicien .table table,
+  body.theme-technicien .table-wrap table,
+  body.theme-technicien .table-wrapper table,
+  body.theme-technicien .table-scroll table,
+  body.theme-technicien .card-table table {
+    min-width: 100%;
+  }
+
+  body.theme-technicien th,
+  body.theme-technicien td {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  body.theme-technicien .table,
+  body.theme-technicien .table-wrap,
+  body.theme-technicien .card-table {
+    padding: 0;
+  }
+
+  body.theme-technicien .table table,
+  body.theme-technicien .table-wrap table,
+  body.theme-technicien .card-table table,
+  body.theme-technicien .table thead,
+  body.theme-technicien .table tbody,
+  body.theme-technicien .table tr,
+  body.theme-technicien .table td,
+  body.theme-technicien .table th,
+  body.theme-technicien .table-wrap thead,
+  body.theme-technicien .table-wrap tbody,
+  body.theme-technicien .table-wrap tr,
+  body.theme-technicien .table-wrap td,
+  body.theme-technicien .table-wrap th,
+  body.theme-technicien .card-table thead,
+  body.theme-technicien .card-table tbody,
+  body.theme-technicien .card-table tr,
+  body.theme-technicien .card-table td,
+  body.theme-technicien .card-table th {
+    display: block;
+    width: 100%;
+  }
+
+  body.theme-technicien .table thead,
+  body.theme-technicien .table-wrap thead,
+  body.theme-technicien .card-table thead {
+    display: none;
+  }
+
+  body.theme-technicien .table tbody,
+  body.theme-technicien .table-wrap tbody,
+  body.theme-technicien .card-table tbody {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  body.theme-technicien .table tbody tr,
+  body.theme-technicien .table-wrap tbody tr,
+  body.theme-technicien .card-table tbody tr {
+    display: block;
+    border: 1px solid var(--fxn-border);
+    border-radius: 14px;
+    padding: 0.6rem 0.75rem;
+    background: var(--fxn-surface);
+  }
+
+  body.theme-technicien .table tbody td,
+  body.theme-technicien .table-wrap tbody td,
+  body.theme-technicien .card-table tbody td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.35rem 0;
+    border-bottom: none;
+  }
+
+  body.theme-technicien .table tbody td::before,
+  body.theme-technicien .table-wrap tbody td::before,
+  body.theme-technicien .card-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--fxn-text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  body.theme-technicien .table tbody td.actions::before,
+  body.theme-technicien .table-wrap tbody td.actions::before,
+  body.theme-technicien .card-table tbody td.actions::before {
+    display: none;
+  }
+}

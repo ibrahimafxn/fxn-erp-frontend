@@ -6,7 +6,7 @@
   right: 0;
   z-index: 60;
   display: flex;
-  height: 64px;
+  height: calc(64px + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--fxn-surface-glass);
   border-top: 1px solid var(--fxn-border-strong);
