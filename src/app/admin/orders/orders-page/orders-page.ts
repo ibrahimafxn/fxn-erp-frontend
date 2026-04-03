@@ -5,6 +5,12 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { Order, OrderService } from '../../../core/services/order.service';
+import { DepotService } from '../../../core/services/depot.service';
+import { ResourceListItem, ResourceListService } from '../../../core/services/resource-list.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { Depot } from '../../../core/models';
+import { Role } from '../../../core/models/roles.model';
+import { environment } from '../../../environments/environment';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
@@ -20,7 +26,11 @@ export class OrdersPage {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private orders = inject(OrderService);
+  private depotService = inject(DepotService);
+  private resourceListService = inject(ResourceListService);
+  private auth = inject(AuthService);
   private readonly tvaRate = 0.2;
+  private readonly apiRoot = (environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -36,12 +46,28 @@ export class OrdersPage {
   readonly importError = signal<string | null>(null);
   readonly importResult = signal<string | null>(null);
   readonly importClient = signal('');
+  readonly depots = signal<Depot[]>([]);
+  readonly depotsLoading = signal(false);
+  readonly resources = signal<ResourceListItem[]>([]);
+  readonly resourcesLoading = signal(false);
+  readonly selectedDepotId = signal('');
+  readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
+  readonly managerDepotId = computed(() => {
+    const raw = this.auth.getCurrentUser()?.idDepot ?? null;
+    if (!raw) return null;
+    if (typeof raw === 'string') return raw;
+    if (typeof raw === 'object' && '_id' in raw) return String((raw as { _id: string })._id);
+    return null;
+  });
   readonly importPreview = signal<{
     reference: string;
     client: string;
+    supplier?: string;
     date: string;
     status: string;
     amount: number;
+    deliveryFee?: number;
+    invoicePdfUrl?: string;
     notes: string;
     lines: Array<{
       resourceId: string | null;
@@ -60,13 +86,19 @@ export class OrdersPage {
   } | null>(null);
   readonly importModalOpen = signal(false);
   readonly pageRange = formatPageRange;
-  readonly sortField = signal<'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva'>('date');
+  readonly sortField = signal<'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva' | 'delivery'>('date');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly importTotalTva = computed(() => {
     const preview = this.importPreview();
     if (!preview) return 0;
     return preview.lines.reduce((sum, line) => sum + Number(line.totalTva ?? 0), 0);
   });
+  readonly totalTva = computed(() =>
+    this.items().reduce((sum, order) => sum + this.tvaAmount(order), 0)
+  );
+  readonly totalTtc = computed(() =>
+    this.items().reduce((sum, order) => sum + this.displayAmount(order), 0)
+  );
 
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -99,6 +131,8 @@ export class OrdersPage {
           return direction * compareNumber(this.displayAmount(a), this.displayAmount(b));
         case 'tva':
           return direction * compareNumber(this.tvaAmount(a), this.tvaAmount(b));
+        case 'delivery':
+          return direction * compareNumber(Number(a.deliveryFee ?? 0), Number(b.deliveryFee ?? 0));
         default:
           return 0;
       }
@@ -111,6 +145,12 @@ export class OrdersPage {
   });
 
   constructor() {
+    if (this.isDepotManager()) {
+      const depotId = this.managerDepotId();
+      if (depotId) this.selectedDepotId.set(depotId);
+    }
+    this.loadDepots();
+    this.loadResources();
     this.refresh();
   }
 
@@ -170,7 +210,12 @@ export class OrdersPage {
     this.orders.importPdfPreview(file, this.importClient()).subscribe({
       next: (res) => {
         this.importLoading.set(false);
-        this.importPreview.set(res.data || null);
+        const preview = res.data || null;
+        if (preview) {
+          const deliveryFee = Number(preview.deliveryFee ?? 0);
+          preview.deliveryFee = Number.isFinite(deliveryFee) ? deliveryFee : 0;
+        }
+        this.importPreview.set(preview);
         this.importModalOpen.set(true);
         this.importClient.set('');
         if (input) input.value = '';
@@ -194,6 +239,11 @@ export class OrdersPage {
   confirmImport(): void {
     const preview = this.importPreview();
     if (!preview) return;
+    const depotId = this.selectedDepotId();
+    if (!depotId) {
+      this.importError.set('Sélectionner un dépôt pour l’import.');
+      return;
+    }
     const validLines = preview.lines
       .filter((line) => line.resourceId && line.resourceType)
       .map((line) => ({
@@ -212,9 +262,13 @@ export class OrdersPage {
     this.orders.confirmImportPdf({
       reference: preview.reference,
       client: preview.client,
+      supplier: preview.supplier,
       date: preview.date,
       notes: preview.notes,
       amount: preview.amount,
+      deliveryFee: Number(preview.deliveryFee ?? 0),
+      depotId,
+      invoicePdfUrl: preview.invoicePdfUrl,
       lines: validLines
     }).subscribe({
       next: () => {
@@ -301,7 +355,7 @@ export class OrdersPage {
     this.refresh();
   }
 
-  setSort(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva'): void {
+  setSort(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva' | 'delivery'): void {
     if (this.sortField() === field) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
       return;
@@ -310,7 +364,7 @@ export class OrdersPage {
     this.sortDirection.set(field === 'date' ? 'desc' : 'asc');
   }
 
-  sortArrow(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva'): string {
+  sortArrow(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva' | 'delivery'): string {
     if (this.sortField() !== field) return '↕';
     return this.sortDirection() === 'asc' ? '↑' : '↓';
   }
@@ -353,5 +407,154 @@ export class OrdersPage {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount);
+  }
+
+  pdfUrl(order: Order | null | undefined): string | null {
+    const raw = order?.invoicePdfUrl || '';
+    if (!raw) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    const prefix = raw.startsWith('/') ? '' : '/';
+    return `${this.apiRoot}${prefix}${raw}`;
+  }
+
+  previewPdfUrl(): string | null {
+    const preview = this.importPreview();
+    if (!preview?.invoicePdfUrl) return null;
+    if (preview.invoicePdfUrl.startsWith('http://') || preview.invoicePdfUrl.startsWith('https://')) {
+      return preview.invoicePdfUrl;
+    }
+    const prefix = preview.invoicePdfUrl.startsWith('/') ? '' : '/';
+    return `${this.apiRoot}${prefix}${preview.invoicePdfUrl}`;
+  }
+
+  resourceLabel(item: ResourceListItem): string {
+    const type = item.type === 'MATERIAL' ? 'Matériel' : 'Consommable';
+    return `${item.name} · ${type}`;
+  }
+
+  onDepotSelect(event: Event): void {
+    const el = event.target as HTMLSelectElement | null;
+    if (!el) return;
+    this.selectedDepotId.set(el.value || '');
+    this.loadResources();
+  }
+
+  updatePreviewField(field: 'reference' | 'client' | 'date' | 'notes' | 'deliveryFee', value: string): void {
+    const preview = this.importPreview();
+    if (!preview) return;
+    const next = { ...preview } as typeof preview;
+    if (field === 'deliveryFee') {
+      const fee = Number(value || 0);
+      next.deliveryFee = Number.isFinite(fee) ? fee : 0;
+    } else {
+      switch (field) {
+        case 'reference':
+          next.reference = value;
+          break;
+        case 'client':
+          next.client = value;
+          break;
+        case 'date':
+          next.date = value;
+          break;
+        case 'notes':
+          next.notes = value;
+          break;
+      }
+    }
+    this.importPreview.set(next);
+  }
+
+  updatePreviewLine(index: number, patch: Partial<{
+    designation: string;
+    description: string;
+    quantity: number | string;
+    unitPrice: number | string;
+  }>): void {
+    const preview = this.importPreview();
+    if (!preview) return;
+    const lines = preview.lines.map((line, i) => {
+      if (i !== index) return line;
+      const next = { ...line, ...patch };
+      const qty = Number(next.quantity ?? 0);
+      const unit = Number(next.unitPrice ?? 0);
+      const totalHt = this.round2(qty * unit);
+      const totalTva = this.round2(totalHt * this.tvaRate);
+      const totalTtc = this.round2(totalHt + totalTva);
+      return {
+        ...next,
+        quantity: Number.isFinite(qty) ? qty : 0,
+        unitPrice: Number.isFinite(unit) ? unit : 0,
+        total: totalHt,
+        totalHt,
+        totalTva,
+        totalTtc
+      };
+    });
+    const amount = this.round2(lines.reduce((sum, line) => sum + Number(line.totalHt ?? line.total ?? 0), 0));
+    this.importPreview.set({ ...preview, lines, amount });
+  }
+
+  onPreviewResourceChange(index: number, event: Event): void {
+    const el = event.target as HTMLSelectElement | null;
+    if (!el) return;
+    const resourceId = String(el.value || '');
+    const resource = this.resources().find((item) => item._id === resourceId);
+    if (!resource) {
+      this.updatePreviewLine(index, {});
+      const preview = this.importPreview();
+      if (!preview) return;
+      const lines = preview.lines.map((line, i) =>
+        i === index ? { ...line, resourceId: null, resourceType: null } : line
+      );
+      this.importPreview.set({ ...preview, lines });
+      return;
+    }
+    const preview = this.importPreview();
+    if (!preview) return;
+    const lines = preview.lines.map((line, i) =>
+      i === index
+        ? {
+            ...line,
+            resourceId: resource._id,
+            resourceType: resource.type,
+            name: resource.name
+          }
+        : line
+    );
+    this.importPreview.set({ ...preview, lines });
+  }
+
+  private loadDepots(): void {
+    this.depotsLoading.set(true);
+    this.depotService.refreshDepots(true).subscribe({
+      next: (res) => {
+        this.depots.set(res.items || []);
+        this.depotsLoading.set(false);
+      },
+      error: () => {
+        this.depots.set([]);
+        this.depotsLoading.set(false);
+      }
+    });
+  }
+
+  private loadResources(): void {
+    this.resourcesLoading.set(true);
+    const depotId = this.selectedDepotId();
+    this.resourceListService.refresh(depotId || undefined).subscribe({
+      next: (res) => {
+        this.resources.set(res.data || []);
+        this.resourcesLoading.set(false);
+      },
+      error: () => {
+        this.resources.set([]);
+        this.resourcesLoading.set(false);
+      }
+    });
+  }
+
+  private round2(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 }

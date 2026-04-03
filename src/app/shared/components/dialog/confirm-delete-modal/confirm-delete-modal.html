@@ -41,7 +41,7 @@
           {{ cancelText() }}
         </button>
 
-        <button type="button" class="btn-outline delete" (click)="onConfirm()" [disabled]="confirming()">
+        <button type="button" class="btn-outline delete" title="Supprimer" (click)="onConfirm()" [disabled]="confirming()">
           @if (confirmIcon()) { <i [class]="confirmIcon()"></i> }
           @if (confirming()) { {{ confirmLoadingText() }} } @else { {{ confirmText() }} }
         </button>

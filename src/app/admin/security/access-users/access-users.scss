@@ -12,6 +12,53 @@
   color: var(--access-ink);
 }
 
+.page-loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 20, 0.45);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(6px);
+  z-index: 50;
+}
+
+.page-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(88, 123, 255, 0.35);
+  background: rgba(12, 18, 30, 0.9);
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+}
+
+.page-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.page-loading-text strong {
+  color: #fff;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(88, 123, 255, 0.3);
+  border-top-color: #6ba4ff;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .page-header {
   display:flex; justify-content:space-between; gap:.75rem; align-items:center;
   padding: .75rem .9rem;
@@ -237,7 +284,19 @@ tbody tr:hover {
   background: rgba(90, 105, 130, 0.08);
 }
 
-.pager { display:flex; justify-content: space-between; gap:.75rem; flex-wrap: wrap; }
+.pager { display:flex; justify-content: space-between; align-items: center; gap:12px; }
+.pager-left,
+.pager-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pager .page-size {
+  display: inline-flex;
+  gap: .35rem;
+}
+.pager-label { color: var(--access-muted); font-size: .85rem; }
 
 @media (max-width: 1000px) {
   .table.card {

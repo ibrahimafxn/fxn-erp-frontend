@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import {
@@ -8,18 +8,24 @@ import {
   InterventionService
 } from '../../../core/services/intervention.service';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
+import { TechnicianReportService } from '../../../core/services/technician-report.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-technician-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, TechnicianMobileNav],
   templateUrl: './technician-dashboard.html',
   styleUrl: './technician-dashboard.scss'
 })
 export class TechnicianDashboard {
   private router = inject(Router);
   private interventions = inject(InterventionService);
+  private reports = inject(TechnicianReportService);
+  private auth = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
 
   readonly caLoading = signal(false);
   readonly caError = signal<string | null>(null);
@@ -86,6 +92,10 @@ export class TechnicianDashboard {
     this.router.navigate(['/technician/reports']).then();
   }
 
+  goCharges(): void {
+    this.router.navigate(['/technician/charges']).then();
+  }
+
   goHistory(): void {
     this.router.navigate(['/technician/history']).then();
   }
@@ -104,20 +114,23 @@ export class TechnicianDashboard {
     const weekStartStr = this.formatDateInput(weekStart);
     const monthStartStr = this.formatDateInput(monthStart);
 
+    const userId = this.currentUserId();
     forkJoin({
-      daily: this.interventions.importSummaryTechnician({ fromDate: todayStr, toDate: todayStr }),
-      weekly: this.interventions.importSummaryTechnician({ fromDate: weekStartStr, toDate: todayStr }),
-      monthly: this.interventions.importSummaryTechnician({ fromDate: monthStartStr, toDate: todayStr })
+      daily: this.reports.summary({ fromDate: todayStr, toDate: todayStr, technicianId: userId || undefined }),
+      weekly: this.reports.summary({ fromDate: weekStartStr, toDate: todayStr, technicianId: userId || undefined }),
+      monthly: this.reports.summary({ fromDate: monthStartStr, toDate: todayStr, technicianId: userId || undefined })
     }).subscribe({
       next: (res) => {
-        this.dailyAmount.set(res.daily.data.totalAmount || 0);
-        this.weeklyAmount.set(res.weekly.data.totalAmount || 0);
-        this.monthlyAmount.set(res.monthly.data.totalAmount || 0);
+        this.dailyAmount.set(this.parseAmount(res.daily.data.totalAmount));
+        this.weeklyAmount.set(this.parseAmount(res.weekly.data.totalAmount));
+        this.monthlyAmount.set(this.parseAmount(res.monthly.data.totalAmount));
         this.caLoading.set(false);
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.caLoading.set(false);
         this.caError.set(err?.message || 'Erreur chargement CA');
+        this.cdr.markForCheck();
       }
     });
   }
@@ -132,11 +145,9 @@ export class TechnicianDashboard {
         this.importBatch.set(batch);
         const today = this.startOfToday();
         const todayStr = this.formatDateInput(today);
-        const summary$ = this.interventions.importSummaryTechnician({
-          ...(batch?._id ? { importBatchId: batch._id } : {}),
-          fromDate: todayStr,
-          toDate: todayStr
-        });
+        const summary$ = batch?._id
+          ? this.interventions.importSummaryTechnician({ importBatchId: batch._id })
+          : this.interventions.importSummaryTechnician({ fromDate: todayStr, toDate: todayStr });
         if (!batch?._id) {
           summary$.subscribe({
             next: (summaryRes) => {
@@ -199,6 +210,21 @@ export class TechnicianDashboard {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const dayOfMonth = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${dayOfMonth}`;
+  }
+
+  private currentUserId(): string | null {
+    const user = this.auth.getCurrentUser();
+    if (!user?._id) return null;
+    return String(user._id);
+  }
+
+  private parseAmount(value?: number | string | null): number {
+    if (value === null || value === undefined) return 0;
+    const raw = typeof value === 'string'
+      ? value.replace(/\s+/g, '').replace(',', '.')
+      : value;
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : 0;
   }
 
 }

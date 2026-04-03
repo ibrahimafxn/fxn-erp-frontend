@@ -1,0 +1,185 @@
+<section class="technician-supply-requests">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">Approvisionnements</h1>
+      <p class="subtitle">Demander des consommables ou matériels pour votre dépôt.</p>
+    </div>
+  </div>
+
+  <div class="panel card request-panel">
+    <h2 class="section-title">@if (editing()) { Modifier la demande } @else { Nouvelle demande }</h2>
+    <form class="form-grid" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field">
+        <label>Type</label>
+        <select formControlName="resourceType">
+          <option value="CONSUMABLE">Consommable</option>
+          <option value="MATERIAL">Matériel</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Ressource</label>
+        <input #resourceSearch type="text" placeholder="Rechercher" [value]="resourceQuery()" (input)="onResourceQuery(resourceSearch.value)" />
+        <select formControlName="resourceId">
+          <option value="" disabled>Sélectionner</option>
+          @for (r of resources(); track r._id) {
+            <option [value]="r._id">{{ r.name }}</option>
+          }
+        </select>
+        @if (resourcesLoading()) {
+          <div class="hint">Chargement des ressources…</div>
+        }
+        @if (resourcesError()) {
+          <div class="hint error">{{ resourcesError() }}</div>
+        }
+      </div>
+      <div class="field">
+        <label>Quantité</label>
+        <input type="number" min="1" formControlName="quantity" />
+      </div>
+      <div class="field full">
+        <label>Commentaire</label>
+        <textarea rows="2" formControlName="note" placeholder="Préciser le besoin"></textarea>
+      </div>
+      <div class="form-actions">
+        <button class="btn-outline" type="button" (click)="resetForm()">Réinitialiser</button>
+        <button class="btn-save" type="submit" [disabled]="loading() || form.invalid">
+          @if (editing()) { Mettre à jour } @else { Envoyer }
+        </button>
+      </div>
+    </form>
+    @if (error()) {
+      <div class="state error">{{ error() }}</div>
+    }
+  </div>
+
+  <div class="panel card">
+    <div class="panel-head">
+      <h2 class="section-title">Mes demandes</h2>
+      <div class="filters">
+        <select #statusSelect [value]="statusFilter()" (change)="setStatusFilter(statusSelect.value)">
+          <option value="">Tous les statuts</option>
+          <option value="PENDING">En attente</option>
+          <option value="APPROVED">Validées</option>
+          <option value="CANCELED">Annulées</option>
+        </select>
+        <select #typeSelect [value]="typeFilter()" (change)="setTypeFilter(typeSelect.value)">
+          <option value="">Tous les types</option>
+          <option value="CONSUMABLE">Consommables</option>
+          <option value="MATERIAL">Matériels</option>
+        </select>
+        <div class="date-filters">
+          <input #onlyDate type="date" [value]="dateFilter()" (change)="setDateFilter(onlyDate.value)" />
+        </div>
+      </div>
+    </div>
+
+    <div class="pager" *ngIf="total() > limit()">
+      <div class="pager-left">
+        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+      </div>
+      <div class="pager-right">
+        <div class="pager-nav">
+          <button class="btn-outline btn-xs" [disabled]="!canPrev()" (click)="prevPage()">Précédent</button>
+          <button class="btn-outline btn-xs" [disabled]="!canNext()" (click)="nextPage()">Suivant</button>
+        </div>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="state">Chargement…</div>
+    } @else if (items().length === 0) {
+      <div class="state">Aucune demande.</div>
+    } @else {
+      <div class="pager">
+        <div class="pager-left">
+          <div class="page-size">
+            <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+            <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+            <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+          </div>
+          <span class="pager-label">Éléments par page</span>
+        </div>
+        <div class="pager-right">
+          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+          <div class="pager-nav">
+            <button class="btn-outline btn-xs" [disabled]="!canPrev()" (click)="prevPage()">Précédent</button>
+            <button class="btn-outline btn-xs" [disabled]="!canNext()" (click)="nextPage()">Suivant</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable" (click)="toggleSort('date')">
+                <span>Date</span>
+                <span class="material-icons notranslate sort-icon">{{ sortIcon('date') }}</span>
+              </th>
+              <th class="sortable" (click)="toggleSort('resource')">
+                <span>Ressource</span>
+                <span class="material-icons notranslate sort-icon">{{ sortIcon('resource') }}</span>
+              </th>
+              <th class="sortable" (click)="toggleSort('type')">
+                <span>Type</span>
+                <span class="material-icons notranslate sort-icon">{{ sortIcon('type') }}</span>
+              </th>
+              <th class="sortable" (click)="toggleSort('quantity')">
+                <span>Quantité</span>
+                <span class="material-icons notranslate sort-icon">{{ sortIcon('quantity') }}</span>
+              </th>
+              <th class="sortable" (click)="toggleSort('status')">
+                <span>Statut</span>
+                <span class="material-icons notranslate sort-icon">{{ sortIcon('status') }}</span>
+              </th>
+              <th>Commentaire</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of sortedItems(); track item._id) {
+              <tr>
+                <td data-label="Date">{{ formattedDate(item.createdAt) }}</td>
+                <td data-label="Ressource">{{ resourceLabel(item) }}</td>
+                <td data-label="Type">{{ item.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
+                <td data-label="Quantité">{{ item.quantity }}</td>
+                <td data-label="Statut"><span class="status-pill" [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
+                <td data-label="Commentaire">
+                  @if (item.status !== 'PENDING') {
+                    <div class="decision">
+                      <div class="decision-note">{{ item.decisionNote || '—' }}</div>
+                      <div class="decision-meta">{{ formattedDate(item.decidedAt) }}</div>
+                    </div>
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="actions" data-label="Actions">
+                  @if (item.status === 'PENDING') {
+                    <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="editRequest(item)">Modifier</button>
+                    <button class="btn-outline btn-xs delete" type="button" title="Supprimer" (click)="openDeleteModal(item)">
+                      @if (deletingId() === item._id) { Suppression… } @else { Supprimer }
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+  </div>
+
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    entityLabel="la demande"
+    [entityName]="pendingDelete()?.resourceName || pendingDelete()?.resource?.name || ''"
+    [entityId]="pendingDelete()?._id || null"
+    [confirming]="deletingId() === pendingDelete()?._id"
+    (cancel)="closeDeleteModal()"
+    (confirm)="confirmDelete()">
+  </app-confirm-delete-modal>
+</section>
+
+<app-technician-mobile-nav></app-technician-mobile-nav>

@@ -21,6 +21,7 @@ import { DepotStats } from '../../../core/models/depotStats.model';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatResourceName } from '../../../core/utils/text-format';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 
 @Component({
   standalone: true,
@@ -216,10 +217,22 @@ export class DepotDetail extends DetailBack{
     return this.manager()?.email ?? '';
   }
 
-  managerAvatar(): string {
+  managerAvatarSrc(): string {
     const m = this.manager();
-    if (!m) return '—';
-    return `${(m.firstName?.[0] ?? '')}${(m.lastName?.[0] ?? '')}`.toUpperCase();
+    if (!m) return '';
+    const cacheKey = (m as { updatedAt?: string; lastLoginAt?: string }).updatedAt
+      || (m as { updatedAt?: string; lastLoginAt?: string }).lastLoginAt
+      || '';
+    return resolveUserAvatarUrl(m as { photoUrl?: string; avatarUrl?: string; preferences?: { avatar?: string | null } }, cacheKey);
+  }
+
+  managerInitials(): string {
+    const m = this.manager();
+    if (!m) return '';
+    const first = m.firstName?.[0] ?? '';
+    const last = m.lastName?.[0] ?? '';
+    const value = `${first}${last}`.toUpperCase();
+    return value || (m.email?.[0] ?? '').toUpperCase();
   }
 
   userName(u: User): string {

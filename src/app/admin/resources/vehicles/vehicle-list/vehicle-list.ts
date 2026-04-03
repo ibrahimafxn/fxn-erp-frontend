@@ -16,6 +16,7 @@ import { formatDepotName, formatPersonName } from '../../../../core/utils/text-f
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 
+type SortKey = 'title' | 'plate' | 'state' | 'assigned' | 'createdAt';
 
 @Component({
   standalone: true,
@@ -62,10 +63,44 @@ export class VehicleList extends DetailBack {
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control(''),
+    assigned: this.fb.nonNullable.control(''),
+    createdFrom: this.fb.nonNullable.control(''),
+    createdTo: this.fb.nonNullable.control(''),
   });
 
   // Derived
   readonly items = computed(() => this.result()?.items ?? []);
+  readonly sortKey = signal<SortKey>('title');
+  readonly sortDir = signal<'asc' | 'desc'>('asc');
+  readonly sortedItems = computed(() => {
+    const key = this.sortKey();
+    const dir = this.sortDir();
+    const items = [...this.items()];
+    const factor = dir === 'asc' ? 1 : -1;
+    const byText = (value: string) => value.toLowerCase();
+    const compareText = (a: string, b: string) => byText(a).localeCompare(byText(b));
+
+    items.sort((a, b) => {
+      switch (key) {
+        case 'plate':
+          return factor * compareText(this.plate(a), this.plate(b));
+        case 'state':
+          return factor * compareText(String(a.state || ''), String(b.state || ''));
+        case 'assigned':
+          return factor * compareText(this.assignedLabel(a), this.assignedLabel(b));
+        case 'createdAt': {
+          const aTime = new Date(this.createdAtValue(a) || 0).getTime();
+          const bTime = new Date(this.createdAtValue(b) || 0).getTime();
+          return factor * (aTime - bTime);
+        }
+        case 'title':
+        default:
+          return factor * compareText(this.title(a), this.title(b));
+      }
+    });
+
+    return items;
+  });
   readonly total = computed(() => this.result()?.total ?? 0);
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -101,12 +136,16 @@ export class VehicleList extends DetailBack {
   }
 
   refresh(force = false): void {
-    const { q, depot } = this.filterForm.getRawValue();
+    const { q, depot, assigned, createdFrom, createdTo } = this.filterForm.getRawValue();
+    const assignedFilter = (assigned === 'assigned' || assigned === 'unassigned') ? assigned : undefined;
 
     this.svc
       .refresh(force, {
         q: q.trim() || undefined,
         depot: depot || undefined,
+        assigned: assignedFilter,
+        createdFrom: createdFrom || undefined,
+        createdTo: createdTo || undefined,
         page: this.page(),
         limit: this.limit(),
       })
@@ -119,7 +158,7 @@ export class VehicleList extends DetailBack {
   }
 
   clearSearch(): void {
-    this.filterForm.setValue({ q: '', depot: '' });
+    this.filterForm.setValue({ q: '', depot: '', assigned: '', createdFrom: '', createdTo: '' });
     this.page.set(1);
     this.refresh(true);
   }
@@ -134,6 +173,20 @@ export class VehicleList extends DetailBack {
     if (!this.canNext()) return;
     this.page.set(this.page() + 1);
     this.refresh(true);
+  }
+
+  setSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+    this.sortKey.set(key);
+    this.sortDir.set('asc');
+  }
+
+  sortIndicator(key: SortKey): string {
+    if (this.sortKey() !== key) return '';
+    return this.sortDir() === 'asc' ? '^' : 'v';
   }
 
   onLimitChange(event: Event): void {
@@ -159,10 +212,14 @@ export class VehicleList extends DetailBack {
   }
 
   exportCsv(): void {
-    const { q, depot } = this.filterForm.getRawValue();
+    const { q, depot, assigned, createdFrom, createdTo } = this.filterForm.getRawValue();
+    const assignedFilter = (assigned === 'assigned' || assigned === 'unassigned') ? assigned : undefined;
     this.svc.exportCsv({
       q: q.trim() || undefined,
-      depot: depot || undefined
+      depot: depot || undefined,
+      assigned: assignedFilter,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `vehicles-${new Date().toISOString().slice(0, 10)}.csv`),
       error: () => {}
@@ -170,10 +227,14 @@ export class VehicleList extends DetailBack {
   }
 
   exportPdf(): void {
-    const { q, depot } = this.filterForm.getRawValue();
+    const { q, depot, assigned, createdFrom, createdTo } = this.filterForm.getRawValue();
+    const assignedFilter = (assigned === 'assigned' || assigned === 'unassigned') ? assigned : undefined;
     this.svc.exportPdf({
       q: q.trim() || undefined,
-      depot: depot || undefined
+      depot: depot || undefined,
+      assigned: assignedFilter,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `vehicles-${new Date().toISOString().slice(0, 10)}.pdf`),
       error: () => {}

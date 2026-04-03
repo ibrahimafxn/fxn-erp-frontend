@@ -5,12 +5,15 @@ import { forkJoin } from 'rxjs';
 import { TechnicianReport, TechnicianReportService } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
+import { BpuSelection } from '../../../core/models';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-technician-revenue',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TechnicianMobileNav],
   providers: [DatePipe],
   templateUrl: './technician-revenue.html',
   styleUrl: './technician-revenue.scss'
@@ -20,6 +23,7 @@ export class TechnicianRevenue {
   private reports = inject(TechnicianReportService);
   private auth = inject(AuthService);
   private datePipe = inject(DatePipe);
+  private bpuSelectionsApi = inject(BpuSelectionService);
 
   readonly summaryLoading = signal(false);
   readonly summaryError = signal<string | null>(null);
@@ -27,6 +31,10 @@ export class TechnicianRevenue {
   readonly weeklyAmount = signal(0);
   readonly monthlyAmount = signal(0);
   readonly todayLabel = computed(() => new Date().toLocaleDateString('fr-FR'));
+  readonly bpuLoading = signal(false);
+  readonly bpuError = signal<string | null>(null);
+  readonly bpuSelections = signal<BpuSelection[]>([]);
+  readonly hasPersonalizedBpu = computed(() => this.bpuSelections().length > 0);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -35,6 +43,9 @@ export class TechnicianRevenue {
   readonly limit = signal(10);
   readonly total = signal(0);
   readonly pageRange = formatPageRange;
+  readonly listTotalAmount = computed(() =>
+    this.items().reduce((sum, item) => sum + Number(item.amount || 0), 0)
+  );
 
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -50,6 +61,7 @@ export class TechnicianRevenue {
   });
 
   constructor() {
+    this.loadBpuInfo();
     this.loadSummary();
     this.refresh(true);
   }
@@ -139,6 +151,22 @@ export class TechnicianRevenue {
       error: () => {
         this.summaryLoading.set(false);
         this.summaryError.set('Erreur chargement résumé CA');
+      }
+    });
+  }
+
+  loadBpuInfo(): void {
+    this.bpuLoading.set(true);
+    this.bpuError.set(null);
+    this.bpuSelectionsApi.list().subscribe({
+      next: (items) => {
+        this.bpuSelections.set(items || []);
+        this.bpuLoading.set(false);
+      },
+      error: () => {
+        this.bpuSelections.set([]);
+        this.bpuLoading.set(false);
+        this.bpuError.set('Erreur chargement BPU');
       }
     });
   }

@@ -54,7 +54,7 @@ export class UserService {
   // -----------------------------
   // Chargement / refresh
   // -----------------------------
-  refreshUsers(force = false, filter?: { q?: string; role?: string; depot?: string; page?: number; limit?: number }  ): Observable<UserListResult> {
+  refreshUsers(force = false, filter?: { q?: string; role?: string; depot?: string; createdFrom?: string; createdTo?: string; page?: number; limit?: number }  ): Observable<UserListResult> {
     if (!force && this._usersRequest$) return this._usersRequest$;
 
     this._loading.set(true);
@@ -64,6 +64,8 @@ export class UserService {
     if (filter?.q) params = params.set('q', filter.q);
     if (filter?.role) params = params.set('role', filter.role);
     if (filter?.depot) params = params.set('depot', filter.depot);
+    if (filter?.createdFrom) params = params.set('createdFrom', filter.createdFrom);
+    if (filter?.createdTo) params = params.set('createdTo', filter.createdTo);
     if (filter?.page) params = params.set('page', String(filter.page));
     if (filter?.limit) params = params.set('limit', String(filter.limit));
 
@@ -181,27 +183,33 @@ export class UserService {
     return this.http.put<{ success: boolean; data: AccessResult }>(`${this.baseUrl}/${userId}/disable-access`, {});
   }
 
-  exportCsv(filter?: { q?: string; role?: string; depot?: string }): Observable<Blob> {
+  exportCsv(filter?: { q?: string; role?: string; depot?: string; createdFrom?: string; createdTo?: string }): Observable<Blob> {
     let params = new HttpParams();
     if (filter?.q) params = params.set('q', filter.q);
     if (filter?.role) params = params.set('role', filter.role);
     if (filter?.depot) params = params.set('depot', filter.depot);
+    if (filter?.createdFrom) params = params.set('createdFrom', filter.createdFrom);
+    if (filter?.createdTo) params = params.set('createdTo', filter.createdTo);
     return this.http.get(`${this.baseUrl}/export/csv`, { params, responseType: 'blob' as const });
   }
 
-  exportPdf(filter?: { q?: string; role?: string; depot?: string }): Observable<Blob> {
+  exportPdf(filter?: { q?: string; role?: string; depot?: string; createdFrom?: string; createdTo?: string }): Observable<Blob> {
     let params = new HttpParams();
     if (filter?.q) params = params.set('q', filter.q);
     if (filter?.role) params = params.set('role', filter.role);
     if (filter?.depot) params = params.set('depot', filter.depot);
+    if (filter?.createdFrom) params = params.set('createdFrom', filter.createdFrom);
+    if (filter?.createdTo) params = params.set('createdTo', filter.createdTo);
     return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' as const });
   }
 
-  exportXlsx(filter?: { q?: string; role?: string; depot?: string }): Observable<Blob> {
+  exportXlsx(filter?: { q?: string; role?: string; depot?: string; createdFrom?: string; createdTo?: string }): Observable<Blob> {
     let params = new HttpParams();
     if (filter?.q) params = params.set('q', filter.q);
     if (filter?.role) params = params.set('role', filter.role);
     if (filter?.depot) params = params.set('depot', filter.depot);
+    if (filter?.createdFrom) params = params.set('createdFrom', filter.createdFrom);
+    if (filter?.createdTo) params = params.set('createdTo', filter.createdTo);
     return this.http.get(`${this.baseUrl}/export/xlsx`, { params, responseType: 'blob' as const });
   }
 

@@ -101,6 +101,7 @@ export class MaterialList extends DetailBack {
     return items;
   });
   readonly total = computed(() => this.result()?.total ?? 0);
+  readonly initialLoading = computed(() => this.loading() && this.items().length === 0 && !this.error());
 
   readonly pageCount = computed(() => {
     const t = this.total();

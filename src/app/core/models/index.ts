@@ -5,6 +5,8 @@ export * from './attribution-history.model';
 export * from './bpu.model';
 export * from './bpu-type.model';
 export * from './bpu-selection.model';
+export * from './charge.model';
+export * from './absence.model';
 
 export * from './consumable.model';
 export * from './consumable-list-result.model';
@@ -24,6 +26,7 @@ export * from './movement-list-result.model';
 export * from './user.model';
 export * from './user-list-result.model';
 export * from './user-lite.model';
+export * from './user-preferences.model';
 
 export * from './vehicle.model';
 export * from './vehicle-list-result.model';
@@ -33,3 +36,5 @@ export * from './roles.model';
 export * from './tool.model';
 export * from './resource-movement.model';
 export * from './hr.model';
+export * from './supply-request.model';
+export * from './prestation.model';

@@ -1,4 +1,15 @@
 <section class="stock-alerts">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header">
     <div>
       <h1>Alertes</h1>
@@ -36,6 +47,27 @@
     </form>
 
   </section>
+
+  @if (!loading() && !error() && total() > 0) {
+    <footer class="pager">
+      <div class="pager-left">
+        <div class="page-size">
+          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+        </div>
+        <span class="pager-label">Éléments par page</span>
+      </div>
+      <div class="pager-right">
+        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+        <div class="pager-nav">
+          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </footer>
+  }
 
   @if (loading()) {
     <div class="state loading card">Chargement…</div>
@@ -224,23 +256,5 @@
       </div>
     }
 
-    <footer class="pager pager-fixed">
-      <div class="pager-left">
-        <div class="page-size">
-          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
-          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
-          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
-          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
-        </div>
-        <span class="pager-label">Éléments par page</span>
-      </div>
-      <div class="pager-right">
-        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-        <div class="pager-nav">
-          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
-          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
-        </div>
-      </div>
-    </footer>
   }
 </section>

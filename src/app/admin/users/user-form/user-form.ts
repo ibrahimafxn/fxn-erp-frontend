@@ -70,7 +70,6 @@ export class UserForm extends DetailBack {
   readonly form = this.fb.nonNullable.group({
     firstName: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
     lastName: this.fb.nonNullable.control('', [Validators.required]),
-    osirisAlias: this.fb.nonNullable.control(''),
     email: this.fb.nonNullable.control('', [Validators.email]),
     phone: this.fb.nonNullable.control(''),
     role: this.fb.nonNullable.control(Role.TECHNICIEN, [Validators.required]),
@@ -180,7 +179,6 @@ export class UserForm extends DetailBack {
         this.form.patchValue({
           firstName: u.firstName || '',
           lastName: u.lastName || '',
-          osirisAlias: u.osirisAlias || '',
           email: u.email || '',
           phone: u.phone || '',
           role: (u.role as Role) || Role.TECHNICIEN,
@@ -257,7 +255,6 @@ export class UserForm extends DetailBack {
     } = {
       firstName: raw.firstName.trim(),
       lastName: raw.lastName.trim() || undefined,
-      osirisAlias: raw.osirisAlias.trim() || undefined,
       email: email ? email.toLowerCase() : undefined,
       phone: raw.phone.trim() || undefined,
       role: raw.role,

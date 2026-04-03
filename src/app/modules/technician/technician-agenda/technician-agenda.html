@@ -1,0 +1,165 @@
+<section class="technician-agenda">
+  <header class="page-header">
+    <div>
+      <h1>Agenda</h1>
+      <p class="subtitle">Formuler une demande d'absence.</p>
+    </div>
+  </header>
+
+  <section class="card form-card">
+    <form class="request-form" [formGroup]="form" (ngSubmit)="submit()">
+      <label>
+        Type
+        <select formControlName="type">
+          <option value="CONGE">Congé</option>
+          <option value="MALADIE">Maladie</option>
+          <option value="PERMISSION">Permission</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </label>
+      <label>
+        Du
+        <input type="date" formControlName="startDate" />
+      </label>
+      <label>
+        Au
+        <input type="date" formControlName="endDate" [disabled]="form.controls.isHalfDay.value" />
+      </label>
+      <label class="inline">
+        <input type="checkbox" formControlName="isHalfDay" />
+        Demi-journée
+      </label>
+      <label>
+        Période
+        <select formControlName="halfDayPeriod">
+          <option value="AM">Matin</option>
+          <option value="PM">Après-midi</option>
+        </select>
+      </label>
+      <label class="full">
+        Commentaire
+        <textarea rows="3" formControlName="comment"></textarea>
+      </label>
+      <div class="actions full">
+        <button class="btn-primary btn-success" type="submit" [disabled]="!canSubmit()">
+          @if (saving()) { Envoi… } @else { @if (isEditing()) { Mettre à jour } @else { Envoyer la demande } }
+        </button>
+        @if (isEditing()) {
+          <button class="btn-outline" type="button" (click)="cancelEdit()">Annuler</button>
+        }
+      </div>
+    </form>
+    @if (success()) {
+      <div class="state success">{{ success() }}</div>
+    }
+    @if (error()) {
+      <div class="state error">{{ error() }}</div>
+    }
+  </section>
+
+  <section class="card list-card">
+    <div class="list-header">
+      <h2>Mes demandes</h2>
+      <div class="meta">{{ absences().length }} demandes</div>
+    </div>
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+      <label>
+        Du
+        <input type="date" formControlName="fromDate" />
+      </label>
+      <label>
+        Au
+        <input type="date" formControlName="toDate" />
+      </label>
+      <label>
+        Type
+        <select formControlName="type">
+          <option value="">Tous</option>
+          <option value="CONGE">Congé</option>
+          <option value="MALADIE">Maladie</option>
+          <option value="PERMISSION">Permission</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </label>
+      <label>
+        Statut
+        <select formControlName="status">
+          <option value="">Tous</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="APPROUVE">Approuvé</option>
+          <option value="REFUSE">Refusé</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button class="btn-outline btn-success-outline" type="submit">Filtrer</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()">Réinitialiser</button>
+      </div>
+    </form>
+
+    @if (loading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (absences().length === 0) {
+      <div class="state empty">Aucune demande.</div>
+    } @else {
+      <div class="table">
+        <table>
+          <thead>
+            <tr>
+              <th>Période</th>
+              <th>Type</th>
+              <th>Statut</th>
+              <th>Commentaire</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of absences(); track a._id || a.startDate) {
+              <tr>
+                <td data-label="Période">{{ formatDate(a.startDate) }} → {{ formatDate(a.endDate) }}</td>
+                <td data-label="Type">{{ a.type }}</td>
+                <td data-label="Statut">
+                  <span class="status-pill" [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span>
+                </td>
+                <td data-label="Commentaire">{{ a.comment || '—' }}</td>
+                <td data-label="Actions" class="actions">
+                  @if (a.status === 'EN_ATTENTE') {
+                    <button class="btn-outline btn-info-outline" type="button" (click)="startEdit(a)">
+                      Modifier
+                    </button>
+                    <button class="btn-outline delete" type="button" title="Supprimer" (click)="deleteAbsence(a)" [disabled]="deletingId() === a._id">
+                      @if (deletingId() === a._id) { Suppression… } @else { Supprimer }
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>
+
+<app-confirm-action-modal
+  [open]="confirmUpdateOpen()"
+  title="Confirmer la mise à jour"
+  description="Souhaitez-vous modifier cette demande d'absence ?"
+  confirmText="Mettre à jour"
+  confirmIcon="fa-solid fa-check"
+  [confirming]="saving()"
+  (cancel)="confirmUpdateOpen.set(false)"
+  (confirm)="confirmUpdate()">
+</app-confirm-action-modal>
+
+<app-confirm-action-modal
+  [open]="confirmDeleteOpen()"
+  title="Confirmer la suppression"
+  description="Souhaitez-vous supprimer cette demande ?"
+  confirmText="Supprimer"
+  confirmIcon="fa-solid fa-trash"
+  [confirming]="deletingId() !== null"
+  (cancel)="confirmDeleteOpen.set(false); confirmDeleteTarget.set(null)"
+  (confirm)="confirmDelete()">
+</app-confirm-action-modal>
+
+<app-technician-mobile-nav></app-technician-mobile-nav>

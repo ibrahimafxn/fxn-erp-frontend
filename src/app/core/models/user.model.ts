@@ -1,4 +1,5 @@
 import { Role } from './roles.model';
+import { UserPreferences } from './user-preferences.model';
 
 export interface User {
   /** Mongo */
@@ -19,6 +20,7 @@ export interface User {
   address?: string;
   avatarUrl?: string;
   photoUrl?: string;
+  preferences?: UserPreferences;
 
   /** Rôle / Affectations */
   role: Role;

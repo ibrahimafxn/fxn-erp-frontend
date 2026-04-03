@@ -1,4 +1,15 @@
 <section class="depot-detail">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <!-- HEADER -->
   <header class="page-header card">
     <div class="header-left">
@@ -18,15 +29,12 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
       <button class="btn-outline" type="button" (click)="load()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
     </div>
   </header>
 
   <!-- STATES -->
-  @if (loading()) {
-    <div class="state loading card">Chargement du dépôt…</div>
-  } @else if (error()) {
+  @if (error()) {
     <div class="state error card">
       <strong>Erreur :</strong> {{ error() }}
     </div>
@@ -60,12 +68,21 @@
           <div class="info-item">
             <label>Gestionnaire: </label>
             <div class="manager-row">
-              <span class="manager">
-                {{ managerLabel() }}
-                @if (managerEmail()) {
-                  <small>· {{ managerEmail() }}</small>
-                }
-              </span>
+              <div class="manager-info">
+                <div class="manager-avatar" [attr.aria-label]="managerLabel()">
+                  @if (managerAvatarSrc()) {
+                    <img [src]="managerAvatarSrc()" [alt]="managerLabel()" loading="lazy" />
+                  } @else {
+                    <span>{{ managerInitials() || '—' }}</span>
+                  }
+                </div>
+                <span class="manager">
+                  {{ managerLabel() }}
+                  @if (managerEmail()) {
+                    <small>· {{ managerEmail() }}</small>
+                  }
+                </span>
+              </div>
 
               <button class="btn-outline btn-xs" type="button" (click)="openManagerEdit()">
                 Changer
@@ -147,7 +164,7 @@
         <div class="divider"></div>
 
         <div class="card-actions">
-          <button class="btn-outline edit" type="button" (click)="edit()" [disabled]="!hasDepot()"><i class="bi bi-pencil"></i> Modifier</button>
+          <button class="btn-outline edit" type="button" title="Modifier" (click)="edit()" [disabled]="!hasDepot()"><i class="bi bi-pencil"></i> Modifier</button>
         </div>
       </article>
 
@@ -215,7 +232,7 @@
                 </div>
 
                 <div class="mini-right" (click)="$event.stopPropagation()">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="editTechnician(t)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="editTechnician(t)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -253,7 +270,7 @@
                 </div>
 
                 <div class="mini-right">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="$event.stopPropagation(); editMaterial(m)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="$event.stopPropagation(); editMaterial(m)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -291,7 +308,7 @@
                 </div>
 
                 <div class="mini-right">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="$event.stopPropagation(); modifierConsumable(c)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="$event.stopPropagation(); modifierConsumable(c)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }
@@ -407,7 +424,7 @@
                 </div>
 
                 <div class="mini-right" (click)="$event.stopPropagation()">
-                  <button class="btn-outline btn-xs edit" type="button" (click)="editVehicle(v)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="editVehicle(v)"><i class="bi bi-pencil"></i> Modifier</button>
                 </div>
               </div>
             }

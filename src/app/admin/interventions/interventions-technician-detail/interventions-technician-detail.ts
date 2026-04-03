@@ -63,7 +63,8 @@ export class InterventionsTechnicianDetail {
       const type = this.normalizeText(item.type);
       const status = this.normalizeText(item.statut);
       const isClosed = status.includes('CLOTURE') && status.includes('TERMINEE');
-      const isReconnexion = type.includes('RECO') || this.hasReconnexionInArticles(item.articlesRaw);
+      const isSfrB2b = this.isSfrB2bMarque(item.marque);
+      const isReconnexion = !isSfrB2b && (type.includes('RECO') || this.hasReconnexionInArticles(item.articlesRaw));
       const isB2b = categories.includes('racProS')
         || categories.includes('racProC')
         || this.hasB2bInArticles(item.articlesRaw);
@@ -72,14 +73,14 @@ export class InterventionsTechnicianDetail {
       if (successMatches.length) {
         if (successMatches.includes('RACPAV')) key = 'racPavillon';
         else if (successMatches.includes('RACIH')) key = 'racImmeuble';
-        else if (successMatches.includes('RECOIP')) key = 'reconnexion';
+        else if (successMatches.includes('RECOIP') && !isSfrB2b) key = 'reconnexion';
         else if (successMatches.includes('SAV')) key = 'sav';
         else if (successMatches.includes('RACPRO_S') || successMatches.includes('RACPRO_C')) key = 'b2b';
       } else {
         if (isClosed && isReconnexion) key = 'reconnexion';
         else if (categories.includes('racPavillon')) key = 'racPavillon';
         else if (categories.includes('racImmeuble')) key = 'racImmeuble';
-        else if (categories.includes('reconnexion')) key = 'reconnexion';
+        else if (categories.includes('reconnexion') && !isSfrB2b) key = 'reconnexion';
         else if (categories.includes('sav')) key = 'sav';
         else if (isB2b) key = 'b2b';
         else {
@@ -212,6 +213,13 @@ export class InterventionsTechnicianDetail {
       .trim();
   }
 
+  private isSfrB2bMarque(value?: string | null): boolean {
+    const normalized = this.normalizeText(value);
+    if (!normalized) return false;
+    if (normalized.includes('SFR B2B')) return true;
+    return normalized.replace(/\s+/g, '').includes('SFRB2B');
+  }
+
   private hasReconnexionInArticles(raw?: string | null): boolean {
     const normalized = this.normalizeText(raw);
     if (!normalized) return false;
@@ -234,16 +242,23 @@ export class InterventionsTechnicianDetail {
     const operationNormalized = this.normalizeText(item.typeOperation);
     const commentsNormalized = this.normalizeText(item.commentairesTechnicien);
     const prestationsNormalized = this.normalizeText(item.listePrestationsRaw);
+    const isSfrB2b = this.isSfrB2bMarque(item.marque);
     const matches: string[] = [];
 
     if (isRacpavSuccess(item.statut, item.articlesRaw)) matches.push('RACPAV');
     if (isRacihSuccess(item.statut, item.articlesRaw)) matches.push('RACIH');
     if (
-      articlesNormalized.includes('RECOIP')
-      || operationNormalized.includes('RECONNEX')
-      || typeNormalized.includes('RECO')
+      !isSfrB2b
+      && (
+        articlesNormalized.includes('RECOIP')
+        || operationNormalized.includes('RECONNEX')
+        || typeNormalized.includes('RECO')
+      )
     ) {
       matches.push('RECOIP');
+    }
+    if (isSfrB2b) {
+      matches.push('RACPRO_S');
     }
     if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
       matches.push('RACPRO_S');

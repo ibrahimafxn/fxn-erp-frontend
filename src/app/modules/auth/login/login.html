@@ -81,13 +81,6 @@
             </div>
           }
 
-          <div class="remember-device" [class.is-hidden]="!showRememberDevice()">
-            <label>
-              <input type="checkbox" formControlName="rememberDevice" />
-              <span i18n="@@login.rememberDevice">Se souvenir de cet appareil (30 jours)</span>
-            </label>
-          </div>
-
           <button type="submit" [disabled]="loading()">
             @if (loading()){
               <span i18n="@@login.loading">Connexion...</span>

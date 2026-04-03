@@ -1,0 +1,316 @@
+<section class="agenda-page">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
+  <header class="page-header">
+    <div>
+      <h1>Agenda des techniciens</h1>
+      <p class="subtitle">Congés et absences sur une vue claire et filtrable.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" type="button" (click)="openModal()">
+        <i class="bi bi-plus-lg"></i>
+        Nouvelle absence
+      </button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+      <label>
+        Technicien
+        <select formControlName="technicianId">
+          <option value="">Tous</option>
+          @for (u of users(); track u.user._id) {
+            <option [value]="u.user._id">{{ technicianLabel(u.user._id) }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Dépôt
+        <select formControlName="depotId">
+          <option value="">Tous</option>
+          @for (d of depots(); track d._id) {
+            <option [value]="d._id">{{ depotLabel(d) }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Statut
+        <select formControlName="status">
+          <option value="">Tous</option>
+          <option value="EN_ATTENTE">En attente</option>
+          <option value="APPROUVE">Approuvé</option>
+          <option value="REFUSE">Refusé</option>
+        </select>
+      </label>
+      <label>
+        Type
+        <select formControlName="type">
+          <option value="">Tous</option>
+          <option value="CONGE">Congé</option>
+          <option value="MALADIE">Maladie</option>
+          <option value="PERMISSION">Permission</option>
+          <option value="FORMATION">Formation</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </label>
+      <label>
+        Du
+        <input type="date" formControlName="fromDate" />
+      </label>
+      <label>
+        Au
+        <input type="date" formControlName="toDate" />
+      </label>
+
+      <div class="actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Filtrer</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="calendar card">
+    <div class="calendar-header">
+      <div class="calendar-nav">
+        <button class="btn-icon" type="button" (click)="goPrev()"><i class="bi bi-chevron-left"></i></button>
+        <div class="range">{{ rangeLabel() }}</div>
+        <button class="btn-icon" type="button" (click)="goNext()"><i class="bi bi-chevron-right"></i></button>
+      </div>
+      <div class="calendar-actions">
+        <div class="view-switch">
+          <button type="button" [class.active]="viewMode() === 'month'" (click)="setView('month')">Mois</button>
+          <button type="button" [class.active]="viewMode() === 'week'" (click)="setView('week')">Semaine</button>
+          <button type="button" [class.active]="viewMode() === 'day'" (click)="setView('day')">Jour</button>
+        </div>
+        <button class="btn-outline list-btn" type="button" (click)="toggleList()">Liste</button>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (error()) {
+      <div class="state error">{{ error() }}</div>
+    } @else {
+      @if (viewMode() === 'month') {
+        <div class="month-grid">
+          @for (day of weekDays; track day) {
+            <div class="week-day">{{ day }}</div>
+          }
+          @for (date of monthDays(); track date.toISOString()) {
+            <div
+              class="day-cell"
+              [class.outside]="isOutsideMonth(date)"
+              [class.today]="isToday(date) && !isInFilterRange(date)"
+              [class.in-range]="isInFilterRange(date)"
+              [class.range-start]="isFilterRangeStart(date)"
+              [class.range-end]="isFilterRangeEnd(date)"
+            >
+              <div class="day-header">
+                <span>{{ date.getDate() }}</span>
+              </div>
+              @if (!isOutsideMonth(date) && (!hasFilterRange() || isInFilterRange(date))) {
+                <div class="day-events">
+                  @for (absence of absencesForDay(date); track absence._id || absence.startDate + absence.technicianId) {
+                    <div class="event-pill" [class]="statusClass(absence.status)" (click)="selectAbsence(absence)">
+                      <span class="event-type">{{ typeLabel(absence.type) }}</span>
+                      <span class="event-tech">{{ absenceTechnicianLabel(absence) }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  </section>
+
+  @if (showList()) {
+    <div class="modal-backdrop" (click)="toggleList()"></div>
+    <div class="modal list-modal">
+      <header>
+        <h2>Liste des absences</h2>
+        <button class="btn-icon" type="button" (click)="toggleList()"><i class="bi bi-x-lg"></i></button>
+      </header>
+      <div class="list-view">
+        @for (absence of visibleAbsences(); track absence._id || absence.startDate + absence.technicianId) {
+          <div class="list-item" [class.active]="selectedAbsence()?._id === absence._id" (click)="selectAbsence(absence)">
+            <div>
+              <div class="item-title">{{ technicianLabel(absence.technicianId) }}</div>
+              <div class="item-sub">{{ typeLabel(absence.type) }} · {{ statusLabel(absence.status) }}</div>
+            </div>
+            <div class="item-dates">
+              <span>{{ absence.startDate | date:'shortDate' }}</span>
+              <span>→</span>
+              <span>{{ absence.endDate | date:'shortDate' }}</span>
+            </div>
+            <div class="item-meta">{{ depotLabel(absence.depot) }}</div>
+            <div class="item-actions">
+              @if (absence.status === 'EN_ATTENTE' && canDecideAbsence()) {
+                <button class="btn-success" type="button" (click)="$event.stopPropagation(); approveAbsence(absence)" [disabled]="updating()">
+                  Approuver
+                </button>
+                <button class="btn-danger" type="button" (click)="$event.stopPropagation(); refuseAbsence(absence)" [disabled]="updating()">
+                  Refuser
+                </button>
+              } @else {
+                <span class="status-pill" [class]="statusClass(absence.status)">{{ statusLabel(absence.status) }}</span>
+              }
+              <button class="btn-outline" type="button" (click)="$event.stopPropagation(); openHistory(absence)">Historique</button>
+            </div>
+          </div>
+        }
+        @if (!visibleAbsences().length) {
+          <div class="state empty">Aucune absence sur la période.</div>
+        }
+      </div>
+    </div>
+  }
+
+  @if (modalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()"></div>
+    <div class="modal">
+      <header>
+        <h2>@if (editTarget()) { Modifier absence } @else { Nouvelle absence }</h2>
+        <button class="btn-icon" type="button" (click)="closeModal()"><i class="bi bi-x-lg"></i></button>
+      </header>
+      <form [formGroup]="absenceForm">
+        <div class="form-grid">
+          <label>
+            Technicien
+            <select formControlName="technicianId">
+              <option value="">Sélectionner</option>
+              @for (u of users(); track u.user._id) {
+                <option [value]="u.user._id">{{ technicianLabel(u.user._id) }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Type
+            <select formControlName="type">
+              <option value="CONGE">Congé</option>
+              <option value="MALADIE">Maladie</option>
+              <option value="PERMISSION">Permission</option>
+              <option value="FORMATION">Formation</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          </label>
+          <label>
+            Statut
+            <select formControlName="status">
+              <option value="EN_ATTENTE">En attente</option>
+              <option value="APPROUVE">Approuvé</option>
+              <option value="REFUSE">Refusé</option>
+            </select>
+          </label>
+          <label>
+            Début
+            <input type="date" formControlName="startDate" />
+          </label>
+          <label>
+            Fin
+            <input type="date" formControlName="endDate" />
+          </label>
+          <label class="inline">
+            <input type="checkbox" formControlName="isHalfDay" />
+            Demi-journée
+          </label>
+          <label>
+            Période
+            <select formControlName="halfDayPeriod">
+              <option value="AM">Matin</option>
+              <option value="PM">Après-midi</option>
+            </select>
+          </label>
+          <label class="full">
+            Commentaire
+            <textarea formControlName="comment" rows="3"></textarea>
+          </label>
+        </div>
+      </form>
+      <footer>
+        <button class="btn-outline" type="button" (click)="closeModal()">Annuler</button>
+        <button class="btn-primary" type="button" (click)="saveAbsence()" [disabled]="saving()">
+          @if (saving()) { Enregistrement… } @else { Enregistrer }
+        </button>
+      </footer>
+    </div>
+  }
+
+  @if (historyOpen()) {
+    <div class="modal-backdrop" (click)="closeHistory()"></div>
+    <div class="modal timeline">
+      <header>
+        <div>
+          <h2>Historique</h2>
+          <p class="subtitle">{{ technicianLabel(historyTarget()?.technicianId || '') }}</p>
+        </div>
+        <button class="btn-icon" type="button" (click)="closeHistory()"><i class="bi bi-x-lg"></i></button>
+      </header>
+      <div class="timeline-body">
+        @if (historyLoading()) {
+          <div class="state loading">Chargement…</div>
+        } @else if (!historyItems().length) {
+          <div class="state empty">Aucun historique.</div>
+        } @else {
+          <div class="timeline-list">
+            @for (item of historyItems(); track item._id || item.createdAt) {
+              <div class="timeline-item">
+                <div class="dot"></div>
+                <div class="content">
+                  <div class="line-title">
+                    <span class="action">{{ historyActionLabel(item) }}</span>
+                    <span class="time">{{ item.createdAt | date:'short' }}</span>
+                  </div>
+                  <div class="line-sub">{{ historyActor(item) }}</div>
+                  @if (historyPayloadLabel(item)) {
+                    <div class="line-note">{{ historyPayloadLabel(item) }}</div>
+                  }
+                  @if (historyDetails(item).length) {
+                    <ul class="detail-list">
+                      @for (line of historyDetails(item); track line) {
+                        <li>{{ line }}</li>
+                      }
+                    </ul>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <app-confirm-action-modal
+    [open]="confirmOpen()"
+    [title]="confirmStatus() === 'APPROUVE' ? 'Approuver absence' : 'Refuser absence'"
+    [message]="confirmStatus() === 'APPROUVE' ? 'Confirmer l’approbation de cette absence ?' : 'Confirmer le refus de cette absence ?'"
+    [confirmText]="confirmStatus() === 'APPROUVE' ? 'Approuver' : 'Refuser'"
+    [tone]="confirmStatus() === 'APPROUVE' ? 'success' : 'danger'"
+    [confirming]="updating()"
+    (cancel)="closeConfirm()"
+    (confirm)="confirmUpdateStatus()"
+  />
+
+  <app-confirm-action-modal
+    [open]="saveConfirmOpen()"
+    [title]="editTarget() ? 'Modifier absence' : 'Nouvelle absence'"
+    [message]="editTarget() ? 'Confirmer la mise à jour de cette absence ?' : 'Confirmer la création de cette absence ?'"
+    [confirmText]="editTarget() ? 'Modifier' : 'Créer'"
+    [tone]="'primary'"
+    [confirming]="saving()"
+    (cancel)="closeSaveConfirm()"
+    (confirm)="confirmSaveAbsence()"
+  />
+</section>

@@ -62,6 +62,12 @@ input, select, textarea {
   color: inherit;
 }
 
+body.theme-default input,
+body.theme-default select,
+body.theme-default textarea {
+  background: #f9fafb !important;
+}
+
 input:focus, select:focus, textarea:focus, button:focus {
   outline: none;
   box-shadow: var(--fxn-ring);

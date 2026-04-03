@@ -84,4 +84,18 @@ export class TechnicianReportService {
       { params: httpParams }
     );
   }
+
+  summaryByMonth(params?: { year?: number; technicianId?: string; depotId?: string }): Observable<{
+    success: boolean;
+    data: { year: number; months: { month: string; totalAmount: number }[] };
+  }> {
+    let httpParams = new HttpParams();
+    if (params?.year) httpParams = httpParams.set('year', String(params.year));
+    if (params?.technicianId) httpParams = httpParams.set('technician', params.technicianId);
+    if (params?.depotId) httpParams = httpParams.set('depot', params.depotId);
+    return this.http.get<{ success: boolean; data: { year: number; months: { month: string; totalAmount: number }[] } }>(
+      `${this.baseUrl}/summary-by-month`,
+      { params: httpParams }
+    );
+  }
 }

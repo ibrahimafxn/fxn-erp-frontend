@@ -5,12 +5,13 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { InterventionItem, InterventionService } from '../../../core/services/intervention.service';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-technician-interventions-history',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TechnicianMobileNav],
   templateUrl: './technician-interventions-history.html',
   styleUrls: ['./technician-interventions-history.scss']
 })
@@ -25,7 +26,7 @@ export class TechnicianInterventionsHistory {
   readonly limit = signal(20);
   readonly total = signal(0);
   readonly pageRange = formatPageRange;
-  readonly sortField = signal<'date' | 'numInter' | 'client' | 'type' | 'statut'>('date');
+  readonly sortField = signal<'date' | 'numInter' | 'client' | 'type' | 'typeOperation' | 'typeLogement' | 'statut'>('date');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
 
   readonly filterForm = this.fb.nonNullable.group({
@@ -135,7 +136,7 @@ export class TechnicianInterventionsHistory {
     return new DatePipe('fr-FR').transform(value, 'shortDate') ?? '—';
   }
 
-  setSort(field: 'date' | 'numInter' | 'client' | 'type' | 'statut'): void {
+  setSort(field: 'date' | 'numInter' | 'client' | 'type' | 'typeOperation' | 'typeLogement' | 'statut'): void {
     if (this.sortField() === field) {
       this.sortDirection.update((dir) => (dir === 'asc' ? 'desc' : 'asc'));
       return;
@@ -144,7 +145,7 @@ export class TechnicianInterventionsHistory {
     this.sortDirection.set(field === 'date' ? 'desc' : 'asc');
   }
 
-  sortArrow(field: 'date' | 'numInter' | 'client' | 'type' | 'statut'): string {
+  sortArrow(field: 'date' | 'numInter' | 'client' | 'type' | 'typeOperation' | 'typeLogement' | 'statut'): string {
     if (this.sortField() !== field) return '';
     return this.sortDirection() === 'asc' ? '▲' : '▼';
   }
@@ -152,7 +153,7 @@ export class TechnicianInterventionsHistory {
   private sortItems(
     a: InterventionItem,
     b: InterventionItem,
-    field: 'date' | 'numInter' | 'client' | 'type' | 'statut',
+    field: 'date' | 'numInter' | 'client' | 'type' | 'typeOperation' | 'typeLogement' | 'statut',
     dir: number
   ): number {
     if (field === 'date') {
@@ -164,12 +165,16 @@ export class TechnicianInterventionsHistory {
       field === 'numInter' ? a.numInter :
       field === 'client' ? a.client :
       field === 'type' ? a.type :
+      field === 'typeOperation' ? a.typeOperation :
+      field === 'typeLogement' ? a.typeLogement :
       a.statut
     );
     const bVal = this.normalizeText(
       field === 'numInter' ? b.numInter :
       field === 'client' ? b.client :
       field === 'type' ? b.type :
+      field === 'typeOperation' ? b.typeOperation :
+      field === 'typeLogement' ? b.typeLogement :
       b.statut
     );
     return aVal.localeCompare(bVal, 'fr', { sensitivity: 'base' }) * dir;

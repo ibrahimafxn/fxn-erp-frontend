@@ -1,10 +1,9 @@
 // src/app/app.config.ts
 import {Routes} from '@angular/router';
-import {HTTP_INTERCEPTORS} from '@angular/common/http';
 
 import {AuthGuard} from './core/guards/auth.guard';
 import {RoleGuard} from './core/guards/role.guard';
-import {AuthInterceptor} from './core/interceptors/auth.interceptor';
+import {authInterceptor} from './core/interceptors/auth.interceptor';
 import {DEPOT_ROUTES} from './modules/depot/depot.routes';
 import {ADMIN_ROUTES} from './admin/admin.routes';
 import {TECHNICIAN_ROUTES} from './modules/technician/technician.routes';
@@ -25,6 +24,12 @@ export const AppConfig = {
       path: 'login',
       loadComponent: () =>
         import('./modules/auth/login/login').then(m => m.Login)
+    },
+    {
+      path: '',
+      pathMatch: 'full',
+      loadComponent: () =>
+        import('./modules/shared/landing/landing').then(m => m.Landing)
     },
 
     // --- Espace dépôt (gestion stock / techniciens) ---
@@ -73,9 +78,15 @@ export const AppConfig = {
       loadComponent: () =>
         import('./modules/auth/profile/profile').then(m => m.Profile)
     },
+    {
+      path: 'preferences',
+      canActivate: [AuthGuard],
+      loadComponent: () =>
+        import('./modules/preferences/preferences').then(m => m.Preferences)
+    },
 
     {
-      path: '',
+      path: 'app',
       canActivate: [AuthGuard],
       loadComponent: () =>
         import('./core/components/role-redirect/role-redirect').then(m => m.RoleRedirect)
@@ -89,7 +100,5 @@ export const AppConfig = {
     }
   ],
 
-  providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
-  ]
+  interceptors: [authInterceptor]
 };

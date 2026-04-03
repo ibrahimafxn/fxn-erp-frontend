@@ -2,29 +2,97 @@
   <header class="page-header">
     <div>
       <h1>BPU prestations</h1>
-      <p class="subtitle">Bordereau des prix unitaires (global).</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="goBack()">
-        <i class="bi bi-arrow-left"></i>
-        Retour
-      </button>
+      <p class="subtitle">
+        @if (isTechnician()) {
+          Bordereau des prix unitaires (personnel).
+        } @else {
+          @if (selectedTechnicianLabel()) {
+            Bordereau des prix unitaires (BPU de suivi pour {{ selectedTechnicianLabel() }}).
+          } @else {
+            Bordereau des prix unitaires (global).
+          }
+        }
+      </p>
     </div>
   </header>
 
   <section class="toolbar card">
-    <label>
-      Type BPU
-      <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
-        <option value="AUTO">AUTO-ENTREPRENEUR</option>
-        <option value="SALARIE">SALARIE</option>
-                <option value="ASSOCIE">AUTRE</option>
-      </select>
-    </label>
+    @if (isTechnician()) {
+      <div class="toolbar-label">BPU de suivi</div>
+    } @else {
+      @if (isPersonalized()) {
+        <div class="toolbar-badge">
+          BPU de suivi
+          <span class="mono">{{ selectedTechnicianLabel() }}</span>
+        </div>
+      }
+      <label>
+        Type BPU
+        <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
+          <option value="AUTO">AUTO-ENTREPRENEUR</option>
+          <option value="SALARIE">SALARIE</option>
+          <option value="AUTRE">AUTRE</option>
+        </select>
+      </label>
+      <label>
+        Technicien
+        <select
+          [value]="selectedTechnicianId() || ''"
+          (change)="onTechnicianChange($event)"
+          [disabled]="loading() || saving() || techniciansLoading()"
+        >
+          <option value="">Global (par défaut)</option>
+          @for (tech of technicians(); track tech._id) {
+            <option [value]="tech._id">
+              {{ tech.firstName }} {{ tech.lastName }}
+            </option>
+          }
+        </select>
+        @if (techniciansError()) {
+          <span class="toolbar-help error">{{ techniciansError() }}</span>
+        }
+      </label>
+      <div class="personalized-box">
+        <div class="personalized-title">Techniciens avec BPU de suivi actif</div>
+        @if (techniciansLoading()) {
+          <div class="personalized-empty">Chargement…</div>
+        } @else if (activePersonalizedTechnicians().length === 0) {
+          <div class="personalized-empty">Aucun technicien actif.</div>
+        } @else {
+          <div class="personalized-list">
+            @for (tech of activePersonalizedTechnicians(); track tech._id) {
+              <div class="personalized-item">
+                <button class="personalized-chip" type="button" (click)="editPersonalized(tech._id)">
+                  {{ tech.firstName }} {{ tech.lastName }}
+                </button>
+                <button class="btn-icon subtle" type="button" title="Modifier" (click)="editPersonalized(tech._id)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn-icon subtle danger" type="button" title="Supprimer" (click)="requestDeletePersonalized(tech._id)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <button
+        class="btn-outline toolbar-copy"
+        type="button"
+        (click)="copyFromGlobal()"
+        [disabled]="loading() || saving() || !selectedTechnicianId()"
+      >
+        Copier depuis le global
+      </button>
+    }
   </section>
 
   @if (success()) {
     <div class="state ok card">{{ success() }}</div>
+  }
+
+  @if (warning()) {
+    <div class="state warning card"><strong>Attention :</strong> {{ warning() }}</div>
   }
 
   @if (loading()) {
@@ -38,19 +106,21 @@
       <table>
         <thead>
         <tr>
-          <th class="select-col select-all">
-            <label class="select-all-label">
-              <input
-                class="select-box"
-                type="checkbox"
-                [checked]="allSelected()"
-                [disabled]="loading() || saving()"
-                (change)="toggleSelectAll()"
-                aria-label="Tout sélectionner"
-              />
-              <span>Tout</span>
-            </label>
-          </th>
+          @if (!isTechnician()) {
+            <th class="select-col select-all">
+              <label class="select-all-label">
+                <input
+                  class="select-box"
+                  type="checkbox"
+                  [checked]="allSelected()"
+                  [disabled]="loading() || saving()"
+                  (change)="toggleSelectAll()"
+                  aria-label="Tout sélectionner"
+                />
+                <span>Tout</span>
+              </label>
+            </th>
+          }
           <th>
             <button class="sort-btn" type="button" (click)="toggleSortPrestation()">
               Prestation <span class="sort-indicator">{{ sortIndicator() }}</span>
@@ -63,31 +133,44 @@
         <tbody>
           @for (item of sortedItems(); track item._id || item.code) {
             <tr>
-              <td data-label="Sélection" class="select-col">
-                <input
-                  class="select-box"
-                  type="checkbox"
-                  [checked]="isSelected(item)"
-                  [disabled]="loading() || saving()"
-                  (change)="toggleSelection(item)"
-                />
-              </td>
+              @if (!isTechnician()) {
+                <td data-label="Sélection" class="select-col">
+                  <input
+                    class="select-box"
+                    type="checkbox"
+                    [checked]="isSelected(item)"
+                    [disabled]="loading() || saving()"
+                    (change)="toggleSelection(item)"
+                  />
+                </td>
+              }
               <td data-label="Prestation">
                 {{ item.prestation || '—' }}
               </td>
               <td data-label="Code" class="mono">
-                <span
-                  [class.pill-blue]="isBluePill(item.code)"
-                  [class.pill-orange]="isOrangePill(item.code)"
-                  [class.pill-green]="isGreenPill(item.code)"
-                  [class.pill-yellow]="isYellowPill(item.code)"
-                  [class.pill-aqua]="isAquaPill(item.code)"
-                  [class.pill-turquoise]="isTurquoisePill(item.code)"
-                  [class.pill-violet]="isVioletPill(item.code)"
-                  [class.text-red]="isRedText(item.code)"
-                >
-                  {{ item.code || '—' }}
-                </span>
+                @if (isTechnician()) {
+                  <span
+                    [class.pill-blue]="isBluePill(item.code)"
+                    [class.pill-orange]="isOrangePill(item.code)"
+                    [class.pill-green]="isGreenPill(item.code)"
+                    [class.pill-yellow]="isYellowPill(item.code)"
+                    [class.pill-aqua]="isAquaPill(item.code)"
+                    [class.pill-turquoise]="isTurquoisePill(item.code)"
+                    [class.pill-violet]="isVioletPill(item.code)"
+                    [class.text-red]="isRedText(item.code)"
+                  >
+                    {{ item.code || '—' }}
+                  </span>
+                } @else {
+                  <input
+                    class="code-input"
+                    type="text"
+                    [value]="codeValue(item)"
+                    [disabled]="loading() || saving() || isCodeSaving(item)"
+                    (input)="onCodeInput(item, $event)"
+                    (blur)="commitCode(item)"
+                  />
+                }
               </td>
               <td data-label="Prix unitaire">
                 <input
@@ -95,8 +178,47 @@
                   min="0"
                   step="1"
                   [value]="priceValue(item)"
-                  [disabled]="loading() || saving()"
+                  [disabled]="loading() || saving() || isTechnician()"
                   (input)="onPriceChange(item, $event)"
+                />
+              </td>
+            </tr>
+          }
+          @if (!isTechnician()) {
+            <tr class="new-row">
+              <td data-label="Sélection" class="select-col">
+                <span class="new-label">Nouveau</span>
+              </td>
+              <td data-label="Prestation">
+                <input
+                  type="text"
+                  placeholder="Nouvelle prestation"
+                  [value]="newPrestation().prestation"
+                  [disabled]="adding() || loading() || saving()"
+                  (input)="onNewPrestationChange('prestation', $event)"
+                  (keydown)="onNewPrestationKeydown($event)"
+                />
+              </td>
+              <td data-label="Code" class="mono">
+                <input
+                  class="code-input"
+                  type="text"
+                  placeholder="CODE"
+                  [value]="newPrestation().code"
+                  [disabled]="adding() || loading() || saving()"
+                  (input)="onNewPrestationChange('code', $event)"
+                  (keydown)="onNewPrestationKeydown($event)"
+                />
+              </td>
+              <td data-label="Prix unitaire">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  [value]="newPrestation().unitPrice"
+                  [disabled]="adding() || loading() || saving()"
+                  (input)="onNewPrestationChange('unitPrice', $event)"
+                  (keydown)="onNewPrestationKeydown($event)"
                 />
               </td>
             </tr>
@@ -105,14 +227,34 @@
       </table>
     </div>
     <footer class="actions-footer">
-      <button class="btn-primary" type="button" (click)="saveSelection()" [disabled]="saving() || loading() || !hasSelection()">
-        <i class="bi bi-check"></i>
-        @if (saving()) {
-          Enregistrement…
-        } @else {
-          @if (isEditing()) { Modifier BPU } @else { Enregistrer BPU }
-        }
-      </button>
+      @if (!isTechnician()) {
+        <button class="btn-outline" type="button" (click)="addPrestation()" [disabled]="adding() || loading() || saving() || !canAddPrestation()">
+          <i class="bi bi-plus"></i>
+          @if (adding()) { Ajout… } @else { Ajouter la prestation }
+        </button>
+      }
+      @if (!isTechnician()) {
+        <button class="btn-primary" type="button" (click)="saveSelection()" [disabled]="saving() || loading() || !hasSelection()">
+          <i class="bi bi-check"></i>
+          @if (saving()) {
+            Enregistrement…
+          } @else {
+            @if (isEditing()) { Modifier BPU } @else { Enregistrer BPU }
+          }
+        </button>
+      }
     </footer>
   }
 </section>
+
+<app-confirm-action-modal
+  [open]="confirmOpen()"
+  [title]="confirmTitle()"
+  [message]="confirmSubtitle()"
+  [confirmText]="confirmButtonLabel()"
+  [cancelText]="'Annuler'"
+  [confirming]="confirmBusy()"
+  [tone]="confirmTone()"
+  (cancel)="closeConfirm()"
+  (confirm)="confirmSave()">
+</app-confirm-action-modal>

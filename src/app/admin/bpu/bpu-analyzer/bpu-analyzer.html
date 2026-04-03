@@ -1,0 +1,356 @@
+<section class="analyzer-page">
+
+  <!-- En-tête -->
+  <header class="page-header">
+    <div>
+      <h1>Analyse articles OSIRIS</h1>
+      <p class="subtitle">Comparez les codes articles de vos exports OSIRIS avec le référentiel BPU admin.</p>
+    </div>
+  </header>
+
+  <!-- Zone upload -->
+  <div class="card upload-card">
+    <div class="upload-zone">
+      <label class="upload-label" for="csv-input">
+        <i class="bi bi-file-earmark-text upload-icon"></i>
+        <span class="upload-hint">
+          @if (selectedFile()) {
+            <strong>{{ formatFileName() }}</strong>
+          } @else {
+            Sélectionnez un export CSV OSIRIS
+          }
+        </span>
+        <input
+          id="csv-input"
+          type="file"
+          accept=".csv"
+          (change)="onFileChange($event)"
+          style="display:none"
+        />
+      </label>
+
+      <button
+        class="btn-primary"
+        type="button"
+        [disabled]="!selectedFile() || loading()"
+        (click)="analyze()"
+      >
+        @if (loading()) {
+          <i class="bi bi-hourglass-split"></i>
+          Analyse en cours…
+        } @else {
+          <i class="bi bi-search"></i>
+          Analyser
+        }
+      </button>
+    </div>
+
+    @if (error()) {
+      <p class="alert-error">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        {{ error() }}
+      </p>
+    }
+  </div>
+
+  <!-- Résultats -->
+  @if (report(); as r) {
+
+    <!-- Stats globales -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value">{{ r.stats.linesWithArticles }}</span>
+        <span class="stat-label">Lignes avec articles</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value">{{ r.stats.totalArticleOccurrences }}</span>
+        <span class="stat-label">Occurrences totales</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" [class]="matchRateClass(r.stats.matchRate)">
+          {{ r.stats.matchRate }}%
+        </span>
+        <span class="stat-label">Taux de correspondance</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value text-warning">{{ r.stats.uniqueUnknownCodes }}</span>
+        <span class="stat-label">Codes inconnus uniques</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value text-muted">{{ r.notSeenInCsv.length }}</span>
+        <span class="stat-label">Codes admin non vus</span>
+      </div>
+    </div>
+
+    <!-- Onglets -->
+    <nav class="tab-nav card">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'stats'"
+        (click)="setTab('stats')"
+      >Résumé</button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'matched'"
+        (click)="setTab('matched')"
+      >
+        Codes reconnus
+        <span class="tab-badge badge-green">{{ matchedCodesArray().length }}</span>
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'unknown'"
+        (click)="setTab('unknown')"
+      >
+        Codes inconnus
+        @if (unknownCodesArray().length) {
+          <span class="tab-badge badge-red">{{ unknownCodesArray().length }}</span>
+        }
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'notseen'"
+        (click)="setTab('notseen')"
+      >
+        Non vus dans CSV
+        @if (r.notSeenInCsv.length) {
+          <span class="tab-badge badge-orange">{{ r.notSeenInCsv.length }}</span>
+        }
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'lines'"
+        (click)="setTab('lines')"
+      >
+        Lignes problématiques
+        @if (linesWithUnknown().length) {
+          <span class="tab-badge badge-red">{{ linesWithUnknown().length }}</span>
+        }
+      </button>
+    </nav>
+
+    <!-- Onglet : Résumé -->
+    @if (activeTab() === 'stats') {
+      <div class="card tab-panel">
+        <h2 class="panel-title">Résumé de l'analyse</h2>
+        <table class="data-table">
+          <tbody>
+            <tr>
+              <td>Lignes totales dans le CSV</td>
+              <td class="mono">{{ r.stats.totalLines }}</td>
+            </tr>
+            <tr>
+              <td>Lignes contenant des articles</td>
+              <td class="mono">{{ r.stats.linesWithArticles }}</td>
+            </tr>
+            <tr>
+              <td>Occurrences d'articles (toutes lignes)</td>
+              <td class="mono">{{ r.stats.totalArticleOccurrences }}</td>
+            </tr>
+            <tr>
+              <td>Occurrences reconnues</td>
+              <td class="mono text-success">{{ r.stats.matchedOccurrences }}</td>
+            </tr>
+            <tr>
+              <td>Occurrences inconnues</td>
+              <td class="mono text-warning">{{ r.stats.unknownOccurrences }}</td>
+            </tr>
+            <tr>
+              <td>Taux de correspondance</td>
+              <td class="mono" [class]="matchRateClass(r.stats.matchRate)">
+                {{ r.stats.matchRate }}%
+              </td>
+            </tr>
+            <tr>
+              <td>Codes BPU reconnus (uniques)</td>
+              <td class="mono">{{ r.stats.uniqueMatchedCodes }}</td>
+            </tr>
+            <tr>
+              <td>Codes inconnus (uniques)</td>
+              <td class="mono text-warning">{{ r.stats.uniqueUnknownCodes }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Onglet : Codes reconnus -->
+    @if (activeTab() === 'matched') {
+      <div class="card tab-panel">
+        <h2 class="panel-title">Codes reconnus dans le référentiel admin</h2>
+        @if (!matchedCodesArray().length) {
+          <p class="empty-msg">Aucun code reconnu.</p>
+        } @else {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Désignation</th>
+                <th>Occurrences (CSV)</th>
+                <th>Prix unitaire</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of matchedCodesArray(); track item.code) {
+                <tr>
+                  <td><span class="code-pill pill-blue">{{ item.code }}</span></td>
+                  <td>{{ item.adminInfo.label }}</td>
+                  <td class="mono">{{ item.count }}</td>
+                  <td class="mono">
+                    {{ item.adminInfo.unitPrice !== null ? (item.adminInfo.unitPrice | number:'1.2-2') + ' €' : '—' }}
+                  </td>
+                  <td>
+                    <span class="badge-source" [class.source-bpu]="item.adminInfo.source === 'BPU'">
+                      {{ item.adminInfo.source }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
+
+    <!-- Onglet : Codes inconnus -->
+    @if (activeTab() === 'unknown') {
+      <div class="card tab-panel">
+        <h2 class="panel-title">Codes inconnus — non présents dans le référentiel admin</h2>
+        @if (!unknownCodesArray().length) {
+          <p class="empty-msg text-success">
+            <i class="bi bi-check-circle-fill"></i>
+            Tous les codes articles sont reconnus.
+          </p>
+        } @else {
+          <p class="panel-hint">
+            Ces codes apparaissent dans les exports OSIRIS mais ne correspondent à aucune prestation définie.
+            Des suggestions de codes proches sont proposées.
+          </p>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Code OSIRIS</th>
+                <th>Occurrences</th>
+                <th>Exemples bruts</th>
+                <th>Suggestions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of unknownCodesArray(); track item.code) {
+                <tr class="row-unknown">
+                  <td><span class="code-pill pill-red">{{ item.code }}</span></td>
+                  <td class="mono">{{ item.count }}</td>
+                  <td class="raw-examples">
+                    @for (ex of item.rawExamples; track ex) {
+                      <code class="raw-chip">{{ ex }}</code>
+                    }
+                  </td>
+                  <td>
+                    @if (!item.suggestions.length) {
+                      <span class="text-muted">—</span>
+                    } @else {
+                      <div class="suggestions-list">
+                        @for (sug of item.suggestions; track sug.code) {
+                          <span class="suggestion-pill" [title]="sug.label">
+                            {{ sug.code }}
+                            <span class="sug-dist">dist.{{ sug.distance }}</span>
+                          </span>
+                        }
+                      </div>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
+
+    <!-- Onglet : Codes admin non vus -->
+    @if (activeTab() === 'notseen') {
+      <div class="card tab-panel">
+        <h2 class="panel-title">Codes admin jamais rencontrés dans ce CSV</h2>
+        @if (!r.notSeenInCsv.length) {
+          <p class="empty-msg text-success">
+            <i class="bi bi-check-circle-fill"></i>
+            Tous les codes du référentiel sont présents dans le CSV.
+          </p>
+        } @else {
+          <p class="panel-hint">
+            Ces prestations sont définies par l'admin mais n'apparaissent dans aucun export OSIRIS de ce fichier.
+          </p>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Désignation</th>
+                <th>Prix unitaire</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of r.notSeenInCsv; track item.code) {
+                <tr>
+                  <td><span class="code-pill pill-grey">{{ item.code }}</span></td>
+                  <td>{{ item.label }}</td>
+                  <td class="mono">
+                    {{ item.unitPrice !== null ? (item.unitPrice | number:'1.2-2') + ' €' : '—' }}
+                  </td>
+                  <td>
+                    <span class="badge-source" [class.source-bpu]="item.source === 'BPU'">
+                      {{ item.source }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
+
+    <!-- Onglet : Lignes problématiques -->
+    @if (activeTab() === 'lines') {
+      <div class="card tab-panel">
+        <h2 class="panel-title">Lignes contenant des codes inconnus</h2>
+        @if (!linesWithUnknown().length) {
+          <p class="empty-msg text-success">
+            <i class="bi bi-check-circle-fill"></i>
+            Aucune ligne problématique.
+          </p>
+        } @else {
+          <div class="lines-list">
+            @for (line of linesWithUnknown(); track line.numInter) {
+              <div class="line-item">
+                <div class="line-header">
+                  <span class="line-inter">
+                    <i class="bi bi-file-text"></i>
+                    {{ line.numInter || '(numéro inconnu)' }}
+                  </span>
+                  <code class="line-raw-articles">{{ line.rawArticles }}</code>
+                </div>
+                <div class="line-details">
+                  @for (u of line.unknown; track u.code) {
+                    <span class="unknown-chip">
+                      <span class="code-pill pill-red">{{ u.code }}</span>
+                      <span class="qty-label">×{{ u.qty }}</span>
+                      @if (u.suggestions.length) {
+                        <span class="inline-sug">
+                          → {{ u.suggestions[0].code }}?
+                        </span>
+                      }
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+  }
+
+</section>

@@ -159,6 +159,13 @@ export class InterventionsDashboard {
       .trim();
   }
 
+  private isSfrB2bMarque(value?: string | null): boolean {
+    const normalized = this.normalizeText(value);
+    if (!normalized) return false;
+    if (normalized.includes('SFR B2B')) return true;
+    return normalized.replace(/\s+/g, '').includes('SFRB2B');
+  }
+
   private hasReconnexionInArticles(raw?: string | null): boolean {
     const normalized = this.normalizeText(raw);
     if (!normalized) return false;
@@ -166,6 +173,7 @@ export class InterventionsDashboard {
   }
 
   private isReconnectionItem(item: InterventionItem): boolean {
+    if (this.isSfrB2bMarque(item.marque)) return false;
     const statusNormalized = this.normalizeText(item.statut);
     if (!(statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINEE'))) return false;
     const typeNormalized = this.normalizeText(item.type);
@@ -204,6 +212,7 @@ export class InterventionsDashboard {
     }
 
     const normalized = this.normalizeText(`${item.articlesRaw || ''} ${item.listePrestationsRaw || ''}`);
+    const isSfrB2b = this.isSfrB2bMarque(item.marque);
     if (normalized.includes('CABLE PAV 1') || normalized.includes('CABLE_PAV_1')) codes.add('CABLE_PAV_1');
     if (normalized.includes('CABLE PAV 2') || normalized.includes('CABLE_PAV_2')) codes.add('CABLE_PAV_2');
     if (normalized.includes('CABLE PAV 3') || normalized.includes('CABLE_PAV_3')) codes.add('CABLE_PAV_3');
@@ -214,6 +223,9 @@ export class InterventionsDashboard {
 
     if (!isRacihSuccess(item.statut, item.articlesRaw)) {
       codes.delete('RACIH');
+    }
+    if (isSfrB2b) {
+      codes.delete('RECOIP');
     }
 
     return [...codes];
@@ -228,15 +240,22 @@ export class InterventionsDashboard {
     const articlesNormalized = this.normalizeText(item.articlesRaw);
     const commentsNormalized = this.normalizeText(item.commentairesTechnicien);
     const prestationsNormalized = this.normalizeText(item.listePrestationsRaw);
+    const isSfrB2b = this.isSfrB2bMarque(item.marque);
     const matches: string[] = [];
 
     if (isRacpavSuccess(item.statut, item.articlesRaw)) matches.push('RACPAV');
     if (isRacihSuccess(item.statut, item.articlesRaw)) matches.push('RACIH');
     if (
-      articlesNormalized.includes('RECOIP')
-      || typeNormalized === 'RECO'
+      !isSfrB2b
+      && (
+        articlesNormalized.includes('RECOIP')
+        || typeNormalized === 'RECO'
+      )
     ) {
       matches.push('RECOIP');
+    }
+    if (isSfrB2b) {
+      matches.push('RACPRO_S');
     }
     if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
       matches.push('RACPRO_S');
@@ -365,7 +384,11 @@ export class InterventionsDashboard {
   });
 
   readonly hasData = computed(() => this.summaryItems().length > 0 || Boolean(this.latestImport()));
+  readonly initialLoading = computed(() => this.loading() && !this.error());
   readonly canEditRates = computed(() => this.auth.hasRole([Role.ADMIN, Role.DIRIGEANT]));
+  readonly formatVersionsLoading = signal(false);
+  readonly formatVersionsResult = signal<string | null>(null);
+  readonly formatVersionsError = signal<string | null>(null);
   readonly pageCount = computed(() => {
     const t = this.totalItems();
     const l = this.limit();
@@ -897,6 +920,24 @@ export class InterventionsDashboard {
         this.invoiceLoading.set(false);
         this.invoiceError.set(this.apiError(err, 'Erreur import factures'));
         this.resetInvoiceInput();
+      }
+    });
+  }
+
+  runFormatVersions(): void {
+    this.formatVersionsLoading.set(true);
+    this.formatVersionsResult.set(null);
+    this.formatVersionsError.set(null);
+    this.svc.formatVersions().subscribe({
+      next: (res) => {
+        this.formatVersionsLoading.set(false);
+        this.formatVersionsResult.set(
+          `Formatage terminé — ${res.data.backfilled} version(s) créée(s), ${res.data.skipped} déjà existante(s).`
+        );
+      },
+      error: (err: HttpErrorResponse) => {
+        this.formatVersionsLoading.set(false);
+        this.formatVersionsError.set(this.apiError(err, 'Erreur formatage versions'));
       }
     });
   }

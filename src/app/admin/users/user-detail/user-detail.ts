@@ -5,14 +5,16 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 
 import { User, Depot, Vehicle } from '../../../core/models';
+import { Role } from '../../../core/models/roles.model';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
-import { environment } from '../../../environments/environment';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 
 // ✅ Modal suppression (ne change pas ton modal)
 
@@ -30,14 +32,51 @@ export class UserDetail extends DetailBack {
   private userService = inject(UserService);
   private depotService = inject(DepotService);
   private vehicleService = inject(VehicleService);
+  private authService = inject(AuthService);
   private datePipe = inject(DatePipe);
-  private readonly uploadsBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
-
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly deleting = signal(false);
 
   readonly user = signal<User | null>(null);
+
+  readonly canDelete = computed(() => {
+    const current = this.authService.getCurrentUser();
+    const target = this.user();
+    if (!current || !target) return false;
+
+    if (target.role === Role.ADMIN && current.role !== Role.ADMIN) {
+      return false;
+    }
+
+    if (current.role === Role.DIRIGEANT && target.role === Role.DIRIGEANT) {
+      const currentId = (current as any)?._id;
+      const targetId = (target as any)?._id;
+      return !!currentId && !!targetId && currentId === targetId;
+    }
+
+    return true;
+  });
+
+  readonly deleteDisabledReason = computed(() => {
+    const current = this.authService.getCurrentUser();
+    const target = this.user();
+    if (!current || !target) return 'Suppression indisponible';
+
+    if (target.role === Role.ADMIN && current.role !== Role.ADMIN) {
+      return 'Seul un administrateur peut supprimer un compte administrateur';
+    }
+
+    if (current.role === Role.DIRIGEANT && target.role === Role.DIRIGEANT) {
+      const currentId = (current as any)?._id;
+      const targetId = (target as any)?._id;
+      if (currentId && targetId && currentId !== targetId) {
+        return 'Un dirigeant ne peut pas supprimer un autre dirigeant';
+      }
+    }
+
+    return null;
+  });
 
   // -----------------------------
   // ✅ Données lookup (dépôts + véhicule assigné)
@@ -279,10 +318,6 @@ export class UserDetail extends DetailBack {
   }
 
   avatarSrc(u: User): string {
-    const raw = String(u.photoUrl || u.avatarUrl || '').trim();
-    if (!raw) return '';
-    if (/^https?:\/\//i.test(raw)) return raw;
-    if (raw.startsWith('/')) return `${this.uploadsBaseUrl}${raw}`;
-    return `${this.uploadsBaseUrl}/${raw}`;
+    return resolveUserAvatarUrl(u, (u as { updatedAt?: string }).updatedAt || '');
   }
 }

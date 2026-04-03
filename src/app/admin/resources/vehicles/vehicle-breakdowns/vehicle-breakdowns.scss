@@ -44,9 +44,9 @@
   &.error { background: rgba(255,0,60,.14); }
 }
 
-.table.card { padding: 0; overflow: hidden; }
+.table.card { padding: 0; overflow: auto; }
 
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; border-collapse: collapse; min-width: 900px; }
 
 thead th {
   text-align: left;
@@ -69,6 +69,39 @@ tbody td {
 .actions {
   text-align: right;
   white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table.card {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 720px;
+  }
+
+  thead th {
+    font-size: .8rem;
+  }
+
+  tbody td {
+    font-size: .85rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .vehicle-breakdowns {
+    padding: 1rem;
+  }
+
+  table {
+    min-width: 620px;
+  }
 }
 
 .resolve-panel {

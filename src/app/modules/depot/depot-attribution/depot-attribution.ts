@@ -202,7 +202,7 @@ export class DepotAttribution {
 
   private buildLine() {
     return this.fb.nonNullable.group({
-      resourceType: this.fb.nonNullable.control<ResourceType>('MATERIAL'),
+      resourceType: this.fb.nonNullable.control<ResourceType>('CONSUMABLE'),
       resourceId: this.fb.nonNullable.control('', [Validators.required]),
       quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
       note: this.fb.nonNullable.control('')

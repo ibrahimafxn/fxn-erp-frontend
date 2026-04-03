@@ -1,4 +1,15 @@
 <section class="depot-list">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header">
     <div>
       <h1>Dépôts</h1>
@@ -19,15 +30,33 @@
 
   </section>
 
-  @if (loading()) {
-    <div class="state loading card">Chargement…</div>
-  } @else if (error()) {
+  @if (error()) {
     <div class="state error card">
       <strong>Erreur :</strong> {{ errorMessage() }}
     </div>
   } @else if (items().length === 0) {
     <div class="state empty card">Aucun dépôt trouvé.</div>
   } @else {
+    <div class="card pager-card">
+      <div class="pager pager-top">
+        <div class="pager-left">
+          <div class="page-size">
+            <button type="button" [class.active]="limit() === 10" (click)="setLimit(10)">10</button>
+            <button type="button" [class.active]="limit() === 20" (click)="setLimit(20)">20</button>
+            <button type="button" [class.active]="limit() === 50" (click)="setLimit(50)">50</button>
+            <button type="button" [class.active]="limit() === 100" (click)="setLimit(100)">100</button>
+          </div>
+          <span class="pager-label">Éléments par page</span>
+        </div>
+        <div class="pager-right">
+          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+          <div class="pager-nav">
+            <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i></button>
+            <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="table card">
       <table>
         <thead>
@@ -44,29 +73,43 @@
         <tbody>
           @for (d of items(); track trackById($index, d)) {
             <tr class="row" (click)="openDetail(d)">
-              <td class="main">
+              <td class="main" data-label="Dépôt">
                 <div class="name">{{ depotName(d) }}</div>
               </td>
 
-              <td>{{ d.city || '—' }}</td>
-              <td>{{ d.phone || '—' }}</td>
-              <td><span class="badge">{{ managerLabel(d) }}</span></td>
+              <td data-label="Ville">{{ d.city || '—' }}</td>
+              <td data-label="Téléphone">{{ d.phone || '—' }}</td>
+              <td data-label="Gestionnaire">
+                <div class="manager-cell">
+                  <div class="manager-avatar" [attr.aria-label]="managerLabel(d)">
+                    @if (managerAvatarSrc(d)) {
+                      <img [src]="managerAvatarSrc(d)" [alt]="managerLabel(d)" loading="lazy" />
+                    } @else {
+                      <span>{{ managerInitials(d) || '—' }}</span>
+                    }
+                  </div>
+                  <span class="badge">{{ managerLabel(d) }}</span>
+                </div>
+              </td>
 
-              <td>
+              <td data-label="Création">
                 @if (createdAtValue(d)) { {{ createdAtValue(d) | date:'short' }} } @else { — }
               </td>
 
-              <td class="actions" (click)="$event.stopPropagation()">
+              <td class="actions" data-label="Actions" (click)="$event.stopPropagation()">
                 <div class="actions-group">
-                  <button class="btn-outline edit" type="button" (click)="edit(d)"><i class="bi bi-pencil"></i> Modifier</button>
+                  <button class="btn-outline edit" type="button" title="Modifier" aria-label="Modifier" (click)="edit(d)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
 
                   <button
                     class="btn-outline delete"
                     type="button"
+                    title="Supprimer"
+                    aria-label="Supprimer"
                     [disabled]="deletingId() === d._id"
                     (click)="openDeleteModal(d)"
-                  ><i class="fa-solid fa-trash"></i> 
-                    @if (deletingId() === d._id) { Suppression… } @else { Supprimer }
+                  ><i class="fa-solid fa-trash"></i>
                   </button>
                 </div>
               </td>
@@ -75,25 +118,6 @@
         </tbody>
       </table>
     </div>
-
-    <footer class="pager pager-fixed">
-      <div class="pager-left">
-        <div class="page-size">
-          <button type="button" [class.active]="limit() === 10" (click)="setLimit(10)">10</button>
-          <button type="button" [class.active]="limit() === 20" (click)="setLimit(20)">20</button>
-          <button type="button" [class.active]="limit() === 50" (click)="setLimit(50)">50</button>
-          <button type="button" [class.active]="limit() === 100" (click)="setLimit(100)">100</button>
-        </div>
-        <span class="pager-label">Éléments par page</span>
-      </div>
-      <div class="pager-right">
-        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-        <div class="pager-nav">
-          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1"><i class="bi bi-chevron-left"></i></button>
-          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()"><i class="bi bi-chevron-right"></i></button>
-        </div>
-      </div>
-    </footer>
   }
 
   <!-- ✅ MODAL suppression -->

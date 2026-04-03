@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { Component, ElementRef, ViewChild, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -8,8 +9,10 @@ import {
   InterventionImportBatch,
   InterventionImportTicket,
   InterventionImportCategory,
-  InterventionImportCategoryItem
+  InterventionImportCategoryItem,
+  BpuAnalysisReport
 } from '../../../core/services/intervention.service';
+import { OsirisMappingService } from '../../../core/services/osiris-mapping.service';
 import { formatPersonName } from '../../../core/utils/text-format';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
@@ -18,12 +21,13 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-interventions-import',
-  imports: [CommonModule, RouterModule, ConfirmDeleteModal],
+  imports: [CommonModule, RouterModule, FormsModule, ConfirmDeleteModal],
   templateUrl: './interventions-import.html',
   styleUrls: ['./interventions-import.scss']
 })
 export class InterventionsImport {
   private svc = inject(InterventionService);
+  private mappingSvc = inject(OsirisMappingService);
   private readonly emptyCategoryState = { items: [], total: 0, page: 1, loading: false, error: null } as const;
 
   @ViewChild('csvInput') private csvInput?: ElementRef<HTMLInputElement>;
@@ -57,13 +61,25 @@ export class InterventionsImport {
   private readonly CATEGORY_LIMIT = 20;
   readonly categoryKeys: InterventionImportCategory[] = ['success', 'failure', 'versioned', 'rejected', 'tickets'];
   readonly lastImportBatchId = signal<string | null>(null);
+  readonly bpuAnalysis = signal<BpuAnalysisReport | null>(null);
+  readonly bpuAnalysisLoading = signal(false);
+  readonly bpuAnalysisPending = signal(false);
+  private bpuPollTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // ── Formulaire inline de mapping code OSIRIS → code admin ─────────────────
+  readonly mappingFormOpen = signal<string | null>(null); // osirisCode en cours de mapping
+  readonly mappingFormCanonical = signal('');
+  readonly mappingFormLabel = signal('');
+  readonly mappingFormLoading = signal(false);
+  readonly mappingFormError = signal<string | null>(null);
+  readonly mappingFormSuccess = signal<string | null>(null);
 
   readonly latestImport = computed(() => this.importBatches()[0] || null);
   readonly latestImportNotice = computed(() => this.formatImportNotice(this.latestImport(), false));
   readonly todayImportNotice = computed(() => this.formatImportNotice(this.latestImport(), true));
   readonly prestationRules = INTERVENTION_PRESTATION_FIELDS;
   private readonly REQUIRED_COLUMNS = ['Liste des prestations réalisées', 'Articles'] as const;
-  private readonly OPTIONAL_COLUMNS = ['Statut', 'Type', 'Type operation', 'Commentaires technicien'] as const;
+  private readonly OPTIONAL_COLUMNS = ['Statut', 'Type', 'Type operation', 'Commentaires technicien', 'Marque'] as const;
   private readonly PREVIEW_LINE_LIMIT = 40;
   readonly previewColumns = signal<{ name: string; present: boolean }[]>([]);
   readonly previewRows = signal(0);
@@ -173,8 +189,10 @@ export class InterventionsImport {
             this.importResult.set('Import terminé.');
           }
           if (data?.importBatchId) {
-            this.lastImportBatchId.set(String(data.importBatchId));
-            this.loadImportCategories(String(data.importBatchId));
+            const batchId = String(data.importBatchId);
+            this.lastImportBatchId.set(batchId);
+            this.loadImportCategories(batchId);
+            this.pollBpuAnalysis(batchId);
           }
           this.resetFileInput();
           this.loadImports();
@@ -249,6 +267,7 @@ export class InterventionsImport {
         if (latestId) {
           this.lastImportBatchId.set(latestId);
           this.loadImportCategories(latestId);
+          this.loadBpuAnalysis(latestId);
         }
         this.loadTickets(latestId);
       },
@@ -368,6 +387,107 @@ export class InterventionsImport {
     return combined || ticket.techFull || '—';
   }
 
+  loadBpuAnalysis(batchId: string): void {
+    this.bpuAnalysisLoading.set(true);
+    this.bpuAnalysis.set(null);
+    this.bpuAnalysisPending.set(false);
+    this.svc.getBpuAnalysis(batchId).subscribe({
+      next: (res) => {
+        this.bpuAnalysisLoading.set(false);
+        if (res.data) {
+          this.bpuAnalysis.set(res.data);
+          this.bpuAnalysisPending.set(false);
+        } else {
+          this.bpuAnalysisPending.set(true);
+        }
+      },
+      error: () => {
+        this.bpuAnalysisLoading.set(false);
+      }
+    });
+  }
+
+  pollBpuAnalysis(batchId: string): void {
+    this.bpuAnalysis.set(null);
+    this.bpuAnalysisPending.set(true);
+    if (this.bpuPollTimer) clearTimeout(this.bpuPollTimer);
+    const attempt = (tries: number) => {
+      this.bpuPollTimer = setTimeout(() => {
+        this.svc.getBpuAnalysis(batchId).subscribe({
+          next: (res) => {
+            if (res.data) {
+              this.bpuAnalysis.set(res.data);
+              this.bpuAnalysisPending.set(false);
+            } else if (tries > 0) {
+              attempt(tries - 1);
+            } else {
+              this.bpuAnalysisPending.set(false);
+            }
+          },
+          error: () => { this.bpuAnalysisPending.set(false); }
+        });
+      }, 2500);
+    };
+    attempt(6); // ~15s max
+  }
+
+  bpuUnknownEntries(): { code: string; count: number; suggestions: { code: string; label: string; distance: number }[]; rawExamples: string[] }[] {
+    const report = this.bpuAnalysis();
+    if (!report?.unknownCodes) return [];
+    return Object.entries(report.unknownCodes)
+      .map(([code, val]) => ({ code, ...val }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  bpuMatchRateClass(rate: number): string {
+    if (rate >= 90) return 'rate-high';
+    if (rate >= 60) return 'rate-medium';
+    return 'rate-low';
+  }
+
+  openMappingForm(osirisCode: string): void {
+    this.mappingFormOpen.set(osirisCode);
+    this.mappingFormCanonical.set('');
+    this.mappingFormLabel.set('');
+    this.mappingFormError.set(null);
+    this.mappingFormSuccess.set(null);
+  }
+
+  closeMappingForm(): void {
+    this.mappingFormOpen.set(null);
+    this.mappingFormError.set(null);
+    this.mappingFormSuccess.set(null);
+  }
+
+  saveMappingForm(): void {
+    const osirisCode = this.mappingFormOpen();
+    const canonicalCode = this.mappingFormCanonical().trim().toUpperCase();
+    if (!osirisCode || !canonicalCode) {
+      this.mappingFormError.set('Le code prestation admin est requis.');
+      return;
+    }
+    this.mappingFormLoading.set(true);
+    this.mappingFormError.set(null);
+    this.mappingSvc.create({
+      osirisCode,
+      canonicalCode,
+      label: this.mappingFormLabel().trim()
+    }).subscribe({
+      next: () => {
+        this.mappingFormLoading.set(false);
+        this.mappingFormSuccess.set(`"${osirisCode}" → "${canonicalCode}" enregistré.`);
+        this.mappingFormOpen.set(null);
+        // Relancer l'analyse sur le batch courant pour refléter le nouveau mapping
+        const batchId = this.lastImportBatchId();
+        if (batchId) this.loadBpuAnalysis(batchId);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.mappingFormLoading.set(false);
+        this.mappingFormError.set(err.error?.message || 'Erreur lors de la création du mapping.');
+      }
+    });
+  }
+
   private resetFileInput(): void {
     const input = this.csvInput?.nativeElement;
     if (input) input.value = '';
@@ -431,7 +551,8 @@ export class InterventionsImport {
         'commentairesinter',
         'commentaires',
         'commentaire'
-      ])
+      ]),
+      marque: this.findHeaderIndex(normalizedHeader, ['marque'])
     };
     if (indices.articles < 0 && indices.prestations < 0) {
       this.previewError.set('Les colonnes Articles ou Liste des prestations ne sont pas présentes.');
@@ -512,6 +633,7 @@ export class InterventionsImport {
       type: number;
       typeOperation: number;
       commentaires: number;
+      marque: number;
     }
   ): string[] {
     const codes = new Set<string>();
@@ -521,6 +643,7 @@ export class InterventionsImport {
     const typeValue = indices.type >= 0 ? row[indices.type] ?? '' : '';
     const typeOperationValue = indices.typeOperation >= 0 ? row[indices.typeOperation] ?? '' : '';
     const commentairesValue = indices.commentaires >= 0 ? row[indices.commentaires] ?? '' : '';
+    const marqueValue = indices.marque >= 0 ? row[indices.marque] ?? '' : '';
 
     for (const code of this.extractPrestationCodes(articlesValue)) {
       codes.add(code);
@@ -539,15 +662,22 @@ export class InterventionsImport {
     const articlesNormalized = this.normalizeToken(articlesValue);
     const commentairesNormalized = this.normalizeToken(commentairesValue);
     const prestationsNormalized = this.normalizeToken(prestationsValue);
+    const isSfrB2b = this.isSfrB2bMarque(marqueValue);
 
     if (articlesNormalized.includes('RACPAV')) codes.add('RACPAV');
     if (articlesNormalized.includes('RACIH')) codes.add('RACIH');
     if (
-      articlesNormalized.includes('RECOIP')
-      || operationNormalized.includes('RECONNEX')
-      || typeNormalized.includes('RECO')
+      !isSfrB2b
+      && (
+        articlesNormalized.includes('RECOIP')
+        || operationNormalized.includes('RECONNEX')
+        || typeNormalized.includes('RECO')
+      )
     ) {
       codes.add('RECOIP');
+    }
+    if (isSfrB2b) {
+      codes.add('RACPRO_S');
     }
     if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
       codes.add('RACPRO_S');
@@ -582,6 +712,10 @@ export class InterventionsImport {
       codes.add('REFRAC');
     }
 
+    if (isSfrB2b) {
+      codes.delete('RECOIP');
+    }
+
     return [...codes];
   }
 
@@ -609,6 +743,13 @@ export class InterventionsImport {
       .replace(/[\u0300-\u036f]/g, '')
       .toUpperCase()
       .trim();
+  }
+
+  private isSfrB2bMarque(value?: string | null): boolean {
+    const normalized = this.normalizeToken(value ?? '');
+    if (!normalized) return false;
+    if (normalized.includes('SFR B2B')) return true;
+    return normalized.replace(/\s+/g, '').includes('SFRB2B');
   }
 
   private resetPreview(): void {

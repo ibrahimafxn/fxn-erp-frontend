@@ -1,0 +1,150 @@
+<div class="landing-page">
+  <header class="landing-top">
+    <div class="brand">
+      <img class="brand-logo" src="assets/fxn_logo_header.png" alt="FXN" height="1024" width="1024" />
+      <div class="brand-text">
+        <div class="brand-tag">ERP & opérations terrain</div>
+      </div>
+    </div>
+
+    <form class="mini-login" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="mini-title">Accès utilisateur</div>
+
+      <div class="mini-grid">
+        <div class="field">
+          <label for="mini-email">Email</label>
+          <input id="mini-email" type="email" formControlName="email" autocomplete="email" placeholder="nom@fxn.com" />
+        </div>
+
+        <div class="field">
+          <label for="mini-password">Mot de passe</label>
+          <div class="password-field">
+            <input
+              id="mini-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+            />
+            <button type="button" class="toggle-visibility icon-btn" (click)="togglePassword()" aria-label="Afficher le mot de passe">
+              @if (showPassword()) {
+                <i class="bi bi-eye-slash" aria-hidden="true"></i>
+              } @else {
+                <i class="bi bi-eye" aria-hidden="true"></i>
+              }
+            </button>
+          </div>
+        </div>
+
+        @if (mfaRequired()) {
+          <div class="field mfa-field">
+            <label for="mini-mfa">Code MFA</label>
+            <input id="mini-mfa" type="text" formControlName="mfaCode" autocomplete="one-time-code" placeholder="123456" />
+          </div>
+        }
+
+        <div class="field action-field">
+          <div class="action-buttons">
+            <button class="btn-primary" type="submit" [disabled]="loading()">
+              @if (loading()) { Connexion... } @else { Accès user }
+            </button>
+            <a class="btn-outline" routerLink="/login">Accès complet</a>
+          </div>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="mini-error">{{ error() }}</div>
+      }
+    </form>
+  </header>
+
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="hero-badge">FXN ERP · ERT Technologies</div>
+      <h1>Pilotez FXN avec une vision claire, du dépôt au terrain.</h1>
+      <p>
+        FXN centralise les opérations, la flotte, les stocks et les interventions pour donner aux équipes
+        une lecture instantanée de la performance et des priorités terrain.
+      </p>
+      <div class="kpi-grid">
+        <button class="kpi-card kpi-action" type="button" (click)="activeFocus.set(null)">
+          <div class="kpi-title">Performances</div>
+          <div class="kpi-text">Suivi temps réel, alertes proactives, décisions rapides.</div>
+          <span class="focus-cta">Réinitialiser</span>
+        </button>
+        <button
+          class="kpi-card kpi-action"
+          type="button"
+          (click)="toggleFocus('materiels')"
+          [attr.aria-selected]="activeFocus() === 'materiels'"
+        >
+          <div class="kpi-title">Matériels</div>
+          <div class="kpi-text">Outillage, consommables et équipements critiques.</div>
+          <span class="focus-cta">Voir le détail</span>
+        </button>
+        <button
+          class="kpi-card kpi-action"
+          type="button"
+          (click)="toggleFocus('flotte')"
+          [attr.aria-selected]="activeFocus() === 'flotte'"
+        >
+          <div class="kpi-title">Flotte</div>
+          <div class="kpi-text">Véhicules d’intervention et maintenance préventive.</div>
+          <span class="focus-cta">Voir le détail</span>
+        </button>
+      </div>
+
+      @if (activeFocus() === 'materiels') {
+        <section class="focus-detail" id="focus-materiels" role="tabpanel" aria-live="polite">
+          <h3>Suivi des matériels</h3>
+          <p>
+            Centralisez l’inventaire, l’état et l’utilisation des équipements critiques pour chaque dépôt et équipe terrain.
+          </p>
+          <ul class="focus-list">
+            <li>Inventaire par catégorie, criticité et emplacement.</li>
+            <li>Alertes de seuils et consommations anormales.</li>
+            <li>Historique des affectations et traçabilité.</li>
+          </ul>
+        </section>
+      }
+
+      @if (activeFocus() === 'flotte') {
+        <section class="focus-detail" id="focus-flotte" role="tabpanel" aria-live="polite">
+          <h3>Gestion de flotte</h3>
+          <p>
+            Visualisez la disponibilité des véhicules, les coûts d’exploitation et la planification des interventions.
+          </p>
+          <ul class="focus-list">
+            <li>Disponibilités, kilométrage et usage.</li>
+            <li>Maintenance préventive et suivi des incidents.</li>
+            <li>Historique des missions et conformité.</li>
+          </ul>
+        </section>
+      }
+    </div>
+
+    <div class="hero-panel">
+      <div class="panel-card">
+        <h3>Pourquoi FXN ?</h3>
+        <ul class="panel-list">
+          <li>Traçabilité complète des flux et des opérations.</li>
+          <li>Vue consolidée par dépôt, équipe et matériel.</li>
+          <li>Automatisation des alertes et décisions terrain.</li>
+        </ul>
+      </div>
+
+      <div class="panel-card">
+        <h3>Matériels & flotte</h3>
+        <div class="panel-grid">
+          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">Véhicules d’intervention</button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">Consommables critiques</button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">Outillage & équipements</button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">Stock multi-dépôts</button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">Maintenance préventive</button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">Historique & incidents</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,16 @@
+<div class="confirm-modal-backdrop" [class.open]="open()" (click)="onBackdropClick()"></div>
+<div class="confirm-modal" [class.open]="open()" (keydown)="onKeydown($event)" tabindex="0" role="dialog">
+  <header>
+    <h3>{{ title() }}</h3>
+    <button type="button" class="btn-icon" (click)="onCancel()">×</button>
+  </header>
+  <div class="content">
+    <p>{{ message() }}</p>
+  </div>
+  <footer>
+    <button class="btn-outline" type="button" (click)="onCancel()">{{ cancelText() }}</button>
+    <button class="btn-primary" type="button" [class.danger]="tone() === 'danger'" [class.success]="tone() === 'success'" (click)="onConfirm()" [disabled]="confirming()">
+      @if (confirming()) { … } @else { {{ confirmText() }} }
+    </button>
+  </footer>
+</div>

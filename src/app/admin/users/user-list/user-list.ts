@@ -14,7 +14,7 @@ import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { downloadBlob } from '../../../core/utils/download';
 import { formatPageRange } from '../../../core/utils/pagination';
-import { environment } from '../../../environments/environment';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 
 @Component({
   standalone: true,
@@ -36,8 +36,6 @@ export class UserList extends DetailBack {
   private depotSvc = inject(DepotService);
   private fb = inject(FormBuilder);
   private datePipe = inject(DatePipe);
-  private readonly uploadsBaseUrl = environment.apiBaseUrl.replace(/\/api\/?$/, '');
-
   // service signals
   readonly loading = this.userService.loading;
   readonly error = this.userService.error;
@@ -62,11 +60,14 @@ export class UserList extends DetailBack {
     q: this.fb.nonNullable.control(''),
     role: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control(''),
+    createdFrom: this.fb.nonNullable.control(''),
+    createdTo: this.fb.nonNullable.control(''),
   });
 
   // derived
   readonly items = computed(() => this.result()?.items ?? []);
   readonly total = computed(() => this.result()?.total ?? 0);
+  readonly initialLoading = computed(() => this.loading() && this.items().length === 0 && !this.error());
   readonly pageCount = computed(() => {
     const t = this.total();
     const l = this.limit();
@@ -97,11 +98,7 @@ export class UserList extends DetailBack {
   }
 
   avatarSrc(u: User): string {
-    const raw = String(u.photoUrl || u.avatarUrl || '').trim();
-    if (!raw) return '';
-    if (/^https?:\/\//i.test(raw)) return raw;
-    if (raw.startsWith('/')) return `${this.uploadsBaseUrl}${raw}`;
-    return `${this.uploadsBaseUrl}/${raw}`;
+    return resolveUserAvatarUrl(u, (u as { updatedAt?: string }).updatedAt || '');
   }
 
   refresh(force = false): void {
@@ -111,6 +108,8 @@ export class UserList extends DetailBack {
       q: v.q.trim() || undefined,
       role: v.role || undefined,
       depot: v.depot || undefined,
+      createdFrom: v.createdFrom || undefined,
+      createdTo: v.createdTo || undefined,
       page: this.page(),
       limit: this.limit(),
     }).subscribe({ error: () => {} });
@@ -122,7 +121,7 @@ export class UserList extends DetailBack {
   }
 
   clearSearch(): void {
-    this.filterForm.setValue({ q: '', role: '', depot: '' });
+    this.filterForm.setValue({ q: '', role: '', depot: '', createdFrom: '', createdTo: '' });
     this.page.set(1);
     this.refresh(true);
   }
@@ -164,7 +163,9 @@ export class UserList extends DetailBack {
     this.userService.exportCsv({
       q: v.q.trim() || undefined,
       role: v.role || undefined,
-      depot: v.depot || undefined
+      depot: v.depot || undefined,
+      createdFrom: v.createdFrom || undefined,
+      createdTo: v.createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.csv`),
       error: () => {}
@@ -176,7 +177,9 @@ export class UserList extends DetailBack {
     this.userService.exportPdf({
       q: v.q.trim() || undefined,
       role: v.role || undefined,
-      depot: v.depot || undefined
+      depot: v.depot || undefined,
+      createdFrom: v.createdFrom || undefined,
+      createdTo: v.createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.pdf`),
       error: () => {}
@@ -188,7 +191,9 @@ export class UserList extends DetailBack {
     this.userService.exportXlsx({
       q: v.q.trim() || undefined,
       role: v.role || undefined,
-      depot: v.depot || undefined
+      depot: v.depot || undefined,
+      createdFrom: v.createdFrom || undefined,
+      createdTo: v.createdTo || undefined
     }).subscribe({
       next: (blob) => downloadBlob(blob, `users-${new Date().toISOString().slice(0, 10)}.xlsx`),
       error: () => {}

@@ -3,6 +3,8 @@ import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } 
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../../core/services/auth.service';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
+import { UserPreferencesService } from '../../../core/services/user-preferences.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
@@ -21,6 +23,7 @@ export class Profile {
   private router = inject(Router);
   private depotService = inject(DepotService);
   private http = inject(HttpClient);
+  private preferencesApi = inject(UserPreferencesService);
   private apiBase = (environment.apiBaseUrl || '').replace(/\/+$/, '');
 
   readonly user = this.auth.user$;
@@ -42,7 +45,10 @@ export class Profile {
 
   readonly photoUrl = computed(() => {
     const u = this.user();
-    return u?.photoUrl || u?.avatarUrl || '';
+    const cacheKey = (u as { updatedAt?: string; lastLoginAt?: string } | null)?.updatedAt
+      || (u as { updatedAt?: string; lastLoginAt?: string } | null)?.lastLoginAt
+      || '';
+    return resolveUserAvatarUrl(u, cacheKey);
   });
 
   readonly roleLabel = computed(() => {
@@ -156,7 +162,14 @@ export class Profile {
           next: (res) => {
             const url = res?.data?.photoUrl || res?.data?.avatarUrl || '';
             if (url) {
-              this.auth.updateCurrentUser({ photoUrl: url, avatarUrl: url });
+              const basePrefs = this.user()?.preferences || {
+                themeOverride: null,
+                density: 'comfortable',
+                motion: 'full',
+                avatar: null
+              };
+              this.auth.updateCurrentUser({ photoUrl: url, avatarUrl: url, preferences: { ...basePrefs, avatar: null } });
+              this.preferencesApi.updateMyPreferences({ avatar: null }).subscribe({ error: () => {} });
             }
             this.uploadLoading.set(false);
             if (input) input.value = '';
@@ -215,6 +228,7 @@ export class Profile {
       img.src = blobUrl;
     });
   }
+
 
   private apiError(err: HttpErrorResponse, fallback: string): string {
     const apiMsg =

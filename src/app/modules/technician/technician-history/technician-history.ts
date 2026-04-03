@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { AttributionService } from '../../../core/services/attribution.service';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 type AttributionHistoryItem = {
   _id: string;
@@ -33,7 +34,7 @@ type AttributionHistoryItem = {
   selector: 'app-technician-history',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, DatePipe, ReactiveFormsModule],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, TechnicianMobileNav],
   templateUrl: './technician-history.html',
   styleUrls: ['./technician-history.scss']
 })

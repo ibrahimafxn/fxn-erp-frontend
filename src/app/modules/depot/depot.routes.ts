@@ -132,6 +132,15 @@ export const DEPOT_ROUTES: Routes = [
     ]
   },
   {
+    path: 'supply-requests',
+    loadComponent: () =>
+      import('./depot-supply-requests/depot-supply-requests').then(m => m.DepotSupplyRequests),
+    canActivate: [
+      AuthGuard,
+      RoleGuard(DEPOT_ACCESS_ROLES)
+    ]
+  },
+  {
     path: 'alerts/stock',
     loadComponent: () =>
       import('../../admin/alerts/stock-alerts/stock-alerts').then(m => m.StockAlerts),

@@ -1,42 +1,65 @@
+/* ============================================================
+   TECHNICIAN INTERVENTIONS HISTORY — Mobile-first
+   Base = 375px+  |  md = 600px+  |  lg = 900px+
+   ============================================================ */
+
 .technician-interventions-history {
-  padding: 1.25rem;
+  padding: 0.9rem;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   display: grid;
-  gap: 1.25rem;
+  gap: 1rem;
 }
 
-.page-header {
+/* ── Page header ──────────────────────────────────────────── */
+.technician-interventions-history .page-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
-.page-header h1 {
+.technician-interventions-history .page-header h1 {
   margin: 0;
+  font-size: 1.3rem;
+  font-family: var(--fxn-font-display);
 }
 
-.page-header .subtitle {
-  margin: 0.35rem 0 0;
+.technician-interventions-history .page-header .subtitle {
+  margin: 0.2rem 0 0;
   color: var(--fxn-text-muted);
+  font-size: 0.875rem;
 }
 
-.toolbar.card,
-.table.card,
-.state.card {
+/* Full-width reload button on mobile */
+.technician-interventions-history .header-actions {
+  width: 100%;
+}
+
+.technician-interventions-history .header-actions .btn-outline {
+  width: 100%;
+  justify-content: center;
+  min-height: 44px;
+}
+
+/* ── Cards ───────────────────────────────────────────────── */
+.technician-interventions-history .toolbar.card,
+.technician-interventions-history .table.card,
+.technician-interventions-history .state.card,
+.technician-interventions-history .pager.card {
   border-radius: 1rem;
   border: 1px solid var(--fxn-border);
   background: var(--fxn-surface-glass);
-  padding: 1.2rem;
+  padding: 1rem;
 }
 
-.filters {
+/* ── Filters: single column on mobile ───────────────────── */
+.technician-interventions-history .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
 }
 
-.filters label {
+.technician-interventions-history .filters label {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -44,61 +67,130 @@
   color: var(--fxn-text-muted);
 }
 
-.filters input,
-.filters select {
-  padding: 0.65rem 0.75rem;
+.technician-interventions-history .filters input,
+.technician-interventions-history .filters select {
+  padding: 0.7rem 0.75rem;
   border-radius: 0.75rem;
   border: 1px solid rgba(148, 163, 184, 0.45);
   background: rgba(15, 23, 42, 0.75);
   color: var(--fxn-text);
+  min-height: 44px;
 }
 
-.filters .actions {
-  grid-column: span 2;
+.technician-interventions-history .filters .actions {
+  grid-column: 1 / -1;
   display: flex;
-  justify-content: flex-end;
   gap: 0.6rem;
-  flex-wrap: nowrap;
-  align-self: end;
-  justify-self: end;
 }
 
-.filters .actions button {
-  height: 42px;
-  min-width: 110px;
+.technician-interventions-history .filters .actions .btn-outline {
+  flex: 1 1 auto;
+  justify-content: center;
+  min-height: 44px;
 }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
+/* ── Pager ───────────────────────────────────────────────── */
+.technician-interventions-history .pager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0;
 }
 
-th, td {
-  text-align: left;
-  padding: 0.6rem 0.5rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+.technician-interventions-history .pager .pager-left,
+.technician-interventions-history .pager .pager-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
-thead th {
-  font-size: 0.8rem;
+.technician-interventions-history .pager .page-size button {
+  margin-right: 0.35rem;
+  min-height: 36px;
+  min-width: 36px;
+}
+
+.technician-interventions-history .pager-label {
   color: var(--fxn-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 0.85rem;
 }
 
-.row-closed td {
+/* ── Table: card display on mobile ──────────────────────── */
+.technician-interventions-history .table {
+  padding: 0;
+}
+
+.technician-interventions-history .table table {
+  display: block;
+  width: 100%;
+}
+
+.technician-interventions-history .table thead {
+  display: none;
+}
+
+.technician-interventions-history .table tbody {
+  display: grid;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+/* Carte 2 colonnes : Date|Numero / Client|Type / TypeOp|TypeLog / Statut pleine largeur */
+.technician-interventions-history .table tbody tr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 0.75rem;
+  border: 1px solid var(--fxn-border);
+  border-radius: 14px;
+  padding: 0.65rem 0.85rem;
+  background: var(--fxn-surface);
+  box-sizing: border-box;
+}
+
+.technician-interventions-history .table td {
+  display: block;
+  padding: 0.2rem 0;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.technician-interventions-history .table td::before {
+  content: attr(data-label);
+  display: block;
+  font-weight: 600;
+  color: rgba(148, 163, 184, 0.7);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+/* Statut pleine largeur en bas avec séparateur */
+.technician-interventions-history .table td[data-label='Statut'] {
+  grid-column: 1 / -1;
+  padding-top: 0.4rem;
+  margin-top: 0.15rem;
+  border-top: 1px solid var(--fxn-border);
+  font-weight: 600;
+}
+
+/* Row status colors */
+.technician-interventions-history .table tr.row-closed td {
   color: #7ee787;
 }
 
-.row-failed td {
+.technician-interventions-history .table tr.row-failed td {
   color: #ff6b6b;
 }
 
-.row-cancelled td {
-  color: rgba(148, 163, 184, 0.8);
+.technician-interventions-history .table tr.row-cancelled td {
+  color: rgba(148, 163, 184, 0.9);
 }
 
-.sort-button {
+/* ── Sort buttons ────────────────────────────────────────── */
+.technician-interventions-history .sort-button {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -112,122 +204,155 @@ thead th {
   cursor: pointer;
 }
 
-.sort-button .sort-arrow {
+.technician-interventions-history .sort-button .sort-arrow {
   min-width: 0.75rem;
   text-align: center;
   font-size: 0.7rem;
   opacity: 0.55;
 }
 
-.sort-button:hover,
-.sort-button.is-active {
+.technician-interventions-history .sort-button:hover,
+.technician-interventions-history .sort-button.is-active {
   color: var(--fxn-text);
 }
 
-.sort-button.is-active .sort-arrow {
+.technician-interventions-history .sort-button.is-active .sort-arrow {
   opacity: 0.95;
   color: rgba(147, 197, 253, 0.9);
 }
 
-.pager {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
+body.theme-default .technician-interventions-history thead th {
+  color: var(--fxn-primary);
+  opacity: 0.95;
 }
 
-.pager .page-size button {
-  margin-right: 0.35rem;
-}
-
-.pager-label {
-  color: var(--fxn-text-muted);
-  font-size: 0.85rem;
-}
-
-@media (max-width: 700px) {
-  .technician-interventions-history {
-    padding: 1rem;
-  }
-
-  .page-header {
+/* ── Responsive: 600px — Tablet ─────────────────────────── */
+@media (min-width: 600px) {
+  .technician-interventions-history .page-header {
+    flex-direction: row;
     align-items: flex-start;
+    justify-content: space-between;
   }
 
-  .header-actions {
-    width: 100%;
+  .technician-interventions-history .header-actions {
+    width: auto;
   }
 
-  .header-actions .btn-outline {
-    width: 100%;
+  .technician-interventions-history .header-actions .btn-outline {
+    width: auto;
+    min-height: 40px;
   }
 
-  .filters {
-    grid-template-columns: 1fr;
+  .technician-interventions-history .filters {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .filters .actions {
-    grid-column: 1 / -1;
-    justify-self: stretch;
-    flex-wrap: wrap;
+  .technician-interventions-history .filters .actions {
+    justify-content: flex-end;
   }
 
-  .filters .actions {
-    justify-content: stretch;
+  .technician-interventions-history .filters .actions .btn-outline {
+    flex: 0 1 auto;
+    min-height: 40px;
   }
 
-  .filters .actions .btn-outline {
-    flex: 1 1 auto;
+  /* Restore table layout */
+  .technician-interventions-history .table table {
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 0;
+    min-width: 600px;
   }
 
-  .table {
+  .technician-interventions-history .table thead {
+    display: table-header-group;
+  }
+
+  .technician-interventions-history .table thead th {
+    text-align: left;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.8rem;
+    color: var(--fxn-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--fxn-border-strong);
+  }
+
+  .technician-interventions-history .table tbody {
+    display: table-row-group;
+    gap: 0;
+    width: auto;
+  }
+
+  .technician-interventions-history .table tbody tr {
+    display: table-row;
+    grid-template-columns: unset;
+    border-radius: 0;
     padding: 0;
+    background: transparent;
+    border: none;
+    width: auto;
   }
 
-  .table table,
-  .table thead,
-  .table tbody,
-  .table tr {
-    display: block;
-    width: 100%;
+  .technician-interventions-history .table td {
+    display: table-cell;
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid var(--fxn-border-strong);
+    vertical-align: middle;
+    overflow: unset;
+    text-overflow: unset;
   }
 
-  .table thead {
+  .technician-interventions-history .table td::before {
     display: none;
   }
 
-  .table tbody {
-    display: grid;
-    gap: 0.75rem;
+  .technician-interventions-history .table td[data-label='Statut'] {
+    grid-column: unset;
+    padding: 0.6rem 0.5rem;
+    border-top: none;
+    margin-top: 0;
+    font-weight: inherit;
   }
 
-  .table tr {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px;
-    padding: 0.6rem 0.7rem;
-    background: rgba(10, 16, 28, 0.6);
+  .technician-interventions-history .table tr.row-closed td {
+    color: #7ee787;
   }
 
-  .table td {
-    display: flex;
-    align-items: flex-start;
+  .technician-interventions-history .table tr.row-failed td {
+    color: #ff6b6b;
+  }
+
+  .technician-interventions-history .table tr.row-cancelled td {
+    color: rgba(148, 163, 184, 0.8);
+  }
+
+  .technician-interventions-history .pager {
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.4rem 0;
-    border-bottom: none;
+  }
+}
+
+/* ── Responsive: 900px — Desktop ────────────────────────── */
+@media (min-width: 900px) {
+  .technician-interventions-history {
+    padding: 1.25rem;
+    padding-bottom: 1.25rem;
+    gap: 1.25rem;
   }
 
-  .table td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
+  .technician-interventions-history .filters {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 
-  .pager {
-    flex-direction: column;
-    align-items: flex-start;
+  .technician-interventions-history .filters .actions {
+    grid-column: span 2;
+    align-self: end;
+    justify-self: end;
+  }
+
+  .technician-interventions-history .table {
+    overflow-x: auto;
   }
 }

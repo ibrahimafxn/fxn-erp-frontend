@@ -1,5 +1,52 @@
 .reservations { padding: 1.25rem; display: grid; gap: 1rem; }
 
+.page-loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 20, 0.45);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(6px);
+  z-index: 50;
+}
+
+.page-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(88, 123, 255, 0.35);
+  background: rgba(12, 18, 30, 0.9);
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+}
+
+.page-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.page-loading-text strong {
+  color: #fff;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(88, 123, 255, 0.3);
+  border-top-color: #6ba4ff;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .page-header {
   display:flex; justify-content:space-between; gap:1rem; align-items:flex-start;
   h1 { margin:0; font-size:1.35rem; }
@@ -95,6 +142,11 @@ thead th {
   border-bottom: 1px solid rgba(255,255,255,.10);
   min-width: 0;
 }
+
+.theme-default .reservations thead th {
+  opacity: 1;
+  color: #f9fafb;
+}
 tbody td {
   padding: .85rem .9rem;
   border-bottom: 1px solid rgba(255,255,255,.06);
@@ -128,6 +180,12 @@ tbody td:last-child .btn-outline {
   white-space: nowrap;
   width: 100%;
   justify-content: center;
+}
+
+tbody td:last-child .btn-outline.primary {
+  background: var(--fxn-primary-soft);
+  border-color: var(--fxn-primary-border);
+  color: var(--fxn-text);
 }
 
 th:last-child,

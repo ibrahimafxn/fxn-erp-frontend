@@ -7,6 +7,53 @@
   gap: 1rem;
 }
 
+.page-loading {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 10, 20, 0.45);
+  display: grid;
+  place-items: center;
+  backdrop-filter: blur(6px);
+  z-index: 50;
+}
+
+.page-loading-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(88, 123, 255, 0.35);
+  background: rgba(12, 18, 30, 0.9);
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+}
+
+.page-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.page-loading-text strong {
+  color: #fff;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(88, 123, 255, 0.3);
+  border-top-color: #6ba4ff;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* -------------------------------------------------
    Header
 ------------------------------------------------- */
@@ -32,6 +79,15 @@
     display: flex;
     gap: .65rem;
     flex-wrap: wrap;
+  }
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: stretch;
+
+    .header-actions {
+      justify-content: flex-start;
+    }
   }
 }
 
@@ -64,6 +120,11 @@
     }
   }
 
+  .search button {
+    height: 40px;
+    align-self: stretch;
+  }
+
   input,
   select {
     padding: .55rem .65rem;
@@ -72,6 +133,7 @@
     background: var(--fxn-surface);
     color: inherit;
     outline: none;
+    height: 40px;
   }
 
   input:focus,
@@ -135,7 +197,7 @@
 ------------------------------------------------- */
 .table {
   padding: 0;
-  overflow: hidden;
+  overflow-x: auto;
 
   table {
     width: 100%;
@@ -173,15 +235,16 @@
     display: flex;
     justify-content: flex-end;
     gap: .5rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
   }
 
   .actions-group .btn-outline,
   .actions-group .btn-danger {
-    min-width: 110px;
-    height: 38px;
-    padding: 0 0.9rem;
+    min-width: 52px;
+    width: 52px;
+    height: 52px;
+    padding: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -200,6 +263,96 @@
       font-weight: 750;
     }
   }
+
+  .manager-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+  }
+
+  .manager-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: .8rem;
+    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .manager-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+@media (max-width: 900px) {
+  .table table {
+    min-width: 720px;
+  }
+
+  .table td.actions {
+    width: auto;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    display: grid;
+    gap: .35rem;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--fxn-border);
+  }
+
+  .table tbody td {
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .3rem 0;
+    border-bottom: none;
+  }
+
+  .table tbody td::before {
+    content: attr(data-label);
+    font-size: .75rem;
+    opacity: .7;
+  }
+
+  .table tbody td.main {
+    display: block;
+  }
+
+  .table tbody td.main::before {
+    display: block;
+    margin-bottom: .25rem;
+  }
+
+  .table td.actions {
+    text-align: left;
+  }
+}
+
+@media (max-width: 700px) {
+  .depot-list {
+    padding: 1rem;
+  }
+
+  .table table {
+    min-width: 640px;
+  }
+
+  .table .actions-group {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
 }
 
 /* -------------------------------------------------
@@ -210,4 +363,12 @@
   justify-content: space-between;
   gap: .5rem;
   flex-wrap: wrap;
+}
+
+.pager-card {
+  padding: 0.75rem 1rem;
+}
+
+.pager-top {
+  align-items: center;
 }

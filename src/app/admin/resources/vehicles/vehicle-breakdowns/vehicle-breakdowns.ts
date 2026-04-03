@@ -166,18 +166,25 @@ export class VehicleBreakdowns extends DetailBack {
 
     const raw = this.resolveForm.getRawValue();
     const resolvedAt = raw.resolvedAt ? `${raw.resolvedAt}T00:00:00` : undefined;
-    const resolvedGarage = raw.resolvedGarage.trim() || null;
-    const resolvedNote = raw.resolvedNote.trim() || null;
-    const resolvedCost = raw.resolvedCost !== '' ? Number(raw.resolvedCost) : null;
-    const costValue = Number.isFinite(resolvedCost ?? 0) ? resolvedCost : null;
+    const resolvedGarage = raw.resolvedGarage.trim();
+    const resolvedNote = raw.resolvedNote.trim();
+    const resolvedCostRaw = raw.resolvedCost !== '' ? Number(raw.resolvedCost) : null;
+    const resolvedCost = Number.isFinite(resolvedCostRaw as number) ? resolvedCostRaw : null;
 
     this.resolvingId.set(target._id);
-    this.svc.resolveBreakdown(this.id, target._id, {
-      resolvedAt,
-      resolvedGarage,
-      resolvedCost: costValue,
-      resolvedNote
-    }).subscribe({
+    const payload: {
+      resolvedAt?: string;
+      resolvedGarage?: string;
+      resolvedCost?: number;
+      resolvedNote?: string;
+    } = {};
+
+    if (resolvedAt) payload.resolvedAt = resolvedAt;
+    if (resolvedGarage) payload.resolvedGarage = resolvedGarage;
+    if (resolvedNote) payload.resolvedNote = resolvedNote;
+    if (resolvedCost !== null) payload.resolvedCost = resolvedCost;
+
+    this.svc.resolveBreakdown(this.id, target._id, payload).subscribe({
       next: () => {
         this.resolvingId.set(null);
         this.closeResolve();

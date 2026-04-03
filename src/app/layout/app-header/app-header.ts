@@ -1,17 +1,20 @@
 import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
-import { CommonModule, Location } from '@angular/common';
+import {CommonModule, Location, NgOptimizedImage} from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService, AuthUser } from '../../core/services/auth.service';
 import { filter } from 'rxjs/operators';
 import { formatPersonName } from '../../core/utils/text-format';
+import { resolveUserAvatarUrl } from '../../core/utils/avatar-url';
 import { AlertsService } from '../../core/services/alerts.service';
+import { SupplyRequestService } from '../../core/services/supply-request.service';
 
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-header',
-  imports: [CommonModule, RouterModule, MatButtonModule],
+  imports: [CommonModule, RouterModule, MatButtonModule, NgOptimizedImage],
   templateUrl: './app-header.html',
   styleUrls: ['./app-header.scss'],
 })
@@ -20,6 +23,7 @@ export class AppHeader {
   private router = inject(Router);
   private location = inject(Location);
   private alertsService = inject(AlertsService);
+  private supplyRequestService = inject(SupplyRequestService);
 
   // user
   readonly user = this.auth.user$;
@@ -32,6 +36,8 @@ export class AppHeader {
   readonly pageTitle = signal('Dashboard');
   readonly currentUrl = signal(this.router.url);
   readonly alertsCount = this.alertsService.count;
+  readonly supplyBadgeCount = signal(0);
+  readonly supplyLatestDecidedAt = signal<string | null>(null);
   readonly showDirigeantWelcome = signal(false);
   private welcomeShown = false;
   private welcomeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -45,15 +51,20 @@ export class AppHeader {
   constructor() {
     this.currentLocale.set(this.detectLocale());
     this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
+      .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed())
       .subscribe(() => {
         this.currentUrl.set(this.router.url);
         this.pageTitle.set(this.computeTitle(this.router.url));
         this.menuOpen.set(false);
         this.currentLocale.set(this.detectLocale());
         this.alertsService.refresh();
+        this.refreshSupplyBadge();
+        if (this.router.url.includes('/technician/supply-requests')) {
+          this.markSupplyBadgeSeen();
+        }
       });
     this.alertsService.refresh();
+    this.refreshSupplyBadge();
     effect(() => {
       const user = this.user();
       if (user?.role === 'DIRIGEANT') {
@@ -82,7 +93,10 @@ export class AppHeader {
 
   readonly avatarUrl = computed(() => {
     const u = this.user();
-    return u?.photoUrl || u?.avatarUrl || '';
+    const cacheKey = (u as { updatedAt?: string; lastLoginAt?: string } | null)?.updatedAt
+      || (u as { updatedAt?: string; lastLoginAt?: string } | null)?.lastLoginAt
+      || '';
+    return resolveUserAvatarUrl(u, cacheKey);
   });
 
   readonly roleLabel = computed(() => {
@@ -118,6 +132,7 @@ export class AppHeader {
   readonly materialReservationsLink = computed(() => '/admin/reservations/materials');
   readonly receiptsLink = computed(() => (this.isDepotManager() ? '/depot/receipts' : '/admin/receipts'));
   readonly ordersLink = computed(() => '/admin/orders');
+  readonly suppliersLink = computed(() => '/admin/suppliers');
   readonly stockAlertsLink = computed(() => (this.isDepotManager() ? '/depot/alerts/stock' : '/admin/alerts/stock'));
 
   /* ---------------------------
@@ -142,6 +157,10 @@ export class AppHeader {
 
   goProfile(): void {
     this.router.navigate(['/profile']);
+  }
+
+  goPreferences(): void {
+    this.router.navigate(['/preferences']);
   }
 
   goUserAccess(): void {
@@ -171,6 +190,10 @@ export class AppHeader {
     this.router.navigate(['/admin/technicians/interventions']).then();
   }
 
+  goAgenda(): void {
+    this.router.navigate(['/admin/agenda']).then();
+  }
+
   goBpu(): void {
     this.router.navigate(['/admin/bpu']).then();
   }
@@ -189,6 +212,10 @@ export class AppHeader {
 
   goOrders(): void {
     this.router.navigate([this.ordersLink()]).then();
+  }
+
+  goSuppliers(): void {
+    this.router.navigate([this.suppliersLink()]).then();
   }
 
   goStockAlerts(): void {
@@ -211,6 +238,14 @@ export class AppHeader {
     this.router.navigate(['/technician/resources/vehicles']).then();
   }
 
+  goTechSupplyRequests(): void {
+    this.router.navigate(['/technician/supply-requests']).then();
+  }
+
+  goTechAgenda(): void {
+    this.router.navigate(['/technician/agenda']).then();
+  }
+
   goTechReports(): void {
     this.router.navigate(['/technician/reports']).then();
   }
@@ -219,12 +254,78 @@ export class AppHeader {
     this.router.navigate(['/technician/revenue']).then();
   }
 
+  goTechCharges(): void {
+    this.router.navigate(['/technician/charges']).then();
+  }
+
+  goTechBpu(): void {
+    this.router.navigate(['/technician/bpu']).then();
+  }
+
   goTechHistory(): void {
     this.router.navigate(['/technician/history']).then();
   }
 
+  goTechDocuments(): void {
+    this.router.navigate(['/technician/documents']).then();
+  }
+
+  goSupplyRequests(): void {
+    this.router.navigate(['/depot/supply-requests']).then();
+  }
+
   logout(): void {
     this.auth.logout(true).subscribe();
+  }
+
+  private refreshSupplyBadge(): void {
+    if (!this.isTechnician()) {
+      this.supplyBadgeCount.set(0);
+      this.supplyLatestDecidedAt.set(null);
+      return;
+    }
+    this.supplyRequestService.summaryMine().subscribe({
+      next: (res) => {
+        const decided = res?.data?.decided ?? 0;
+        const latest = res?.data?.latestDecidedAt ?? null;
+        this.supplyLatestDecidedAt.set(latest);
+        const seenAt = this.loadSupplySeenAt();
+        const latestTs = latest ? new Date(latest).getTime() : 0;
+        const seenTs = seenAt ? new Date(seenAt).getTime() : 0;
+        const shouldShow = latestTs > seenTs;
+        this.supplyBadgeCount.set(shouldShow ? decided : 0);
+      },
+      error: () => {
+        this.supplyBadgeCount.set(0);
+        this.supplyLatestDecidedAt.set(null);
+      }
+    });
+  }
+
+  private markSupplyBadgeSeen(): void {
+    if (!this.isTechnician()) return;
+    const latest = this.supplyLatestDecidedAt();
+    const value = latest || new Date().toISOString();
+    this.persistSupplySeenAt(value);
+    this.supplyBadgeCount.set(0);
+  }
+
+  private loadSupplySeenAt(): string | null {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      return localStorage.getItem('fxn_supply_seen_at');
+    } catch {
+      return null;
+    }
+  }
+
+  private persistSupplySeenAt(value: string): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem('fxn_supply_seen_at', value);
+    } catch {
+      // ignore storage errors
+    }
   }
 
   localeHref(locale: 'fr' | 'en'): string {
@@ -282,6 +383,7 @@ export class AppHeader {
       if (url.includes('/reservations')) return 'Attributions';
       if (url.includes('/receipts')) return 'Réceptions';
       if (url.includes('/alerts/stock')) return 'Alertes';
+      if (url.includes('/supply-requests')) return 'Approvisionnements';
       if (url.includes('/history')) return 'Mouvements';
       return 'Dépôt';
     }
@@ -289,9 +391,14 @@ export class AppHeader {
       if (url.includes('/resources/vehicles')) return 'Véhicules';
       if (url.includes('/resources/materials')) return 'Matériels';
       if (url.includes('/resources/consumables')) return 'Consommables';
+      if (url.includes('/supply-requests')) return 'Approvisionnements';
+      if (url.includes('/agenda')) return 'Agenda';
       if (url.includes('/reports')) return 'Rapport quotidien';
       if (url.includes('/revenue')) return "Chiffre d'affaires";
+      if (url.includes('/charges')) return 'Charges';
+      if (url.includes('/bpu')) return 'BPU prestations';
       if (url.includes('/history')) return 'Historique';
+      if (url.includes('/documents')) return 'Documents';
       return 'Technicien';
     }
     if (url.includes('/unauthorized')) return 'Accès refusé';
@@ -299,11 +406,13 @@ export class AppHeader {
     if (url.includes('/users')) return 'Utilisateurs';
     if (url.includes('/hr')) return 'Ressources humaines';
     if (url.includes('/security/user-access')) return 'Accès connexion';
+    if (url.includes('/preferences')) return 'Préférences';
     if (url.includes('/reservations/materials')) return 'Attributions matériels';
     if (url.includes('/reservations')) return 'Attributions';
     if (url.includes('/receipts')) return 'Réceptions';
     if (url.includes('/orders/new')) return 'Nouvelle commande';
     if (url.includes('/orders')) return 'Commandes';
+    if (url.includes('/suppliers')) return 'Fournisseurs';
     if (url.includes('/alerts/stock')) return 'Alertes';
     if (url.includes('/interventions/import')) return 'Import interventions';
     if (url.includes('/interventions')) return 'Interventions';
@@ -320,4 +429,6 @@ export class AppHeader {
     const path = window.location.pathname || '';
     return path === '/en' || path.startsWith('/en/') ? 'en' : 'fr';
   }
+
+
 }

@@ -1,4 +1,15 @@
 <section class="revenue-page">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header">
     <div>
       <h1>Chiffre d'affaires</h1>
@@ -202,22 +213,69 @@
   } @else if (error()) {
     <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
   } @else {
+    <footer class="pager pager-fixed">
+      <div class="pager-left">
+        <div class="page-size">
+          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+        </div>
+        <span class="pager-label">Éléments par page</span>
+      </div>
+      <div class="pager-right">
+        <span class="pager-range">{{ pageRange(page(), limit(), totalCount()) }}</span>
+        <div class="pager-nav">
+          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+        </div>
+      </div>
+    </footer>
+
     <div class="table card revenue-table">
       <table>
         <thead>
         <tr>
-          <th>Mois</th>
-          <th>Montant HT</th>
-          <th>Pénalité</th>
-          <th>Note</th>
-          <th>Factures</th>
-          <th>Auteur</th>
-          <th>MAJ</th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('month')">
+              Mois <span class="sort-indicator">{{ sortIndicator('month') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('amount')">
+              Montant HT <span class="sort-indicator">{{ sortIndicator('amount') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('penalty')">
+              Pénalité <span class="sort-indicator">{{ sortIndicator('penalty') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('note')">
+              Note <span class="sort-indicator">{{ sortIndicator('note') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('attachments')">
+              Factures <span class="sort-indicator">{{ sortIndicator('attachments') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('author')">
+              Auteur <span class="sort-indicator">{{ sortIndicator('author') }}</span>
+            </button>
+          </th>
+          <th>
+            <button class="sort-btn" type="button" (click)="setSort('updatedAt')">
+              MAJ <span class="sort-indicator">{{ sortIndicator('updatedAt') }}</span>
+            </button>
+          </th>
           <th></th>
         </tr>
         </thead>
         <tbody>
-          @for (item of items(); track item._id) {
+          @for (item of sortedItems(); track item._id) {
             <tr>
               <td data-label="Mois"><span class="month-pill">{{ formatMonth(item) }}</span></td>
               <td data-label="Montant HT"><span class="amount-pill">{{ formatCurrency(item.amountHt) }}</span></td>
@@ -279,8 +337,8 @@
                 @if (item.updatedBy) { · {{ authorLabel(item.updatedBy) }} }
               </td>
               <td class="actions" data-label="Actions">
-                <button class="btn-outline edit" type="button" (click)="startEdit(item)"><i class="bi bi-pencil"></i> Modifier</button>
-                <button class="btn-outline delete" type="button" (click)="openDeleteModal(item)"><i class="fa-solid fa-trash"></i> Supprimer</button>
+                <button class="btn-outline edit" type="button" title="Modifier" (click)="startEdit(item)"><i class="bi bi-pencil"></i> Modifier</button>
+                <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal(item)"><i class="fa-solid fa-trash"></i> Supprimer</button>
               </td>
             </tr>
           }
@@ -297,23 +355,5 @@
       (cancel)="closeDeleteModal()"
       (confirm)="confirmDelete()"
     />
-    <footer class="pager pager-fixed">
-      <div class="pager-left">
-        <div class="page-size">
-          <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
-          <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
-          <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
-          <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
-        </div>
-        <span class="pager-label">Éléments par page</span>
-      </div>
-      <div class="pager-right">
-        <span class="pager-range">{{ pageRange(page(), limit(), totalCount()) }}</span>
-        <div class="pager-nav">
-          <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
-          <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
-        </div>
-      </div>
-    </footer>
   }
 </section>

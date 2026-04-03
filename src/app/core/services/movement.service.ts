@@ -45,6 +45,8 @@ export class MovementService {
       toId?: string;
       fromDate?: string;
       toDate?: string;
+      sortField?: string;
+      sortDir?: string;
       page?: number;
       limit?: number;
     }
@@ -68,6 +70,8 @@ export class MovementService {
     if (filter?.toId) params = params.set('toId', filter.toId);
     if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
     if (filter?.toDate) params = params.set('toDate', filter.toDate);
+    if (filter?.sortField) params = params.set('sortField', filter.sortField);
+    if (filter?.sortDir) params = params.set('sortDir', filter.sortDir);
     if (filter?.page) params = params.set('page', String(filter.page));
     if (filter?.limit) params = params.set('limit', String(filter.limit));
 
@@ -109,6 +113,8 @@ export class MovementService {
     if (filter?.toId) params = params.set('toId', filter.toId);
     if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
     if (filter?.toDate) params = params.set('toDate', filter.toDate);
+    if (filter?.sortField) params = params.set('sortField', filter.sortField);
+    if (filter?.sortDir) params = params.set('sortDir', filter.sortDir);
     if (filter?.page) params = params.set('page', String(filter.page));
     if (filter?.limit) params = params.set('limit', String(filter.limit));
 
@@ -136,6 +142,8 @@ export class MovementService {
     if (filter?.toId) params = params.set('toId', filter.toId);
     if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
     if (filter?.toDate) params = params.set('toDate', filter.toDate);
+    if (filter?.sortField) params = params.set('sortField', filter.sortField);
+    if (filter?.sortDir) params = params.set('sortDir', filter.sortDir);
     return this.http.get(`${this.baseUrl}/export`, { params, responseType: 'blob' }).pipe(
       catchError(err => this.handleError(err))
     );
@@ -156,6 +164,8 @@ export class MovementService {
     if (filter?.toId) params = params.set('toId', filter.toId);
     if (filter?.fromDate) params = params.set('fromDate', filter.fromDate);
     if (filter?.toDate) params = params.set('toDate', filter.toDate);
+    if (filter?.sortField) params = params.set('sortField', filter.sortField);
+    if (filter?.sortDir) params = params.set('sortDir', filter.sortDir);
     return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' }).pipe(
       catchError(err => this.handleError(err))
     );

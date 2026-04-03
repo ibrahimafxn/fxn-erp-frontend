@@ -1,4 +1,15 @@
 <section class="reservations">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header">
     <div>
       <h1>Attributions consommables</h1>
@@ -57,7 +68,7 @@
       </label>
 
       <div class="actions">
-        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline primary" type="submit"><i class="bi bi-search"></i> Rechercher</button>
         <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
       </div>
     </form>
@@ -74,15 +85,15 @@
     <div class="table card">
       <table>
         <thead>
-        <tr>
-          <th>Date</th>
-          <th>Consommable</th>
-          <th>Quantité</th>
-          <th>Technicien</th>
-          <th>Dépôt</th>
-          <th>Auteur</th>
-          <th>Note</th>
-          <th>Action</th>
+        <tr title="Contraste renforcé (thème neutre)">
+          <th title="Date">Date</th>
+          <th title="Consommable">Consommable</th>
+          <th title="Quantité">Quantité</th>
+          <th title="Technicien">Technicien</th>
+          <th title="Dépôt">Dépôt</th>
+          <th title="Auteur">Auteur</th>
+          <th title="Note">Note</th>
+          <th title="Action">Action</th>
         </tr>
         </thead>
         <tbody>

@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: blob: https://exchange-backend-r5rb.onrender.com https://res.cloudinary.com; style-src 'self' 'unsafe-inline'; script-src 'self'; script-src-attr 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https://exchange-backend-r5rb.onrender.com https://res.cloudinary.com;"
+          "value": "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data: blob: https://exchange-backend-r5rb.onrender.com https://res.cloudinary.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'sha256-Hl4QofVum+RU4U1J+I5FzonzH/ytHndIk09rwgO68Ng='; script-src-attr 'unsafe-hashes' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc='; font-src 'self' data:; connect-src 'self' https://exchange-backend-r5rb.onrender.com https://res.cloudinary.com;"
         },
         {
           "key": "Referrer-Policy",

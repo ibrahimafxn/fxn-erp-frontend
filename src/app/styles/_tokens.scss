@@ -95,8 +95,8 @@ body.theme-admin {
 }
 
 body.theme-default {
-  --fxn-bg: #f5f8ff;
-  --fxn-bg-2: #eaf1ff;
+  --fxn-bg: #edf0f3;
+  --fxn-bg-2: #e2e6ea;
   --fxn-surface: #ffffff;
   --fxn-surface-soft: #f1f6ff;
   --fxn-surface-glass: rgba(255, 255, 255, 0.82);
@@ -196,4 +196,13 @@ body.theme-technicien {
   --fxn-ring: 0 0 0 3px rgba(139, 153, 179, 0.3);
   --fxn-bg-glow-1: rgba(139, 153, 179, 0.22);
   --fxn-bg-glow-2: rgba(32, 36, 48, 0.55);
+}
+
+body.ui-compact {
+  --fxn-space-md: 0.75rem;
+  --fxn-space-lg: 1.1rem;
+  --fxn-space-xl: 1.6rem;
+  --fxn-radius-lg: 16px;
+  --fxn-radius-xl: 22px;
+  --fxn-pager-fixed-height: 48px;
 }

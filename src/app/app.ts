@@ -1,9 +1,15 @@
 import { Component, AfterViewInit, OnDestroy, effect, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
 import {DOCUMENT} from '@angular/common';
-import {RouterOutlet} from '@angular/router';
+import {NavigationEnd, Router, RouterOutlet} from '@angular/router';
 import {AppHeader} from './layout/app-header/app-header';
 import {AuthService} from './core/services/auth.service';
+import { UserPreferencesService } from './core/services/user-preferences.service';
+import { ThemeOverride, UserPreferences } from './core/models';
 import {Role} from './core/models/roles.model';
+import { environment } from './environments/environment';
+import packageJson from '../../package.json';
+import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -14,36 +20,70 @@ import {Role} from './core/models/roles.model';
 })
 export class App implements AfterViewInit, OnDestroy {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly preferencesApi = inject(UserPreferencesService);
   private readonly document = inject(DOCUMENT);
   private toneObserver: MutationObserver | null = null;
+  private lastPrefsUserId: string | null = null;
+  private routeSub: Subscription | null = null;
 
   protected readonly title = signal('fxn-erp-frontend');
-  readonly showHeader = computed(() => Boolean(this.auth.user$()));
+  private readonly routeUrl = signal(this.router.url);
+  readonly showHeader = computed(() =>
+    Boolean(this.auth.user$()) && !this.isLoginRoute(this.routeUrl())
+  );
+  readonly showHeidiOverlay = computed(() => {
+    const user = this.auth.user$();
+    if (!user || user.role !== Role.ADMIN) return false;
+    return this.isAdminDashboardRoute(this.routeUrl());
+  });
+  readonly isTechnician = computed(() => this.auth.user$()?.role === Role.TECHNICIEN);
+  readonly currentYear = new Date().getFullYear();
+  readonly appVersion = packageJson.version ?? '—';
+  constructor() {
+    this.auth.bootstrapSession();
+    this.routeSub = this.router.events
+      .pipe(filter((evt) => evt instanceof NavigationEnd))
+      .subscribe((evt) => {
+        const nav = evt as NavigationEnd;
+        this.routeUrl.set(nav.urlAfterRedirects || nav.url);
+      });
+  }
+  private readonly preferencesEffect = effect(() => {
+    const user = this.auth.user$();
+    const userId = user?._id ?? null;
+    if (!userId || this.lastPrefsUserId === userId) return;
+    this.lastPrefsUserId = userId;
+    this.preferencesApi.getMyPreferences().subscribe({
+      next: (prefs) => this.auth.updateCurrentUser({ preferences: prefs }),
+      error: () => {}
+    });
+  });
 
   private readonly themeEffect = effect(() => {
-    const role = this.auth.getUserRole();
+    const user = this.auth.user$();
+    const prefs = this.normalizePreferences(user?.preferences);
+    const override = this.normalizeTheme(prefs?.themeOverride ?? null);
+    const role = user?.role ?? null;
     const body = this.document.body;
     const classes = ['theme-default', 'theme-admin', 'theme-dirigeant', 'theme-gestion-depot', 'theme-technicien'];
 
     classes.forEach(c => body.classList.remove(c));
 
-    switch (role) {
-      case Role.ADMIN:
-        body.classList.add('theme-admin');
-        break;
-      case Role.DIRIGEANT:
-        body.classList.add('theme-dirigeant');
-        break;
-      case Role.GESTION_DEPOT:
-        body.classList.add('theme-gestion-depot');
-        break;
-      case Role.TECHNICIEN:
-        body.classList.add('theme-technicien');
-        break;
-      default:
-        body.classList.add('theme-default');
-        break;
-    }
+    const themeClass = this.resolveThemeClass(override, role);
+    body.classList.add(themeClass);
+  });
+
+  private readonly densityEffect = effect(() => {
+    const body = this.document.body;
+    const prefs = this.normalizePreferences(this.auth.user$()?.preferences);
+    body.classList.toggle('ui-compact', prefs?.density === 'compact');
+  });
+
+  private readonly motionEffect = effect(() => {
+    const body = this.document.body;
+    const prefs = this.normalizePreferences(this.auth.user$()?.preferences);
+    body.classList.toggle('ui-reduced-motion', prefs?.motion === 'reduced');
   });
 
   ngAfterViewInit(): void {
@@ -67,6 +107,50 @@ export class App implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.toneObserver?.disconnect();
     this.toneObserver = null;
+    this.routeSub?.unsubscribe();
+    this.routeSub = null;
+  }
+
+  private normalizeTheme(value: string | ThemeOverride | null): ThemeOverride {
+    if (value === 'default' || value === 'admin' || value === 'dirigeant' || value === 'gestion-depot' || value === 'technicien') {
+      return value;
+    }
+    return null;
+  }
+
+  private normalizePreferences(prefs?: UserPreferences | null): UserPreferences {
+    return {
+      themeOverride: this.normalizeTheme(prefs?.themeOverride ?? null),
+      density: prefs?.density === 'compact' ? 'compact' : 'comfortable',
+      motion: prefs?.motion === 'reduced' ? 'reduced' : 'full',
+      avatar: prefs?.avatar ?? null
+    };
+  }
+
+  private resolveThemeClass(override: ThemeOverride, role: Role | null): string {
+    if (override) return `theme-${override}`;
+    switch (role) {
+      case Role.ADMIN:
+        return 'theme-admin';
+      case Role.DIRIGEANT:
+        return 'theme-dirigeant';
+      case Role.GESTION_DEPOT:
+        return 'theme-gestion-depot';
+      case Role.TECHNICIEN:
+        return 'theme-technicien';
+      default:
+        return 'theme-default';
+    }
+  }
+
+  private isLoginRoute(url: string): boolean {
+    const clean = (url || '').split('?')[0].split('#')[0].toLowerCase();
+    return clean === '/login' || clean.endsWith('/auth/login') || clean.includes('/login');
+  }
+
+  private isAdminDashboardRoute(url: string): boolean {
+    const clean = (url || '').split('?')[0].split('#')[0].toLowerCase();
+    return clean === '/admin' || clean === '/admin/dashboard';
   }
 
   private applyButtonTones(): void {

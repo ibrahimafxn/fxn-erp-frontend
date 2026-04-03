@@ -30,11 +30,23 @@
     border: 1px solid var(--fxn-border-strong);
   }
 
+  select {
+    min-width: 180px;
+    background: #000;
+    color: #fff;
+    border: 1px solid var(--fxn-border-strong);
+  }
+
   input::placeholder {
     color: rgba(255, 255, 255, 0.65);
   }
 
   input:focus {
+    border-color: var(--fxn-primary-border);
+    box-shadow: var(--fxn-ring);
+  }
+
+  select:focus {
     border-color: var(--fxn-primary-border);
     box-shadow: var(--fxn-ring);
   }
@@ -72,6 +84,47 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   margin-top: 18px;
+}
+
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.kpi-card {
+  border: 1px solid var(--fxn-border);
+  border-radius: 14px;
+  background: var(--fxn-surface-glass);
+  padding: 12px 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.kpi-card .label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fxn-text-muted);
+}
+
+.kpi-card .value {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.kpi-card .hint {
+  font-size: 0.8rem;
+  color: var(--fxn-text-muted);
+}
+
+.kpi-ttc .value {
+  color: #a7f3d0;
+}
+
+.kpi-tva .value {
+  color: #fde68a;
 }
 
 .filters label {
@@ -279,8 +332,40 @@ td {
   justify-content: flex-end;
 }
 
+.import-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 1rem;
+
+  label {
+    display: grid;
+    gap: 6px;
+  }
+
+  input {
+    border-radius: var(--fxn-radius-sm);
+    border: 1px solid var(--fxn-border-strong);
+    background: var(--fxn-surface-soft);
+    color: var(--fxn-text);
+    padding: 10px 12px;
+    font: inherit;
+  }
+}
+
 .modal-table {
   margin-top: 0;
+}
+
+.modal-table input,
+.modal-table select {
+  width: 100%;
+  border-radius: var(--fxn-radius-sm);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
+  color: var(--fxn-text);
+  padding: 8px 10px;
+  font: inherit;
 }
 
 @media (max-width: 900px) {

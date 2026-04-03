@@ -11,6 +11,7 @@ import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-dele
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 
 @Component({
   standalone: true,
@@ -193,6 +194,24 @@ export class DepotList extends DetailBack {
     }
 
     return '—';
+  }
+
+  managerAvatarSrc(d: Depot): string {
+    const m = d.managerId;
+    if (!m || typeof m !== 'object' || !('_id' in m)) return '';
+    const obj = m as { photoUrl?: string; avatarUrl?: string; updatedAt?: string; lastLoginAt?: string };
+    const cacheKey = obj.updatedAt || obj.lastLoginAt || '';
+    return resolveUserAvatarUrl(obj as { photoUrl?: string; avatarUrl?: string; preferences?: { avatar?: string | null } }, cacheKey);
+  }
+
+  managerInitials(d: Depot): string {
+    const m = d.managerId;
+    if (!m || typeof m !== 'object' || !('_id' in m)) return '';
+    const obj = m as { firstName?: string; lastName?: string; email?: string };
+    const first = obj.firstName?.[0] ?? '';
+    const last = obj.lastName?.[0] ?? '';
+    const value = `${first}${last}`.toUpperCase();
+    return value || (obj.email?.[0] ?? '').toUpperCase();
   }
 
   depotName(d: Depot): string {

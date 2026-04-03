@@ -250,6 +250,10 @@
         <source>Compte</source>
         <target>Account</target>
       </trans-unit>
+      <trans-unit id="header.menu.preferences">
+        <source>Préférences</source>
+        <target>Preferences</target>
+      </trans-unit>
       <trans-unit id="header.menu.profile">
         <source>Mon profil</source>
         <target>My profile</target>

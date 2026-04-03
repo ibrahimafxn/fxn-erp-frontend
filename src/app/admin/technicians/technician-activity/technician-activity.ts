@@ -1,17 +1,22 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, firstValueFrom } from 'rxjs';
 
 import { MovementService } from '../../../core/services/movement.service';
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
 import { UserService } from '../../../core/services/user.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
+import { HrService } from '../../../core/services/hr.service';
 import { Movement, Depot, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
+
+type SortField = 'date' | 'technician' | 'depot' | 'amount';
 
 @Component({
   selector: 'app-technician-activity',
@@ -28,6 +33,8 @@ export class TechnicianActivity {
   private userService = inject(UserService);
   private depotService = inject(DepotService);
   private auth = inject(AuthService);
+  private bpuSelectionService = inject(BpuSelectionService);
+  private hrService = inject(HrService);
   private datePipe = inject(DatePipe);
   private fb = inject(FormBuilder);
 
@@ -41,7 +48,18 @@ export class TechnicianActivity {
   readonly summaryLoading = signal(false);
   readonly loadingUsers = signal(false);
   readonly loadingDepots = signal(false);
+  readonly loadingBpu = signal(false);
+  readonly loadingEmployees = signal(false);
   readonly error = signal<string | null>(null);
+  readonly initialLoading = computed(() =>
+    this.reservationsLoading()
+    || this.interventionsLoading()
+    || this.summaryLoading()
+    || this.loadingUsers()
+    || this.loadingDepots()
+    || this.loadingBpu()
+    || this.loadingEmployees()
+  );
 
   readonly interventionPage = signal(1);
   readonly interventionLimit = signal(20);
@@ -54,6 +72,8 @@ export class TechnicianActivity {
   });
   readonly canPrevInterventions = computed(() => this.interventionPage() > 1);
   readonly canNextInterventions = computed(() => this.interventionPage() < this.interventionPageCount());
+  readonly sortField = signal<SortField>('date');
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
 
   readonly filterForm = this.fb.nonNullable.group({
     technicianId: this.fb.nonNullable.control(''),
@@ -63,14 +83,55 @@ export class TechnicianActivity {
   });
 
   readonly prestationOptions = [
-    { key: 'professionnel', label: 'Professionnel' },
-    { key: 'pavillon', label: 'Pavillon' },
-    { key: 'immeuble', label: 'Immeuble' },
-    { key: 'prestaComplementaire', label: 'Presta Compl.' },
-    { key: 'reconnexion', label: 'Reconnexion' },
-    { key: 'sav', label: 'SAV' },
-    { key: 'prestationF8', label: 'Prestation F8' }
+    { key: 'professionnel', label: 'Professionnel', className: 'pill-professionnel' },
+    { key: 'pavillon', label: 'Pavillon', className: 'pill-pavillon' },
+    { key: 'immeuble', label: 'Immeuble', className: 'pill-immeuble' },
+    { key: 'racProC', label: 'Professionnel complexe', className: 'pill-pro-c' },
+    { key: 'prestaComplementaire', label: 'Presta Compl.', className: 'pill-complementaire' },
+    { key: 'reconnexion', label: 'Reconnexion', className: 'pill-reconnexion' },
+    { key: 'sav', label: 'SAV', className: 'pill-sav' },
+    { key: 'prestationF8', label: 'Prestation F8', className: 'pill-f8' }
   ] as const;
+  readonly bpuSelections = signal(new Map<string, Map<string, number>>());
+  readonly employeeContracts = signal(new Map<string, string>());
+  readonly bpuLoaded = signal(false);
+  readonly employeesLoaded = signal(false);
+  readonly selectedTechnicianId = signal('');
+  readonly customBpuLoading = signal(false);
+  readonly hasCustomBpu = signal(false);
+  readonly selectedTechnicianLabel = computed(() => {
+    const techId = this.selectedTechnicianId();
+    if (!techId) return '';
+    const match = this.users().find((u) => u._id === techId);
+    if (!match) return '';
+    const parts = [match.firstName, match.lastName].filter(Boolean);
+    return parts.join(' ').trim();
+  });
+  readonly sortedInterventions = computed(() => {
+    const items = [...this.interventions()];
+    const field = this.sortField();
+    const dir = this.sortDirection();
+    const factor = dir === 'asc' ? 1 : -1;
+    const byText = (value: string) => value.toLowerCase();
+    const compareText = (a: string, b: string) => byText(a).localeCompare(byText(b));
+    items.sort((a, b) => {
+      switch (field) {
+        case 'technician':
+          return factor * compareText(this.technicianName(a), this.technicianName(b));
+        case 'depot':
+          return factor * compareText(this.depotName(a), this.depotName(b));
+        case 'amount':
+          return factor * ((this.reportAmount(a) || 0) - (this.reportAmount(b) || 0));
+        case 'date':
+        default: {
+          const aTime = new Date(a.reportDate || 0).getTime();
+          const bTime = new Date(b.reportDate || 0).getTime();
+          return factor * (aTime - bTime);
+        }
+      }
+    });
+    return items;
+  });
 
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly managerDepotId = computed(() => {
@@ -84,7 +145,18 @@ export class TechnicianActivity {
   constructor() {
     this.loadUsers();
     this.loadDepots();
+    void this.ensureBpuSelections();
+    void this.ensureEmployeeContracts();
     this.refreshAll();
+
+    this.selectedTechnicianId.set(this.filterForm.controls.technicianId.value || '');
+    this.loadSelectedTechnicianBpu();
+    this.filterForm.controls.technicianId.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((value) => {
+        this.selectedTechnicianId.set(value || '');
+        this.loadSelectedTechnicianBpu();
+      });
   }
 
   refreshAll(): void {
@@ -245,13 +317,28 @@ export class TechnicianActivity {
     return formatDepotName(depot.name);
   }
 
-  prestationsSummary(report: TechnicianReport): Array<{ key: string; label: string; value: number }> {
+  sortArrow(field: SortField): string {
+    if (this.sortField() !== field) return '';
+    return this.sortDirection() === 'asc' ? '▲' : '▼';
+  }
+
+  setSort(field: SortField): void {
+    if (this.sortField() === field) {
+      this.sortDirection.update((dir) => (dir === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    this.sortField.set(field);
+    this.sortDirection.set(field === 'date' || field === 'amount' ? 'desc' : 'asc');
+  }
+
+  prestationsSummary(report: TechnicianReport): Array<{ key: string; label: string; value: number; className: string }> {
     const p = report.prestations || {};
     return this.prestationOptions
       .map((option) => ({
         key: option.key,
         label: option.label,
-        value: Number(p[option.key] || 0)
+        value: Number(p[option.key] || 0),
+        className: option.className
       }))
       .filter((item) => item.value > 0);
   }
@@ -266,6 +353,30 @@ export class TechnicianActivity {
       maximumFractionDigits: 2
     }).format(amount);
   }
+
+  reportAmount(report: TechnicianReport): number {
+    return this.computeBpuAmount(report);
+  }
+
+  reportBpuLabel(report: TechnicianReport): string {
+    const type = this.resolveBpuSegment(report.technician?._id);
+    if (type === 'AUTO') return 'AUTO';
+    if (type === 'AUTRE') return 'AUTRE';
+    return 'SALARIE';
+  }
+
+  readonly selectedBpuLabel = computed(() => {
+    const techId = this.selectedTechnicianId();
+    if (!techId) return '';
+    if (this.hasCustomBpu()) {
+      const label = this.selectedTechnicianLabel();
+      return label ? `Suivi - ${label}` : 'Suivi';
+    }
+    const type = this.resolveBpuSegment(techId);
+    if (type === 'AUTO') return 'AUTO';
+    if (type === 'AUTRE') return 'AUTRE';
+    return 'SALARIE';
+  });
 
   totalAmount(): number {
     return this.summaryTotalAmount();
@@ -322,7 +433,10 @@ export class TechnicianActivity {
     };
   }
 
-  private refreshSummary(): void {
+  private summaryRequestId = 0;
+
+  private async refreshSummary(): Promise<void> {
+    const requestId = ++this.summaryRequestId;
     const filters = this.filterForm.getRawValue();
     const dates = this.normalizeDateRange(filters.fromDate, filters.toDate);
     const depotId = this.isDepotManager() ? (this.managerDepotId() ?? undefined) : (filters.depot || undefined);
@@ -330,26 +444,141 @@ export class TechnicianActivity {
 
     this.summaryLoading.set(true);
     this.error.set(null);
-    this.reportService.summary({
+    await this.ensureBpuSelections();
+    await this.ensureEmployeeContracts();
+
+    const baseQuery = {
       fromDate: dates.fromDate,
       toDate: dates.toDate,
       technicianId,
       depotId
-    }).subscribe({
-      next: (res) => {
+    };
+
+    const limit = 200;
+    let page = 1;
+    let total = 0;
+    let amount = 0;
+
+    try {
+      do {
+        const res = await firstValueFrom(this.reportService.list({ ...baseQuery, page, limit }));
+        if (requestId !== this.summaryRequestId) return;
         if (!res?.success) {
-          this.error.set('Erreur chargement montant');
-          this.summaryLoading.set(false);
-          return;
+          throw new Error('Erreur chargement montant');
         }
-        this.summaryTotalAmount.set(res.data.totalAmount || 0);
-        this.summaryLoading.set(false);
+        const items = res.data.items || [];
+        for (const item of items) {
+          amount += this.computeBpuAmount(item);
+        }
+        total = res.data.total ?? (items.length + (page - 1) * limit);
+        page += 1;
+      } while ((page - 1) * limit < total);
+
+      if (requestId !== this.summaryRequestId) return;
+      this.summaryTotalAmount.set(amount);
+    } catch (err) {
+      if (requestId !== this.summaryRequestId) return;
+      this.error.set(this.apiError(err, 'Erreur chargement montant'));
+    } finally {
+      if (requestId !== this.summaryRequestId) return;
+      this.summaryLoading.set(false);
+    }
+  }
+
+  private computeBpuAmount(report: TechnicianReport): number {
+    const prices = this.resolveBpuPrices(report.technician?._id);
+    const p = report.prestations || {};
+    const get = (value?: number) => Number(value || 0);
+    return (
+      get(p.professionnel) * this.getBpuUnit(prices, 'RACPRO_S')
+      + get(p.racProC) * this.getBpuUnit(prices, 'RACPRO_C')
+      + get(p.pavillon) * this.getBpuUnit(prices, 'RACPAV')
+      + get(p.immeuble) * this.getBpuUnit(prices, 'RACIH')
+      + get(p.prestaComplementaire) * this.getBpuUnit(prices, 'PRESTA_COMPL')
+      + get(p.reconnexion) * this.getBpuUnit(prices, 'RECOIP')
+      + get(p.sav) * this.getBpuUnit(prices, 'SAV')
+      + get(p.prestationF8) * this.getBpuUnit(prices, 'REPFOU_PRI')
+    );
+  }
+
+  private getBpuUnit(prices: Map<string, number> | null, code: string): number {
+    if (!prices) return 0;
+    return Number(prices.get(code) || 0);
+  }
+
+  private resolveBpuPrices(technicianId?: string | null): Map<string, number> | null {
+    const type = this.resolveBpuSegment(technicianId);
+    return this.bpuSelections().get(type) || null;
+  }
+
+  private resolveBpuSegment(technicianId?: string | null): string {
+    if (!technicianId) return 'SALARIE';
+    const contract = this.employeeContracts().get(technicianId) || '';
+    if (contract === 'AUTRE') return 'AUTRE';
+    if (contract === 'FREELANCE') return 'AUTO';
+    return 'SALARIE';
+  }
+
+  private async ensureBpuSelections(): Promise<void> {
+    if (this.bpuLoaded() || this.loadingBpu()) return;
+    this.loadingBpu.set(true);
+    try {
+      const items = await firstValueFrom(this.bpuSelectionService.list());
+      const map = new Map<string, Map<string, number>>();
+      for (const selection of items || []) {
+        const type = String(selection.type || '').trim().toUpperCase();
+        if (!type) continue;
+        const priceMap = new Map<string, number>();
+        for (const entry of selection.prestations || []) {
+          const code = String(entry.code || '').trim().toUpperCase();
+          if (!code) continue;
+          priceMap.set(code, Number(entry.unitPrice || 0));
+        }
+        map.set(type, priceMap);
+      }
+      this.bpuSelections.set(map);
+      this.bpuLoaded.set(true);
+    } finally {
+      this.loadingBpu.set(false);
+    }
+  }
+
+  private loadSelectedTechnicianBpu(): void {
+    const techId = this.selectedTechnicianId();
+    if (!techId) {
+      this.hasCustomBpu.set(false);
+      return;
+    }
+    this.customBpuLoading.set(true);
+    this.bpuSelectionService.list({ owner: techId }).subscribe({
+      next: (items) => {
+        this.hasCustomBpu.set((items || []).length > 0);
+        this.customBpuLoading.set(false);
       },
-      error: (err) => {
-        this.summaryLoading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement montant'));
+      error: () => {
+        this.hasCustomBpu.set(false);
+        this.customBpuLoading.set(false);
       }
     });
+  }
+
+  private async ensureEmployeeContracts(): Promise<void> {
+    if (this.employeesLoaded() || this.loadingEmployees()) return;
+    this.loadingEmployees.set(true);
+    try {
+      const res = await firstValueFrom(this.hrService.listEmployees({ role: 'TECHNICIEN', page: 1, limit: 2000 }));
+      const map = new Map<string, string>();
+      for (const entry of res.items || []) {
+        const id = entry.user?._id;
+        if (!id) continue;
+        const contract = entry.profile?.contractType || '';
+        map.set(id, contract);
+      }
+      this.employeeContracts.set(map);
+      this.employeesLoaded.set(true);
+    } finally {
+      this.loadingEmployees.set(false);
+    }
   }
 
   private apiError(err: any, fallback: string): string {

@@ -1,0 +1,164 @@
+<section class="osiris-mappings">
+  <header class="page-header card hero">
+    <div>
+      <h1>Mappings codes OSIRIS</h1>
+      <p class="subtitle">
+        ERT Technologie change ses codes tous les 6 mois. Enregistrez ici les équivalences
+        entre les anciens/nouveaux codes OSIRIS et les codes de votre référentiel admin.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" type="button" (click)="openForm()">
+        <i class="bi bi-plus-lg"></i> Nouveau mapping
+      </button>
+    </div>
+  </header>
+
+  <!-- Formulaire de création -->
+  @if (formOpen()) {
+    <div class="card mapping-form-card">
+      <h3>Nouveau mapping</h3>
+      <div class="mapping-form-row">
+        <div class="mapping-field">
+          <label>Code OSIRIS (brut)</label>
+          <input
+            type="text"
+            class="mapping-input"
+            placeholder="ex: RACPBOAV"
+            [(ngModel)]="formOsirisCode"
+            [disabled]="formLoading()"
+          />
+        </div>
+        <div class="mapping-arrow">→</div>
+        <div class="mapping-field">
+          <label>Code admin (BPU / Prestation)</label>
+          <input
+            type="text"
+            class="mapping-input"
+            placeholder="ex: RACPAV"
+            [(ngModel)]="formCanonicalCode"
+            [disabled]="formLoading()"
+          />
+        </div>
+        <div class="mapping-field mapping-field-wide">
+          <label>Description (optionnel)</label>
+          <input
+            type="text"
+            class="mapping-input"
+            placeholder="ex: Raccordement Pavillon — nouveau code fév. 2026"
+            [(ngModel)]="formLabel"
+            [disabled]="formLoading()"
+          />
+        </div>
+      </div>
+      @if (formError()) {
+        <p class="state error">{{ formError() }}</p>
+      }
+      <div class="mapping-form-actions">
+        <button class="btn-primary" type="button"
+                (click)="submitForm()"
+                [disabled]="formLoading() || !formOsirisCode() || !formCanonicalCode()">
+          @if (formLoading()) { Enregistrement… } @else { Enregistrer }
+        </button>
+        <button class="btn-outline" type="button" (click)="closeForm()" [disabled]="formLoading()">
+          Annuler
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="state error card">{{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="state card">Chargement…</div>
+  } @else if (!mappings().length) {
+    <div class="state hint card">
+      <i class="bi bi-info-circle"></i>
+      Aucun mapping enregistré. Lors d'un import, les codes inconnus affichent un bouton
+      <strong>Mapper</strong> pour créer rapidement une équivalence.
+    </div>
+  } @else {
+    <div class="card">
+      <table class="mapping-table">
+        <thead>
+          <tr>
+            <th>Code OSIRIS</th>
+            <th>→</th>
+            <th>Code admin</th>
+            <th>Description</th>
+            <th>Statut</th>
+            <th>Créé le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of mappings(); track m._id) {
+            <tr [class.inactive]="!m.active">
+              <td><span class="pill pill-blue">{{ m.osirisCode }}</span></td>
+              <td class="arrow-cell">→</td>
+              @if (editId() === m._id) {
+                <td colspan="2">
+                  <div class="inline-edit-row">
+                    <input
+                      type="text"
+                      class="mapping-input input-sm"
+                      placeholder="Code admin"
+                      [(ngModel)]="editCanonicalCode"
+                      [disabled]="editLoading()"
+                    />
+                    <input
+                      type="text"
+                      class="mapping-input input-sm"
+                      placeholder="Description"
+                      [(ngModel)]="editLabel"
+                      [disabled]="editLoading()"
+                    />
+                    @if (editError()) {
+                      <span class="err-text">{{ editError() }}</span>
+                    }
+                    <button class="btn-primary btn-sm" (click)="saveEdit(m._id)" [disabled]="editLoading()">
+                      @if (editLoading()) { … } @else { OK }
+                    </button>
+                    <button class="btn-outline btn-sm" (click)="cancelEdit()" [disabled]="editLoading()">
+                      Annuler
+                    </button>
+                  </div>
+                </td>
+              } @else {
+                <td><span class="pill pill-green">{{ m.canonicalCode }}</span></td>
+                <td class="muted-text">{{ m.label || '—' }}</td>
+              }
+              <td>
+                @if (m.active) {
+                  <span class="badge badge-active">Actif</span>
+                } @else {
+                  <span class="badge badge-inactive">Inactif</span>
+                }
+              </td>
+              <td class="muted-text mono-text">{{ m.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td>
+                @if (editId() !== m._id) {
+                  <div class="action-btns">
+                    <button class="btn-icon" title="Modifier" (click)="startEdit(m)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    @if (m.active) {
+                      <button class="btn-icon btn-warn" title="Désactiver" (click)="deactivate(m._id)">
+                        <i class="bi bi-pause-circle"></i>
+                      </button>
+                    }
+                    <button class="btn-icon btn-danger" title="Supprimer" (click)="remove(m._id)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

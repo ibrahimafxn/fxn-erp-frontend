@@ -49,6 +49,45 @@ export class ConsumablesDetail extends DetailBack {
   readonly historyLimit = signal(10);
   readonly pageRange = formatPageRange;
   readonly historyItems = computed<AttributionHistoryItem[]>(() => this.history()?.items ?? []);
+  readonly historySort = signal<'DATE_DESC' | 'DATE_ASC' | 'ACTION_ASC' | 'QTY_ASC' | 'AUTHOR_ASC' | 'TECH_ASC' | 'DEPOT_ASC' | 'NOTE_ASC'>('DATE_DESC');
+  readonly sortedHistoryItems = computed<AttributionHistoryItem[]>(() => {
+    const items = [...this.historyItems()];
+    const sort = this.historySort();
+    const byText = (value: string) => this.normalizeSort(value);
+    const compareText = (a: string, b: string) => byText(a).localeCompare(byText(b), 'fr');
+    const dateVal = (it: AttributionHistoryItem) => {
+      const raw = this.createdAtValue(it);
+      return raw ? new Date(raw).getTime() : 0;
+    };
+    const qtyVal = (it: AttributionHistoryItem) => Number(it?.attribution?.quantity ?? 1);
+    const actionVal = (it: AttributionHistoryItem) => this.actionLabel(it?.attribution?.action);
+    const authorVal = (it: AttributionHistoryItem) => this.authorLabel(it);
+    const techVal = (it: AttributionHistoryItem) => this.toUserLabel(it);
+    const depotVal = (it: AttributionHistoryItem) => this.depotLabel(it);
+    const noteVal = (it: AttributionHistoryItem) => this.noteLabel(it);
+    items.sort((a, b) => {
+      switch (sort) {
+        case 'DATE_ASC':
+          return dateVal(a) - dateVal(b);
+        case 'ACTION_ASC':
+          return compareText(actionVal(a), actionVal(b));
+        case 'QTY_ASC':
+          return qtyVal(a) - qtyVal(b);
+        case 'AUTHOR_ASC':
+          return compareText(authorVal(a), authorVal(b));
+        case 'TECH_ASC':
+          return compareText(techVal(a), techVal(b));
+        case 'DEPOT_ASC':
+          return compareText(depotVal(a), depotVal(b));
+        case 'NOTE_ASC':
+          return compareText(noteVal(a), noteVal(b));
+        case 'DATE_DESC':
+        default:
+          return dateVal(b) - dateVal(a);
+      }
+    });
+    return items;
+  });
   readonly historyTotal = computed(() => this.history()?.total ?? 0);
   readonly historyPageCount = computed(() => {
     const t = this.historyTotal();
@@ -246,6 +285,46 @@ export class ConsumablesDetail extends DetailBack {
     this.loadHistory(true);
   }
 
+  toggleHistorySort(field: 'DATE' | 'ACTION' | 'QTY' | 'AUTHOR' | 'TECH' | 'DEPOT' | 'NOTE'): void {
+    const current = this.historySort();
+    let next = current;
+    if (field === 'DATE') {
+      next = current === 'DATE_DESC' ? 'DATE_ASC' : 'DATE_DESC';
+    } else if (field === 'ACTION') {
+      next = 'ACTION_ASC';
+    } else if (field === 'QTY') {
+      next = 'QTY_ASC';
+    } else if (field === 'AUTHOR') {
+      next = 'AUTHOR_ASC';
+    } else if (field === 'TECH') {
+      next = 'TECH_ASC';
+    } else if (field === 'DEPOT') {
+      next = 'DEPOT_ASC';
+    } else if (field === 'NOTE') {
+      next = 'NOTE_ASC';
+    }
+    if (next === current) return;
+    this.historySort.set(next);
+  }
+
+  isHistorySort(field: 'DATE' | 'ACTION' | 'QTY' | 'AUTHOR' | 'TECH' | 'DEPOT' | 'NOTE'): boolean {
+    const current = this.historySort();
+    if (field === 'DATE') return current === 'DATE_DESC' || current === 'DATE_ASC';
+    if (field === 'ACTION') return current === 'ACTION_ASC';
+    if (field === 'QTY') return current === 'QTY_ASC';
+    if (field === 'AUTHOR') return current === 'AUTHOR_ASC';
+    if (field === 'TECH') return current === 'TECH_ASC';
+    if (field === 'DEPOT') return current === 'DEPOT_ASC';
+    return current === 'NOTE_ASC';
+  }
+
+  historySortArrow(field: 'DATE' | 'ACTION' | 'QTY' | 'AUTHOR' | 'TECH' | 'DEPOT' | 'NOTE'): string {
+    const current = this.historySort();
+    if (field === 'DATE') return current === 'DATE_ASC' ? '▲' : '▼';
+    if (!this.isHistorySort(field)) return '';
+    return '▲';
+  }
+
   actionLabel(action?: string): string {
     switch (action) {
       case 'AJOUT': return 'Ajout';
@@ -288,6 +367,14 @@ export class ConsumablesDetail extends DetailBack {
 
   createdAtValue(item: AttributionHistoryItem): string | Date | null {
     return item?.attribution?.createdAt ?? item?.createdAt ?? null;
+  }
+
+  private normalizeSort(value: string): string {
+    return (value || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
   }
 
   depotName(): string {

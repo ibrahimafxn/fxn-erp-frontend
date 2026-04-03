@@ -61,6 +61,9 @@ export class ReceiptPage {
   readonly activeSection = signal<'new' | 'history'>('new');
 
   readonly historyItems = computed<Movement[]>(() => this.historyResult()?.items ?? []);
+  readonly sortField = signal<'date' | 'type' | 'resource' | 'quantity' | 'origin' | 'note'>('date');
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
+  readonly sortedHistoryItems = computed<Movement[]>(() => this.historyItems());
   readonly historyTotal = computed(() => this.historyResult()?.total ?? 0);
   readonly historyPageCount = computed(() => {
     const t = this.historyTotal();
@@ -229,6 +232,8 @@ export class ReceiptPage {
       depotId: depotId || undefined,
       fromDate: dates.fromDate,
       toDate: dates.toDate,
+      sortField: this.sortField(),
+      sortDir: this.sortDirection(),
       page: this.historyPage(),
       limit: this.historyLimit()
     }).subscribe({ error: () => {} });
@@ -246,7 +251,9 @@ export class ReceiptPage {
       reason: 'RECEPTION_COMMANDE',
       depotId: depotId || undefined,
       fromDate: dates.fromDate,
-      toDate: dates.toDate
+      toDate: dates.toDate,
+      sortField: this.sortField(),
+      sortDir: this.sortDirection()
     }).subscribe({
       next: (blob) => downloadBlob(blob, `receptions-${new Date().toISOString().slice(0, 10)}.csv`),
       error: () => {}
@@ -265,7 +272,9 @@ export class ReceiptPage {
       reason: 'RECEPTION_COMMANDE',
       depotId: depotId || undefined,
       fromDate: dates.fromDate,
-      toDate: dates.toDate
+      toDate: dates.toDate,
+      sortField: this.sortField(),
+      sortDir: this.sortDirection()
     }).subscribe({
       next: (blob) => downloadBlob(blob, `receptions-${new Date().toISOString().slice(0, 10)}.pdf`),
       error: () => {}
@@ -316,6 +325,24 @@ export class ReceiptPage {
     this.refreshHistory(true);
   }
 
+  setSort(field: 'date' | 'type' | 'resource' | 'quantity' | 'origin' | 'note'): void {
+    if (this.sortField() === field) {
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+      this.historyPage.set(1);
+      this.refreshHistory(true);
+      return;
+    }
+    this.sortField.set(field);
+    this.sortDirection.set(field === 'date' || field === 'quantity' ? 'desc' : 'asc');
+    this.historyPage.set(1);
+    this.refreshHistory(true);
+  }
+
+  sortArrow(field: 'date' | 'type' | 'resource' | 'quantity' | 'origin' | 'note'): string {
+    if (this.sortField() !== field) return '↕';
+    return this.sortDirection() === 'asc' ? '↑' : '↓';
+  }
+
   depotLabelById(id?: string | null): string {
     if (!id) return '—';
     const depot = this.depots().find((d) => d._id === id);
@@ -340,6 +367,7 @@ export class ReceiptPage {
   createdAtText(m: Movement): string {
     return this.datePipe.transform(m.createdAt as any, 'short') ?? '—';
   }
+
 
   private loadDepots(): void {
     if (this.isDepotManager()) return;

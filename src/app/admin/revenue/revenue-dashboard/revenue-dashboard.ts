@@ -6,6 +6,8 @@ import { formatPageRange } from '../../../core/utils/pagination';
 import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
+type SortKey = 'month' | 'amount' | 'penalty' | 'note' | 'attachments' | 'author' | 'updatedAt';
+
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,6 +41,8 @@ export class RevenueDashboard {
   });
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly sortKey = signal<SortKey>('month');
+  readonly sortDir = signal<'asc' | 'desc'>('asc');
   readonly editing = signal<RevenueItem | null>(null);
   readonly deleteModalOpen = signal(false);
   readonly pendingDelete = signal<RevenueItem | null>(null);
@@ -76,6 +80,46 @@ export class RevenueDashboard {
     const values = this.series().map((s) => s.cumulativeHt || 0);
     const max = Math.max(...values, 0);
     return max || 1;
+  });
+
+  readonly sortedItems = computed(() => {
+    const key = this.sortKey();
+    const dir = this.sortDir();
+    const items = [...this.items()];
+    const factor = dir === 'asc' ? 1 : -1;
+    const byText = (value: string) => value.toLowerCase();
+    const compareText = (a: string, b: string) => byText(a).localeCompare(byText(b));
+
+    items.sort((a, b) => {
+      switch (key) {
+        case 'amount':
+          return factor * ((a.amountHt || 0) - (b.amountHt || 0));
+        case 'penalty':
+          return factor * ((a.penalty || 0) - (b.penalty || 0));
+        case 'note':
+          return factor * compareText(String(a.note || ''), String(b.note || ''));
+        case 'attachments': {
+          const aCount = a.attachments?.length || 0;
+          const bCount = b.attachments?.length || 0;
+          return factor * (aCount - bCount);
+        }
+        case 'author':
+          return factor * compareText(this.authorLabel(a.createdBy || a.updatedBy), this.authorLabel(b.createdBy || b.updatedBy));
+        case 'updatedAt': {
+          const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+          const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+          return factor * (aTime - bTime);
+        }
+        case 'month':
+        default: {
+          const aKey = (a.year || 0) * 100 + (a.month || 0);
+          const bKey = (b.year || 0) * 100 + (b.month || 0);
+          return factor * (aKey - bKey);
+        }
+      }
+    });
+
+    return items;
   });
 
 
@@ -220,6 +264,20 @@ export class RevenueDashboard {
       },
       error: () => {}
     });
+  }
+
+  setSort(key: SortKey): void {
+    if (this.sortKey() === key) {
+      this.sortDir.set(this.sortDir() === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+    this.sortKey.set(key);
+    this.sortDir.set('asc');
+  }
+
+  sortIndicator(key: SortKey): string {
+    if (this.sortKey() !== key) return '';
+    return this.sortDir() === 'asc' ? '^' : 'v';
   }
 
   applyFilters(): void {

@@ -23,10 +23,12 @@ export type Order = {
   status: string;
   amount: number;
   tvaAmount?: number;
+  deliveryFee?: number;
   notes?: string;
   lines?: OrderLine[];
   importedToDepotAt?: string | null;
   importedToDepotId?: string | null;
+  invoicePdfUrl?: string | null;
 };
 
 export type OrderListResult = {
@@ -50,6 +52,7 @@ export type OrderPayload = {
   status: string;
   amount: number;
   tvaAmount?: number;
+  deliveryFee?: number;
   notes?: string;
   lines?: OrderLine[];
 };
@@ -103,9 +106,12 @@ export class OrderService {
     data: {
       reference: string;
       client: string;
+      supplier?: string;
       date: string;
       status: string;
       amount: number;
+      deliveryFee?: number;
+      invoicePdfUrl?: string;
       notes: string;
       lines: Array<{
         resourceId: string | null;
@@ -133,9 +139,12 @@ export class OrderService {
       data: {
         reference: string;
         client: string;
+        supplier?: string;
         date: string;
         status: string;
         amount: number;
+        deliveryFee?: number;
+        invoicePdfUrl?: string;
         notes: string;
         lines: Array<{
           resourceId: string | null;
@@ -161,9 +170,13 @@ export class OrderService {
   confirmImportPdf(payload: {
     reference: string;
     client: string;
+    supplier?: string;
     date: string;
     notes?: string;
     amount?: number;
+    deliveryFee?: number;
+    depotId?: string;
+    invoicePdfUrl?: string;
     lines: Array<{
       resourceId: string;
       resourceType: 'MATERIAL' | 'CONSUMABLE';

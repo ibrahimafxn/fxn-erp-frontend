@@ -12,6 +12,9 @@ type ApiResponse<T> = { success: boolean; data: T; message?: string; errors?: un
 export type VehicleFilter = {
   q?: string;
   depot?: string; // compat: depot ou idDepot
+  assigned?: 'assigned' | 'unassigned';
+  createdFrom?: string;
+  createdTo?: string;
   page?: number;
   limit?: number;
 };
@@ -165,6 +168,9 @@ export class VehicleService {
 
     // si ton backend n’a pas encore q/page/limit => il ignorera, pas grave
     if (filter?.q) params = params.set('q', filter.q);
+    if (filter?.assigned) params = params.set('assigned', filter.assigned);
+    if (filter?.createdFrom) params = params.set('createdFrom', filter.createdFrom);
+    if (filter?.createdTo) params = params.set('createdTo', filter.createdTo);
     params = params.set('page', String(safePage));
     params = params.set('limit', String(safeLimit));
 
@@ -260,6 +266,9 @@ export class VehicleService {
     let params = new HttpParams();
     if (filter?.q) params = params.set('q', filter.q);
     if (filter?.depot) params = params.set('depot', filter.depot);
+    if (filter?.assigned) params = params.set('assigned', filter.assigned);
+    if (filter?.createdFrom) params = params.set('createdFrom', filter.createdFrom);
+    if (filter?.createdTo) params = params.set('createdTo', filter.createdTo);
     return this.http.get(`${this.baseUrl}/export`, { params, responseType: 'blob' }).pipe(
       catchError((err) => this.handleError(err as HttpErrorResponse))
     );
@@ -269,6 +278,9 @@ export class VehicleService {
     let params = new HttpParams();
     if (filter?.q) params = params.set('q', filter.q);
     if (filter?.depot) params = params.set('depot', filter.depot);
+    if (filter?.assigned) params = params.set('assigned', filter.assigned);
+    if (filter?.createdFrom) params = params.set('createdFrom', filter.createdFrom);
+    if (filter?.createdTo) params = params.set('createdTo', filter.createdTo);
     return this.http.get(`${this.baseUrl}/export/pdf`, { params, responseType: 'blob' }).pipe(
       catchError((err) => this.handleError(err as HttpErrorResponse))
     );

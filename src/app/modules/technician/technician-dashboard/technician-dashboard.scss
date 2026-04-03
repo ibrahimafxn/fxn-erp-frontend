@@ -1,20 +1,49 @@
+/* ============================================================
+   TECHNICIAN DASHBOARD — Mobile-first
+   Base = 375px+  |  sm = 480px+  |  md = 600px+  |  lg = 900px+
+   ============================================================ */
+
 .technician-dashboard {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 1rem;
+  padding: 0.9rem;
+  /* Bottom padding for mobile nav bar */
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
 
+/* ── Page header ──────────────────────────────────────────── */
 .technician-dashboard .page-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.technician-dashboard .page-header h1 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-family: var(--fxn-font-display);
 }
 
 .technician-dashboard .subtitle {
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--fxn-primary);
+  margin: 0;
+  font-size: 0.875rem;
 }
 
+/* ── States ───────────────────────────────────────────────── */
+.technician-dashboard .state {
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--fxn-border);
+  font-size: 0.9rem;
+}
+
+.technician-dashboard .state.error {
+  background: var(--fxn-danger-soft);
+}
+
+/* ── KPI Section ─────────────────────────────────────────── */
 .technician-dashboard .kpi-section {
   display: grid;
   gap: 10px;
@@ -24,14 +53,24 @@
   background: linear-gradient(135deg, rgba(12, 18, 30, 0.96), rgba(14, 22, 36, 0.85));
 }
 
+body.theme-technicien .technician-dashboard .kpi-section {
+  background: linear-gradient(135deg, rgba(30, 36, 48, 0.96), rgba(22, 28, 40, 0.88));
+  border-color: rgba(139, 153, 179, 0.2);
+}
+
 .technician-dashboard .kpi-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .technician-dashboard .kpi-header h2 {
   font-size: 0.95rem;
+  margin: 0;
+}
+
+body.theme-default .technician-dashboard .kpi-header h2 {
+  color: var(--fxn-primary);
 }
 
 .technician-dashboard .kpi-meta {
@@ -39,12 +78,79 @@
   color: rgba(148, 163, 184, 0.85);
 }
 
+/* KPI grid: 1 col on small mobile → 3 col on 480px+ */
 .technician-dashboard .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
+.technician-dashboard .kpi-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.14);
+  background: linear-gradient(135deg, rgba(12, 18, 30, 0.92), rgba(15, 23, 42, 0.82));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 60px;
+}
+
+.technician-dashboard .kpi-card.kpi-daily {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: linear-gradient(135deg, rgba(16, 64, 32, 0.95), rgba(15, 40, 28, 0.85));
+}
+
+.technician-dashboard .kpi-card.kpi-weekly {
+  border-color: rgba(79, 70, 229, 0.35);
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(30, 41, 59, 0.85));
+}
+
+.technician-dashboard .kpi-card.kpi-monthly {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: linear-gradient(135deg, rgba(79, 52, 10, 0.95), rgba(52, 36, 9, 0.85));
+}
+
+.technician-dashboard .kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.technician-dashboard .kpi-title {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.85);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.technician-dashboard .kpi-sub {
+  font-size: 0.72rem;
+  color: rgba(148, 163, 184, 0.7);
+}
+
+.technician-dashboard .kpi-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.technician-dashboard .kpi-card.kpi-daily .kpi-title,
+.technician-dashboard .kpi-card.kpi-daily .kpi-sub,
+.technician-dashboard .kpi-card.kpi-weekly .kpi-title,
+.technician-dashboard .kpi-card.kpi-weekly .kpi-sub,
+.technician-dashboard .kpi-card.kpi-monthly .kpi-title,
+.technician-dashboard .kpi-card.kpi-monthly .kpi-sub {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.technician-dashboard .kpi-card.kpi-daily .kpi-value,
+.technician-dashboard .kpi-card.kpi-weekly .kpi-value,
+.technician-dashboard .kpi-card.kpi-monthly .kpi-value {
+  color: #f8fafc;
+}
+
+/* ── Import Section ──────────────────────────────────────── */
 .technician-dashboard .import-section {
   display: grid;
   gap: 10px;
@@ -56,13 +162,13 @@
 
 .technician-dashboard .import-head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .technician-dashboard .import-head h2 {
   font-size: 0.95rem;
+  margin: 0;
 }
 
 .technician-dashboard .import-meta {
@@ -71,7 +177,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  text-align: right;
 }
 
 .technician-dashboard .import-batch {
@@ -87,251 +192,168 @@
   color: rgba(148, 163, 184, 0.75);
 }
 
+/* Import grid: 2 cols on mobile */
 .technician-dashboard .import-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
 .technician-dashboard .import-card {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(10, 18, 32, 0.7);
+  background: var(--fxn-surface);
   display: grid;
   gap: 4px;
 }
 
 .technician-dashboard .import-card .label {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: rgba(148, 163, 184, 0.8);
 }
 
 .technician-dashboard .import-card .value {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #f8fafc;
-}
-
-.technician-dashboard .import-alerts {
-  display: grid;
-  gap: 10px;
-}
-
-.technician-dashboard .alert-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  background: rgba(76, 5, 25, 0.3);
-}
-
-.technician-dashboard .alert-card.ok {
-  border-color: rgba(34, 197, 94, 0.35);
-  background: rgba(15, 76, 45, 0.35);
-}
-
-.technician-dashboard .alert-card .label {
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.technician-dashboard .alert-card .value {
   font-size: 1.1rem;
   font-weight: 700;
-}
-
-.technician-dashboard .alert-card .hint,
-.technician-dashboard .alert-list .hint {
-  font-size: 0.75rem;
-  color: rgba(226, 232, 240, 0.7);
-}
-
-.technician-dashboard .alert-list {
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(15, 23, 42, 0.7);
-  display: grid;
-  gap: 6px;
-}
-
-.technician-dashboard .alert-list ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 4px;
-  font-size: 0.82rem;
-  color: rgba(226, 232, 240, 0.85);
-}
-
-.technician-dashboard .alert-list li {
-  padding-left: 14px;
-  position: relative;
-}
-
-.technician-dashboard .alert-list li::before {
-  content: '•';
-  position: absolute;
-  left: 0;
-  color: rgba(148, 163, 184, 0.8);
-}
-
-.technician-dashboard .kpi-card {
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(56, 189, 248, 0.14);
-  background: linear-gradient(135deg, rgba(12, 18, 30, 0.92), rgba(15, 23, 42, 0.82));
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.technician-dashboard .kpi-info {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.technician-dashboard .kpi-card.kpi-daily {
-  border-color: rgba(34, 197, 94, 0.35);
-  background: linear-gradient(135deg, rgba(16, 64, 32, 0.95), rgba(15, 40, 28, 0.85));
-}
-
-.technician-dashboard .kpi-card.kpi-monthly {
-  border-color: rgba(245, 158, 11, 0.35);
-  background: linear-gradient(135deg, rgba(79, 52, 10, 0.95), rgba(52, 36, 9, 0.85));
-}
-
-.technician-dashboard .kpi-card.kpi-semi {
-  border-color: rgba(6, 182, 212, 0.35);
-  background: linear-gradient(135deg, rgba(7, 51, 65, 0.95), rgba(9, 37, 46, 0.85));
-}
-
-.technician-dashboard .kpi-card.kpi-daily .kpi-title,
-.technician-dashboard .kpi-card.kpi-daily .kpi-sub,
-.technician-dashboard .kpi-card.kpi-monthly .kpi-title,
-.technician-dashboard .kpi-card.kpi-monthly .kpi-sub,
-.technician-dashboard .kpi-card.kpi-semi .kpi-title,
-.technician-dashboard .kpi-card.kpi-semi .kpi-sub {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.technician-dashboard .kpi-card.kpi-daily .kpi-value,
-.technician-dashboard .kpi-card.kpi-monthly .kpi-value,
-.technician-dashboard .kpi-card.kpi-semi .kpi-value {
   color: #f8fafc;
 }
 
-.technician-dashboard .kpi-title {
-  font-size: 0.75rem;
-  color: rgba(148, 163, 184, 0.85);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.technician-dashboard .kpi-value {
-  font-size: 1.05rem;
-  font-weight: 700;
-}
-
-.technician-dashboard .kpi-sub {
-  font-size: 0.72rem;
-  color: rgba(148, 163, 184, 0.7);
-}
-
+/* ── Action Grid ─────────────────────────────────────────── */
+/* 2 cols on mobile — more ergonomic than 1 col for tap navigation */
 .technician-dashboard .action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
 }
 
 .technician-dashboard .action-card {
-  background: rgba(10, 18, 32, 0.7);
-  border-radius: 18px;
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  background: var(--fxn-surface);
+  border-radius: 16px;
+  padding: 14px 12px;
+  border: 1px solid var(--fxn-border);
   cursor: pointer;
+  min-height: 100px;
+  /* Active feedback instead of hover on mobile */
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.technician-dashboard .action-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(96, 165, 250, 0.5);
+.technician-dashboard .action-card:active {
+  transform: scale(0.96);
+  border-color: var(--fxn-primary-border);
 }
 
 .technician-dashboard .action-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .technician-dashboard .action-icon {
-  font-size: 22px;
-  color: #73a6ff;
+  font-size: 20px;
+  color: var(--fxn-primary);
 }
 
 .technician-dashboard .action-tag {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.58);
 }
 
 .technician-dashboard .action-title {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  line-height: 1.3;
 }
 
 .technician-dashboard .action-subtitle {
-  color: rgba(255, 255, 255, 0.64);
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  line-height: 1.3;
 }
 
-@media (max-width: 900px) {
+/* ── Responsive: 480px — KPI 3 cols, better header ──────── */
+@media (min-width: 480px) {
   .technician-dashboard .kpi-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
   }
-}
 
-@media (max-width: 700px) {
-  .technician-dashboard .page-header {
+  .technician-dashboard .kpi-card {
     flex-direction: column;
     align-items: flex-start;
+    min-height: 80px;
   }
 
-  .technician-dashboard .kpi-header,
+  .technician-dashboard .kpi-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .technician-dashboard .import-head {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .technician-dashboard .import-meta {
-    text-align: left;
+    text-align: right;
   }
 
-  .technician-dashboard .kpi-card,
-  .technician-dashboard .import-card {
-    flex-direction: column;
-    align-items: flex-start;
+  .technician-dashboard .import-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+}
+
+/* ── Responsive: 900px — Desktop layout ─────────────────── */
+@media (min-width: 900px) {
+  .technician-dashboard {
+    padding: 1.25rem;
+    padding-bottom: 1.25rem;
+    gap: 24px;
+  }
+
+  .technician-dashboard .page-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .technician-dashboard .page-header h1 {
+    font-size: 1.5rem;
   }
 
   .technician-dashboard .action-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
   }
 
   .technician-dashboard .action-card {
-    padding: 14px;
+    padding: 18px;
+    border-radius: 18px;
+    min-height: auto;
+  }
+
+  .technician-dashboard .action-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--fxn-primary-border);
+  }
+
+  .technician-dashboard .action-card:active {
+    transform: translateY(0);
+  }
+
+  .technician-dashboard .action-title {
+    font-size: 16px;
+  }
+
+  .technician-dashboard .action-subtitle {
+    font-size: 13px;
   }
 }

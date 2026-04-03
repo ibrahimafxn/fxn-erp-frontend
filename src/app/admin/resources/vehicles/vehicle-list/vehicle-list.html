@@ -1,4 +1,15 @@
 <section class="vehicles-list">
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des données…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header">
     <div>
       <h1>Véhicules</h1>
@@ -35,6 +46,15 @@
             }
           </select>
         }
+
+        <select formControlName="assigned">
+          <option value="">Toutes assignations</option>
+          <option value="assigned">Assignés</option>
+          <option value="unassigned">Non assignés</option>
+        </select>
+
+        <input type="date" formControlName="createdFrom" aria-label="Création du" />
+        <input type="date" formControlName="createdTo" aria-label="Création au" />
 
         <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
         <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
@@ -81,18 +101,58 @@
       <div class="state loading card">Chargement…</div>
     } @else if (error()) {
       <div class="state error card"><strong>Erreur :</strong> {{ errorMessage() }}</div>
-    } @else if (items().length === 0) {
-      <div class="state empty card">Aucun véhicule trouvé.</div>
-    } @else {
-      <div class="table card">
-        <table>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucun véhicule trouvé.</div>
+  } @else {
+    <div class="card pager-card">
+      <div class="pager pager-top">
+        <div class="pager-left">
+          <div class="page-size">
+            <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+            <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+            <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+            <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+          </div>
+          <span class="pager-label">Éléments par page</span>
+        </div>
+        <div class="pager-right">
+          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+          <div class="pager-nav">
+            <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+            <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="table card">
+      <table>
           <thead>
           <tr>
-            <th>Véhicule</th>
-            <th>Plaque</th>
-            <th>État</th>
-            <th>Assignation</th>
-            <th>Création</th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('title')">
+                Véhicule <span class="sort-indicator">{{ sortIndicator('title') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('plate')">
+                Plaque <span class="sort-indicator">{{ sortIndicator('plate') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('state')">
+                État <span class="sort-indicator">{{ sortIndicator('state') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('assigned')">
+                Assignation <span class="sort-indicator">{{ sortIndicator('assigned') }}</span>
+              </button>
+            </th>
+            <th>
+              <button class="sort-btn" type="button" (click)="setSort('createdAt')">
+                Création <span class="sort-indicator">{{ sortIndicator('createdAt') }}</span>
+              </button>
+            </th>
             @if (canDeclareBreakdown()) {
               <th class="actions">Actions</th>
             }
@@ -100,7 +160,7 @@
           </thead>
 
           <tbody>
-            @for (v of items(); track trackById($index, v)) {
+            @for (v of sortedItems(); track trackById($index, v)) {
               <tr class="row" (click)="openDetail(v)">
                 <td class="main" data-label="Véhicule">
                   <div class="name">{{ title(v) }}</div>
@@ -123,11 +183,12 @@
                       </button>
 
                       @if (!isDepotManager()) {
-                        <button class="btn-outline edit" type="button" (click)="edit(v)"><i class="bi bi-pencil"></i> Modifier</button>
+                        <button class="btn-outline edit" type="button" title="Modifier" (click)="edit(v)"><i class="bi bi-pencil"></i> Modifier</button>
 
                         <button
                           class="btn-outline delete"
                           type="button"
+                          title="Supprimer"
                           [disabled]="deletingId() === v._id"
                           (click)="openDeleteModal(v)"
                         ><i class="fa-solid fa-trash"></i> 
@@ -140,28 +201,9 @@
                 }
               </tr>
             }
-          </tbody>
-        </table>
-      </div>
-
-      <footer class="pager pager-fixed">
-        <div class="pager-left">
-          <div class="page-size">
-            <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
-            <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
-            <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
-            <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
-          </div>
-          <span class="pager-label">Éléments par page</span>
-        </div>
-        <div class="pager-right">
-          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-          <div class="pager-nav">
-            <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
-            <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
-          </div>
-        </div>
-      </footer>
+        </tbody>
+      </table>
+    </div>
     }
   }
 

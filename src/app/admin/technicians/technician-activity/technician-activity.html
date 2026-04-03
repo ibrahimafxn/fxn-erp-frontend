@@ -1,4 +1,15 @@
 <section class="technician-activity">
+  @if (initialLoading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement des interventions…</strong>
+          <span>Récupération des données en cours.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header">
     <div>
       <h1>Historique technicien</h1>
@@ -48,7 +59,12 @@
       <div class="amount-summary">
         <span class="label">Montant</span>
         <span class="value">{{ formatAmount(totalAmount()) }}</span>
-        <span class="hint">Total sur la période filtrée</span>
+        <span class="hint">
+          Total sur la période filtrée
+          @if (selectedBpuLabel()) {
+            • BPU {{ selectedBpuLabel() }}
+          }
+        </span>
       </div>
 
       <div class="actions">
@@ -74,20 +90,56 @@
       } @else if (interventions().length === 0) {
         <div class="state empty">Aucune intervention saisie.</div>
       } @else {
+        <div class="card pager-card">
+          <div class="pager pager-top">
+            <div class="pager-left">
+              <div class="page-size">
+                <button type="button" [class.active]="interventionLimit() === 10" (click)="setInterventionLimitValue(10)">10</button>
+                <button type="button" [class.active]="interventionLimit() === 20" (click)="setInterventionLimitValue(20)">20</button>
+                <button type="button" [class.active]="interventionLimit() === 50" (click)="setInterventionLimitValue(50)">50</button>
+                <button type="button" [class.active]="interventionLimit() === 100" (click)="setInterventionLimitValue(100)">100</button>
+              </div>
+              <span class="pager-label">Éléments par page</span>
+            </div>
+            <div class="pager-right">
+              <span class="pager-range">{{ pageRange(interventionPage(), interventionLimit(), interventionTotal()) }}</span>
+              <div class="pager-nav">
+                <button class="btn-outline" type="button" (click)="prevInterventions()" [disabled]="!canPrevInterventions()"><i class="bi bi-chevron-left"></i></button>
+                <button class="btn-outline" type="button" (click)="nextInterventions()" [disabled]="!canNextInterventions()"><i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="table">
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Technicien</th>
-                <th>Dépôt</th>
+                <th>
+                  <button class="sort-button" type="button" (click)="setSort('date')">
+                    Date <span class="sort-arrow">{{ sortArrow('date') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="setSort('technician')">
+                    Technicien <span class="sort-arrow">{{ sortArrow('technician') }}</span>
+                  </button>
+                </th>
+                <th>
+                  <button class="sort-button" type="button" (click)="setSort('depot')">
+                    Dépôt <span class="sort-arrow">{{ sortArrow('depot') }}</span>
+                  </button>
+                </th>
                 <th>Prestations</th>
-                <th>Montant</th>
+                <th>
+                  <button class="sort-button" type="button" (click)="setSort('amount')">
+                    Montant <span class="sort-arrow">{{ sortArrow('amount') }}</span>
+                  </button>
+                </th>
                 <th>Commentaire</th>
               </tr>
             </thead>
             <tbody>
-              @for (it of interventions(); track it._id) {
+              @for (it of sortedInterventions(); track it._id) {
                 <tr>
                   <td>{{ interventionDateLabel(it) }}</td>
                   <td>{{ technicianName(it) }}</td>
@@ -96,7 +148,7 @@
                     @if (prestationsSummary(it).length) {
                       <div class="prestations-summary">
                         @for (item of prestationsSummary(it); track item.label) {
-                          <span class="prestations-pill">
+                          <span class="prestations-pill" [class]="item.className">
                             <span class="qty">{{ item.value }}</span>
                             <span>{{ item.label }}</span>
                           </span>
@@ -106,32 +158,13 @@
                       —
                     }
                   </td>
-                  <td>{{ formatAmount(it.amount) }}</td>
+                  <td>{{ formatAmount(reportAmount(it)) }}</td>
                   <td class="note">{{ it.comment || '—' }}</td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-
-        <footer class="pager pager-fixed">
-          <div class="pager-left">
-            <div class="page-size">
-              <button type="button" [class.active]="interventionLimit() === 10" (click)="setInterventionLimitValue(10)">10</button>
-              <button type="button" [class.active]="interventionLimit() === 20" (click)="setInterventionLimitValue(20)">20</button>
-              <button type="button" [class.active]="interventionLimit() === 50" (click)="setInterventionLimitValue(50)">50</button>
-              <button type="button" [class.active]="interventionLimit() === 100" (click)="setInterventionLimitValue(100)">100</button>
-            </div>
-            <span class="pager-label">Éléments par page</span>
-          </div>
-          <div class="pager-right">
-            <span class="pager-range">{{ pageRange(interventionPage(), interventionLimit(), interventionTotal()) }}</span>
-            <div class="pager-nav">
-              <button class="btn-outline" type="button" (click)="prevInterventions()" [disabled]="!canPrevInterventions()"><i class="bi bi-chevron-left"></i></button>
-              <button class="btn-outline" type="button" (click)="nextInterventions()" [disabled]="!canNextInterventions()"><i class="bi bi-chevron-right"></i></button>
-            </div>
-          </div>
-        </footer>
       }
     </article>
   </section>

@@ -1,4 +1,15 @@
 <section class="interventions">
+  @if (importLoading()) {
+    <div class="import-blocker" aria-live="polite" aria-busy="true">
+      <div class="import-blocker-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="import-blocker-text">
+          <strong>Import en cours…</strong>
+          <span>Merci de patienter, la page est temporairement désactivée.</span>
+        </div>
+      </div>
+    </div>
+  }
   <header class="page-header card hero">
     <div>
       <h1>Import interventions du jour</h1>
@@ -254,36 +265,170 @@
       </div>
     }
   </section>
-  <section class="card import-rules">
-    <div class="table-head">
-      <h2><span class="material-icons notranslate">rule</span>Règles d’import</h2>
-      <p>Codes BPU utilisés pour classer les prestations présentes dans l’export Osiris.</p>
+  <!-- ─── Analyse BPU du dernier import ─────────────────────────────────── -->
+  <section class="card bpu-analysis-section">
+    <div class="bpu-analysis-header">
+      <div>
+        <h2 class="bpu-analysis-title">Analyse articles vs référentiel BPU</h2>
+        <p class="bpu-analysis-subtitle">Comparaison automatique des codes OSIRIS avec les prestations définies par l'admin.</p>
+      </div>
     </div>
-    <p class="import-rules-note">
-      Chaque ligne de votre CSV doit contenir le code prestation attendu : les désignations ci-dessous doivent correspondre à la colonne utilisée par Osiris pour qualifier la prestation facturée. Les tickets sont générés dès qu’un code est absent ou inconnu.
-    </p>
-    <div class="rules-table-wrapper">
-      <table class="import-rules-table">
-        <thead>
-          <tr>
-            <th>Code</th>
-            <th>Prestation</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (rule of prestationRules; track rule.code) {
-            <tr>
-              <td class="mono">{{ rule.code }}</td>
-              <td>{{ rule.label }}</td>
-              <td>{{ rule.description }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-    <p class="import-rules-footnote">
-      Les montants liés à ces codes sont ensuite répartis entre la part FXN et la part technicien selon les tarifs définis sur le tableau principal.
-    </p>
+
+    @if (bpuAnalysisLoading()) {
+      <div class="bpu-state">Chargement de l'analyse…</div>
+    } @else if (bpuAnalysisPending()) {
+      <div class="bpu-state bpu-pending">
+        <span class="spinner-sm"></span>
+        Analyse en cours en arrière-plan…
+      </div>
+    } @else if (!bpuAnalysis()) {
+      <div class="bpu-state bpu-empty">Aucune analyse disponible pour cet import.</div>
+    } @else {
+
+      <!-- Stats -->
+      <div class="bpu-stats-row">
+        <div class="bpu-stat">
+          <span class="bpu-stat-value" [class]="bpuMatchRateClass(bpuAnalysis()!.stats.matchRate)">
+            {{ bpuAnalysis()!.stats.matchRate }}%
+          </span>
+          <span class="bpu-stat-label">Taux de correspondance</span>
+        </div>
+        <div class="bpu-stat">
+          <span class="bpu-stat-value">{{ bpuAnalysis()!.stats.linesWithArticles }}</span>
+          <span class="bpu-stat-label">Lignes avec articles</span>
+        </div>
+        <div class="bpu-stat">
+          <span class="bpu-stat-value">{{ bpuAnalysis()!.stats.matchedOccurrences }}</span>
+          <span class="bpu-stat-label">Occurrences reconnues</span>
+        </div>
+        <div class="bpu-stat">
+          <span class="bpu-stat-value bpu-warn">{{ bpuAnalysis()!.stats.unknownOccurrences }}</span>
+          <span class="bpu-stat-label">Occurrences inconnues</span>
+        </div>
+        <div class="bpu-stat">
+          <span class="bpu-stat-value bpu-muted">{{ bpuAnalysis()!.stats.uniqueUnknownCodes }}</span>
+          <span class="bpu-stat-label">Codes inconnus uniques</span>
+        </div>
+      </div>
+
+      <!-- Codes inconnus -->
+      @if (bpuUnknownEntries().length) {
+        <div class="bpu-unknown-block">
+          <h3 class="bpu-block-title">
+            <i class="bi bi-exclamation-triangle-fill bpu-icon-warn"></i>
+            Codes non reconnus dans le référentiel
+          </h3>
+          <table class="bpu-table">
+            <thead>
+              <tr>
+                <th>Code OSIRIS</th>
+                <th>Occurrences</th>
+                <th>Exemples bruts</th>
+                <th>Suggestions</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of bpuUnknownEntries(); track entry.code) {
+                <tr [class.bpu-row-mapping]="mappingFormOpen() === entry.code">
+                  <td><span class="bpu-pill bpu-pill-red">{{ entry.code }}</span></td>
+                  <td class="mono">{{ entry.count }}</td>
+                  <td>
+                    @for (ex of entry.rawExamples; track ex) {
+                      <code class="bpu-raw">{{ ex }}</code>
+                    }
+                  </td>
+                  <td>
+                    @if (!entry.suggestions.length) {
+                      <span class="bpu-muted">—</span>
+                    } @else {
+                      @for (sug of entry.suggestions; track sug.code) {
+                        <span class="bpu-sug"
+                              [title]="sug.label"
+                              (click)="openMappingForm(entry.code); mappingFormCanonical.set(sug.code)"
+                              style="cursor:pointer">
+                          {{ sug.code }}
+                          <span class="bpu-dist">dist.{{ sug.distance }}</span>
+                        </span>
+                      }
+                    }
+                  </td>
+                  <td>
+                    @if (mappingFormOpen() === entry.code) {
+                      <div class="bpu-mapping-form">
+                        <input
+                          class="bpu-mapping-input"
+                          type="text"
+                          placeholder="Code admin (ex: RACPAV)"
+                          [(ngModel)]="mappingFormCanonical"
+                          [disabled]="mappingFormLoading()"
+                          (keydown.enter)="saveMappingForm()"
+                        />
+                        <input
+                          class="bpu-mapping-input bpu-mapping-label"
+                          type="text"
+                          placeholder="Description (optionnel)"
+                          [(ngModel)]="mappingFormLabel"
+                          [disabled]="mappingFormLoading()"
+                        />
+                        @if (mappingFormError()) {
+                          <span class="bpu-mapping-err">{{ mappingFormError() }}</span>
+                        }
+                        <div class="bpu-mapping-actions">
+                          <button class="btn-primary btn-xs" type="button"
+                                  (click)="saveMappingForm()"
+                                  [disabled]="mappingFormLoading() || !mappingFormCanonical()">
+                            @if (mappingFormLoading()) { Enregistrement… } @else { Enregistrer }
+                          </button>
+                          <button class="btn-outline btn-xs" type="button"
+                                  (click)="closeMappingForm()"
+                                  [disabled]="mappingFormLoading()">
+                            Annuler
+                          </button>
+                        </div>
+                      </div>
+                    } @else {
+                      <button class="btn-map" type="button" (click)="openMappingForm(entry.code)"
+                              title="Mapper ce code OSIRIS vers un code admin">
+                        <i class="bi bi-link-45deg"></i> Mapper
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="bpu-all-ok">
+          <i class="bi bi-check-circle-fill"></i>
+          Tous les codes articles sont reconnus dans le référentiel admin.
+        </p>
+      }
+
+      @if (mappingFormSuccess()) {
+        <div class="bpu-mapping-ok">
+          <i class="bi bi-check-circle-fill"></i> {{ mappingFormSuccess() }}
+          — <a routerLink="/admin/bpu/osiris-mappings">Gérer tous les mappings</a>
+        </div>
+      }
+
+      <!-- Codes admin jamais vus -->
+      @if (bpuAnalysis()!.notSeenInCsv.length) {
+        <div class="bpu-notseen-block">
+          <h3 class="bpu-block-title bpu-title-muted">
+            <i class="bi bi-eye-slash"></i>
+            Prestations admin absentes de cet export ({{ bpuAnalysis()!.notSeenInCsv.length }})
+          </h3>
+          <div class="bpu-chips">
+            @for (item of bpuAnalysis()!.notSeenInCsv; track item.code) {
+              <span class="bpu-pill bpu-pill-grey" [title]="item.label">{{ item.code }}</span>
+            }
+          </div>
+        </div>
+      }
+
+    }
   </section>
+
 </section>
