@@ -1,0 +1,116 @@
+<section class="auth-history">
+  <header class="page-header">
+    <div>
+      <h1>Historique des connexions</h1>
+      <p class="subtitle">Suivi des connexions et déconnexions utilisateurs.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="refresh()"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="search" [formGroup]="filterForm" (ngSubmit)="search()">
+      <label>
+        Utilisateur
+        <select formControlName="user" [disabled]="usersLoading()">
+          <option value="">{{ usersLoading() ? 'Chargement…' : 'Tous utilisateurs' }}</option>
+          @for (u of users(); track u._id) {
+            <option [value]="u._id">{{ userLabel(u) }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Action
+        <select formControlName="action">
+          <option value="">Toutes actions</option>
+          <option value="LOGIN">Connexion</option>
+          <option value="LOGOUT">Déconnexion</option>
+        </select>
+      </label>
+
+      <label>
+        Statut
+        <select formControlName="status">
+          <option value="">Tous statuts</option>
+          <option value="SUCCESS">Succès</option>
+          <option value="FAIL">Échec</option>
+        </select>
+      </label>
+
+      <div class="actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
+        <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
+      </div>
+    </form>
+  </section>
+
+  @if (loading()) {
+    <div class="state loading card">Chargement…</div>
+  } @else if (error()) {
+    <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (items().length === 0) {
+    <div class="state empty card">Aucun historique trouvé.</div>
+  } @else {
+    <div class="card pager-card">
+      <div class="pager pager-top">
+        <div class="pager-left">
+          <div class="page-size">
+            <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+            <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+            <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+            <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
+          </div>
+          <span class="pager-label">Éléments par page</span>
+        </div>
+        <div class="pager-right">
+          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+          <div class="pager-nav">
+            <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+            <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table card table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Utilisateur</th>
+            <th>Action</th>
+            <th>Statut</th>
+            <th>Raison</th>
+            <th>IP</th>
+            <th>Localisation</th>
+            <th>Agent</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item._id) {
+            <tr>
+              <td>{{ dateLabel(item.createdAt) }}</td>
+              <td>{{ itemUserLabel(item) }}</td>
+              <td>
+                <span class="pill" [class.login]="item.action === 'LOGIN'" [class.logout]="item.action === 'LOGOUT'">
+                  {{ actionLabel(item.action) }}
+                </span>
+              </td>
+              <td>
+                <span class="pill" [class.success]="item.status === 'SUCCESS'" [class.fail]="item.status === 'FAIL'">
+                  {{ statusLabel(item.status, item.action) }}
+                </span>
+              </td>
+              <td>{{ reasonLabel(item.reason) }}</td>
+              <td>{{ item.ip || '—' }}</td>
+              <td>{{ locationLabel(item) }}</td>
+              <td class="agent">{{ item.userAgent || '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

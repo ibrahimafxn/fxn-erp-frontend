@@ -62,6 +62,9 @@ export class AuthService {
   private readonly _user = signal<AuthUser | null>(null);
   /** Signal readonly exposé au reste de l'app */
   readonly user$ = this._user.asReadonly();
+  /** Indique si l'init auth est terminée (refresh tenté) */
+  private readonly _ready = signal(false);
+  readonly ready$ = this._ready.asReadonly();
 
   /**
    * Gestion mutualisée des refresh token :
@@ -158,8 +161,8 @@ export class AuthService {
 
   bootstrapSession(): void {
     this.refreshToken().subscribe({
-      next: () => {},
-      error: () => {}
+      next: () => this._ready.set(true),
+      error: () => this._ready.set(true)
     });
   }
 
@@ -209,7 +212,7 @@ export class AuthService {
    */
   logout(redirect = true): Observable<any> {
     const logout$ = this.http
-      .post(`${this.apiBase}/auth/logout`, {}, {
+      .post(`${this.apiBase}/auth/refresh/logout`, {}, {
         withCredentials: true
       })
       .pipe(
