@@ -38,3 +38,4 @@ export * from './resource-movement.model';
 export * from './hr.model';
 export * from './supply-request.model';
 export * from './prestation.model';
+export * from './auth-history.model';

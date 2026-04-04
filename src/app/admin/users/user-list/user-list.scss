@@ -10,7 +10,7 @@
 .page-loading {
   position: fixed;
   inset: 0;
-  background: rgba(4, 10, 20, 0.45);
+  background: color-mix(in srgb, var(--fxn-bg) 55%, transparent);
   display: grid;
   place-items: center;
   backdrop-filter: blur(6px);
@@ -23,10 +23,10 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 14px;
-  border: 1px solid rgba(88, 123, 255, 0.35);
-  background: rgba(12, 18, 30, 0.9);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-surface);
   color: #fff;
-  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+  box-shadow: var(--fxn-shadow-md);
 }
 
 .page-loading-text {
@@ -34,7 +34,7 @@
   flex-direction: column;
   gap: 4px;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fxn-text-soft);
 }
 
 .page-loading-text strong {
@@ -45,8 +45,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 3px solid rgba(88, 123, 255, 0.3);
-  border-top-color: #6ba4ff;
+  border: 3px solid var(--fxn-primary-soft);
+  border-top-color: var(--fxn-primary);
   animation: spin 0.9s linear infinite;
 }
 
@@ -103,7 +103,7 @@
   position: sticky;
   top: 80px;
   z-index: 5;
-  background: rgba(6, 10, 18, 0.75);
+  background: var(--fxn-surface-soft);
   backdrop-filter: blur(12px);
   border-radius: 1rem;
   padding: 0.85rem;
@@ -296,31 +296,31 @@
   letter-spacing: .06em;
   text-transform: uppercase;
   border: 1px solid rgba(255, 255, 255, .12);
-  background: rgba(12, 18, 30, .35);
+  background: color-mix(in srgb, var(--fxn-surface-soft) 60%, transparent);
 }
 
 .badge.role-admin {
   color: #b8ddff;
   border-color: rgba(88, 164, 255, 0.5);
-  background: rgba(24, 80, 160, 0.25);
+  background: color-mix(in srgb, #3b82f6 18%, var(--fxn-surface-soft));
 }
 
 .badge.role-dirigeant {
   color: #9ff0d3;
   border-color: rgba(47, 190, 160, 0.55);
-  background: rgba(14, 70, 58, 0.35);
+  background: color-mix(in srgb, #10b981 18%, var(--fxn-surface-soft));
 }
 
 .badge.role-depot {
   color: #ffd79a;
   border-color: rgba(255, 179, 92, 0.55);
-  background: rgba(90, 52, 10, 0.3);
+  background: color-mix(in srgb, #f59e0b 18%, var(--fxn-surface-soft));
 }
 
 .badge.role-tech {
   color: #e7d7ff;
   border-color: rgba(168, 126, 255, 0.5);
-  background: rgba(52, 22, 90, 0.35);
+  background: color-mix(in srgb, #7c3aed 18%, var(--fxn-surface-soft));
 }
 
 .depot-pill {
@@ -414,7 +414,7 @@
       padding: 10px;
       border-radius: 0.9rem;
       border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(12, 18, 30, 0.35);
+      background: color-mix(in srgb, var(--fxn-surface-soft) 60%, transparent);
     }
 
     tbody td {

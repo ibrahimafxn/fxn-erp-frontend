@@ -4,39 +4,43 @@
 
 /* Couleurs principales */
 :root {
-  --fxn-bg: #0b1117;
-  --fxn-bg-2: #111a24;
-  --fxn-surface: #141f2b;
-  --fxn-surface-soft: #182635;
-  --fxn-surface-glass: rgba(20, 32, 45, 0.82);
+  /* Backgrounds — hiérarchie plus lisible entre les couches */
+  --fxn-bg: #0d1117;
+  --fxn-bg-2: #131b26;
+  --fxn-surface: #192332;
+  --fxn-surface-soft: #1f2d3e;
+  --fxn-surface-glass: rgba(22, 34, 50, 0.86);
 
-  --fxn-text: #eef2f6;
-  --fxn-text-muted: #9aa7b5;
-  --fxn-text-soft: #c6d0da;
+  /* Texte — contraste renforcé, lecture longue plus confortable */
+  --fxn-text: #edf2f7;
+  --fxn-text-muted: #8c9eb2;
+  --fxn-text-soft: #bfcbd8;
 
-  --fxn-primary: #21b6b6;
-  --fxn-primary-strong: #0fbf9f;
-  --fxn-primary-soft: rgba(33, 182, 182, 0.18);
-  --fxn-primary-border: rgba(33, 182, 182, 0.55);
+  /* Primary — teal plus vif, meilleure lisibilité sur fond sombre */
+  --fxn-primary: #0ec9ca;
+  --fxn-primary-strong: #09b0b1;
+  --fxn-primary-soft: rgba(14, 201, 202, 0.15);
+  --fxn-primary-border: rgba(14, 201, 202, 0.48);
 
-  --fxn-accent: #f6a609;
-  --fxn-accent-soft: rgba(246, 166, 9, 0.18);
-  --fxn-danger: #ff5c7c;
-  --fxn-danger-soft: rgba(255, 92, 124, 0.18);
-  --fxn-success: #2ecf9a;
-  --fxn-warning: #f2b94b;
+  /* Accent / sémantique — tons plus distincts les uns des autres */
+  --fxn-accent: #f59e0b;
+  --fxn-accent-soft: rgba(245, 158, 11, 0.16);
+  --fxn-danger: #f0546c;
+  --fxn-danger-soft: rgba(240, 84, 108, 0.16);
+  --fxn-success: #10d48a;
+  --fxn-warning: #f0b630;
 
-  /* Borders */
-  --fxn-border: rgba(255, 255, 255, 0.08);
-  --fxn-border-strong: rgba(255, 255, 255, 0.16);
-  --fxn-button-outline-bg: rgba(15, 24, 32, 0.55);
+  /* Borders — légèrement plus visibles pour repères spatiaux */
+  --fxn-border: rgba(255, 255, 255, 0.10);
+  --fxn-border-strong: rgba(255, 255, 255, 0.18);
+  --fxn-button-outline-bg: rgba(15, 24, 36, 0.55);
   --fxn-button-outline-border: rgba(255, 255, 255, 0.18);
 
   /* Shadow */
-  --fxn-shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.24);
-  --fxn-shadow-md: 0 20px 40px rgba(0, 0, 0, 0.3);
-  --fxn-button-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
-  --fxn-button-shadow-hover: 0 16px 28px rgba(0, 0, 0, 0.22);
+  --fxn-shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.28);
+  --fxn-shadow-md: 0 20px 44px rgba(0, 0, 0, 0.34);
+  --fxn-button-shadow: 0 10px 22px rgba(0, 0, 0, 0.20);
+  --fxn-button-shadow-hover: 0 16px 30px rgba(0, 0, 0, 0.26);
 
   --fxn-pager-fixed-height: 56px;
 
@@ -61,11 +65,11 @@
   --fxn-font: var(--fxn-font-body);
 
   /* Focus ring */
-  --fxn-ring: 0 0 0 3px rgba(33, 182, 182, 0.25);
+  --fxn-ring: 0 0 0 3px rgba(14, 201, 202, 0.28);
 
   /* Background glows */
-  --fxn-bg-glow-1: rgba(33, 182, 182, 0.2);
-  --fxn-bg-glow-2: rgba(246, 166, 9, 0.18);
+  --fxn-bg-glow-1: rgba(14, 201, 202, 0.18);
+  --fxn-bg-glow-2: rgba(245, 158, 11, 0.14);
 }
 
 body.theme-admin {

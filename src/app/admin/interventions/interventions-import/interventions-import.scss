@@ -104,7 +104,7 @@
   padding: .4rem .65rem;
   border-radius: .7rem;
   border: 1px dashed rgba(148, 163, 184, 0.6);
-  background: rgba(15, 22, 36, 0.55);
+  background: var(--fxn-surface-soft);
   font-size: .8rem;
   color: var(--fxn-text-muted);
   max-width: 220px;
@@ -153,7 +153,7 @@
 .category-card {
   border-radius: 0.85rem;
   border: 1px solid var(--fxn-border);
-  background: rgba(15, 22, 36, 0.55);
+  background: var(--fxn-surface-soft);
   padding: 0.75rem 0.85rem;
   display: grid;
   gap: 0.6rem;
@@ -256,7 +256,7 @@
   padding: 0.75rem 0.85rem;
   border-radius: 0.85rem;
   border: 1px solid var(--fxn-border);
-  background: rgba(15, 22, 36, 0.55);
+  background: var(--fxn-surface-soft);
   display: grid;
   gap: 0.35rem;
 }
@@ -276,7 +276,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(6, 10, 20, 0.78);
+  background: var(--fxn-surface);
   display: grid;
   place-items: center;
   backdrop-filter: blur(6px);
@@ -288,10 +288,10 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 14px;
-  border: 1px solid rgba(88, 123, 255, 0.35);
-  background: rgba(12, 18, 30, 0.9);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-surface);
   color: #fff;
-  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+  box-shadow: var(--fxn-shadow-md);
 }
 
 .import-blocker-text {
@@ -299,7 +299,7 @@
   flex-direction: column;
   gap: 4px;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fxn-text-soft);
 }
 
 .import-blocker-text strong {
@@ -310,8 +310,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 3px solid rgba(88, 123, 255, 0.3);
-  border-top-color: #6ba4ff;
+  border: 3px solid var(--fxn-primary-soft);
+  border-top-color: var(--fxn-primary);
   animation: spin 0.9s linear infinite;
 }
 
@@ -347,7 +347,7 @@ tbody td {
 }
 
 tbody tr:nth-child(even) {
-  background: rgba(12, 18, 30, 0.35);
+  background: color-mix(in srgb, var(--fxn-surface-soft) 60%, transparent);
 }
 
 .import-validation {
@@ -366,7 +366,7 @@ tbody tr:nth-child(even) {
     padding: 0.85rem 1rem;
     border-radius: 0.85rem;
     border: 1px solid var(--fxn-border);
-    background: rgba(15, 22, 36, 0.55);
+    background: var(--fxn-surface-soft);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

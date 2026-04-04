@@ -45,6 +45,8 @@ export type InterventionSummaryItem = {
   technician: string;
   total: number;
   racPavillon: number;
+  racAerien?: number;
+  racFacade?: number;
   racImmeuble: number;
   reconnexion: number;
   racF8: number;
@@ -58,6 +60,9 @@ export type InterventionSummaryItem = {
   refrac?: number;
   refcDgr?: number;
   savExp?: number;
+  deplacementOffert?: number;
+  deplacementATort?: number;
+  swapEquipement?: number;
   cablePav1: number;
   cablePav2: number;
   cablePav3: number;
@@ -69,6 +74,8 @@ export type InterventionSummaryItem = {
 export type InterventionTotals = {
   total: number;
   racPavillon: number;
+  racAerien?: number;
+  racFacade?: number;
   racImmeuble: number;
   reconnexion: number;
   racF8: number;
@@ -82,6 +89,9 @@ export type InterventionTotals = {
   refrac?: number;
   refcDgr?: number;
   savExp?: number;
+  deplacementOffert?: number;
+  deplacementATort?: number;
+  swapEquipement?: number;
   cablePav1: number;
   cablePav2: number;
   cablePav3: number;

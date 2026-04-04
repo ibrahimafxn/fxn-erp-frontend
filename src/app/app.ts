@@ -30,7 +30,9 @@ export class App implements AfterViewInit, OnDestroy {
   protected readonly title = signal('fxn-erp-frontend');
   private readonly routeUrl = signal(this.router.url);
   readonly showHeader = computed(() =>
-    Boolean(this.auth.user$()) && !this.isLoginRoute(this.routeUrl())
+    this.auth.ready$() &&
+    this.auth.isAuthenticated() &&
+    !this.isLoginRoute(this.routeUrl())
   );
   readonly showHeidiOverlay = computed(() => {
     const user = this.auth.user$();

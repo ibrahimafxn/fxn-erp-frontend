@@ -20,58 +20,72 @@
 
       <div class="hero-foot">
         <div class="hero-kpis" *ngIf="stats() as s">
-          <div class="hero-kpi alert">
-            <div class="label">Alertes totales</div>
-            <div class="value">{{ s.totalAlerts ?? s.totalLowStock ?? 0 }}</div>
+          <div class="hero-kpi alert" (click)="goToStockAlerts()" role="button" tabindex="0">
+            <div class="kpi-icon-wrap"><span class="material-icons notranslate">warning_amber</span></div>
+            <div class="kpi-body">
+              <div class="value">{{ s.totalAlerts ?? s.totalLowStock ?? 0 }}</div>
+              <div class="label">Alertes totales</div>
+            </div>
           </div>
-          <div class="hero-kpi alert">
-            <div class="label">Stock bas matériels</div>
-            <div class="value">{{ s.totalLowStockMaterials ?? 0 }}</div>
+          <div class="hero-kpi alert" (click)="goToResources('materials')" role="button" tabindex="0">
+            <div class="kpi-icon-wrap"><span class="material-icons notranslate">build_circle</span></div>
+            <div class="kpi-body">
+              <div class="value">{{ s.totalLowStockMaterials ?? 0 }}</div>
+              <div class="label">Stock bas matériels</div>
+            </div>
           </div>
-          <div class="hero-kpi alert">
-            <div class="label">Stock bas consommables</div>
-            <div class="value">{{ s.totalLowStockConsumables ?? 0 }}</div>
+          <div class="hero-kpi alert" (click)="goToResources('consumables')" role="button" tabindex="0">
+            <div class="kpi-icon-wrap"><span class="material-icons notranslate">inventory</span></div>
+            <div class="kpi-body">
+              <div class="value">{{ s.totalLowStockConsumables ?? 0 }}</div>
+              <div class="label">Stock bas consommables</div>
+            </div>
           </div>
-          <div class="hero-kpi alert">
-            <div class="label">Alertes véhicules</div>
-            <div class="value">{{ s.totalVehicleAlerts ?? 0 }}</div>
+          <div class="hero-kpi alert" (click)="goToResources('vehicles')" role="button" tabindex="0">
+            <div class="kpi-icon-wrap"><span class="material-icons notranslate">directions_car</span></div>
+            <div class="kpi-body">
+              <div class="value">{{ s.totalVehicleAlerts ?? 0 }}</div>
+              <div class="label">Alertes véhicules</div>
+            </div>
           </div>
         </div>
-        <div class="hero-admin" *ngIf="canManageAccess() || canViewHr()">
-          <div class="hero-admin-title">Administration</div>
-          <div class="hero-admin-actions">
-            <button class="btn-outline admin-access" type="button" (click)="goToUserAccess()" *ngIf="canManageAccess()">
-              <span class="material-icons notranslate" aria-hidden="true">vpn_key</span>
-              Accès connexion
+        <div class="hero-bottom-row">
+          <div class="hero-admin" *ngIf="canManageAccess() || canViewHr()">
+            <div class="hero-admin-title">Administration</div>
+            <div class="hero-admin-actions">
+              <button class="btn-outline admin-access" type="button" (click)="goToUserAccess()" *ngIf="canManageAccess()">
+                <span class="material-icons notranslate" aria-hidden="true">vpn_key</span>
+                Accès connexion
+              </button>
+              <button class="btn-outline admin-hr" type="button" (click)="goToHr()" *ngIf="canViewHr()">
+                <span class="material-icons notranslate" aria-hidden="true">badge</span>
+                Ressources humaines
+              </button>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn-outline btn-onboarding btn-depot-hero" type="button" (click)="goToDepotDashboard()">
+              <span class="btn-text">
+                <span class="title">Dépôt</span>
+                <span class="meta">Tableau dépôt</span>
+              </span>
+              <span class="badge">Stock</span>
             </button>
-            <button class="btn-outline admin-hr" type="button" (click)="goToHr()" *ngIf="canViewHr()">
-              <span class="material-icons notranslate" aria-hidden="true">badge</span>
-              Ressources humaines
+            <button class="btn-outline btn-onboarding btn-onboarding-hero" type="button" (click)="goToOnboarding()">
+              <span class="btn-text">
+                <span class="title">Onboarding</span>
+                <span class="meta">Importer fichiers CSV</span>
+              </span>
+              <span class="badge">CSV</span>
+            </button>
+            <button class="btn-outline btn-reload btn-reload-hero" type="button" (click)="adminService.loadDashboardStats()">
+              <span class="btn-text">
+                <span class="title">Rafraîchir</span>
+                <span class="meta">Actualiser les indicateurs</span>
+              </span>
+              <span class="badge">Live</span>
             </button>
           </div>
-        </div>
-        <div class="hero-actions">
-          <button class="btn-outline btn-onboarding btn-depot-hero" type="button" (click)="goToDepotDashboard()">
-            <span class="btn-text">
-              <span class="title">Dépôt</span>
-              <span class="meta">Tableau dépôt</span>
-            </span>
-            <span class="badge">Stock</span>
-          </button>
-          <button class="btn-outline btn-onboarding btn-onboarding-hero" type="button" (click)="goToOnboarding()">
-            <span class="btn-text">
-              <span class="title">Onboarding</span>
-              <span class="meta">Importer fichiers CSV</span>
-            </span>
-            <span class="badge">CSV</span>
-          </button>
-          <button class="btn-outline btn-reload btn-reload-hero" type="button" (click)="adminService.loadDashboardStats()">
-            <span class="btn-text">
-              <span class="title">Rafraîchir</span>
-              <span class="meta">Actualiser les indicateurs</span>
-            </span>
-            <span class="badge">Live</span>
-          </button>
         </div>
       </div>
     </div>

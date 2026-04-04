@@ -273,6 +273,10 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () => import('./security/access-users/access-users').then(m => m.AccessUsers),
   },
   {
+    path: 'security/auth-history',
+    loadComponent: () => import('./security/auth-history/auth-history').then(m => m.AuthHistory),
+  },
+  {
     path: 'hr',
     loadComponent: () => import('../modules/hr/hr-list/hr-list').then(m => m.HrList)
   },

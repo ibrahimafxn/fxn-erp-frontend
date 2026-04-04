@@ -38,7 +38,7 @@
 .step {
   text-align: left;
   border: 1px solid var(--fxn-border);
-  background: rgba(10, 16, 24, 0.45);
+  background: color-mix(in srgb, var(--fxn-bg) 55%, transparent);
   border-radius: var(--fxn-radius-md);
   padding: .75rem .75rem .75rem 1rem;
   color: inherit;
@@ -118,7 +118,7 @@
   padding: 1.25rem;
   display: grid;
   gap: .75rem;
-  background: linear-gradient(145deg, rgba(10, 16, 26, 0.7), rgba(8, 12, 20, 0.9));
+  background: var(--fxn-surface);
   transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 

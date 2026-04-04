@@ -20,6 +20,7 @@
     margin: 0;
     font-size: 1.3rem;
     font-weight: 750;
+    font-family: var(--fxn-font-display);
   }
 
   .subtitle {
@@ -75,7 +76,7 @@
 }
 
 .technician-history .search select {
-  background: rgba(10, 16, 28, 0.85);
+  background: var(--fxn-surface);
 }
 
 .technician-history .search input:focus,
@@ -137,7 +138,7 @@
 
 .technician-history .badge-assign {
   border-color: rgba(59, 130, 246, 0.8);
-  background: rgba(37, 99, 235, 0.18);
+  background: color-mix(in srgb, #3b82f6 14%, var(--fxn-surface-soft));
   color: #bfdbfe;
 }
 

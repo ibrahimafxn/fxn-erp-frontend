@@ -45,6 +45,7 @@ export class AppHeader {
     const url = this.currentUrl();
     if (this.isDashboardUrl(url)) return false;
     if (this.isOrdersNewUrl(url)) return true;
+    if (this.isBpuNewUrl(url)) return true;
     return !this.hasLocalBack(url);
   });
 
@@ -165,6 +166,10 @@ export class AppHeader {
 
   goUserAccess(): void {
     this.router.navigate(['/admin/security/user-access']);
+  }
+
+  goAuthHistory(): void {
+    this.router.navigate(['/admin/security/auth-history']);
   }
 
   goHr(): void {
@@ -373,6 +378,10 @@ export class AppHeader {
 
   private isOrdersNewUrl(url: string): boolean {
     return url === '/admin/orders/new';
+  }
+
+  private isBpuNewUrl(url: string): boolean {
+    return (url || '').startsWith('/admin/bpu/new');
   }
 
   private computeTitle(url: string): string {

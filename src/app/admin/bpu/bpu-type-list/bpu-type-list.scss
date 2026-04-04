@@ -92,7 +92,7 @@ td.actions {
 
 .pill-green {
   border-color: rgba(16, 185, 129, 0.5);
-  background: rgba(16, 185, 129, 0.2);
+  background: color-mix(in srgb, var(--fxn-success) 16%, var(--fxn-surface-soft));
   color: #dcfce7;
 }
 

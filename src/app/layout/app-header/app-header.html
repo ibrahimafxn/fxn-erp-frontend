@@ -112,6 +112,30 @@
 
               <div class="menu-col">
                 @if (!isTechnician()) {
+                  @if (canManageAccess() || canViewHr()) {
+                    <div class="menu-group admin-group">
+                      <div class="section-label">Administration</div>
+                      <div class="section-items">
+                        @if (canManageAccess()) {
+                          <button mat-button (click)="goUserAccess()">
+                            <span class="material-icons notranslate">vpn_key</span>
+                            <span>Accès connexion</span>
+                          </button>
+                          <button mat-button (click)="goAuthHistory()">
+                            <span class="material-icons notranslate">history</span>
+                            <span>Historique connexions</span>
+                          </button>
+                        }
+                        @if (canViewHr()) {
+                          <button mat-button (click)="goHr()">
+                            <span class="material-icons notranslate">badge</span>
+                            <span>Ressources humaines</span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+
                   <div class="menu-row">
                     <div class="menu-group stock-group">
                       <div class="section-label" i18n="@@header.section.stock">Stock</div>
