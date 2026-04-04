@@ -175,7 +175,7 @@
 }
 
 .state.success {
-  background: rgba(16, 185, 129, 0.15);
+  background: color-mix(in srgb, var(--fxn-success) 12%, var(--fxn-surface-soft));
   border: 1px solid rgba(16, 185, 129, 0.4);
   color: #34d399;
   padding: .6rem .8rem;

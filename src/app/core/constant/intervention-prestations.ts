@@ -10,51 +10,63 @@ export type InterventionPrestationField = {
 export const INTERVENTION_PRESTATION_FIELDS: InterventionPrestationField[] = [
   {
     key: 'racPavillon',
-    label: 'Raccordement pavillon',
-    code: 'RACPAV',
-    description: 'Insertion d’un raccordement dans un logement individuel.'
+    label: 'Raccordement pavillon (sout.)',
+    code: 'RAC_PBO-SOUT',
+    description: 'Raccordement pavillon en souterrain.'
+  },
+  {
+    key: 'racAerien',
+    label: 'Raccordement aerien',
+    code: 'RAC_PBO_AERIEN',
+    description: 'Raccordement pavillon en aerien.'
+  },
+  {
+    key: 'racFacade',
+    label: 'Raccordement facade',
+    code: 'RAC_PBO_FACADE',
+    description: 'Raccordement pavillon en facade.'
   },
   {
     key: 'cablePav1',
-    label: 'Câble pavillon tranche 1',
+    label: 'Cable pavillon tranche 1',
     code: 'CABLE_PAV_1',
-    description: 'Premier segment de câblage pavillonnaire (courtes longueurs).'
+    description: 'Premier segment de cablage pavillonnaire (courtes longueurs).'
   },
   {
     key: 'cablePav2',
-    label: 'Câble pavillon tranche 2',
+    label: 'Cable pavillon tranche 2',
     code: 'CABLE_PAV_2',
-    description: 'Deuxième segment de câblage pavillonnaire (moyennes longueurs).'
+    description: 'Deuxieme segment de cablage pavillonnaire (moyennes longueurs).'
   },
   {
     key: 'cablePav3',
-    label: 'Câble pavillon tranche 3',
+    label: 'Cable pavillon tranche 3',
     code: 'CABLE_PAV_3',
-    description: 'Troisième segment de câblage pavillonnaire (longueurs importantes).'
+    description: 'Troisieme segment de cablage pavillonnaire (longueurs importantes).'
   },
   {
     key: 'cablePav4',
-    label: 'Câble pavillon tranche 4',
+    label: 'Cable pavillon tranche 4',
     code: 'CABLE_PAV_4',
-    description: 'Quatrième segment de câblage pavillonnaire (très longues distances).'
+    description: 'Quatrieme segment de cablage pavillonnaire (tres longues distances).'
   },
   {
     key: 'clem',
     label: 'Mise en service',
     code: 'CLEM',
-    description: 'Réouverture ou lancement d’un service pour un client.'
+    description: 'Reouverture ou lancement du service pour un client.'
   },
   {
     key: 'reconnexion',
     label: 'Reconnexion',
     code: 'RECOIP',
-    description: 'Reconnexion après suspension ou déménagement.'
+    description: 'Reconnexion apres suspension ou demenagement.'
   },
   {
     key: 'racImmeuble',
     label: 'Raccordement immeuble',
     code: 'RACIH',
-    description: 'Raccordement d’un immeuble collectif ou d’un site groupé.'
+    description: 'Raccordement collectif ou site groupe.'
   },
   {
     key: 'racProS',
@@ -66,54 +78,72 @@ export const INTERVENTION_PRESTATION_FIELDS: InterventionPrestationField[] = [
     key: 'racProC',
     label: 'Raccordement pro complexe',
     code: 'RACPRO_C',
-    description: 'Installation professionnelle nécessitant du matériel ou du temps supplémentaire.'
+    description: 'Installation professionnelle necessitant du materiel ou du temps supplementaire.'
   },
   {
     key: 'racF8',
-    label: 'Prestation F8',
-    code: 'REPFOU_PRI',
-    description: 'Réparation de fourreaux bouchés en domaine privé.'
+    label: 'Fourreau casse prive',
+    code: 'FOURREAU_CASSE_PRIVE',
+    description: 'Reparation de fourreaux casses en domaine prive.'
   },
   {
     key: 'prestaCompl',
-    label: 'Prestation complémentaire',
+    label: 'Prestation complementaire',
     code: 'PRESTA_COMPL',
-    description: 'Prestation complémentaire facturée en supplément.'
+    description: 'Prestation complementaire facturee en supplement.'
   },
   {
     key: 'deprise',
-    label: 'Déplacement prise',
+    label: 'Deplacement prise',
     code: 'DEPLPRISE',
-    description: 'Modification ou déplacement d’une prise existante.'
+    description: 'Modification ou deplacement de prise existante.'
   },
   {
     key: 'demo',
-    label: 'Démonstration service',
+    label: 'Demonstration service',
     code: 'DEMO',
-    description: 'Présentation du service au client (démonstration commerciale).'
+    description: 'Presentation du service au client.'
   },
   {
     key: 'sav',
-    label: 'Service après-vente',
+    label: 'SAV (ancien)',
     code: 'SAV',
-    description: 'Intervention corrective suite à une anomalie détectée.'
+    description: 'Code SAV generique conserve pour compatibilite avec les anciens imports.'
   },
   {
     key: 'savExp',
     label: 'SAV EXP',
     code: 'SAV_EXP',
-    description: 'SAV sans déplacement physique (expédition ou assistance à distance).'
+    description: 'SAV sans deplacement physique (expedition ou assistance a distance).'
+  },
+  {
+    key: 'deplacementOffert',
+    label: 'Deplacement offert',
+    code: 'DEPLACEMENT_OFFERT',
+    description: 'Deplacement offert au client (non facturable).'
+  },
+  {
+    key: 'deplacementATort',
+    label: 'Deplacement a tort',
+    code: 'DEPLACEMENT_A_TORT',
+    description: 'Deplacement a tort, client responsable.'
+  },
+  {
+    key: 'swapEquipement',
+    label: 'Swap equipement',
+    code: 'SWAP_EQUIPEMENT',
+    description: 'Echange equipement chez le client.'
   },
   {
     key: 'refrac',
     label: 'Refaire raccordement',
     code: 'REFRAC',
-    description: 'Refait d’un raccordement suite à une reprise ou une erreur.'
+    description: 'Refait raccordement suite a une reprise ou une erreur.'
   },
   {
     key: 'refcDgr',
-    label: 'Dégradation client',
+    label: 'Degradation client',
     code: 'REFC_DGR',
-    description: 'Travail lié à des dégradations volontaires ou involontaires du client.'
+    description: 'Travail lie a des degradations volontaires ou involontaires du client.'
   }
 ];

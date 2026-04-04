@@ -9,7 +9,7 @@
 .page-loading {
   position: fixed;
   inset: 0;
-  background: rgba(4, 10, 20, 0.45);
+  background: color-mix(in srgb, var(--fxn-bg) 55%, transparent);
   display: grid;
   place-items: center;
   backdrop-filter: blur(6px);
@@ -22,10 +22,10 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 14px;
-  border: 1px solid rgba(88, 123, 255, 0.35);
-  background: rgba(12, 18, 30, 0.9);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-surface);
   color: #fff;
-  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+  box-shadow: var(--fxn-shadow-md);
 }
 
 .page-loading-text {
@@ -33,7 +33,7 @@
   flex-direction: column;
   gap: 4px;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fxn-text-soft);
 }
 
 .page-loading-text strong {
@@ -44,8 +44,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 3px solid rgba(88, 123, 255, 0.3);
-  border-top-color: #6ba4ff;
+  border: 3px solid var(--fxn-primary-soft);
+  border-top-color: var(--fxn-primary);
   animation: spin 0.9s linear infinite;
 }
 
@@ -82,7 +82,7 @@ label {
 input,
 select,
 textarea {
-  background: rgba(10, 16, 29, 0.85);
+  background: var(--fxn-surface);
   border: 1px solid rgba(88, 123, 255, 0.25);
   border-radius: 10px;
   padding: 8px 10px;
@@ -131,14 +131,14 @@ textarea {
   place-items: center;
   border-radius: 10px;
   border: 1px solid rgba(88, 123, 255, 0.25);
-  background: rgba(10, 16, 29, 0.7);
+  background: var(--fxn-surface-soft);
   color: #fff;
 }
 
 .view-switch {
   display: inline-flex;
   gap: 6px;
-  background: rgba(10, 16, 29, 0.6);
+  background: var(--fxn-surface-soft);
   border-radius: 999px;
   padding: 4px;
 }
@@ -187,7 +187,7 @@ textarea {
   min-height: 120px;
   padding: 6px;
   border-radius: 12px;
-  background: rgba(10, 16, 29, 0.65);
+  background: var(--fxn-surface-soft);
   border: 1px solid rgba(88, 123, 255, 0.15);
   display: flex;
   flex-direction: column;
@@ -244,7 +244,7 @@ textarea {
   padding: 5px 6px;
   border-radius: 10px;
   font-size: 0.72rem;
-  background: rgba(54, 96, 161, 0.25);
+  background: color-mix(in srgb, #3b82f6 15%, var(--fxn-surface-soft));
 }
 
 .event-pill .event-type {
@@ -289,7 +289,7 @@ textarea {
   gap: 10px;
   padding: 10px;
   border-radius: 12px;
-  background: rgba(10, 16, 29, 0.65);
+  background: var(--fxn-surface-soft);
   border: 1px solid rgba(88, 123, 255, 0.15);
 }
 
@@ -362,7 +362,7 @@ textarea {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(6, 10, 18, 0.65);
+  background: var(--fxn-surface-soft);
   z-index: 40;
 }
 
@@ -372,7 +372,7 @@ textarea {
   left: 50%;
   transform: translate(-50%, -50%);
   width: min(760px, 92vw);
-  background: rgba(12, 20, 34, 0.98);
+  background: var(--fxn-surface);
   border-radius: 18px;
   border: 1px solid rgba(88, 123, 255, 0.25);
   padding: 14px;
@@ -443,7 +443,7 @@ textarea {
 .timeline-item .content {
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(10, 16, 29, 0.7);
+  background: var(--fxn-surface-soft);
   border: 1px solid rgba(88, 123, 255, 0.2);
 }
 

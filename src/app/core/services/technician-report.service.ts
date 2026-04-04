@@ -11,11 +11,18 @@ export type TechnicianReport = {
   prestations?: {
     professionnel?: number;
     pavillon?: number;
+    aerien?: number;
+    facade?: number;
     immeuble?: number;
     racProC?: number;
     prestaComplementaire?: number;
     reconnexion?: number;
+    /** @deprecated Remplacé par deplacementOffert / deplacementATort / swapEquipement / savExp */
     sav?: number;
+    savExp?: number;
+    deplacementOffert?: number;
+    deplacementATort?: number;
+    swapEquipement?: number;
     prestationF8?: number;
   };
   comment?: string;

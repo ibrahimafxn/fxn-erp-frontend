@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 @Component({
@@ -9,4 +9,14 @@ import { RouterModule } from '@angular/router';
   styleUrl: './technician-mobile-nav.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TechnicianMobileNav {}
+export class TechnicianMobileNav {
+  readonly menuOpen = signal(false);
+
+  toggleMenu(): void {
+    this.menuOpen.update((v) => !v);
+  }
+
+  closeMenu(): void {
+    this.menuOpen.set(false);
+  }
+}

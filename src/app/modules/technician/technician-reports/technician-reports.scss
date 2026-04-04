@@ -30,7 +30,7 @@
   padding: 14px;
   border-radius: 14px;
   border: 1px solid rgba(99, 102, 241, 0.35);
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.85));
+  background: var(--fxn-surface);
 }
 
 .technician-reports .daily-report-card__values {
@@ -91,7 +91,7 @@
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--fxn-primary-border);
-  background: linear-gradient(180deg, rgba(8, 12, 20, 0.96), rgba(12, 18, 30, 0.92));
+  background: var(--fxn-surface);
   color: #e8f1ff;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
@@ -108,7 +108,7 @@
   outline: none;
   border-color: var(--fxn-primary-border);
   box-shadow: 0 0 0 3px var(--fxn-primary-soft);
-  background: linear-gradient(180deg, rgba(10, 16, 28, 0.98), rgba(12, 20, 34, 0.95));
+  background: var(--fxn-surface);
 }
 
 .technician-reports .full {
@@ -133,39 +133,97 @@
 .technician-reports .prestations-title {
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fxn-text-muted);
+  margin-bottom: 6px;
 }
 
-/* 2 cols on mobile: compact number + pill */
+/* 2-col card grid — pill = header, input = body */
 .technician-reports .prestations-list {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
 .technician-reports .prestation-item {
-  display: grid;
-  grid-template-columns: 64px 1fr;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+/* Stepper row: [−] [value] [+] */
+.technician-reports .prestation-stepper {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--fxn-border);
+}
+
+.technician-reports .stepper-btn {
+  flex: 0 0 44px;
+  background: transparent;
+  border: none;
+  color: var(--fxn-primary);
+  font-size: 1.4rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  justify-content: center;
+  min-height: 52px;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.12s ease;
 }
 
-.technician-reports .prestation-item input {
-  min-height: 40px;
+.technician-reports .stepper-btn:active {
+  background: var(--fxn-primary-soft);
 }
 
+.technician-reports .prestation-stepper input[type='number'] {
+  flex: 1;
+  min-height: 52px;
+  padding: 10px 4px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--fxn-border);
+  border-right: 1px solid var(--fxn-border);
+  color: #f8fafc;
+  -moz-appearance: textfield;
+  width: 100%;
+}
+
+.technician-reports .prestation-stepper input[type='number']::-webkit-inner-spin-button,
+.technician-reports .prestation-stepper input[type='number']::-webkit-outer-spin-button {
+  display: none;
+}
+
+.technician-reports .prestation-stepper input[type='number']:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Pill = full-width card header */
 .technician-reports .prestation-item .prestation-pill {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--fxn-primary-border);
-  background: rgba(15, 23, 42, 0.9);
+  justify-content: center;
+  padding: 7px 8px;
+  border-radius: 0;
+  border: none;
+  background: var(--fxn-surface);
   color: #e6efff;
   font-weight: 600;
-  font-size: 12px;
-  white-space: nowrap;
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.3;
+  min-height: 36px;
 }
 
 /* Pill variants */
@@ -225,19 +283,97 @@
   color: #fffbeb !important;
 }
 
+.technician-reports .prestation-item .prestation-pill.pill-aerien,
+.technician-reports .prestations-pill.pill-aerien {
+  border-color: rgba(56, 189, 248, 0.95) !important;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.85), rgba(56, 189, 248, 0.6)) !important;
+  color: #e0f2fe !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-facade,
+.technician-reports .prestations-pill.pill-facade {
+  border-color: rgba(249, 115, 22, 0.95) !important;
+  background: linear-gradient(135deg, rgba(234, 88, 12, 0.85), rgba(249, 115, 22, 0.65)) !important;
+  color: #fff7ed !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-depl-offert,
+.technician-reports .prestations-pill.pill-depl-offert {
+  border-color: rgba(34, 197, 94, 0.95) !important;
+  background: linear-gradient(135deg, rgba(21, 128, 61, 0.85), rgba(74, 222, 128, 0.6)) !important;
+  color: #dcfce7 !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-depl-tort,
+.technician-reports .prestations-pill.pill-depl-tort {
+  border-color: rgba(239, 68, 68, 0.95) !important;
+  background: linear-gradient(135deg, rgba(185, 28, 28, 0.9), rgba(239, 68, 68, 0.7)) !important;
+  color: #fee2e2 !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-swap,
+.technician-reports .prestations-pill.pill-swap {
+  border-color: rgba(168, 85, 247, 0.95) !important;
+  background: linear-gradient(135deg, rgba(126, 34, 206, 0.85), rgba(168, 85, 247, 0.65)) !important;
+  color: #f5f3ff !important;
+}
+
+.technician-reports .prestation-item .prestation-pill.pill-sav-exp,
+.technician-reports .prestations-pill.pill-sav-exp {
+  border-color: rgba(148, 163, 184, 0.95) !important;
+  background: linear-gradient(135deg, rgba(71, 85, 105, 0.9), rgba(100, 116, 139, 0.75)) !important;
+  color: #f1f5f9 !important;
+}
+
 /* ── List / History section ──────────────────────────────── */
 .technician-reports .list-header {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .technician-reports .list-header h2 {
   margin: 0;
 }
 
-/* Filters: single column on mobile */
+.technician-reports .list-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Collapsible filters: hidden on mobile until toggled */
+@media (max-width: 599px) {
+  .technician-reports .history-filters {
+    display: none;
+  }
+
+  .technician-reports .history-filters.is-open {
+    display: grid;
+  }
+}
+
+/* Toggle button: only visible on mobile */
+.technician-reports .filters-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+@media (min-width: 600px) {
+  .technician-reports .filters-toggle {
+    display: none;
+  }
+}
+
+/* Filters: single column on mobile (shown by default on 600px+, toggleable on mobile) */
 .technician-reports .history-filters {
   display: grid;
   grid-template-columns: 1fr;
@@ -246,7 +382,7 @@
   padding: 12px;
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-soft);
-  background: linear-gradient(135deg, rgba(10, 16, 28, 0.75), rgba(12, 20, 34, 0.5));
+  background: linear-gradient(135deg, var(--fxn-surface), rgba(12, 20, 34, 0.5));
 }
 
 .technician-reports .history-filters label {
@@ -272,7 +408,7 @@
   padding: 0.75rem 1rem;
   border-radius: 0.9rem;
   border: 1px solid var(--fxn-border);
-  background: rgba(12, 18, 30, 0.7);
+  background: var(--fxn-surface-soft);
   margin-bottom: 0.75rem;
 }
 
@@ -320,71 +456,97 @@
   width: 100%;
 }
 
-/* Carte 2 colonnes : Date (gauche) | Montant (droite, proéminent) / Prestations (full) / Commentaire (full) / Actions */
+/* Carte condensée : [Date | Montant | Actions] / [Pills] / [Commentaire] */
 .technician-reports .table tbody tr {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0 0.75rem;
+  grid-template-columns: 1fr auto auto;
+  grid-template-rows: auto auto auto;
+  column-gap: 0.5rem;
+  row-gap: 0;
   border: 1px solid var(--fxn-border);
-  border-radius: 14px;
-  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  padding: 0.55rem 0.75rem;
   background: var(--fxn-surface);
   min-width: 0;
+  align-items: center;
 }
 
 .technician-reports .table td {
   display: block;
-  padding: 0.2rem 0;
-  font-size: 0.9rem;
+  padding: 0;
+  font-size: 0.88rem;
   min-width: 0;
 }
 
+/* Supprimer les labels — le contenu est auto-explicatif */
 .technician-reports .table td::before {
-  content: attr(data-label);
-  display: block;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 2px;
+  display: none;
 }
 
-/* Montant aligné à droite avec mise en avant */
-.technician-reports .table td[data-label='Montant'] {
-  text-align: right;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-/* Prestations : pleine largeur (pills multiples) */
-.technician-reports .table td.prestations-cell {
-  grid-column: 1 / -1;
-  overflow: visible;
-}
-
-/* Commentaire : pleine largeur, plus petit */
-.technician-reports .table td[data-label='Commentaire'] {
-  grid-column: 1 / -1;
+/* Ligne 1 col 1 : Date */
+.technician-reports .table td[data-label='Date'] {
+  grid-column: 1;
+  grid-row: 1;
   font-size: 0.82rem;
-  color: rgba(226, 232, 240, 0.72);
+  color: rgba(226, 232, 240, 0.7);
 }
 
+/* Ligne 1 col 2 : Montant */
+.technician-reports .table td[data-label='Montant'] {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: right;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Ligne 1 col 3 : Actions (trash / modifier) */
 .technician-reports .table td.actions {
-  grid-column: 1 / -1;
+  grid-column: 3;
+  grid-row: 1;
   display: flex;
-  justify-content: flex-end;
-  padding-top: 0.4rem;
-  margin-top: 0.2rem;
-  border-top: 1px solid var(--fxn-border);
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  margin: 0;
 }
 
 .technician-reports .table td.actions::before {
   display: none;
 }
 
+/* Ligne 2 : Pills (full width) */
+.technician-reports .table td.prestations-cell {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  overflow: visible;
+  padding-top: 6px;
+}
+
+/* Ligne 3 : Commentaire (full width, masqué si vide) */
+.technician-reports .table td[data-label='Commentaire'] {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  font-size: 0.78rem;
+  color: rgba(226, 232, 240, 0.6);
+  padding-top: 4px;
+}
+
 .technician-reports .table td.note.is-empty {
   display: none;
+}
+
+/* Masquer le label textuel du bouton Modifier sur mobile */
+.technician-reports .table td.actions .btn-label {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .technician-reports .table td.actions .btn-label {
+    display: inline;
+  }
 }
 
 /* ── Prestation summary pills ────────────────────────────── */
@@ -401,7 +563,7 @@
   padding: 3px 7px;
   border-radius: 999px;
   border: 1px solid var(--fxn-primary-border);
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--fxn-surface-soft);
   font-size: 11px;
   width: fit-content;
 }
@@ -423,7 +585,7 @@ body.theme-default .technician-reports thead th {
   }
 
   .technician-reports .prestations-list {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 
   .technician-reports .history-filters {
@@ -449,11 +611,6 @@ body.theme-default .technician-reports thead th {
     justify-content: flex-end;
   }
 
-  .technician-reports .list-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
 
   /* Restore table layout */
   .technician-reports .table {
@@ -507,10 +664,12 @@ body.theme-default .technician-reports thead th {
     color: inherit;
   }
 
+  .technician-reports .table td[data-label='Date'],
   .technician-reports .table td[data-label='Montant'],
   .technician-reports .table td.prestations-cell,
   .technician-reports .table td[data-label='Commentaire'] {
     grid-column: unset;
+    grid-row: unset;
     font-size: inherit;
     font-weight: inherit;
     text-align: left;
@@ -518,13 +677,19 @@ body.theme-default .technician-reports thead th {
     border-top: none;
     margin-top: 0;
     overflow: unset;
+    padding-top: 0;
   }
 
   .technician-reports .table td.actions {
     grid-column: unset;
+    grid-row: unset;
     display: table-cell;
     border-top: none;
     margin-top: 0;
+  }
+
+  .technician-reports .table td.actions .btn-label {
+    display: inline;
   }
 
   .technician-reports .table td::before {
@@ -574,5 +739,41 @@ body.theme-default .technician-reports thead th {
 
   .technician-reports .note {
     max-width: 420px;
+  }
+}
+
+/* ── Toast de succès ─────────────────────────────────────── */
+.save-toast {
+  position: fixed;
+  bottom: calc(72px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(22, 163, 74, 0.92);
+  color: #f0fdf4;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 200;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  animation: toast-in 0.2s ease;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (min-width: 900px) {
+  .save-toast {
+    bottom: 1.5rem;
   }
 }

@@ -115,7 +115,7 @@
   border: 1px solid var(--fxn-border);
   border-radius: var(--fxn-radius-md);
   padding: 14px;
-  background: rgba(10, 16, 28, 0.5);
+  background: var(--fxn-surface-soft);
   display: grid;
   gap: 12px;
 }

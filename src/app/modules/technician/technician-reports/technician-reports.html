@@ -27,10 +27,14 @@
         <div class="prestations-title">Prestations</div>
         <div class="prestations-list">
           @for (item of prestationOptions; track item.key) {
-            <label class="prestation-item">
-              <input type="number" min="0" [formControlName]="item.key" />
+            <div class="prestation-item">
               <span class="prestation-pill" [ngClass]="item.className">{{ item.label }}</span>
-            </label>
+              <div class="prestation-stepper">
+                <button type="button" class="stepper-btn" (click)="stepPrestation(item.key, -1)" aria-label="Diminuer">−</button>
+                <input type="number" min="0" [formControlName]="item.key" />
+                <button type="button" class="stepper-btn" (click)="stepPrestation(item.key, 1)" aria-label="Augmenter">+</button>
+              </div>
+            </div>
           }
         </div>
       </div>
@@ -49,10 +53,15 @@
   <section class="card list-card">
     <div class="list-header">
       <h2>Historique</h2>
-      <div class="meta">Page {{ page() }} / {{ pageCount() }}</div>
+      <div class="list-header-right">
+        <div class="meta">Page {{ page() }} / {{ pageCount() }}</div>
+        <button type="button" class="btn-outline filters-toggle" (click)="toggleFilters()">
+          <i class="bi bi-funnel"></i> {{ filtersOpen() ? 'Masquer' : 'Filtrer' }}
+        </button>
+      </div>
     </div>
 
-    <form class="history-filters" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+    <form class="history-filters" [class.is-open]="filtersOpen()" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
       <label>
         Année
         <input type="number" min="2000" max="2100" placeholder="2026" formControlName="year" (input)="applyFilters()" />
@@ -133,7 +142,7 @@
                 </td>
                 <td class="actions" data-label="Actions">
                   @if (isToday(report)) {
-                    <button class="btn-outline primary-outline" type="button" (click)="editToday(report)"><i class="bi bi-pencil"></i> Modifier</button>
+                    <button class="btn-outline primary-outline" type="button" (click)="editToday(report)"><i class="bi bi-pencil"></i><span class="btn-label"> Modifier</span></button>
                   }
                   <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal(report)"><i class="fa-solid fa-trash"></i></button>
                 </td>
@@ -145,6 +154,10 @@
     }
   </section>
 </section>
+
+@if (saveSuccess()) {
+  <div class="save-toast" role="status" aria-live="polite">Rapport enregistré</div>
+}
 
 <app-confirm-delete-modal
   [open]="deleteModalOpen()"

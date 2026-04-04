@@ -146,7 +146,7 @@ button.btn-tone-outline-primary {
 }
 
 button.btn-tone-outline-primary:hover {
-  background: rgba(29, 78, 216, 0.12);
+  background: color-mix(in srgb, var(--fxn-primary) 12%, var(--fxn-surface-soft));
   border-color: #1d4ed8;
 }
 

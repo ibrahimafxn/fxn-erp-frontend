@@ -11,6 +11,8 @@ export type InterventionRate = {
 
 export type InterventionRates = {
   racPavillon: InterventionRate;
+  racAerien: InterventionRate;
+  racFacade: InterventionRate;
   clem: InterventionRate;
   reconnexion: InterventionRate;
   racImmeuble: InterventionRate;
@@ -22,6 +24,9 @@ export type InterventionRates = {
   demo: InterventionRate;
   sav: InterventionRate;
   savExp: InterventionRate;
+  deplacementOffert: InterventionRate;
+  deplacementATort: InterventionRate;
+  swapEquipement: InterventionRate;
   refrac: InterventionRate;
   refcDgr: InterventionRate;
   cablePav1: InterventionRate;
@@ -32,6 +37,8 @@ export type InterventionRates = {
 
 const DEFAULT_RATES: InterventionRates = {
   racPavillon: { total: 140, fxn: 10 },
+  racAerien: { total: 0, fxn: 0 },
+  racFacade: { total: 0, fxn: 0 },
   clem: { total: 5, fxn: 5 },
   reconnexion: { total: 45, fxn: 15 },
   racImmeuble: { total: 80, fxn: 20 },
@@ -43,6 +50,9 @@ const DEFAULT_RATES: InterventionRates = {
   demo: { total: 10, fxn: 10 },
   sav: { total: 10, fxn: 10 },
   savExp: { total: 0, fxn: 0 },
+  deplacementOffert: { total: 0, fxn: 0 },
+  deplacementATort: { total: 0, fxn: 0 },
+  swapEquipement: { total: 0, fxn: 0 },
   refrac: { total: 0, fxn: 0 },
   refcDgr: { total: 50, fxn: 0 },
   cablePav1: { total: 20, fxn: 0 },
@@ -83,18 +93,23 @@ export class InterventionRatesService {
 
   private toApiPayload(rates: InterventionRates) {
     return {
-      RACPAV: rates.racPavillon,
+      RAC_PBO_SOUT: rates.racPavillon,
+      RAC_PBO_AERIEN: rates.racAerien,
+      RAC_PBO_FACADE: rates.racFacade,
       CLEM: rates.clem,
       RECOIP: rates.reconnexion,
       RACIH: rates.racImmeuble,
       RACPRO_S: rates.racProS,
       RACPRO_C: rates.racProC,
-      REPFOU_PRI: rates.racF8,
+      FOURREAU_CASSE_PRIVE: rates.racF8,
       PRESTA_COMPL: rates.prestaCompl,
       DEPLPRISE: rates.deprise,
       DEMO: rates.demo,
       SAV: rates.sav,
       SAV_EXP: rates.savExp,
+      DEPLACEMENT_OFFERT: rates.deplacementOffert,
+      DEPLACEMENT_A_TORT: rates.deplacementATort,
+      SWAP_EQUIPEMENT: rates.swapEquipement,
       REFRAC: rates.refrac,
       REFC_DGR: rates.refcDgr,
       CABLE_PAV_1: rates.cablePav1,
@@ -107,18 +122,25 @@ export class InterventionRatesService {
   private fromApiPayload(data?: Record<string, InterventionRate>): InterventionRates {
     if (!data) return DEFAULT_RATES;
     return {
-      racPavillon: data['RACPAV'] ?? DEFAULT_RATES.racPavillon,
+      // RAC_PBO-SOUT remplace RACPAV — compatibilité ascendante
+      racPavillon: data['RAC_PBO_SOUT'] ?? data['RACPAV'] ?? DEFAULT_RATES.racPavillon,
+      racAerien: data['RAC_PBO_AERIEN'] ?? DEFAULT_RATES.racAerien,
+      racFacade: data['RAC_PBO_FACADE'] ?? DEFAULT_RATES.racFacade,
       clem: data['CLEM'] ?? DEFAULT_RATES.clem,
       reconnexion: data['RECOIP'] ?? DEFAULT_RATES.reconnexion,
       racImmeuble: data['RACIH'] ?? DEFAULT_RATES.racImmeuble,
       racProS: data['RACPRO_S'] ?? DEFAULT_RATES.racProS,
       racProC: data['RACPRO_C'] ?? DEFAULT_RATES.racProC,
-      racF8: data['REPFOU_PRI'] ?? DEFAULT_RATES.racF8,
+      // FOURREAU_CASSE_PRIVE remplace REPFOU_PRI — compatibilité ascendante
+      racF8: data['FOURREAU_CASSE_PRIVE'] ?? data['REPFOU_PRI'] ?? DEFAULT_RATES.racF8,
       prestaCompl: data['PRESTA_COMPL'] ?? DEFAULT_RATES.prestaCompl,
       deprise: data['DEPLPRISE'] ?? DEFAULT_RATES.deprise,
       demo: data['DEMO'] ?? DEFAULT_RATES.demo,
       sav: data['SAV'] ?? DEFAULT_RATES.sav,
       savExp: data['SAV_EXP'] ?? DEFAULT_RATES.savExp,
+      deplacementOffert: data['DEPLACEMENT_OFFERT'] ?? DEFAULT_RATES.deplacementOffert,
+      deplacementATort: data['DEPLACEMENT_A_TORT'] ?? DEFAULT_RATES.deplacementATort,
+      swapEquipement: data['SWAP_EQUIPEMENT'] ?? DEFAULT_RATES.swapEquipement,
       refrac: data['REFRAC'] ?? DEFAULT_RATES.refrac,
       refcDgr: data['REFC_DGR'] ?? DEFAULT_RATES.refcDgr,
       cablePav1: data['CABLE_PAV_1'] ?? DEFAULT_RATES.cablePav1,

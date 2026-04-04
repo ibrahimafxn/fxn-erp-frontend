@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
 import { formatPageRange } from '../../../core/utils/pagination';
@@ -23,6 +23,12 @@ export class TechnicianReports {
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly saveSuccess = signal(false);
+  readonly filtersOpen = signal(false);
+
+  toggleFilters(): void {
+    this.filtersOpen.update((v) => !v);
+  }
   readonly items = signal<TechnicianReport[]>([]);
   readonly page = signal(1);
   readonly limit = signal(10);
@@ -54,11 +60,16 @@ export class TechnicianReports {
     prestations: this.fb.nonNullable.group({
       professionnel: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       pavillon: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+      aerien: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+      facade: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       immeuble: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       racProC: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       prestaComplementaire: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       reconnexion: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      sav: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+      deplacementOffert: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+      deplacementATort: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+      swapEquipement: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
+      savExp: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
       prestationF8: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)])
     }),
     comment: this.fb.nonNullable.control('')
@@ -78,14 +89,19 @@ export class TechnicianReports {
     () => this.formSnapshot() === this.initialFormValue()
   );
   readonly prestationOptions = [
-    { key: 'professionnel', label: 'Professionnel', className: 'pill-professionnel' },
+    { key: 'professionnel', label: 'Pro simple', className: 'pill-professionnel' },
+    { key: 'racProC', label: 'Pro complexe', className: 'pill-pro-c' },
     { key: 'immeuble', label: 'Immeuble', className: 'pill-immeuble' },
-    { key: 'racProC', label: 'Professionnel complexe', className: 'pill-pro-c' },
-    { key: 'pavillon', label: 'Pavillon', className: 'pill-pavillon' },
-    { key: 'prestaComplementaire', label: 'Presta Complémentaire', className: 'pill-complementaire' },
+    { key: 'pavillon', label: 'Pavillon sout.', className: 'pill-pavillon' },
+    { key: 'aerien', label: 'Aérien', className: 'pill-aerien' },
+    { key: 'facade', label: 'Façade', className: 'pill-facade' },
+    { key: 'prestaComplementaire', label: 'Complémentaire', className: 'pill-complementaire' },
     { key: 'reconnexion', label: 'Reconnexion', className: 'pill-reconnexion' },
-    { key: 'sav', label: 'SAV', className: 'pill-sav' },
-    { key: 'prestationF8', label: 'Prestation F8', className: 'pill-f8' }
+    { key: 'deplacementOffert', label: 'Dépl. offert', className: 'pill-depl-offert' },
+    { key: 'deplacementATort', label: 'Dépl. à tort', className: 'pill-depl-tort' },
+    { key: 'swapEquipement', label: 'Swap équip.', className: 'pill-swap' },
+    { key: 'savExp', label: 'SAV EXP', className: 'pill-sav-exp' },
+    { key: 'prestationF8', label: 'Fourreau cassé', className: 'pill-f8' }
   ] as const;
 
   constructor() {
@@ -115,6 +131,8 @@ export class TechnicianReports {
         this.editing.set(null);
         this.resetForm();
         this.refresh(true);
+        this.saveSuccess.set(true);
+        setTimeout(() => this.saveSuccess.set(false), 2500);
       },
       error: (err) => {
         this.loading.set(false);
@@ -131,11 +149,16 @@ export class TechnicianReports {
       prestations: {
         professionnel: report.prestations?.professionnel ?? 0,
         pavillon: report.prestations?.pavillon ?? 0,
+        aerien: report.prestations?.aerien ?? 0,
+        facade: report.prestations?.facade ?? 0,
         immeuble: report.prestations?.immeuble ?? 0,
         racProC: report.prestations?.racProC ?? 0,
         prestaComplementaire: report.prestations?.prestaComplementaire ?? 0,
         reconnexion: report.prestations?.reconnexion ?? 0,
-        sav: report.prestations?.sav ?? 0,
+        deplacementOffert: report.prestations?.deplacementOffert ?? 0,
+        deplacementATort: report.prestations?.deplacementATort ?? 0,
+        swapEquipement: report.prestations?.swapEquipement ?? 0,
+        savExp: report.prestations?.savExp ?? 0,
         prestationF8: report.prestations?.prestationF8 ?? 0
       },
       comment: report.comment || ''
@@ -261,11 +284,16 @@ export class TechnicianReports {
       prestations: {
         professionnel: 0,
         pavillon: 0,
+        aerien: 0,
+        facade: 0,
         immeuble: 0,
         racProC: 0,
         prestaComplementaire: 0,
         reconnexion: 0,
-        sav: 0,
+        deplacementOffert: 0,
+        deplacementATort: 0,
+        swapEquipement: 0,
+        savExp: 0,
         prestationF8: 0
       },
       comment: ''
@@ -292,6 +320,18 @@ export class TechnicianReports {
           borderColor: 'rgba(59, 130, 246, 0.95)',
           background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(59, 130, 246, 0.65))',
           color: '#eff6ff'
+        };
+      case 'aerien':
+        return {
+          borderColor: 'rgba(56, 189, 248, 0.95)',
+          background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.85), rgba(56, 189, 248, 0.6))',
+          color: '#e0f2fe'
+        };
+      case 'facade':
+        return {
+          borderColor: 'rgba(249, 115, 22, 0.95)',
+          background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.85), rgba(249, 115, 22, 0.65))',
+          color: '#fff7ed'
         };
       case 'professionnel':
         return {
@@ -323,11 +363,35 @@ export class TechnicianReports {
           background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(14, 116, 144, 0.75))',
           color: '#ecfeff'
         };
-      case 'sav':
+      case 'deplacementOffert':
+        return {
+          borderColor: 'rgba(34, 197, 94, 0.95)',
+          background: 'linear-gradient(135deg, rgba(21, 128, 61, 0.85), rgba(74, 222, 128, 0.6))',
+          color: '#dcfce7'
+        };
+      case 'deplacementATort':
+        return {
+          borderColor: 'rgba(239, 68, 68, 0.95)',
+          background: 'linear-gradient(135deg, rgba(185, 28, 28, 0.9), rgba(239, 68, 68, 0.7))',
+          color: '#fee2e2'
+        };
+      case 'swapEquipement':
+        return {
+          borderColor: 'rgba(168, 85, 247, 0.95)',
+          background: 'linear-gradient(135deg, rgba(126, 34, 206, 0.85), rgba(168, 85, 247, 0.65))',
+          color: '#f5f3ff'
+        };
+      case 'savExp':
         return {
           borderColor: 'rgba(148, 163, 184, 0.95)',
           background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.9), rgba(100, 116, 139, 0.75))',
           color: '#f1f5f9'
+        };
+      case 'sav':
+        return {
+          borderColor: 'rgba(148, 163, 184, 0.7)',
+          background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8), rgba(71, 85, 105, 0.6))',
+          color: '#cbd5e1'
         };
       case 'prestationF8':
         return {
@@ -338,6 +402,13 @@ export class TechnicianReports {
       default:
         return {};
     }
+  }
+
+  stepPrestation(key: string, delta: number): void {
+    const group = this.form.get('prestations') as FormGroup;
+    const ctrl = group?.get(key);
+    if (!ctrl) return;
+    ctrl.setValue(Math.max(0, Number(ctrl.value ?? 0) + delta));
   }
 
   private apiError(err: any, fallback: string): string {

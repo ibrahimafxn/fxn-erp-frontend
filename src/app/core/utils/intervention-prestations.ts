@@ -10,8 +10,11 @@ const normalizeText = (value?: string | null): string =>
 const normalizeCode = (value?: string | null): string =>
   normalizeText(value).replace(/[^A-Z0-9]/g, '');
 
-export const hasRacpavInArticles = (articlesRaw?: string | null): boolean =>
-  normalizeCode(articlesRaw).includes('RACPAV');
+// Détecte un raccordement pavillon quel que soit le code (ancien RACPAV ou nouveaux RAC_PBO_*)
+export const hasRacpavInArticles = (articlesRaw?: string | null): boolean => {
+  const normalized = normalizeCode(articlesRaw);
+  return normalized.includes('RACPAV') || normalized.includes('RACPBO');
+};
 
 export const isRacihSuccess = (statut?: string | null, articlesRaw?: string | null): boolean => {
   const statusNormalized = normalizeText(statut);

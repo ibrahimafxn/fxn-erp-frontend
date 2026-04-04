@@ -144,7 +144,7 @@ td {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(5, 10, 18, 0.65);
+  background: var(--fxn-surface-soft);
   z-index: 2000;
 }
 

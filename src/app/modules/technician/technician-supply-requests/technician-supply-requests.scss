@@ -21,6 +21,7 @@
     margin: 0;
     font-size: 1.3rem;
     font-weight: 700;
+    font-family: var(--fxn-font-display);
   }
 
   .subtitle {
@@ -87,7 +88,7 @@
     outline: none;
     border-color: var(--fxn-primary-border);
     box-shadow: 0 0 0 3px var(--fxn-primary-soft);
-    background: rgba(12, 18, 30, 0.8);
+    background: var(--fxn-surface);
   }
 
   .field.full {
@@ -149,7 +150,7 @@
     outline: none;
     border-color: var(--fxn-primary-border);
     box-shadow: 0 0 0 3px var(--fxn-primary-soft);
-    background: rgba(12, 18, 30, 0.8);
+    background: var(--fxn-surface);
   }
 
   .date-filters {
@@ -190,7 +191,7 @@
   }
 
   .status-approved {
-    background: rgba(16, 185, 129, 0.12);
+    background: color-mix(in srgb, var(--fxn-success) 10%, var(--fxn-surface-soft));
     color: #059669;
   }
 

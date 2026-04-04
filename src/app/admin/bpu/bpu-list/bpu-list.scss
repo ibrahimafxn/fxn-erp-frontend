@@ -104,7 +104,7 @@
     height: 28px;
     border-radius: 999px;
     border: 1px solid rgba(148, 163, 184, 0.25);
-    background: rgba(15, 23, 42, 0.35);
+    background: color-mix(in srgb, var(--fxn-surface-soft) 55%, transparent);
     color: rgba(226, 232, 240, 0.75);
     display: inline-flex;
     align-items: center;

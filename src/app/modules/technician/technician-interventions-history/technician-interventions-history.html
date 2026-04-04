@@ -128,6 +128,9 @@
         <tbody>
           @for (item of sortedItems(); track item._id) {
             <tr
+              class="is-expandable"
+              (click)="toggleDetails(item)"
+              [class.is-expanded]="isExpanded(item)"
               [class.row-closed]="item.statut === 'CLOTURE TERMINEE'"
               [class.row-failed]="item.statut === 'ECHEC' || item.statut === 'ECHEC TERMINE'"
               [class.row-cancelled]="item.statut === 'ANNULE' || item.statut === 'ANNULEE'"
@@ -138,8 +141,28 @@
               <td data-label="Type">{{ item.type || '—' }}</td>
               <td data-label="Type opération">{{ item.typeOperation || '—' }}</td>
               <td data-label="Type logement">{{ item.typeLogement || '—' }}</td>
-              <td data-label="Statut">{{ item.statut || '—' }}</td>
+              <td data-label="Statut">
+                {{ item.statut || '—' }}
+                <span class="details-hint">{{ isExpanded(item) ? 'Masquer' : 'Voir détails' }}</span>
+              </td>
             </tr>
+            @if (isExpanded(item)) {
+              <tr class="details-row">
+                <td colspan="7">
+                  <div class="details-card">
+                    <div class="details-title">Détails de l’intervention</div>
+                    <div class="details-grid">
+                      @for (row of detailRows(item); track row.label) {
+                        <div class="detail-item">
+                          <span class="detail-label">{{ row.label }}</span>
+                          <span class="detail-value">{{ row.value }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>
