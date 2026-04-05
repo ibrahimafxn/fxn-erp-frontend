@@ -10,11 +10,12 @@ export class AuthHistoryService {
 
   constructor(private http: HttpClient) {}
 
-  listHistory(filter?: { user?: string; action?: string; status?: string; page?: number; limit?: number }) {
+  listHistory(filter?: { user?: string; action?: string; status?: string; date?: string; page?: number; limit?: number }) {
     let params = new HttpParams();
     if (filter?.user) params = params.set('user', filter.user);
     if (filter?.action) params = params.set('action', filter.action);
     if (filter?.status) params = params.set('status', filter.status);
+    if (filter?.date) params = params.set('date', filter.date);
     if (filter?.page) params = params.set('page', String(filter.page));
     if (filter?.limit) params = params.set('limit', String(filter.limit));
 

@@ -30,7 +30,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -43,7 +43,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -127,7 +127,7 @@
   gap: 0.2rem;
   text-align: left;
   cursor: pointer;
-  color: #f8fafc;
+  color: var(--fxn-text);
 }
 
 .view-pill.danger {
@@ -147,7 +147,7 @@
   border: 1px solid rgba(148, 163, 184, 0.3);
   background: var(--fxn-surface-soft);
   font-size: 0.85rem;
-  color: rgba(226, 232, 240, 0.75);
+  color: var(--fxn-text-muted);
 }
 
 .filters-grid label {
@@ -242,7 +242,7 @@
 .stat-card .helper {
   margin: 0;
   font-size: 0.75rem;
-  color: rgba(226, 232, 240, 0.7);
+  color: var(--fxn-text-muted);
 }
 
 .stat-breakdown {
@@ -302,7 +302,7 @@
 }
 
 .success-rate-card .value {
-  color: #fff;
+  color: var(--fxn-text);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
@@ -331,11 +331,11 @@
 }
 
 .stat-line .count.status-success {
-  color: #22c55e;
+  color: var(--fxn-success);
 }
 
 .stat-line .count.status-error {
-  color: #f87171;
+  color: var(--fxn-danger);
 }
 
 .stat-line .count.status-neutral {
@@ -347,11 +347,11 @@
 }
 
 .stat-line .status-label.status-success {
-  color: #22c55e;
+  color: var(--fxn-success);
 }
 
 .stat-line .status-label.status-error {
-  color: #f87171;
+  color: var(--fxn-danger);
 }
 
 .stat-line .status-label.status-neutral {
@@ -456,7 +456,7 @@ tbody tr:nth-child(even) {
 }
 
 .row-click:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
 }
 
 .status-pill {
@@ -471,12 +471,12 @@ tbody tr:nth-child(even) {
 
 .status-success {
   background: color-mix(in srgb, var(--fxn-success) 12%, var(--fxn-surface-soft));
-  color: #22c55e;
+  color: var(--fxn-success);
 }
 
 .status-error {
   background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
+  color: var(--fxn-danger);
 }
 
 .status-neutral {

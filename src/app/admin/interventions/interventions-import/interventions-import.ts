@@ -73,6 +73,11 @@ export class InterventionsImport {
   readonly mappingFormLoading = signal(false);
   readonly mappingFormError = signal<string | null>(null);
   readonly mappingFormSuccess = signal<string | null>(null);
+  readonly ticketEditOpen = signal(false);
+  readonly ticketEditSaving = signal(false);
+  readonly ticketEditError = signal<string | null>(null);
+  readonly ticketEditTarget = signal<InterventionImportTicket | null>(null);
+  readonly ticketEditCode = signal('');
 
   readonly latestImport = computed(() => this.importBatches()[0] || null);
   readonly latestImportNotice = computed(() => this.formatImportNotice(this.latestImport(), false));
@@ -385,6 +390,58 @@ export class InterventionsImport {
     const last = ticket.techLastName || '';
     const combined = `${first} ${last}`.trim();
     return combined || ticket.techFull || '—';
+  }
+
+  openTicketEdit(ticket: InterventionImportTicket): void {
+    this.ticketEditTarget.set(ticket);
+    this.ticketEditCode.set('');
+    this.ticketEditError.set(null);
+    this.ticketEditOpen.set(true);
+  }
+
+  closeTicketEdit(): void {
+    this.ticketEditOpen.set(false);
+    this.ticketEditTarget.set(null);
+    this.ticketEditSaving.set(false);
+    this.ticketEditError.set(null);
+    this.ticketEditCode.set('');
+  }
+
+  saveTicketEdit(): void {
+    const ticket = this.ticketEditTarget();
+    const code = this.ticketEditCode().trim().toUpperCase();
+    if (!ticket?._id || !code) {
+      this.ticketEditError.set('Sélectionne une prestation.');
+      return;
+    }
+    const label = this.prestationRules.find((p) => p.code === code)?.label || '';
+    this.ticketEditSaving.set(true);
+    this.ticketEditError.set(null);
+    this.svc.resolveImportTicket(ticket._id, { code, label }).subscribe({
+      next: () => {
+        this.ticketEditSaving.set(false);
+        this.closeTicketEdit();
+        this.loadTickets(this.lastImportBatchId() || undefined);
+        if (this.lastImportBatchId()) this.loadImportCategory('tickets', this.lastImportBatchId()!, 1);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.ticketEditSaving.set(false);
+        this.ticketEditError.set(this.apiError(err, 'Erreur correction ticket'));
+      }
+    });
+  }
+
+  autoResolveTicket(ticket: InterventionImportTicket): void {
+    if (!ticket?._id) return;
+    this.svc.resolveImportTicketAuto(ticket._id).subscribe({
+      next: () => {
+        this.loadTickets(this.lastImportBatchId() || undefined);
+        if (this.lastImportBatchId()) this.loadImportCategory('tickets', this.lastImportBatchId()!, 1);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.importsError.set(this.apiError(err, 'Erreur validation automatique'));
+      }
+    });
   }
 
   loadBpuAnalysis(batchId: string): void {

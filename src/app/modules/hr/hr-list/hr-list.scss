@@ -16,7 +16,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -29,7 +29,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -217,8 +217,8 @@
     place-items: center;
     font-weight: 700;
     font-size: .95rem;
-    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+    border: 1px solid var(--fxn-border-strong);
     overflow: hidden;
   }
 
@@ -434,7 +434,7 @@
 
     .sort-button.is-active .sort-arrow {
       opacity: 0.95;
-      color: rgba(147, 197, 253, 0.9);
+      color: var(--fxn-accent);
     }
 
     th,
@@ -471,11 +471,11 @@
     }
 
     tbody tr.doc-valid td {
-      color: rgba(72, 217, 166, 0.95);
+      color: var(--fxn-success);
     }
 
     tbody tr.doc-expired td {
-      color: rgba(255, 122, 122, 0.9);
+      color: var(--fxn-danger);
     }
   }
 
@@ -484,7 +484,7 @@
     height: 44px;
     object-fit: cover;
     border-radius: 0.4rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--fxn-border-strong);
   }
 
   .identity {
@@ -511,8 +511,8 @@
       place-items: center;
       font-weight: 700;
       font-size: 1.1rem;
-      background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+      border: 1px solid var(--fxn-border-strong);
       overflow: hidden;
       flex-shrink: 0;
     }
@@ -562,8 +562,8 @@
     place-items: center;
     font-weight: 700;
     font-size: .95rem;
-    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+    border: 1px solid var(--fxn-border-strong);
     overflow: hidden;
     flex-shrink: 0;
   }
@@ -673,7 +673,7 @@
   .role-pill.tech {
     background: rgba(46, 207, 154, 0.18);
     border-color: rgba(46, 207, 154, 0.5);
-    color: #d7ffee;
+    color: var(--fxn-pill-text-success);
   }
 
   .pill.ok {
@@ -719,7 +719,7 @@
     max-height: 85vh;
     overflow: auto;
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--fxn-border-strong);
     background: var(--fxn-surface);
     padding: 1rem;
     display: grid;
@@ -1111,7 +1111,7 @@
   max-height: 85vh;
   overflow: auto;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--fxn-border-strong);
   background: var(--fxn-surface);
   padding: 1rem;
   display: grid;

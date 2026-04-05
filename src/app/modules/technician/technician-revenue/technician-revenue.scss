@@ -76,7 +76,7 @@
 .technician-revenue .bpu-pill.active {
   border-color: rgba(46, 207, 154, 0.4);
   background: rgba(46, 207, 154, 0.15);
-  color: #dcfce7;
+  color: var(--fxn-pill-text-success);
 }
 
 .technician-revenue .bpu-error {
@@ -201,7 +201,7 @@
   width: 100%;
   padding: 0.7rem 0.75rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--fxn-border-strong);
   background: rgba(0, 0, 0, 0.18);
   color: inherit;
   min-height: 44px;
@@ -228,8 +228,8 @@
 .technician-revenue .state {
   padding: 0.9rem 1rem;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
 }
 
 .technician-revenue .state.error {

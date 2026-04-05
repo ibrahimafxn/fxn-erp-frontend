@@ -22,7 +22,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -35,7 +35,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -176,7 +176,7 @@
   }
 
   .sort-btn:hover {
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--fxn-text);
   }
 
   body.theme-default & .sort-btn:hover {
@@ -211,8 +211,8 @@
   .main {
     .name {
       font-weight: 750;
-      background: #0b1f3a;
-      color: #e2f0ff;
+      background: var(--fxn-surface-soft);
+      color: var(--fxn-text);
       padding: .25rem .55rem;
       border-radius: .6rem;
       display: inline-flex;
@@ -241,8 +241,8 @@
   align-items: center;
   padding: .2rem .55rem;
   border-radius: 999px;
-  border: 1px solid rgba(33, 182, 182, 0.4);
-  background: rgba(33, 182, 182, 0.15);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-primary-soft);
   font-size: .78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -252,7 +252,7 @@
 .tag.tag-epi {
   border-color: rgba(59, 130, 246, 0.65);
   background: color-mix(in srgb, #3b82f6 15%, var(--fxn-surface-soft));
-  color: #dbeafe;
+  color: var(--fxn-text-soft);
 }
 
 .qty {
@@ -260,7 +260,7 @@
   align-items: center;
   padding: .2rem .6rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--fxn-border-strong);
   background: var(--fxn-surface-soft);
   font-weight: 700;
 }
@@ -322,7 +322,7 @@ td.actions {
   }
 
   .table .row {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--fxn-border);
     border-radius: 14px;
     padding: .6rem .7rem;
     background: var(--fxn-surface-soft);

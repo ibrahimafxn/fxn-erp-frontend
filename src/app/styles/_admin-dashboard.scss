@@ -458,7 +458,7 @@
 
   .btn-primary {
     background: linear-gradient(120deg, var(--dash-accent), var(--dash-accent-strong));
-    color: #fff;
+    color: var(--fxn-text);
     border: 1px solid var(--dash-border);
     box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
   }
@@ -1220,7 +1220,7 @@
     overflow: hidden;
   }
 
-  .ops-grid .action-card.ops-card:nth-of-type(1) { --ops-color: #22c55e; }
+  .ops-grid .action-card.ops-card:nth-of-type(1) { --ops-color: var(--fxn-success); }
   .ops-grid .action-card.ops-card:nth-of-type(2) { --ops-color: #818cf8; }
   .ops-grid .action-card.ops-card:nth-of-type(3) { --ops-color: #fb923c; }
   .ops-grid .action-card.ops-card:nth-of-type(4) { --ops-color: #a855f7; }
@@ -1342,7 +1342,7 @@
 
   .kpi-grid .kpi-card.kpi-primary:nth-of-type(1) { --kpi-color: #3b82f6; }
   .kpi-grid .kpi-card.kpi-primary:nth-of-type(2) { --kpi-color: #6366f1; }
-  .kpi-grid .kpi-card.kpi-primary:nth-of-type(3) { --kpi-color: #22c55e; }
+  .kpi-grid .kpi-card.kpi-primary:nth-of-type(3) { --kpi-color: var(--fxn-success); }
   .kpi-grid .kpi-card.kpi-primary:nth-of-type(4) { --kpi-color: #f59e0b; }
   .kpi-grid .kpi-card.kpi-primary:nth-of-type(5) { --kpi-color: #06b6d4; }
 
@@ -1404,13 +1404,13 @@
   .kpi-icon.kpi-presta { background: color-mix(in srgb, var(--fxn-success) 13%, var(--fxn-surface-soft)); border-color: rgba(16, 185, 129, 0.45); }
 
   .kpi-icon.kpi-users .material-icons { color: #38bdf8; }
-  .kpi-icon.kpi-depots .material-icons { color: #60a5fa; }
+  .kpi-icon.kpi-depots .material-icons { color: var(--fxn-primary); }
   .kpi-icon.kpi-materials .material-icons { color: #a78bfa; }
-  .kpi-icon.kpi-consumables .material-icons { color: #34d399; }
+  .kpi-icon.kpi-consumables .material-icons { color: var(--fxn-success); }
   .kpi-icon.kpi-vehicles .material-icons { color: #fbbf24; }
   .kpi-icon.kpi-alerts .material-icons { color: var(--fxn-danger); }
   .kpi-icon.kpi-revenue .material-icons { color: #38bdf8; }
-  .kpi-icon.kpi-presta .material-icons { color: #34d399; }
+  .kpi-icon.kpi-presta .material-icons { color: var(--fxn-success); }
 
   .kpi-label {
     font-size: 0.72rem;
@@ -1589,7 +1589,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -1602,7 +1602,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {

@@ -67,8 +67,8 @@
 .technician-history .search select {
   padding: 0.7rem 0.75rem;
   border-radius: 0.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
   color: inherit;
   outline: none;
   min-height: 44px;
@@ -132,8 +132,8 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
 }
 
 .technician-history .badge-assign {
@@ -145,7 +145,7 @@
 .technician-history .badge-release {
   border-color: rgba(239, 68, 68, 0.8);
   background: rgba(185, 28, 28, 0.18);
-  color: #fecaca;
+  color: var(--fxn-pill-text-danger);
 }
 
 /* ── States ───────────────────────────────────────────────── */

@@ -177,7 +177,7 @@
 .state.success {
   background: color-mix(in srgb, var(--fxn-success) 12%, var(--fxn-surface-soft));
   border: 1px solid rgba(16, 185, 129, 0.4);
-  color: #34d399;
+  color: var(--fxn-success);
   padding: .6rem .8rem;
   border-radius: .75rem;
 }
@@ -185,7 +185,7 @@
 .state.error {
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.4);
-  color: #f87171;
+  color: var(--fxn-danger);
   padding: .6rem .8rem;
   border-radius: .75rem;
 }

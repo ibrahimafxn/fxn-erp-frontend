@@ -107,6 +107,7 @@ export class OrderService {
       reference: string;
       client: string;
       supplier?: string;
+      supplierExists?: boolean;
       date: string;
       status: string;
       amount: number;

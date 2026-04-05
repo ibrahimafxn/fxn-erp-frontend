@@ -111,7 +111,7 @@
 
   .hint {
     font-size: 0.82rem;
-    color: var(--fxn-muted, #8a97a8);
+    color: var(--fxn-muted);
   }
 
   .hint.error {
@@ -192,17 +192,17 @@
 
   .status-approved {
     background: color-mix(in srgb, var(--fxn-success) 10%, var(--fxn-surface-soft));
-    color: #059669;
+    color: var(--fxn-success);
   }
 
   .status-canceled {
     background: rgba(239, 68, 68, 0.12);
-    color: #dc2626;
+    color: var(--fxn-danger);
   }
 
   .status-pending {
     background: rgba(59, 130, 246, 0.12);
-    color: #2563eb;
+    color: var(--fxn-primary);
   }
 
   .decision {
@@ -217,7 +217,7 @@
 
   .decision-meta {
     font-size: 0.78rem;
-    color: var(--fxn-muted, #8a97a8);
+    color: var(--fxn-muted);
   }
 
   /* ── Pager ───────────────────────────────────────────────── */
@@ -250,7 +250,7 @@
 
   .pager-label {
     font-size: 0.85rem;
-    color: var(--fxn-muted, #8a97a8);
+    color: var(--fxn-muted);
   }
 
   .pager-right {
@@ -305,7 +305,7 @@
     display: block;
     font-size: 10px;
     font-weight: 600;
-    color: var(--fxn-muted, #8a97a8);
+    color: var(--fxn-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 2px;

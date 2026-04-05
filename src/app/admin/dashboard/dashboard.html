@@ -50,19 +50,6 @@
           </div>
         </div>
         <div class="hero-bottom-row">
-          <div class="hero-admin" *ngIf="canManageAccess() || canViewHr()">
-            <div class="hero-admin-title">Administration</div>
-            <div class="hero-admin-actions">
-              <button class="btn-outline admin-access" type="button" (click)="goToUserAccess()" *ngIf="canManageAccess()">
-                <span class="material-icons notranslate" aria-hidden="true">vpn_key</span>
-                Accès connexion
-              </button>
-              <button class="btn-outline admin-hr" type="button" (click)="goToHr()" *ngIf="canViewHr()">
-                <span class="material-icons notranslate" aria-hidden="true">badge</span>
-                Ressources humaines
-              </button>
-            </div>
-          </div>
           <div class="hero-actions">
             <button class="btn-outline btn-onboarding btn-depot-hero" type="button" (click)="goToDepotDashboard()">
               <span class="btn-text">

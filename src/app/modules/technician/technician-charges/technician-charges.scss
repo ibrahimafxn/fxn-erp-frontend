@@ -284,7 +284,7 @@
 
 .technician-charges .list-card td.actions .btn-outline.delete {
   border-color: rgba(239, 68, 68, 0.45);
-  color: #fca5a5;
+  color: var(--fxn-danger);
 }
 
 /* ── Table bénéfices : Mois | Bénéfice / CA | Charges ────── */
@@ -308,7 +308,7 @@
   grid-column: 1;
   grid-row: 2;
   font-size: 0.85rem;
-  color: #86efac;
+  color: var(--fxn-pill-text-success);
 }
 
 .technician-charges .benefit-card td[data-label='Charges'] {
@@ -316,7 +316,7 @@
   grid-row: 2;
   font-size: 0.85rem;
   text-align: right;
-  color: #fca5a5;
+  color: var(--fxn-danger);
 }
 
 /* ── Pager ───────────────────────────────────────────────── */
@@ -494,7 +494,7 @@
 
   .technician-charges .list-card td.actions .btn-outline.delete {
     border-color: rgba(239, 68, 68, 0.35);
-    color: #fca5a5;
+    color: var(--fxn-danger);
   }
 
   .technician-charges .pager {

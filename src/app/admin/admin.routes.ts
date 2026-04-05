@@ -1,5 +1,7 @@
 // src/app/admin/admin.routes.ts
 import { Routes } from '@angular/router';
+import { RoleGuard } from '../core/guards/role.guard';
+import { Role } from '../core/models/roles.model';
 
 /**
  * Routes de la zone admin.
@@ -138,12 +140,20 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'bpu/osiris-mappings',
-    loadComponent: () => import('./bpu/osiris-mappings/osiris-mappings').then(m => m.OsirisMappings)
+    loadComponent: () => import('./bpu/osiris-mappings/osiris-mappings').then(m => m.OsirisMappings),
+    canActivate: [RoleGuard([Role.ADMIN])]
   },
   {
     path: 'revenue',
     loadComponent: () =>
       import('./revenue/revenue-dashboard/revenue-dashboard').then(m => m.RevenueDashboard)
+  },
+
+  // /admin/dirigeant
+  {
+    path: 'dirigeant',
+    loadComponent: () =>
+      import('./dirigeant/dirigeant-dashboard/dirigeant-dashboard').then(m => m.DirigeantDashboard)
   },
 
   // -----------------------------
@@ -312,7 +322,15 @@ export const ADMIN_ROUTES: Routes = [
     path: 'prestations/:id/edit',
     loadComponent: () =>
       import('./prestations/prestation-form/prestation-form').then(m => m.PrestationForm)
-  }
+  },
+
+  // -----------------------------
+  // ABSENCES
+  // -----------------------------
+  {
+    path: 'absences',
+    loadComponent: () => import('./absences/absence-list/absence-list').then(m => m.AbsenceList)
+  },
 
   // Optionnel (on fera après)
   // {

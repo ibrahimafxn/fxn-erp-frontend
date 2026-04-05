@@ -1,0 +1,212 @@
+<section class="dirigeant-dashboard">
+
+  <!-- ── Loading overlay ──────────────────────────────────── -->
+  @if (loading()) {
+    <div class="page-loading" aria-live="polite" aria-busy="true">
+      <div class="page-loading-card">
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="page-loading-text">
+          <strong>Chargement du tableau de bord…</strong>
+          <span>Merci de patienter.</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Error state ──────────────────────────────────────── -->
+  @if (error() && !loading()) {
+    <div class="state-card state-error" role="alert">
+      <span class="material-symbols-outlined">error_outline</span>
+      <div>
+        <strong>Impossible de charger les données</strong>
+        <p>{{ error() }}</p>
+      </div>
+    </div>
+  }
+
+  <!-- ── Page header ──────────────────────────────────────── -->
+  <header class="page-header">
+    <div>
+      <h1>Tableau de bord Dirigeant</h1>
+      <p class="subtitle">Vue d'ensemble — chiffre d'affaires, pénalités et ressources humaines.</p>
+    </div>
+  </header>
+
+  <!-- ── Section 1 — KPIs ─────────────────────────────────── -->
+  <div class="kpi-grid">
+
+    <!-- CA ce mois -->
+    <div class="kpi-card revenue">
+      <div class="kpi-header">
+        <span class="kpi-title">CA ce mois</span>
+        <span class="material-symbols-outlined kpi-icon icon-revenue">trending_up</span>
+      </div>
+      <div class="kpi-value">{{ formatAmount(caThisMonth()) }}</div>
+      <div class="kpi-sub">Chiffre d'affaires HT du mois en cours</div>
+    </div>
+
+    <!-- CA annuel -->
+    <div class="kpi-card annual">
+      <div class="kpi-header">
+        <span class="kpi-title">CA annuel</span>
+        <span class="material-symbols-outlined kpi-icon icon-annual">bar_chart</span>
+      </div>
+      <div class="kpi-value">{{ formatAmount(caYtd()) }}</div>
+      <div class="kpi-sub">Cumul depuis janvier {{ (revenueMonths()[0])?.year ?? '' }}</div>
+    </div>
+
+    <!-- Pénalités -->
+    <div class="kpi-card penalty">
+      <div class="kpi-header">
+        <span class="kpi-title">Pénalités YTD</span>
+        <span class="material-symbols-outlined kpi-icon icon-penalty">warning_amber</span>
+      </div>
+      <div class="kpi-value kpi-value--danger">{{ formatAmount(penaltyYtd()) }}</div>
+      <div class="kpi-sub">Total des pénalités sur l'année</div>
+    </div>
+
+    <!-- Absences en attente -->
+    <a class="kpi-card absences" [class.has-pending]="pendingAbsences().length > 0"
+       href="#absences-section" (click)="$event.preventDefault(); scrollToAbsences()">
+      <div class="kpi-header">
+        <span class="kpi-title">Absences en attente</span>
+        <span class="material-symbols-outlined kpi-icon icon-absences">event_busy</span>
+      </div>
+      <div class="kpi-value">{{ pendingAbsences().length }}</div>
+      <div class="kpi-sub">
+        @if (pendingAbsences().length === 0) {
+          Aucune demande en attente
+        } @else {
+          {{ pendingAbsences().length === 1 ? 'demande à traiter' : 'demandes à traiter' }}
+        }
+      </div>
+    </a>
+
+  </div>
+
+  <!-- ── Section 2 — Évolution CA ─────────────────────────── -->
+  @if (!loading() && revenueMonths().length > 0) {
+    <div class="section-block">
+      <div class="section-header">
+        <span class="section-title">Évolution du CA</span>
+        <span class="section-hint">6 derniers mois</span>
+      </div>
+
+      <div class="ca-chart">
+        @for (point of revenueMonths(); track point.key) {
+          <div class="ca-bar-row" [class.current-month]="isCurrentMonth(point)">
+            <span class="ca-month-label">{{ formatMonth(point.year, point.month) }}</span>
+            <div class="ca-bar-track">
+              <div class="ca-bar" [style.width]="barWidthPercent(point.amountHt)"></div>
+            </div>
+            <span class="ca-amount">{{ formatAmount(point.amountHt) }}</span>
+            @if (point.penalty && point.penalty > 0) {
+              <span class="ca-penalty" title="Pénalité">−{{ formatAmount(point.penalty) }}</span>
+            }
+          </div>
+        }
+        @empty {
+          <p class="empty-text">Aucune donnée disponible.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Section 3 — Absences en attente ──────────────────── -->
+  <div class="section-block" id="absences-section">
+    <div class="section-header">
+      <span class="section-title">Demandes d'absence à traiter</span>
+      @if (pendingAbsences().length > 0) {
+        <span class="count-badge">{{ pendingAbsences().length }}</span>
+      }
+    </div>
+
+    @if (!loading()) {
+      <div class="absence-list">
+        @for (absence of pendingAbsences(); track absence._id) {
+          <div class="absence-card">
+            <div class="absence-info">
+              <span class="absence-name">{{ absenceName(absence) }}</span>
+              <div class="absence-meta">
+                <span class="badge badge-type">{{ absenceTypeLabel(absence.type) }}</span>
+                <span class="absence-dates">
+                  {{ absence.startDate | date:'dd/MM/yyyy' }}
+                  @if (absence.startDate !== absence.endDate) {
+                    → {{ absence.endDate | date:'dd/MM/yyyy' }}
+                  }
+                </span>
+                <span class="absence-days">
+                  {{ absenceDays(absence) }} j
+                </span>
+              </div>
+              @if (absence.comment) {
+                <p class="absence-comment">{{ absence.comment }}</p>
+              }
+            </div>
+            <div class="absence-actions">
+              <button class="btn-approve" type="button" (click)="approveAbsence(absence._id)"
+                      aria-label="Approuver la demande">
+                <span class="material-symbols-outlined">check_circle</span>
+                Approuver
+              </button>
+              <button class="btn-reject" type="button" (click)="rejectAbsence(absence._id)"
+                      aria-label="Refuser la demande">
+                <span class="material-symbols-outlined">cancel</span>
+                Refuser
+              </button>
+            </div>
+          </div>
+        }
+        @empty {
+          <div class="empty-state">
+            <span class="material-symbols-outlined empty-icon">event_available</span>
+            <p>Aucune demande d'absence en attente.</p>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- ── Section 4 — Liens rapides ────────────────────────── -->
+  <div class="section-block">
+    <div class="section-header">
+      <span class="section-title">Accès rapide</span>
+    </div>
+    <div class="quick-links">
+
+      <a class="quick-link-card" routerLink="/admin/revenue">
+        <span class="material-symbols-outlined quick-link-icon">show_chart</span>
+        <div>
+          <div class="quick-link-title">Chiffre d'affaires</div>
+          <div class="quick-link-sub">Saisie et historique CA</div>
+        </div>
+      </a>
+
+      <a class="quick-link-card" routerLink="/admin/history">
+        <span class="material-symbols-outlined quick-link-icon">history</span>
+        <div>
+          <div class="quick-link-title">Historique</div>
+          <div class="quick-link-sub">Journal des actions</div>
+        </div>
+      </a>
+
+      <a class="quick-link-card" routerLink="/admin/hr">
+        <span class="material-symbols-outlined quick-link-icon">groups</span>
+        <div>
+          <div class="quick-link-title">RH</div>
+          <div class="quick-link-sub">Congés et absences</div>
+        </div>
+      </a>
+
+      <a class="quick-link-card" routerLink="/admin/users">
+        <span class="material-symbols-outlined quick-link-icon">manage_accounts</span>
+        <div>
+          <div class="quick-link-title">Utilisateurs</div>
+          <div class="quick-link-sub">Gestion des comptes</div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+</section>

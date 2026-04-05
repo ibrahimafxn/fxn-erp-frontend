@@ -18,7 +18,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -31,7 +31,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -218,13 +218,13 @@ tbody tr:hover {
 }
 
 .qty-pill.success {
-  color: #4ade80;
+  color: var(--fxn-pill-text-success);
   background: color-mix(in srgb, var(--fxn-success) 12%, var(--fxn-surface-soft));
   border: 1px solid rgba(74, 222, 128, 0.55);
 }
 
 .qty-pill.danger {
-  color: #f87171;
+  color: var(--fxn-danger);
   background: rgba(239, 68, 68, 0.15);
   border: 1px solid rgba(239, 68, 68, 0.5);
 }

@@ -16,7 +16,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -29,7 +29,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -75,17 +75,17 @@
     min-width: 190px;
     padding: 0.55rem 0.75rem;
     border-radius: 10px;
-    border: 1px solid var(--fxn-border, #e5e7eb);
-    background: #fff;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface);
     font-weight: 600;
-    color: #0f172a;
+    color: var(--fxn-text);
     box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .filters select:focus {
     outline: none;
-    border-color: var(--fxn-primary, #2563eb);
+    border-color: var(--fxn-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   }
 
@@ -102,17 +102,17 @@
 
   .status-approved {
     background: color-mix(in srgb, var(--fxn-success) 10%, var(--fxn-surface-soft));
-    color: #059669;
+    color: var(--fxn-success);
   }
 
   .status-canceled {
     background: rgba(239, 68, 68, 0.12);
-    color: #dc2626;
+    color: var(--fxn-danger);
   }
 
   .status-pending {
     background: rgba(59, 130, 246, 0.12);
-    color: #2563eb;
+    color: var(--fxn-primary);
   }
 
   .availability {
@@ -123,14 +123,14 @@
     padding: 0.15rem 0.5rem;
     border-radius: 999px;
     border: 1px solid rgba(16, 185, 129, 0.35);
-    color: #34d399;
+    color: var(--fxn-success);
     font-weight: 600;
     font-size: 0.8rem;
   }
 
   .availability.low {
     border-color: rgba(239, 68, 68, 0.5);
-    color: #fca5a5;
+    color: var(--fxn-danger);
   }
 
   .decision {
@@ -141,12 +141,12 @@
 
   .decision-note {
     font-size: 0.9rem;
-    color: #0f172a;
+    color: var(--fxn-text);
   }
 
   .decision-meta {
     font-size: 0.78rem;
-    color: var(--fxn-muted, #8a97a8);
+    color: var(--fxn-muted);
   }
 
   .decision-row td {
@@ -175,18 +175,18 @@
     resize: vertical;
     padding: 0.75rem 0.9rem;
     border-radius: 12px;
-    border: 1px solid var(--fxn-border, #e5e7eb);
-    background: #fff;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface);
     font-size: 0.95rem;
     line-height: 1.4;
-    color: #0f172a;
+    color: var(--fxn-text);
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .decision-panel textarea:focus {
     outline: none;
-    border-color: var(--fxn-primary, #2563eb);
+    border-color: var(--fxn-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   }
 

@@ -91,7 +91,11 @@ export class Login {
           this.pendingPassword.set(String(credentials.password || ''));
           this.step.set('password');
           this.mfaRequired.set(false);
-          this.error.set(err?.error?.message || 'Mot de passe expiré.');
+          if (err?.error?.mustChangePassword) {
+            this.error.set('Votre mot de passe doit être changé avant de continuer.');
+          } else {
+            this.error.set(err?.error?.message || 'Mot de passe expiré.');
+          }
           return;
         }
         if (err?.error?.mfaRequired) {

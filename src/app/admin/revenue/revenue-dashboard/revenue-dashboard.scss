@@ -41,7 +41,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -54,7 +54,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -345,7 +345,7 @@
   width: 12px;
   height: 12px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--fxn-border-strong);
   display: inline-block;
 
   &.amount {
@@ -476,12 +476,12 @@
 
 .series-ht::before {
   content: 'HT: ';
-  color: rgba(59, 130, 246, 0.85);
+  color: var(--fxn-accent);
 }
 
 .series-cum::before {
   content: 'Cumul: ';
-  color: rgba(20, 184, 166, 0.85);
+  color: var(--fxn-success);
 }
 
 .state {
@@ -545,7 +545,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: color-mix(in srgb, #3b82f6 8%, var(--fxn-surface-soft));
+  background: color-mix(in srgb, var(--fxn-primary) 8%, var(--fxn-surface-soft));
 }
 
 .month-pill {
@@ -553,8 +553,8 @@ tbody tr:hover {
   align-items: center;
   padding: .15rem .5rem;
   border-radius: 999px;
-  background: color-mix(in srgb, #3b82f6 14%, var(--fxn-surface-soft));
-  border: 1px solid rgba(59, 130, 246, 0.35);
+  background: var(--fxn-primary-soft);
+  border: 1px solid var(--fxn-primary-border);
   font-weight: 700;
   letter-spacing: .015em;
 }
@@ -751,9 +751,9 @@ tbody tr:hover {
   width: fit-content;
   padding: .2rem .5rem;
   font-size: .72rem;
-  border-color: rgba(46, 207, 154, 0.95);
+  border-color: rgba(16, 212, 138, 0.7);
   background: transparent;
-  color: #22c55e;
+  color: var(--fxn-success);
 }
 
 .attachment-items {

@@ -25,7 +25,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -38,7 +38,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -278,8 +278,8 @@
     place-items: center;
     font-weight: 800;
     font-size: .8rem;
-    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+    border: 1px solid var(--fxn-border-strong);
     overflow: hidden;
     flex-shrink: 0;
   }

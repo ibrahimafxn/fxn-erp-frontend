@@ -269,6 +269,7 @@ export class HrList {
   readonly payslipLoading = signal(false);
   readonly payslipConfirmOpen = signal(false);
   readonly exportConfirmOpen = signal(false);
+  readonly profileConfirmOpen = signal(false);
   readonly payslipExportLoading = signal(false);
   readonly payslipError = signal<string | null>(null);
   readonly payslipList = signal<Payslip[]>([]);
@@ -578,7 +579,20 @@ export class HrList {
     });
   }
 
-  saveProfile(): void {
+  openProfileConfirm(): void {
+    this.profileConfirmOpen.set(true);
+  }
+
+  closeProfileConfirm(): void {
+    this.profileConfirmOpen.set(false);
+  }
+
+  confirmSaveProfile(): void {
+    this.profileConfirmOpen.set(false);
+    this.saveProfile();
+  }
+
+  private saveProfile(): void {
     const current = this.selected();
     if (!current?.user?._id) return;
     const raw = this.profileForm.getRawValue();

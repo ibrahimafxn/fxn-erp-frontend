@@ -19,7 +19,8 @@
 
     <article class="user-card">
 
-      <div class="identity">
+      <div class="user-hero">
+        <span class="hero-glow"></span>
         <div class="avatar">
           @if (avatarSrc(u); as avatar) {
             <img [src]="avatar" alt="Photo de profil" />
@@ -27,12 +28,15 @@
             <span>{{ (u.firstName || '—').charAt(0) }}{{ (u.lastName || '—').charAt(0) }}</span>
           }
         </div>
-
         <div class="identity-text">
           <h2>{{ userName(u) }}</h2>
           <span class="role-badge role-{{ (u.role || '').toLowerCase() }}">
             {{ u.role || '—' }}
           </span>
+          <div class="hero-meta">
+            <span><i class="bi bi-envelope"></i>{{ u.email || '—' }}</span>
+            <span><i class="bi bi-telephone"></i>{{ u.phone || '—' }}</span>
+          </div>
         </div>
       </div>
 

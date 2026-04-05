@@ -63,6 +63,7 @@ export class OrdersPage {
     reference: string;
     client: string;
     supplier?: string;
+    supplierExists?: boolean;
     date: string;
     status: string;
     amount: number;
@@ -226,7 +227,7 @@ export class OrdersPage {
             ? String((err.error as { message?: unknown }).message ?? '')
             : '';
         this.importLoading.set(false);
-        this.importError.set(apiMsg || err.message || 'Erreur import PDF');
+        this.importError.set(apiMsg || err.message || 'Erreur import fichier');
         if (input) input.value = '';
       }
     });
@@ -283,7 +284,7 @@ export class OrdersPage {
             ? String((err.error as { message?: unknown }).message ?? '')
             : '';
         this.importLoading.set(false);
-        this.importError.set(apiMsg || err.message || 'Erreur import PDF');
+        this.importError.set(apiMsg || err.message || 'Erreur import fichier');
       }
     });
   }

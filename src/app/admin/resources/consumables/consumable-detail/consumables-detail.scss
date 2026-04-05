@@ -22,7 +22,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -35,7 +35,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -258,7 +258,7 @@ th {
 
 .sort-button.is-active .sort-arrow {
   opacity: 0.95;
-  color: rgba(147, 197, 253, 0.9);
+  color: var(--fxn-accent);
 }
 
 td.note {

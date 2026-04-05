@@ -70,6 +70,29 @@
   /* Background glows */
   --fxn-bg-glow-1: rgba(14, 201, 202, 0.18);
   --fxn-bg-glow-2: rgba(245, 158, 11, 0.14);
+
+  /* Semantic soft tones */
+  --fxn-success-soft: rgba(16, 212, 138, 0.14);
+  --fxn-warning-soft: rgba(240, 182, 48, 0.14);
+  --fxn-info: #4aa3ff;
+  --fxn-info-soft: rgba(74, 163, 255, 0.16);
+
+  /* Elevated surface (e.g. card on card) */
+  --fxn-surface-elevated: rgba(255, 255, 255, 0.04);
+
+  /* Badge colors */
+  --fxn-badge-bg: #f6c453;
+  --fxn-badge-border: #e0a820;
+  --fxn-badge-text: #0f1117;
+
+  /* Pill text — readable on colored soft backgrounds (dark themes = light text) */
+  --fxn-pill-text-primary: #c8e0ff;
+  --fxn-pill-text-success: #9ef5d3;
+  --fxn-pill-text-danger:  #ffc4c8;
+  --fxn-pill-text-warning: #ffe9a0;
+  --fxn-pill-text-neutral: #c8d5e8;
+  --fxn-pill-text-amount:  #d7ffe7;
+  --fxn-pill-text-tva:     #fff4e6;
 }
 
 body.theme-admin {
@@ -122,6 +145,16 @@ body.theme-default {
   --fxn-ring: 0 0 0 3px rgba(47, 107, 255, 0.2);
   --fxn-bg-glow-1: rgba(47, 107, 255, 0.12);
   --fxn-bg-glow-2: rgba(100, 160, 255, 0.14);
+  --fxn-surface-elevated: rgba(47, 107, 255, 0.04);
+
+  /* Pill text — dark theme-default uses dark text on light soft backgrounds */
+  --fxn-pill-text-primary: #1a3a8f;
+  --fxn-pill-text-success: #065f46;
+  --fxn-pill-text-danger:  #9b1c2e;
+  --fxn-pill-text-warning: #78350f;
+  --fxn-pill-text-neutral: #374151;
+  --fxn-pill-text-amount:  #1a3a8f;
+  --fxn-pill-text-tva:     #78350f;
 }
 
 body.theme-dirigeant {

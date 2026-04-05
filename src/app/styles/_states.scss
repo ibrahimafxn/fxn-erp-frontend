@@ -1,0 +1,213 @@
+/* ===============================
+   FXN STATES — loading, empty, error
+================================ */
+
+/* ── Skeleton loader ── */
+
+@keyframes fxn-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--fxn-surface-soft) 25%,
+    var(--fxn-surface-elevated, rgba(255,255,255,0.06)) 50%,
+    var(--fxn-surface-soft) 75%
+  );
+  background-size: 200% 100%;
+  animation: fxn-shimmer 1.4s ease infinite;
+  border-radius: var(--fxn-radius-sm);
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+}
+
+.skeleton-text {
+  height: 1em;
+  border-radius: 4px;
+}
+
+.skeleton-title {
+  height: 1.4em;
+  width: 55%;
+  border-radius: 6px;
+}
+
+.skeleton-card {
+  height: 120px;
+  border-radius: var(--fxn-radius-lg);
+}
+
+/* ── Spinner ── */
+
+@keyframes fxn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--fxn-border-strong);
+  border-top-color: var(--fxn-primary);
+  border-radius: 50%;
+  animation: fxn-spin 0.7s linear infinite;
+}
+
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+.spinner-lg {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+/* ── Loading overlay ── */
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--fxn-surface-glass);
+  backdrop-filter: blur(4px);
+  border-radius: inherit;
+  z-index: 10;
+}
+
+/* ── Empty state ── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  color: var(--fxn-text-muted);
+}
+
+.empty-state-icon {
+  font-size: 2.5rem;
+  opacity: 0.5;
+  line-height: 1;
+}
+
+.empty-state-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--fxn-text-soft);
+  font-family: var(--fxn-font-display);
+  letter-spacing: -0.01em;
+}
+
+.empty-state-text {
+  font-size: 0.88rem;
+  color: var(--fxn-text-muted);
+  max-width: 36ch;
+  line-height: 1.5;
+}
+
+/* ── Inline alert banners ── */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--fxn-radius-sm);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.alert-error {
+  background: var(--fxn-danger-soft);
+  border: 1px solid rgba(240, 84, 108, 0.3);
+  color: var(--fxn-pill-text-danger);
+}
+
+.alert-success {
+  background: var(--fxn-success-soft);
+  border: 1px solid rgba(16, 212, 138, 0.3);
+  color: var(--fxn-pill-text-success);
+}
+
+.alert-warning {
+  background: var(--fxn-warning-soft);
+  border: 1px solid rgba(240, 182, 48, 0.3);
+  color: var(--fxn-pill-text-warning);
+}
+
+.alert-info {
+  background: var(--fxn-info-soft);
+  border: 1px solid rgba(74, 163, 255, 0.3);
+  color: var(--fxn-pill-text-primary);
+}
+
+.alert i,
+.alert .bi {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+/* ── Status pills ── */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.status-pill.success {
+  background: var(--fxn-success-soft);
+  border: 1px solid rgba(16, 212, 138, 0.3);
+  color: var(--fxn-pill-text-success);
+}
+
+.status-pill.danger,
+.status-pill.error {
+  background: var(--fxn-danger-soft);
+  border: 1px solid rgba(240, 84, 108, 0.3);
+  color: var(--fxn-pill-text-danger);
+}
+
+.status-pill.warning {
+  background: var(--fxn-warning-soft);
+  border: 1px solid rgba(240, 182, 48, 0.3);
+  color: var(--fxn-pill-text-warning);
+}
+
+.status-pill.info {
+  background: var(--fxn-info-soft);
+  border: 1px solid rgba(74, 163, 255, 0.3);
+  color: var(--fxn-pill-text-primary);
+}
+
+.status-pill.neutral {
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  color: var(--fxn-text-muted);
+}
+
+.status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.75;
+}

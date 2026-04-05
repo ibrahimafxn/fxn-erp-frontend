@@ -62,7 +62,7 @@
 }
 
 .step[data-step="depots"] { --step-own: #3b82f6; }
-.step[data-step="users"] { --step-own: #22c55e; }
+.step[data-step="users"] { --step-own: var(--fxn-success); }
 .step[data-step="materials"] { --step-own: #f59e0b; }
 .step[data-step="consumables"] { --step-own: #e11d48; }
 .step[data-step="vehicles"] { --step-own: #8b5cf6; }
@@ -71,7 +71,7 @@
 .step.active {
   border-color: var(--step-own, var(--fxn-primary));
   transform: translateY(-1px);
-  background: linear-gradient(135deg, rgba(8, 14, 22, 0.85), rgba(18, 26, 40, 0.65));
+  background: var(--fxn-surface-soft);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
 }
 
@@ -129,7 +129,7 @@
 }
 
 .onboarding[data-step="depots"] { --step-accent: #3b82f6; --step-accent-soft: rgba(59, 130, 246, 0.12); }
-.onboarding[data-step="users"] { --step-accent: #22c55e; --step-accent-soft: rgba(34, 197, 94, 0.12); }
+.onboarding[data-step="users"] { --step-accent: var(--fxn-success); --step-accent-soft: rgba(34, 197, 94, 0.12); }
 .onboarding[data-step="materials"] { --step-accent: #f59e0b; --step-accent-soft: rgba(245, 158, 11, 0.12); }
 .onboarding[data-step="consumables"] { --step-accent: #e11d48; --step-accent-soft: rgba(225, 29, 72, 0.12); }
 .onboarding[data-step="vehicles"] { --step-accent: #8b5cf6; --step-accent-soft: rgba(139, 92, 246, 0.12); }

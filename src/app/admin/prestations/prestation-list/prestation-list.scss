@@ -22,7 +22,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -33,7 +33,7 @@
   font-size: 0.95rem;
   color: var(--fxn-text-soft);
 
-  strong { color: #fff; }
+  strong { color: var(--fxn-text); }
 }
 
 .spinner {
@@ -230,7 +230,7 @@
 
     &.active {
       background: var(--fxn-primary);
-      color: #fff;
+      color: var(--fxn-text);
       border-color: var(--fxn-primary);
     }
   }

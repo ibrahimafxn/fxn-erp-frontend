@@ -99,9 +99,13 @@ export const authInterceptor: HttpInterceptorFn = (
           );
         }
 
-        // 403 : accès interdit → redirection
+        // 403 : accès interdit → redirection (sauf endpoints auth/flux mdp)
         if (err.status === 403) {
-          router.navigate(['/unauthorized']);
+          const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/change-password');
+          const isPasswordFlow = !!(err.error && (err.error.passwordExpired || err.error.mustChangePassword));
+          if (!isAuthEndpoint && !isPasswordFlow) {
+            router.navigate(['/unauthorized']);
+          }
         }
       }
 

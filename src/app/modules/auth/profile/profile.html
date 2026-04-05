@@ -1,6 +1,10 @@
 <section class="profile-page">
   <header class="profile-hero">
-    <div class="hero-left">
+    <!-- Décor -->
+    <div class="hero-glow"></div>
+
+    <!-- Photo centrée -->
+    <div class="avatar-wrapper">
       <div class="avatar">
         @if (photoUrl()) {
           <img [src]="photoUrl()" alt="Photo de profil" />
@@ -8,33 +12,32 @@
           <span>{{ initials() }}</span>
         }
       </div>
-      <div class="hero-text">
-        <span class="hero-label"><span class="material-icons notranslate">person</span>Profil utilisateur</span>
-        <h1>{{ displayName() }}</h1>
-        <div class="role-pill">{{ roleLabel() }}</div>
-        <div class="hero-meta">
-          <div class="meta-item">
-            <span class="material-icons notranslate">mail</span>
-            <span>{{ user()?.email || '—' }}</span>
-          </div>
-          <div class="meta-item">
-            <span class="material-icons notranslate">call</span>
-            <span>{{ user()?.phone || '—' }}</span>
-          </div>
+      <label class="avatar-upload-btn" [class.loading]="uploadLoading()" title="Changer la photo">
+        <input type="file" accept="image/png,image/jpeg" (change)="onPhotoSelected($event)" [disabled]="uploadLoading()" />
+        <i class="bi bi-camera-fill"></i>
+      </label>
+    </div>
+
+    <!-- Identité -->
+    <div class="hero-identity">
+      <span class="hero-label"><span class="material-icons notranslate">person</span>Profil utilisateur</span>
+      <h1>{{ displayName() }}</h1>
+      <div class="role-pill">{{ roleLabel() }}</div>
+      <div class="hero-meta">
+        <div class="meta-item">
+          <span class="material-icons notranslate">mail</span>
+          <span>{{ user()?.email || '—' }}</span>
+        </div>
+        <div class="meta-item">
+          <span class="material-icons notranslate">call</span>
+          <span>{{ user()?.phone || '—' }}</span>
         </div>
       </div>
     </div>
 
-    <div class="hero-actions">
-      <label class="btn-outline upload-btn">
-        <input type="file" accept="image/png,image/jpeg" (change)="onPhotoSelected($event)" [disabled]="uploadLoading()" />
-        <i class="bi bi-camera"></i>
-        <span>@if (uploadLoading()) { Import... } @else { Changer la photo }</span>
-      </label>
-      @if (uploadError()) {
-        <div class="state error upload-error">{{ uploadError() }}</div>
-      }
-    </div>
+    @if (uploadError()) {
+      <div class="state error upload-error">{{ uploadError() }}</div>
+    }
   </header>
 
   @if (!user()) {

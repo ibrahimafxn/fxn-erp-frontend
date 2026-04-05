@@ -18,7 +18,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -31,7 +31,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -239,7 +239,7 @@ tbody td {
 .badge.cancel {
   background: rgba(148, 163, 184, 0.2);
   border-color: rgba(148, 163, 184, 0.45);
-  color: rgba(226, 232, 240, 0.9);
+  color: var(--fxn-text-muted);
 }
 
 .pill {

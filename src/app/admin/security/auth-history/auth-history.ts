@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { AuthHistoryService } from '../../../core/services/auth-history.service';
+import { AuditLogService, AuditLogItem } from '../../../core/services/audit-log.service';
 import { UserService } from '../../../core/services/user.service';
 import { AuthHistoryItem, AuthHistoryResult, User } from '../../../core/models';
 import { formatPersonName } from '../../../core/utils/text-format';
@@ -21,6 +22,7 @@ import { formatPageRange } from '../../../core/utils/pagination';
 export class AuthHistory {
   private fb = inject(FormBuilder);
   private svc = inject(AuthHistoryService);
+  private auditSvc = inject(AuditLogService);
   private usersSvc = inject(UserService);
   private datePipe = inject(DatePipe);
 
@@ -39,7 +41,8 @@ export class AuthHistory {
   readonly filterForm = this.fb.nonNullable.group({
     user: this.fb.nonNullable.control(''),
     action: this.fb.nonNullable.control(''),
-    status: this.fb.nonNullable.control('')
+    status: this.fb.nonNullable.control(''),
+    date: this.fb.nonNullable.control('')
   });
 
   readonly items = computed<AuthHistoryItem[]>(() => this.result()?.items ?? []);
@@ -51,6 +54,16 @@ export class AuthHistory {
   });
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
+
+  readonly auditOpen = signal(false);
+  readonly auditLoading = signal(false);
+  readonly auditError = signal<string | null>(null);
+  readonly auditItems = signal<AuditLogItem[]>([]);
+  readonly auditTitle = signal<string>('');
+  readonly auditRange = signal<string>('');
+  readonly auditSession = signal<AuthHistoryItem | null>(null);
+  readonly auditExtended = signal(false);
+  readonly auditSessionId = signal<string | null>(null);
 
   constructor() {
     this.loadUsers();
@@ -70,6 +83,7 @@ export class AuthHistory {
       user: f.user || undefined,
       action: f.action || undefined,
       status: f.status || undefined,
+      date: f.date || undefined,
       page: this.page(),
       limit: this.limit()
     }).subscribe({
@@ -90,7 +104,7 @@ export class AuthHistory {
   }
 
   clearSearch(): void {
-    this.filterForm.setValue({ user: '', action: '', status: '' });
+    this.filterForm.setValue({ user: '', action: '', status: '', date: '' });
     this.page.set(1);
     this.refresh();
   }
@@ -158,6 +172,52 @@ export class AuthHistory {
     return this.datePipe.transform(value as any, 'short') || '—';
   }
 
+  showSessionActions(item: AuthHistoryItem): void {
+    const userId = this.getItemUserId(item);
+    if (!userId || item.action !== 'LOGIN' || item.status !== 'SUCCESS') return;
+
+    const from = new Date(item.createdAt as any);
+    const to = this.findNextLogoutDate(item) || new Date();
+    const userLabel = this.itemUserLabel(item);
+
+    this.auditTitle.set(`Actions CRUD · ${userLabel}`);
+    this.auditRange.set(
+      `${this.datePipe.transform(from, 'short') || '—'} → ${this.datePipe.transform(to, 'short') || '—'}`
+    );
+    this.auditOpen.set(true);
+    this.auditLoading.set(true);
+    this.auditError.set(null);
+    this.auditSession.set(item);
+    this.auditSessionId.set(item._id || null);
+    this.auditExtended.set(false);
+
+    this.loadAudit(userId, from, to);
+  }
+
+  closeAudit(): void {
+    this.auditOpen.set(false);
+    this.auditItems.set([]);
+    this.auditError.set(null);
+    this.auditTitle.set('');
+    this.auditRange.set('');
+    this.auditSession.set(null);
+    this.auditSessionId.set(null);
+    this.auditExtended.set(false);
+  }
+
+  extendAuditWindow(): void {
+    const session = this.auditSession();
+    const userId = session ? this.getItemUserId(session) : null;
+    if (!session || !userId) return;
+    const from = new Date(session.createdAt as any);
+    const to = new Date(from.getTime() + 8 * 60 * 60 * 1000);
+    this.auditRange.set(
+      `${this.datePipe.transform(from, 'short') || '—'} → ${this.datePipe.transform(to, 'short') || '—'}`
+    );
+    this.auditExtended.set(true);
+    this.loadAudit(userId, from, to);
+  }
+
   locationLabel(item: AuthHistoryItem): string {
     const ip = item.ip || '';
     if (this.isPrivateIp(ip)) return 'Local';
@@ -184,6 +244,55 @@ export class AuthHistory {
       return octet >= 16 && octet <= 31;
     }
     return false;
+  }
+
+  private getItemUserId(item: AuthHistoryItem): string | null {
+    const u = item.user as any;
+    if (u && typeof u === 'object' && u._id) return String(u._id);
+    return null;
+  }
+
+  private findNextLogoutDate(item: AuthHistoryItem): Date | null {
+    const userId = this.getItemUserId(item);
+    if (!userId) return null;
+    const baseTime = new Date(item.createdAt as any).getTime();
+    const next = this.items()
+      .filter((entry) => {
+        const entryUser = this.getItemUserId(entry);
+        if (!entryUser || entryUser !== userId) return false;
+        if (entry.action !== 'LOGOUT') return false;
+        const ts = new Date(entry.createdAt as any).getTime();
+        return Number.isFinite(ts) && ts >= baseTime;
+      })
+      .sort((a, b) => new Date(a.createdAt as any).getTime() - new Date(b.createdAt as any).getTime())[0];
+    if (!next) return null;
+    const nextTime = new Date(next.createdAt as any).getTime();
+    // Si un logout survient quasi immédiatement, on considère la session encore active
+    if (Number.isFinite(nextTime) && nextTime - baseTime < 2 * 60 * 1000) {
+      return null;
+    }
+    return new Date(next.createdAt as any);
+  }
+
+  private loadAudit(userId: string, from: Date, to: Date): void {
+    this.auditLoading.set(true);
+    this.auditError.set(null);
+    this.auditSvc.list({
+      user: userId,
+      from: from.toISOString(),
+      to: to.toISOString(),
+      methods: 'POST,PUT,PATCH,DELETE',
+      limit: 200
+    }).subscribe({
+      next: (res) => {
+        this.auditItems.set(res.items || []);
+        this.auditLoading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.auditError.set(this.apiError(err, 'Erreur chargement actions'));
+        this.auditLoading.set(false);
+      }
+    });
   }
 
   private apiError(err: HttpErrorResponse, fallback: string): string {

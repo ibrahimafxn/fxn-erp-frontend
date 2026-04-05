@@ -39,6 +39,11 @@
         </select>
       </label>
 
+      <label>
+        Date
+        <input type="date" formControlName="date" />
+      </label>
+
       <div class="actions">
         <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Rechercher</button>
         <button class="btn-outline" type="button" (click)="clearSearch()"><i class="bi bi-x"></i> Effacer</button>
@@ -86,6 +91,7 @@
             <th>IP</th>
             <th>Localisation</th>
             <th>Agent</th>
+            <th>Opérations</th>
           </tr>
         </thead>
         <tbody>
@@ -107,7 +113,80 @@
               <td>{{ item.ip || '—' }}</td>
               <td>{{ locationLabel(item) }}</td>
               <td class="agent">{{ item.userAgent || '—' }}</td>
+              <td>
+                @if (item.action === 'LOGIN' && item.status === 'SUCCESS') {
+                  <button class="btn-outline btn-xs" type="button" (click)="showSessionActions(item)">
+                    Voir actions
+                  </button>
+                } @else {
+                  —
+                }
+              </td>
             </tr>
+            @if (auditOpen() && auditSessionId() === item._id) {
+              <tr class="audit-row">
+                <td colspan="9">
+                  <div class="card audit-card">
+                    <div class="audit-head">
+                      <div>
+                        <div class="audit-title">{{ auditTitle() }}</div>
+                        <div class="audit-sub">{{ auditRange() }}</div>
+                      </div>
+                      <div class="audit-actions">
+                        <button
+                          class="btn-outline btn-xs"
+                          type="button"
+                          (click)="extendAuditWindow()"
+                          [disabled]="auditExtended()"
+                        >
+                          @if (auditExtended()) { Fenêtre étendue } @else { Étendre à 8h }
+                        </button>
+                        <button class="btn-outline btn-xs" type="button" (click)="closeAudit()">Fermer</button>
+                      </div>
+                    </div>
+
+                    @if (auditLoading()) {
+                      <div class="state loading">Chargement des actions…</div>
+                    } @else if (auditError()) {
+                      <div class="state error"><strong>Erreur :</strong> {{ auditError() }}</div>
+                    } @else if (auditItems().length === 0) {
+                      <div class="state empty">Aucune action CRUD sur cette session.</div>
+                    } @else {
+                      <div class="table card table-scroll audit-table">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Méthode</th>
+                              <th>URL</th>
+                              <th>Statut</th>
+                              <th>Champs modifiés</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (row of auditItems(); track row._id) {
+                              <tr>
+                                <td>{{ dateLabel(row.createdAt) }}</td>
+                                <td><span class="pill method-pill">{{ row.method }}</span></td>
+                                <td class="mono">{{ row.path }}</td>
+                                <td>{{ row.status }}</td>
+                                <td class="mono">
+                                  @if ((row.bodyKeys?.length || 0) > 0) {
+                                    {{ row.bodyKeys?.join(', ') }}
+                                  } @else {
+                                    —
+                                  }
+                                </td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
           }
         </tbody>
       </table>

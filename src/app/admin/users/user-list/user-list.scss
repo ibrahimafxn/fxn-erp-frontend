@@ -25,7 +25,7 @@
   border-radius: 14px;
   border: 1px solid var(--fxn-primary-border);
   background: var(--fxn-surface);
-  color: #fff;
+  color: var(--fxn-text);
   box-shadow: var(--fxn-shadow-md);
 }
 
@@ -38,7 +38,7 @@
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
@@ -274,8 +274,8 @@
   font-weight: 700;
   font-size: 1rem;
   color: var(--fxn-text);
-  background: linear-gradient(135deg, rgba(61, 140, 255, 0.35), rgba(33, 182, 182, 0.35));
-  border: 1px solid rgba(255, 255, 255, .16);
+  background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+  border: 1px solid var(--fxn-border-strong);
   overflow: hidden;
 
   img {
@@ -300,25 +300,25 @@
 }
 
 .badge.role-admin {
-  color: #b8ddff;
+  color: var(--fxn-pill-text-primary, #b8ddff);
   border-color: rgba(88, 164, 255, 0.5);
   background: color-mix(in srgb, #3b82f6 18%, var(--fxn-surface-soft));
 }
 
 .badge.role-dirigeant {
-  color: #9ff0d3;
+  color: var(--fxn-pill-text-success, #9ff0d3);
   border-color: rgba(47, 190, 160, 0.55);
   background: color-mix(in srgb, #10b981 18%, var(--fxn-surface-soft));
 }
 
 .badge.role-depot {
-  color: #ffd79a;
+  color: var(--fxn-pill-text-warning, #ffd79a);
   border-color: rgba(255, 179, 92, 0.55);
   background: color-mix(in srgb, #f59e0b 18%, var(--fxn-surface-soft));
 }
 
 .badge.role-tech {
-  color: #e7d7ff;
+  color: var(--fxn-pill-text-neutral, #e7d7ff);
   border-color: rgba(168, 126, 255, 0.5);
   background: color-mix(in srgb, #7c3aed 18%, var(--fxn-surface-soft));
 }
@@ -330,13 +330,13 @@
   border-radius: 999px;
   font-size: .78rem;
   font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, .12);
-  background: rgba(33, 182, 182, 0.18);
-  color: #c9f3ee;
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-primary-soft);
+  color: var(--fxn-text-soft);
 
   &.empty {
-    color: rgba(255, 255, 255, 0.6);
-    background: rgba(255, 255, 255, 0.06);
+    color: var(--fxn-text-muted);
+    background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
   }
 }
 
@@ -349,13 +349,17 @@
   font-weight: 700;
   border: 1px solid rgba(46, 204, 113, 0.45);
   background: rgba(46, 204, 113, 0.18);
-  color: #c7f7d8;
+  color: var(--fxn-pill-text-success);
 
   &.off {
     border-color: rgba(239, 68, 68, 0.5);
     background: rgba(239, 68, 68, 0.18);
-    color: #ffd3d3;
+    color: var(--fxn-pill-text-danger);
   }
+}
+
+.depot-pill .empty {
+  color: var(--fxn-text-muted);
 }
 
 /* -------------------------------------------------
@@ -413,7 +417,7 @@
       gap: 8px;
       padding: 10px;
       border-radius: 0.9rem;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--fxn-border);
       background: color-mix(in srgb, var(--fxn-surface-soft) 60%, transparent);
     }
 

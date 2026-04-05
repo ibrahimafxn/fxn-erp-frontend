@@ -1,7 +1,7 @@
 .confirm-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: var(--fxn-surface-soft);
+  background: rgba(0, 0, 0, 0.5);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -21,7 +21,7 @@
   width: min(420px, 92vw);
   background: var(--fxn-surface);
   border-radius: 16px;
-  border: 1px solid rgba(88, 123, 255, 0.25);
+  border: 1px solid var(--fxn-primary-border);
   padding: 16px;
   z-index: 70;
   opacity: 0;
@@ -49,7 +49,7 @@
 
 .confirm-modal .content {
   margin-top: 10px;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--fxn-text-muted);
 }
 
 .confirm-modal footer {
