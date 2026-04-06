@@ -1390,10 +1390,16 @@ export class InterventionsDashboard {
   saveRates(): void {
     const raw = this.rateForm.getRawValue() as InterventionRates;
     if (!this.rateForm.valid) {
+      this.rateSuccess.set(null);
+      this.rateError.set('Vérifie les tarifs saisis avant d’enregistrer.');
       this.rateForm.markAllAsTouched();
       return;
     }
-    if (this.findInvalidRates().length) {
+    const invalidRates = this.findInvalidRates();
+    if (invalidRates.length) {
+      this.rateSuccess.set(null);
+      this.rateError.set('Le montant FXN ne peut pas dépasser le total.');
+      this.rateForm.markAllAsTouched();
       return;
     }
     this.rateSaving.set(true);

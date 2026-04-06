@@ -496,6 +496,14 @@ export class OrdersPage {
     this.importPreview.set({ ...preview, lines, amount });
   }
 
+  removePreviewLine(index: number): void {
+    const preview = this.importPreview();
+    if (!preview) return;
+    const lines = preview.lines.filter((_, i) => i !== index);
+    const amount = this.round2(lines.reduce((sum, line) => sum + Number(line.totalHt ?? line.total ?? 0), 0));
+    this.importPreview.set({ ...preview, lines, amount });
+  }
+
   onPreviewResourceChange(index: number, event: Event): void {
     const el = event.target as HTMLSelectElement | null;
     if (!el) return;

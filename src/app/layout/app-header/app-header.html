@@ -75,6 +75,7 @@
                       <button mat-button (click)="goTechBpu()"><span class="material-icons notranslate">price_check</span><span i18n="@@header.menu.bpu">BPU prestations</span></button>
                       <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span><span i18n="@@header.menu.techHistory">Historique</span></button>
                       <button mat-button (click)="goTechDocuments()"><span class="material-icons notranslate">description</span><span>Documents</span></button>
+                      <button mat-button (click)="goTechAbsences()"><span class="material-icons notranslate">event_busy</span><span>Congés / Absences</span></button>
                   </div>
                   </div>
 
@@ -183,6 +184,20 @@
                           <button mat-button (click)="goRevenue()"><span class="material-icons notranslate">insights</span><span i18n="@@header.menu.revenue">Chiffre d'affaires</span></button>
                           <button mat-button (click)="goAgenda()"><span class="material-icons notranslate">event</span><span i18n="@@header.menu.agenda">Agenda</span></button>
                           <button mat-button (click)="goBpu()"><span class="material-icons notranslate">price_check</span><span i18n="@@header.menu.bpu">BPU prestations</span></button>
+                          <button mat-button (click)="goAbsences()">
+                            <span class="material-icons notranslate">event_busy</span>
+                            <span>Gestion absences</span>
+                            @if (absencePendingCount() > 0) {
+                              <span class="badge">{{ absencePendingCount() }}</span>
+                            }
+                          </button>
+                          <button mat-button (click)="goDirigeantDashboard()">
+                            <span class="material-icons notranslate">bar_chart</span>
+                            <span>Tableau dirigeant</span>
+                            @if (absencePendingCount() > 0) {
+                              <span class="badge">{{ absencePendingCount() }}</span>
+                            }
+                          </button>
                         }
                       </div>
                     </div>

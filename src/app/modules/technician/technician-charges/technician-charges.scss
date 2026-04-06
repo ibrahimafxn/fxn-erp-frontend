@@ -151,6 +151,41 @@
   font-weight: 700;
 }
 
+.technician-charges .benefit-kpis .kpi.kpi-charges .label,
+.technician-charges .benefit-kpis .kpi.kpi-charges .value {
+  color: #f8fafc;
+}
+
+.technician-charges .benefit-kpis .kpi.kpi-ca .label,
+.technician-charges .benefit-kpis .kpi.kpi-ca .value {
+  color: #0f172a;
+}
+
+.technician-charges .benefit-kpis .kpi.kpi-benefit .label,
+.technician-charges .benefit-kpis .kpi.kpi-benefit .value {
+  color: #1f2937;
+}
+
+.technician-charges .benefit-kpis .kpi.kpi-benefit.is-negative .label,
+.technician-charges .benefit-kpis .kpi.kpi-benefit.is-negative .value,
+.technician-charges td[data-label='Bénéfice'].is-negative {
+  color: #dc2626;
+}
+
+.technician-charges td[data-label='Bénéfice'].is-positive {
+  color: #15803d;
+}
+
+.technician-charges .benefit-kpis .kpi.kpi-benefit.is-negative {
+  border-color: rgba(220, 38, 38, 0.45);
+  background: color-mix(in srgb, #dc2626 12%, var(--fxn-surface-soft));
+}
+
+.technician-charges .benefit-kpis .kpi.kpi-benefit.is-positive {
+  border-color: rgba(22, 163, 74, 0.45);
+  background: color-mix(in srgb, #16a34a 12%, var(--fxn-surface-soft));
+}
+
 /* ── List card ───────────────────────────────────────────── */
 .technician-charges .list-head {
   display: flex;

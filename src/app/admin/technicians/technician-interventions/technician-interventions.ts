@@ -1065,7 +1065,7 @@ export class TechnicianInterventions {
       .slice(0, 3)
       .map(([label, count]) => ({ label, count }));
     const displayBaseTopTypes = baseTopTypes.map((type) => ({
-      label: this.normalizeTypeLabel(type.label),
+      label: this.labelToBpuCode(type.label),
       count: type.count
     }));
     const baseTypeLabels = new Set(displayBaseTopTypes.map((type) => type.label));
@@ -1073,12 +1073,12 @@ export class TechnicianInterventions {
       .filter((label) => !baseTopTypes.some((type) => type.label === label))
       .map((label) => ({ label, count: types.get(label) ?? 0 }));
     const articleTypeEntries = ARTICLE_TYPE_LABELS.map(({ label }) => ({
-      label,
+      label: this.labelToBpuCode(label),
       count: articleTypeCounts.get(label) ?? 0
     })).filter((entry) => !baseTypeLabels.has(entry.label));
     const enforcedTypeEntries = enforcedTypes
       .map((entry) => ({
-        label: this.normalizeTypeLabel(entry.label),
+        label: this.labelToBpuCode(entry.label),
         count: entry.count
       }))
       .filter((entry) => !baseTypeLabels.has(entry.label));
@@ -1098,7 +1098,7 @@ export class TechnicianInterventions {
     const applyBpuFilter = bpuCodes.size > 0 && bpuEntries.length > 0;
     const bpuTopTypes = applyBpuFilter
       ? bpuEntries.map((entry) => ({
-          label: this.normalizeTypeLabel(entry.code),
+          label: entry.code,
           count: types.get(this.normalizeToken(entry.code).replace(/[^A-Z0-9_]/g, '')) ?? 0
         }))
       : [];
@@ -1129,7 +1129,9 @@ export class TechnicianInterventions {
           return normalizedEntry === normalizedAllowed || normalizedEntry === normalizedAllowedLabel;
         })
       : filteredTopTypes;
-    const finalTopTypes = (bpuOnlyTopTypes ?? computedTopTypes).filter((entry) => entry.count > 0);
+    const finalTopTypes = (bpuOnlyTopTypes ?? computedTopTypes).filter((entry) =>
+      entry.count > 0 && !this.isCablePavLabel(entry.label) && !this.isClemLabel(entry.label)
+    );
     const ALWAYS_STATUSES = ['ECHEC TERMINE', 'ECHEC', 'ANNULEE', 'A COMPLETER'];
     for (const label of ALWAYS_STATUSES) {
       if (!statuses.has(label)) statuses.set(label, 0);
@@ -1723,6 +1725,17 @@ export class TechnicianInterventions {
   private isPavLabel(label: string): boolean {
     const normalized = this.normalizeToken(label);
     return normalized === 'PAV';
+  }
+
+  private isCablePavLabel(label: string): boolean {
+    const normalized = this.normalizeToken(label);
+    const underscored = normalized.replace(/[\s-]+/g, '_');
+    const compact = normalized.replace(/[\s_-]+/g, '');
+    return underscored.startsWith('CABLE_PAV') || compact.startsWith('CABLEPAV');
+  }
+
+  private isClemLabel(label: string): boolean {
+    return this.normalizeToken(label) === 'CLEM';
   }
 
   private matchesAllowedType(typeLabel: string, allowedType: string): boolean {

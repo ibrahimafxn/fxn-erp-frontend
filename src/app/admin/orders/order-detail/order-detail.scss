@@ -87,6 +87,35 @@ tbody td:last-child {
   border-bottom-right-radius: var(--fxn-radius-sm);
 }
 
+.td-action {
+  width: 48px;
+  text-align: center;
+  padding: 4px 8px;
+}
+
+.btn-remove-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 92, 124, 0.4);
+  background: transparent;
+  color: var(--fxn-danger, #ff5c7c);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--fxn-danger) 12%, transparent);
+    border-color: rgba(255, 92, 124, 0.7);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
 .lines-total {
   margin-top: 16px;
   display: flex;

@@ -9,6 +9,7 @@ import { formatPersonName } from '../../core/utils/text-format';
 import { resolveUserAvatarUrl } from '../../core/utils/avatar-url';
 import { AlertsService } from '../../core/services/alerts.service';
 import { SupplyRequestService } from '../../core/services/supply-request.service';
+import { AbsenceService } from '../../core/services/absence.service';
 
 @Component({
   standalone: true,
@@ -24,6 +25,7 @@ export class AppHeader {
   private location = inject(Location);
   private alertsService = inject(AlertsService);
   private supplyRequestService = inject(SupplyRequestService);
+  private absenceService = inject(AbsenceService);
 
   // user
   readonly user = this.auth.user$;
@@ -36,6 +38,7 @@ export class AppHeader {
   readonly pageTitle = signal('Dashboard');
   readonly currentUrl = signal(this.router.url);
   readonly alertsCount = this.alertsService.count;
+  readonly absencePendingCount = this.absenceService.pendingCount;
   readonly supplyBadgeCount = signal(0);
   readonly supplyLatestDecidedAt = signal<string | null>(null);
   readonly showDirigeantWelcome = signal(false);
@@ -60,12 +63,14 @@ export class AppHeader {
         this.currentLocale.set(this.detectLocale());
         this.alertsService.refresh();
         this.refreshSupplyBadge();
+        this.refreshAbsenceBadge();
         if (this.router.url.includes('/technician/supply-requests')) {
           this.markSupplyBadgeSeen();
         }
       });
     this.alertsService.refresh();
     this.refreshSupplyBadge();
+    this.refreshAbsenceBadge();
     effect(() => {
       const user = this.user();
       if (user?.role === 'DIRIGEANT') {
@@ -275,12 +280,30 @@ export class AppHeader {
     this.router.navigate(['/technician/documents']).then();
   }
 
+  goTechAbsences(): void {
+    this.router.navigate(['/technician/absences']).then();
+  }
+
+  goAbsences(): void {
+    this.router.navigate(['/admin/absences']).then();
+  }
+
+  goDirigeantDashboard(): void {
+    this.router.navigate(['/admin/dirigeant']).then();
+  }
+
   goSupplyRequests(): void {
     this.router.navigate(['/depot/supply-requests']).then();
   }
 
   logout(): void {
     this.auth.logout(true).subscribe();
+  }
+
+  private refreshAbsenceBadge(): void {
+    if (this.canManageAccess()) {
+      this.absenceService.refreshPendingCount();
+    }
   }
 
   private refreshSupplyBadge(): void {
@@ -408,12 +431,15 @@ export class AppHeader {
       if (url.includes('/bpu')) return 'BPU prestations';
       if (url.includes('/history')) return 'Historique';
       if (url.includes('/documents')) return 'Documents';
+      if (url.includes('/absences')) return 'Mes absences';
       return 'Technicien';
     }
     if (url.includes('/unauthorized')) return 'Accès refusé';
     if (url.includes('/depots')) return 'Dépôts';
     if (url.includes('/users')) return 'Utilisateurs';
     if (url.includes('/hr')) return 'Ressources humaines';
+    if (url.includes('/absences')) return 'Gestion des absences';
+    if (url.includes('/dirigeant')) return 'Tableau de bord dirigeant';
     if (url.includes('/security/user-access')) return 'Accès connexion';
     if (url.includes('/preferences')) return 'Préférences';
     if (url.includes('/reservations/materials')) return 'Attributions matériels';

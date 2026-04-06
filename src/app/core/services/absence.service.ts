@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -10,7 +10,18 @@ type ApiResponse<T> = { success: boolean; data: T; message?: string };
 export class AbsenceService {
   private readonly baseUrl = `${environment.apiBaseUrl}/absences`;
 
+  private _pendingCount = signal(0);
+  readonly pendingCount = this._pendingCount.asReadonly();
+
   constructor(private http: HttpClient) {}
+
+  refreshPendingCount(): void {
+    const params = new HttpParams().set('status', 'EN_ATTENTE');
+    this.http.get<ApiResponse<Absence[]>>(this.baseUrl, { params }).subscribe({
+      next: (res) => this._pendingCount.set(res?.data?.length ?? 0),
+      error: () => this._pendingCount.set(0)
+    });
+  }
 
   list(params?: {
     fromDate?: string;

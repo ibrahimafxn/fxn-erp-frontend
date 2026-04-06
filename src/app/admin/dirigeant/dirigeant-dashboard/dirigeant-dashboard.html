@@ -16,7 +16,7 @@
   <!-- ── Error state ──────────────────────────────────────── -->
   @if (error() && !loading()) {
     <div class="state-card state-error" role="alert">
-      <span class="material-symbols-outlined">error_outline</span>
+      <span class="material-icons notranslate">error_outline</span>
       <div>
         <strong>Impossible de charger les données</strong>
         <p>{{ error() }}</p>
@@ -39,7 +39,7 @@
     <div class="kpi-card revenue">
       <div class="kpi-header">
         <span class="kpi-title">CA ce mois</span>
-        <span class="material-symbols-outlined kpi-icon icon-revenue">trending_up</span>
+        <span class="material-icons notranslate kpi-icon icon-revenue">trending_up</span>
       </div>
       <div class="kpi-value">{{ formatAmount(caThisMonth()) }}</div>
       <div class="kpi-sub">Chiffre d'affaires HT du mois en cours</div>
@@ -49,7 +49,7 @@
     <div class="kpi-card annual">
       <div class="kpi-header">
         <span class="kpi-title">CA annuel</span>
-        <span class="material-symbols-outlined kpi-icon icon-annual">bar_chart</span>
+        <span class="material-icons notranslate kpi-icon icon-annual">bar_chart</span>
       </div>
       <div class="kpi-value">{{ formatAmount(caYtd()) }}</div>
       <div class="kpi-sub">Cumul depuis janvier {{ (revenueMonths()[0])?.year ?? '' }}</div>
@@ -59,7 +59,7 @@
     <div class="kpi-card penalty">
       <div class="kpi-header">
         <span class="kpi-title">Pénalités YTD</span>
-        <span class="material-symbols-outlined kpi-icon icon-penalty">warning_amber</span>
+        <span class="material-icons notranslate kpi-icon icon-penalty">warning</span>
       </div>
       <div class="kpi-value kpi-value--danger">{{ formatAmount(penaltyYtd()) }}</div>
       <div class="kpi-sub">Total des pénalités sur l'année</div>
@@ -70,7 +70,7 @@
        href="#absences-section" (click)="$event.preventDefault(); scrollToAbsences()">
       <div class="kpi-header">
         <span class="kpi-title">Absences en attente</span>
-        <span class="material-symbols-outlined kpi-icon icon-absences">event_busy</span>
+        <span class="material-icons notranslate kpi-icon icon-absences">event_busy</span>
       </div>
       <div class="kpi-value">{{ pendingAbsences().length }}</div>
       <div class="kpi-sub">
@@ -146,12 +146,12 @@
             <div class="absence-actions">
               <button class="btn-approve" type="button" (click)="approveAbsence(absence._id)"
                       aria-label="Approuver la demande">
-                <span class="material-symbols-outlined">check_circle</span>
+                <span class="material-icons notranslate">check_circle</span>
                 Approuver
               </button>
               <button class="btn-reject" type="button" (click)="rejectAbsence(absence._id)"
                       aria-label="Refuser la demande">
-                <span class="material-symbols-outlined">cancel</span>
+                <span class="material-icons notranslate">cancel</span>
                 Refuser
               </button>
             </div>
@@ -159,7 +159,7 @@
         }
         @empty {
           <div class="empty-state">
-            <span class="material-symbols-outlined empty-icon">event_available</span>
+            <span class="material-icons notranslate empty-icon">event_available</span>
             <p>Aucune demande d'absence en attente.</p>
           </div>
         }
@@ -175,7 +175,7 @@
     <div class="quick-links">
 
       <a class="quick-link-card" routerLink="/admin/revenue">
-        <span class="material-symbols-outlined quick-link-icon">show_chart</span>
+        <span class="material-icons notranslate quick-link-icon">show_chart</span>
         <div>
           <div class="quick-link-title">Chiffre d'affaires</div>
           <div class="quick-link-sub">Saisie et historique CA</div>
@@ -183,7 +183,7 @@
       </a>
 
       <a class="quick-link-card" routerLink="/admin/history">
-        <span class="material-symbols-outlined quick-link-icon">history</span>
+        <span class="material-icons notranslate quick-link-icon">history</span>
         <div>
           <div class="quick-link-title">Historique</div>
           <div class="quick-link-sub">Journal des actions</div>
@@ -191,7 +191,7 @@
       </a>
 
       <a class="quick-link-card" routerLink="/admin/hr">
-        <span class="material-symbols-outlined quick-link-icon">groups</span>
+        <span class="material-icons notranslate quick-link-icon">groups</span>
         <div>
           <div class="quick-link-title">RH</div>
           <div class="quick-link-sub">Congés et absences</div>
@@ -199,7 +199,7 @@
       </a>
 
       <a class="quick-link-card" routerLink="/admin/users">
-        <span class="material-symbols-outlined quick-link-icon">manage_accounts</span>
+        <span class="material-icons notranslate quick-link-icon">manage_accounts</span>
         <div>
           <div class="quick-link-title">Utilisateurs</div>
           <div class="quick-link-sub">Gestion des comptes</div>

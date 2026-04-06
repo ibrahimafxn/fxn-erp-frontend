@@ -93,6 +93,9 @@
       } @else if (importResult()) {
         <div class="state ok">{{ importResult() }}</div>
       }
+      @if (deleteLineError()) {
+        <div class="state error">{{ deleteLineError() }}</div>
+      }
     </article>
 
     <article class="card">
@@ -109,16 +112,32 @@
               <th>Quantité</th>
               <th>Prix unitaire</th>
               <th>Total</th>
+              @if (!order()?.importedToDepotAt) {
+                <th></th>
+              }
             </tr>
             </thead>
             <tbody>
-              @for (line of (order()?.lines || []); track $index) {
+              @for (line of (order()?.lines || []); track line._id ?? $index) {
                 <tr>
                   <td>{{ line.name }}</td>
                   <td>{{ line.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
                   <td>{{ line.quantity }}</td>
                   <td>{{ formatCurrency(line.unitPrice) }}</td>
                   <td>{{ formatCurrency(line.total ?? (line.quantity * line.unitPrice)) }}</td>
+                  @if (!order()?.importedToDepotAt) {
+                    <td class="td-action">
+                      <button
+                        class="btn-outline danger btn-remove-line"
+                        type="button"
+                        [disabled]="deletingLine()"
+                        (click)="openDeleteLineModal(line._id!)"
+                        title="Supprimer la ligne"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  }
                 </tr>
               }
             </tbody>
@@ -143,4 +162,16 @@
   [confirming]="importLoading()"
   (cancel)="cancelImportModal()"
   (confirm)="confirmImport()"
+></app-confirm-delete-modal>
+
+<app-confirm-delete-modal
+  [open]="deleteLineConfirmOpen()"
+  entityLabel="ligne"
+  [entityName]="deleteLineEntityName()"
+  dangerHint="La ligne sera supprimée de la commande et le montant HT recalculé."
+  cancelText="Annuler"
+  confirmText="Supprimer"
+  [confirming]="deletingLine()"
+  (cancel)="cancelDeleteLineModal()"
+  (confirm)="confirmDeleteLine()"
 ></app-confirm-delete-modal>
