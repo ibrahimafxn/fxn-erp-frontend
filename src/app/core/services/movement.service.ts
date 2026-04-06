@@ -25,7 +25,6 @@ export class MovementService {
   constructor(private http: HttpClient) {}
 
   private handleError(err: any) {
-    console.error(err);
     this._error.set(err);
     return throwError(() => err);
   }
