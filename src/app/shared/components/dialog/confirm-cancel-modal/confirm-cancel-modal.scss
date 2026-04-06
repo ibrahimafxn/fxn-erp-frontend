@@ -11,8 +11,8 @@
 .modal {
   width: min(520px, 100%);
   border-radius: 1rem;
-  background: #0c0c11;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--fxn-surface);
+  border: 1px solid var(--fxn-border-strong);
   box-shadow: 0 25px 55px rgba(0, 0, 0, 0.65);
   overflow: hidden;
   display: flex;
@@ -25,8 +25,8 @@
   justify-content: space-between;
   gap: .75rem;
   padding: 1.25rem 1.25rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.03));
 }
 
 .modal-title {
@@ -35,8 +35,8 @@
 }
 
 .icon-btn {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
   color: inherit;
   border-radius: .75rem;
   width: 38px;
@@ -50,7 +50,7 @@
   padding: 1.2rem;
   display: grid;
   gap: .75rem;
-  background: #09090f;
+  background: var(--fxn-bg);
   flex: 1;
 }
 
@@ -74,9 +74,8 @@
   margin-top: .25rem;
   padding: .75rem 1rem;
   border-radius: .9rem;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.01);
+  background: var(--fxn-surface-soft);
+  border: 1px solid var(--fxn-border);
 }
 
 .label {
@@ -97,7 +96,7 @@
 }
 
 .required {
-  color: #ff5c7a;
+  color: var(--fxn-danger);
 }
 
 .reason textarea {
@@ -105,8 +104,8 @@
   min-height: 90px;
   padding: .65rem .75rem;
   border-radius: .75rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
   color: inherit;
   resize: vertical;
   font-size: .95rem;
@@ -117,6 +116,6 @@
   justify-content: flex-end;
   gap: .6rem;
   padding: 1rem 1.15rem 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.02));
 }

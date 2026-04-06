@@ -14,7 +14,7 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
 }
 
 .import-client {
@@ -25,20 +25,20 @@
 
   input {
     min-width: 220px;
-    background: #000;
-    color: #fff;
+    background: var(--fxn-surface-soft);
+    color: var(--fxn-text);
     border: 1px solid var(--fxn-border-strong);
   }
 
   select {
     min-width: 180px;
-    background: #000;
-    color: #fff;
+    background: var(--fxn-surface-soft);
+    color: var(--fxn-text);
     border: 1px solid var(--fxn-border-strong);
   }
 
   input::placeholder {
-    color: rgba(255, 255, 255, 0.65);
+    color: var(--fxn-text-muted);
   }
 
   input:focus {
@@ -120,11 +120,11 @@
 }
 
 .kpi-ttc .value {
-  color: #a7f3d0;
+  color: var(--fxn-success);
 }
 
 .kpi-tva .value {
-  color: #fde68a;
+  color: var(--fxn-accent);
 }
 
 .filters label {
@@ -189,7 +189,7 @@ th,
 td {
   text-align: left;
   padding: 12px 14px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--fxn-border);
 }
 
 th {
@@ -230,20 +230,20 @@ td {
   padding: 0.25rem 0.7rem;
   border-radius: 999px;
   font-weight: 800;
-  color: #e3f0ff;
-  background: rgba(59, 130, 246, 0.18);
-  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: var(--fxn-pill-text-primary);
+  background: var(--fxn-primary-soft);
+  border: 1px solid var(--fxn-primary-border);
 }
 
 .amount-pill.status-delivered {
-  color: #d7ffe7;
-  background: rgba(16, 185, 129, 0.18);
+  color: var(--fxn-pill-text-amount);
+  background: color-mix(in srgb, var(--fxn-success) 14%, var(--fxn-surface-soft));
   border-color: rgba(16, 185, 129, 0.45);
 }
 
 .amount-pill.status-pending {
-  color: #ffe9c7;
-  background: rgba(245, 158, 11, 0.2);
+  color: var(--fxn-pill-text-warning);
+  background: var(--fxn-warning-soft);
   border-color: rgba(245, 158, 11, 0.5);
 }
 
@@ -253,7 +253,7 @@ td {
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
   font-weight: 700;
-  color: #fff4e6;
+  color: var(--fxn-pill-text-tva);
   border: 1px solid rgba(251, 146, 60, 0.6);
   background: rgba(251, 146, 60, 0.2);
 }
@@ -288,7 +288,7 @@ td {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(5, 10, 18, 0.65);
+  background: var(--fxn-surface-soft);
   z-index: 2000;
 }
 
@@ -355,6 +355,29 @@ td {
 
 .modal-table {
   margin-top: 0;
+}
+
+.btn-remove-preview-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 92, 124, 0.45);
+  background: transparent;
+  color: var(--fxn-danger, #ff5c7c);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--fxn-danger) 12%, transparent);
+    border-color: rgba(255, 92, 124, 0.7);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
 }
 
 .modal-table input,

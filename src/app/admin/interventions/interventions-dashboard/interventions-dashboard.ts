@@ -409,19 +409,28 @@ export class InterventionsDashboard {
 
   private readonly revenueKeys = new Set([
     'racPavillon',
+    'racAerien',
+    'racFacade',
     'clem',
     'reconnexion',
     'racImmeuble',
     'racProS',
     'racProC',
     'racF8',
+    'fourreauBeton',
     'prestaCompl',
-    'deprise',
+    'deplacementPrise',
+    'deplacementOffert',
+    'deplacementATort',
     'demo',
     'sav',
     'savExp',
+    'swapEquipement',
     'refrac',
-    'refcDgr'
+    'refcDgr',
+    'cableSl',
+    'bifibre',
+    'nacelle'
   ]);
 
   private readonly rateCodeMap = new Map<string, keyof InterventionRates>(
@@ -435,21 +444,13 @@ export class InterventionsDashboard {
       total: [140, [Validators.required, Validators.min(0)]],
       fxn: [10, [Validators.required, Validators.min(0)]]
     }),
-    cablePav1: this.fb.nonNullable.group({
-      total: [20, [Validators.required, Validators.min(0)]],
-      fxn: [0, [Validators.required, Validators.min(0)]]
+    racAerien: this.fb.nonNullable.group({
+      total: [215, [Validators.required, Validators.min(0)]],
+      fxn: [10, [Validators.required, Validators.min(0)]]
     }),
-    cablePav2: this.fb.nonNullable.group({
-      total: [40, [Validators.required, Validators.min(0)]],
-      fxn: [0, [Validators.required, Validators.min(0)]]
-    }),
-    cablePav3: this.fb.nonNullable.group({
-      total: [60, [Validators.required, Validators.min(0)]],
-      fxn: [0, [Validators.required, Validators.min(0)]]
-    }),
-    cablePav4: this.fb.nonNullable.group({
-      total: [80, [Validators.required, Validators.min(0)]],
-      fxn: [0, [Validators.required, Validators.min(0)]]
+    racFacade: this.fb.nonNullable.group({
+      total: [160, [Validators.required, Validators.min(0)]],
+      fxn: [10, [Validators.required, Validators.min(0)]]
     }),
     clem: this.fb.nonNullable.group({
       total: [5, [Validators.required, Validators.min(0)]],
@@ -475,12 +476,24 @@ export class InterventionsDashboard {
       total: [200, [Validators.required, Validators.min(0)]],
       fxn: [100, [Validators.required, Validators.min(0)]]
     }),
+    fourreauBeton: this.fb.nonNullable.group({
+      total: [450, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
     prestaCompl: this.fb.nonNullable.group({
       total: [50, [Validators.required, Validators.min(0)]],
       fxn: [0, [Validators.required, Validators.min(0)]]
     }),
-    deprise: this.fb.nonNullable.group({
-      total: [50, [Validators.required, Validators.min(0)]],
+    deplacementPrise: this.fb.nonNullable.group({
+      total: [20, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    deplacementOffert: this.fb.nonNullable.group({
+      total: [10, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    deplacementATort: this.fb.nonNullable.group({
+      total: [10, [Validators.required, Validators.min(0)]],
       fxn: [0, [Validators.required, Validators.min(0)]]
     }),
     demo: this.fb.nonNullable.group({
@@ -495,12 +508,28 @@ export class InterventionsDashboard {
       total: [0, [Validators.required, Validators.min(0)]],
       fxn: [0, [Validators.required, Validators.min(0)]]
     }),
+    swapEquipement: this.fb.nonNullable.group({
+      total: [10, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
     refrac: this.fb.nonNullable.group({
       total: [0, [Validators.required, Validators.min(0)]],
       fxn: [0, [Validators.required, Validators.min(0)]]
     }),
     refcDgr: this.fb.nonNullable.group({
       total: [50, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    cableSl: this.fb.nonNullable.group({
+      total: [0.30, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    bifibre: this.fb.nonNullable.group({
+      total: [5, [Validators.required, Validators.min(0)]],
+      fxn: [0, [Validators.required, Validators.min(0)]]
+    }),
+    nacelle: this.fb.nonNullable.group({
+      total: [-80, [Validators.required]],
       fxn: [0, [Validators.required, Validators.min(0)]]
     })
   });
@@ -1191,15 +1220,12 @@ export class InterventionsDashboard {
       prestaCompl: 0,
       sav: 0,
       clem: 0,
-      deprise: 0,
+      deplacementPrise: 0,
       demo: 0,
       refrac: 0,
       refcDgr: 0,
       savExp: 0,
-      cablePav1: 0,
-      cablePav2: 0,
-      cablePav3: 0,
-      cablePav4: 0,
+      cableSl: 0,
       racAutre: 0,
       other: 0
     };
@@ -1364,10 +1390,16 @@ export class InterventionsDashboard {
   saveRates(): void {
     const raw = this.rateForm.getRawValue() as InterventionRates;
     if (!this.rateForm.valid) {
+      this.rateSuccess.set(null);
+      this.rateError.set('Vérifie les tarifs saisis avant d’enregistrer.');
       this.rateForm.markAllAsTouched();
       return;
     }
-    if (this.findInvalidRates().length) {
+    const invalidRates = this.findInvalidRates();
+    if (invalidRates.length) {
+      this.rateSuccess.set(null);
+      this.rateError.set('Le montant FXN ne peut pas dépasser le total.');
+      this.rateForm.markAllAsTouched();
       return;
     }
     this.rateSaving.set(true);
@@ -1611,19 +1643,28 @@ export class InterventionsDashboard {
 
     return (
       get(item.racPavillon) * share(rates.racPavillon) +
+      get(item.racAerien) * share(rates.racAerien) +
+      get(item.racFacade) * share(rates.racFacade) +
       get(item.clem) * share(rates.clem) +
       get(item.reconnexion) * share(rates.reconnexion) +
       get(item.racImmeuble) * share(rates.racImmeuble) +
       get(item.racProS) * share(rates.racProS) +
       get(item.racProC) * share(rates.racProC) +
       get(item.racF8) * share(rates.racF8) +
+      get(item.fourreauBeton) * share(rates.fourreauBeton) +
       get(item.prestaCompl) * share(rates.prestaCompl) +
-      get(item.deprise) * share(rates.deprise) +
+      get(item.deplacementPrise ?? item.deprise) * share(rates.deplacementPrise) +
+      get(item.deplacementOffert) * share(rates.deplacementOffert) +
+      get(item.deplacementATort) * share(rates.deplacementATort) +
       get(item.demo) * share(rates.demo) +
       get(item.sav) * share(rates.sav) +
       get(item.savExp) * share(rates.savExp) +
+      get(item.swapEquipement) * share(rates.swapEquipement) +
       get(item.refrac) * share(rates.refrac) +
-      get(item.refcDgr) * share(rates.refcDgr)
+      get(item.refcDgr) * share(rates.refcDgr) +
+      get(item.cableSl) * share(rates.cableSl) +
+      get(item.bifibre) * share(rates.bifibre) +
+      get(item.nacelle) * share(rates.nacelle)
     );
   }
 

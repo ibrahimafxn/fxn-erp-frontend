@@ -227,7 +227,7 @@
             </div>
           </form>
           <div class="actions">
-            <button class="btn-save" (click)="saveProfile()"><i class="fa-solid fa-check"></i> Enregistrer</button>
+            <button class="btn-save" type="button" (click)="openProfileConfirm()"><i class="fa-solid fa-check"></i> Enregistrer</button>
           </div>
           @if (success()) {
             <div class="state success">{{ success() }}</div>
@@ -663,6 +663,7 @@
             (cancel)="closeExportConfirm()"
             (confirm)="confirmExportPayslips()">
           </app-confirm-action-modal>
+
         } @else {
           <div class="state">Sélectionner un employé.</div>
         }
@@ -742,4 +743,13 @@
       </div>
     </div>
   }
+
+  <app-confirm-action-modal
+    [open]="profileConfirmOpen()"
+    title="Confirmer l’enregistrement"
+    message="Confirmer l’enregistrement du dossier de cet employé ?"
+    confirmText="Enregistrer"
+    (cancel)="closeProfileConfirm()"
+    (confirm)="confirmSaveProfile()">
+  </app-confirm-action-modal>
 </section>

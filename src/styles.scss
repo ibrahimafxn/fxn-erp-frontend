@@ -2,7 +2,10 @@
 @use './app/styles/theme' as *;
 @use './app/styles/buttons' as *;
 @use './app/styles/cards' as *;
+@use './app/styles/forms' as *;
+@use './app/styles/states' as *;
 @use './app/styles/tables' as *;
+@use './app/styles/admin-dashboard' as *;
 
 @font-face {
   font-family: 'Manrope';
@@ -114,22 +117,22 @@ button .fa-brands {
 }
 
 .limit select {
-  color: #ffffff;
-  background: #0b0f16;
-  border: 1px solid rgba(148, 163, 184, 0.7);
+  color: var(--fxn-text);
+  background: var(--fxn-surface);
+  border: 1px solid var(--fxn-border-strong);
 }
 
 .limit select:hover,
 .limit select:focus {
-  background: #05070c;
-  border-color: #3b82f6;
+  background: var(--fxn-surface-soft);
+  border-color: var(--fxn-primary-border);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 0 2px var(--fxn-primary-soft);
 }
 
 .limit select option {
-  color: #ffffff;
-  background: #0b0f16;
+  color: var(--fxn-text);
+  background: var(--fxn-surface);
 }
 
 body.ui-reduced-motion * {
@@ -196,6 +199,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 }
 
 .pager .page-size button.active {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.6);
+  background: var(--fxn-primary-soft);
+  border-color: var(--fxn-primary-border);
+  color: var(--fxn-text);
 }

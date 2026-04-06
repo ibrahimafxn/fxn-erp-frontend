@@ -101,6 +101,7 @@ export class OrderForm {
   removeLine(index: number): void {
     if (this.lines.length <= 1) return;
     this.lines.removeAt(index);
+    this.syncAmounts();
   }
 
   lineTotal(index: number): number {
@@ -124,7 +125,8 @@ export class OrderForm {
       const group = this.lines.at(index) as FormGroup;
       const applyTva = Boolean(group.get('applyTva')?.value);
       if (!applyTva) return sum;
-      return sum + this.lineTotal(index) * this.tvaRate;
+      const rate = Number(group.get('tvaRate')?.value ?? 20) / 100;
+      return sum + this.lineTotal(index) * rate;
     }, 0);
   }
 
@@ -169,6 +171,7 @@ export class OrderForm {
         item: String(line["name"] || resources.find((r) => r._id === line["resourceId"])?.name || '').trim(),
         description: String(line["description"] || '').trim() || undefined,
         applyTva: Boolean(line["applyTva"]),
+        tvaRate: Number(line["tvaRate"] ?? 20),
         quantity: Number(line["quantity"] || 0),
         unitPrice: Number(line["unitPrice"] || 0)
       }))
@@ -208,6 +211,7 @@ export class OrderForm {
       name: this.fb.nonNullable.control('', [Validators.required]),
       description: this.fb.nonNullable.control(''),
       applyTva: this.fb.nonNullable.control(true),
+      tvaRate: this.fb.nonNullable.control(20, [Validators.required, Validators.min(0), Validators.max(100)]),
       quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1)]),
       unitPrice: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)])
     });
@@ -242,6 +246,7 @@ export class OrderForm {
             name: line.name || '',
             description: line.description || '',
             applyTva: line.applyTva ?? true,
+            tvaRate: Number((line as { tvaRate?: number }).tvaRate ?? 20),
             quantity: line.quantity || 1,
             unitPrice: line.unitPrice || 0
           });
@@ -292,14 +297,15 @@ export class OrderForm {
   }
 
   private computeTvaFromLines(
-    lines: Array<{ applyTva?: boolean; quantity?: number; unitPrice?: number }>
+    lines: Array<{ applyTva?: boolean; tvaRate?: number; quantity?: number; unitPrice?: number }>
   ): number {
     return lines.reduce((sum, line) => {
       if (!line.applyTva) return sum;
       const qty = Number(line.quantity ?? 0);
       const unitPrice = Number(line.unitPrice ?? 0);
+      const rate = Number(line.tvaRate ?? 20) / 100;
       if (!Number.isFinite(qty) || !Number.isFinite(unitPrice)) return sum;
-      return sum + qty * unitPrice * this.tvaRate;
+      return sum + qty * unitPrice * rate;
     }, 0);
   }
 

@@ -3,31 +3,79 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 80vh;
+  min-height: calc(100vh - 80px);
   text-align: center;
-  color: #444;
+  padding: 2rem;
+  gap: 1rem;
+  animation: fxn-fade-up 0.35s ease;
 }
-h1 {
+
+.not-found-code {
+  font-family: var(--fxn-font-display);
+  font-size: clamp(5rem, 14vw, 9rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--fxn-primary), var(--fxn-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.not-found-title {
+  font-family: var(--fxn-font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--fxn-text);
+  margin: 0;
+}
+
+.not-found-text {
+  color: var(--fxn-text-muted);
+  font-size: 1rem;
+  max-width: 38ch;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* Legacy fallback — keep h1/h2/p scoped */
+.not-found-container h1 {
   font-size: 6rem;
   margin: 0;
-  color: #e74c3c;
+  color: var(--fxn-danger);
 }
-h2 {
+
+.not-found-container h2 {
   margin: 1rem 0;
   font-size: 2rem;
+  color: var(--fxn-text);
 }
-p {
+
+.not-found-container p {
   margin-bottom: 2rem;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
+  color: var(--fxn-text-soft);
 }
+
 .btn-home {
-  padding: 0.8rem 1.5rem;
-  background-color: #3498db;
-  color: #fff;
-  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.4rem;
+  background: linear-gradient(120deg, var(--fxn-primary), var(--fxn-primary-strong));
+  color: var(--fxn-text);
+  border-radius: var(--fxn-radius-md);
   text-decoration: none;
-  transition: background-color 0.2s;
+  font-weight: 700;
+  border: 1px solid var(--fxn-primary-border);
+  box-shadow: var(--fxn-button-shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
 }
+
 .btn-home:hover {
-  background-color: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: var(--fxn-button-shadow-hover);
+  filter: brightness(1.04);
+  text-decoration: none;
 }

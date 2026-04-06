@@ -34,24 +34,24 @@
 .status {
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  background: rgba(0, 0, 0, 0.25);
+  background: var(--fxn-surface-soft);
 }
 
 .status.error {
-  border: 1px solid rgba(255, 0, 0, 0.25);
-  color: #ff8a8a;
+  border: 1px solid var(--fxn-danger-soft);
+  color: var(--fxn-danger);
 }
 
 .status.success {
-  border: 1px solid rgba(0, 255, 120, 0.2);
-  color: #8affc0;
+  border: 1px solid var(--fxn-success-soft);
+  color: var(--fxn-success);
 }
 
 .form {
   padding: 1rem;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-soft);
 }
 
 .grid {
@@ -72,8 +72,8 @@
   width: 100%;
   padding: 0.6rem 0.75rem;
   border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
   color: inherit;
   outline: none;
 }
@@ -85,7 +85,7 @@
 }
 
 .hint.error {
-  color: #ff8a8a;
+  color: var(--fxn-danger);
   opacity: 1;
 }
 

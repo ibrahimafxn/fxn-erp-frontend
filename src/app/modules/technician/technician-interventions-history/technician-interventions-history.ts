@@ -22,6 +22,7 @@ export class TechnicianInterventionsHistory {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<InterventionItem[]>([]);
+  readonly expandedId = signal<string | null>(null);
   readonly page = signal(1);
   readonly limit = signal(20);
   readonly total = signal(0);
@@ -150,6 +151,49 @@ export class TechnicianInterventionsHistory {
     return this.sortDirection() === 'asc' ? '▲' : '▼';
   }
 
+  isExpanded(item: InterventionItem): boolean {
+    return this.expandedId() === item._id;
+  }
+
+  toggleDetails(item: InterventionItem): void {
+    this.expandedId.update((current) => (current === item._id ? null : item._id));
+  }
+
+  detailRows(item: InterventionItem): { label: string; value: string }[] {
+    return [
+      { label: 'Numéro', value: this.textValue(item.numInter) },
+      { label: 'Client', value: this.textValue(item.client) },
+      { label: 'Date RDV', value: this.formatDateTime(item.dateRdv, 'short') },
+      { label: 'Type', value: this.textValue(item.type) },
+      { label: 'Type opération', value: this.textValue(item.typeOperation) },
+      { label: 'Type logement', value: this.textValue(item.typeLogement) },
+      { label: 'Statut', value: this.textValue(item.statut) },
+      { label: 'Ville', value: this.textValue(item.ville) },
+      { label: 'Région', value: this.textValue(item.region) },
+      { label: 'Société', value: this.textValue(item.societe) },
+      { label: 'Plaque', value: this.textValue(item.plaque) },
+      { label: 'Début', value: this.formatDateTime(item.debut, 'shortTime') },
+      { label: 'Durée', value: this.textValue(item.duree) },
+      { label: 'Début intervention', value: this.formatDateTime(item.debutIntervention, 'short') },
+      { label: 'Clôture hotline', value: this.formatDateTime(item.clotureHotline, 'short') },
+      { label: 'Clôture technicien', value: this.formatDateTime(item.clotureTech, 'short') },
+      { label: 'Motif échec', value: this.textValue(item.motifEchec) },
+      { label: 'Action SAV', value: this.textValue(item.actionSav) },
+      { label: 'Type PBO', value: this.textValue(item.typePbo) },
+      { label: 'Type habitation', value: this.textValue(item.typeHabitation) },
+      { label: 'Prise existante', value: this.textValue(item.priseExistante) },
+      { label: 'Marque', value: this.textValue(item.marque) },
+      { label: 'Longueur câble', value: this.textValue(item.longueurCable) },
+      { label: 'Créneau +2h', value: this.textValue(item.creneauPlus2h) },
+      { label: 'Recommandation', value: this.textValue(item.recoRacc) },
+      { label: 'Prestations', value: this.textValue(item.listePrestationsRaw) },
+      { label: 'Articles', value: this.textValue(item.articlesRaw) },
+      { label: 'Commentaire technicien', value: this.textValue(item.commentairesTechnicien) },
+      { label: 'Commentaire clôture', value: this.textValue(item.commentairesCloture) },
+      { label: 'Importé le', value: this.formatDateTime(item.importedAt, 'short') }
+    ];
+  }
+
   private sortItems(
     a: InterventionItem,
     b: InterventionItem,
@@ -188,5 +232,14 @@ export class TechnicianInterventionsHistory {
 
   private normalizeText(value?: string | null): string {
     return String(value || '').trim();
+  }
+
+  private textValue(value?: string | null): string {
+    return this.normalizeText(value) || '—';
+  }
+
+  private formatDateTime(value?: string | null, format: 'short' | 'shortDate' | 'shortTime' = 'short'): string {
+    if (!value) return '—';
+    return new DatePipe('fr-FR').transform(value, format) ?? '—';
   }
 }

@@ -57,13 +57,13 @@ button {
 .btn-outline.edit {
   background: rgba(59, 130, 246, 0.18);
   border-color: rgba(59, 130, 246, 0.55);
-  color: #eaf2ff;
+  color: var(--fxn-pill-text-primary);
 }
 
 .btn-outline.delete {
   background: transparent;
   border-color: rgba(255, 90, 111, 0.55);
-  color: rgba(255, 170, 170, 0.95);
+  color: var(--fxn-pill-text-danger);
 }
 
 .btn-outline.delete:hover {
@@ -74,19 +74,19 @@ button {
 .btn-outline.primary {
   background: rgba(46, 117, 255, 0.15);
   border-color: rgba(46, 117, 255, 0.55);
-  color: #dbe7ff;
+  color: var(--fxn-pill-text-primary);
 }
 
 .btn-outline.danger {
   background: rgba(255, 90, 111, 0.12);
   border-color: rgba(255, 90, 111, 0.6);
-  color: rgba(255, 170, 170, 0.95);
+  color: var(--fxn-pill-text-danger);
 }
 
 .btn-outline.warning {
   background: rgba(242, 185, 75, 0.16);
   border-color: rgba(242, 185, 75, 0.55);
-  color: #ffe9bf;
+  color: var(--fxn-pill-text-warning);
 }
 
 
@@ -134,20 +134,20 @@ button.btn-tone-info.btn-tone-flat {
 }
 
 button.btn-tone-new {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #ffffff;
+  background: var(--fxn-primary);
+  border-color: var(--fxn-primary-border);
+  color: var(--fxn-bg);
 }
 
 button.btn-tone-outline-primary {
   background: transparent;
-  border-color: #1d4ed8;
-  color: #dbeafe;
+  border-color: var(--fxn-primary-border);
+  color: var(--fxn-text-soft);
 }
 
 button.btn-tone-outline-primary:hover {
-  background: rgba(29, 78, 216, 0.12);
-  border-color: #1d4ed8;
+  background: var(--fxn-primary-soft);
+  border-color: var(--fxn-primary-border);
 }
 
 button.btn-tone-outline-danger {
@@ -164,7 +164,7 @@ button.btn-tone-outline-danger:hover {
 button.btn-tone-outline-success {
   background: transparent;
   border-color: rgba(46, 207, 154, 0.7);
-  color: rgba(190, 255, 225, 0.95);
+  color: var(--fxn-pill-text-success);
 }
 
 button.btn-tone-outline-success:hover {
@@ -189,9 +189,89 @@ button.btn-tone-neutral {
   color: var(--fxn-text);
 }
 
+/* ── theme-default: tous les boutons outline ont du texte lisible ── */
+
 body.theme-default button.btn-outline:has(.bi-search),
 body.theme-default button.btn-outline.primary:has(.bi-search) {
   color: var(--fxn-primary);
+}
+
+/* Boutons edit : icône bleue foncée en thème clair */
+body.theme-default .btn-outline.edit {
+  color: #1a3a8f;
+  background: rgba(47, 107, 255, 0.12);
+  border-color: rgba(47, 107, 255, 0.4);
+}
+
+body.theme-default .btn-outline.edit:hover {
+  background: rgba(47, 107, 255, 0.2);
+  color: #1a3a8f;
+}
+
+/* Boutons delete : icône rouge foncée en thème clair */
+body.theme-default .btn-outline.delete {
+  color: #9b1c2e;
+  border-color: rgba(220, 38, 60, 0.45);
+}
+
+body.theme-default .btn-outline.delete:hover {
+  background: rgba(220, 38, 60, 0.1);
+  border-color: rgba(220, 38, 60, 0.65);
+  color: #7f1d2b;
+}
+
+/* Bouton outline primary (bleu) : texte foncé en thème clair */
+body.theme-default .btn-outline.primary {
+  color: #1a3a8f;
+  background: rgba(47, 107, 255, 0.1);
+  border-color: rgba(47, 107, 255, 0.4);
+}
+
+/* Bouton outline danger : texte rouge foncé en thème clair */
+body.theme-default .btn-outline.danger {
+  color: #9b1c2e;
+  background: rgba(220, 38, 60, 0.08);
+  border-color: rgba(220, 38, 60, 0.4);
+}
+
+body.theme-default .btn-outline.danger:hover {
+  background: rgba(220, 38, 60, 0.14);
+  border-color: rgba(220, 38, 60, 0.6);
+}
+
+/* Bouton outline warning : texte ambré foncé en thème clair */
+body.theme-default .btn-outline.warning {
+  color: #78350f;
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+
+/* btn-tone-* : texte visible sur fond clair */
+body.theme-default button.btn-tone-outline-primary {
+  color: #1a3a8f;
+  border-color: rgba(47, 107, 255, 0.4);
+}
+
+body.theme-default button.btn-tone-outline-danger {
+  color: #9b1c2e;
+  border-color: rgba(220, 38, 60, 0.5);
+}
+
+body.theme-default button.btn-tone-outline-success {
+  color: #065f46;
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+body.theme-default button.btn-tone-outline-neutral {
+  color: #374151;
+  border-color: rgba(107, 114, 128, 0.5);
+}
+
+/* btn-back en thème clair */
+body.theme-default .btn-back {
+  color: #374151;
+  background: rgba(107, 114, 128, 0.1);
+  border-color: rgba(107, 114, 128, 0.3);
 }
 
 button.btn-tone-export-pdf {

@@ -13,7 +13,7 @@
 .page-loading {
   position: fixed;
   inset: 0;
-  background: rgba(4, 10, 20, 0.45);
+  background: color-mix(in srgb, var(--fxn-bg) 55%, transparent);
   display: grid;
   place-items: center;
   backdrop-filter: blur(6px);
@@ -26,10 +26,10 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 14px;
-  border: 1px solid rgba(88, 123, 255, 0.35);
-  background: rgba(12, 18, 30, 0.9);
-  color: #fff;
-  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-surface);
+  color: var(--fxn-text);
+  box-shadow: var(--fxn-shadow-md);
 }
 
 .page-loading-text {
@@ -37,19 +37,19 @@
   flex-direction: column;
   gap: 4px;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fxn-text-soft);
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 3px solid rgba(88, 123, 255, 0.3);
-  border-top-color: #6ba4ff;
+  border: 3px solid var(--fxn-primary-soft);
+  border-top-color: var(--fxn-primary);
   animation: spin 0.9s linear infinite;
 }
 
@@ -388,19 +388,19 @@
   padding: 0.75rem;
   border-radius: 0.9rem;
   border: 1px solid rgba(255, 255, 255, .08);
-  background: rgba(6, 10, 18, 0.75);
+  background: var(--fxn-surface-soft);
 }
 
 .vehicle-card .vehicle-item .label {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(226, 232, 240, 0.7);
+  color: var(--fxn-text-muted);
 }
 
 .vehicle-card .vehicle-item .value {
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--fxn-text);
 }
 
 @media (max-width: 700px) {

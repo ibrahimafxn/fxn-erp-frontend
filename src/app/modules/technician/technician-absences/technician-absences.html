@@ -1,0 +1,163 @@
+<section class="technician-absences">
+  <div class="page-header">
+    <span class="material-icons notranslate page-icon">event_busy</span>
+    <div>
+      <h1 class="page-title">Mes absences</h1>
+      <p class="subtitle">Demandez un congé ou signalez une absence</p>
+    </div>
+  </div>
+
+  <!-- ── Nouvelle demande ── -->
+  <div class="form-card card">
+    <h2 class="section-title">Nouvelle demande</h2>
+
+    <div class="form-grid">
+      <div class="field">
+        <label for="abs-type">Type</label>
+        <select id="abs-type" [ngModel]="formType()" (ngModelChange)="formType.set($event)">
+          <option value="CONGE">Congé payé</option>
+          <option value="MALADIE">Arrêt maladie</option>
+          <option value="PERMISSION">Permission</option>
+          <option value="FORMATION">Formation</option>
+          <option value="AUTRE">Autre</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="abs-start">Date début</label>
+        <input
+          id="abs-start"
+          type="date"
+          [ngModel]="formStart()"
+          (ngModelChange)="formStart.set($event)"
+        />
+      </div>
+
+      <div class="field">
+        <label for="abs-end">Date fin</label>
+        <input
+          id="abs-end"
+          type="date"
+          [ngModel]="formEnd()"
+          (ngModelChange)="formEnd.set($event)"
+        />
+      </div>
+
+      <div class="field full">
+        <label for="abs-comment">Commentaire <span class="optional">(optionnel)</span></label>
+        <textarea
+          id="abs-comment"
+          rows="3"
+          placeholder="Précisez le motif si nécessaire…"
+          [ngModel]="formComment()"
+          (ngModelChange)="formComment.set($event)"
+        ></textarea>
+      </div>
+
+      <div class="form-actions">
+        @if (formError()) {
+          <div class="form-message form-message--error">
+            <span class="material-icons notranslate">error_outline</span>
+            {{ formError() }}
+          </div>
+        }
+        @if (formSuccess()) {
+          <div class="form-message form-message--success">
+            <span class="material-icons notranslate">check_circle</span>
+            Demande envoyée !
+          </div>
+        }
+        <button
+          class="btn-save"
+          type="button"
+          [disabled]="formSubmitting()"
+          (click)="submitRequest()"
+        >
+          @if (formSubmitting()) {
+            Envoi en cours…
+          } @else {
+            Envoyer la demande
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Liste des demandes ── -->
+  <div class="list-card card">
+    <h2 class="section-title">Mes demandes</h2>
+
+    @if (loading()) {
+      <div class="state">Chargement…</div>
+    } @else {
+      @if (items().length === 0) {
+        <div class="state state--empty">
+          <span class="material-icons notranslate state-icon">inbox</span>
+          <span>Aucune demande</span>
+        </div>
+      } @else {
+        <div class="absence-list">
+          @for (item of items(); track item._id) {
+            <div class="absence-card">
+              <div class="absence-card__header">
+                <span class="badge badge--type">{{ typeLabel(item.type) }}</span>
+                <span
+                  class="badge badge--status"
+                  [class.badge--pending]="item.status === 'EN_ATTENTE'"
+                  [class.badge--approved]="item.status === 'APPROUVE'"
+                  [class.badge--refused]="item.status === 'REFUSE'"
+                >{{ statusLabel(item.status) }}</span>
+              </div>
+
+              <div class="absence-card__dates">
+                <span class="material-icons notranslate">date_range</span>
+                <span>{{ formatDate(item.startDate) }}</span>
+                @if (item.startDate !== item.endDate) {
+                  <span class="dates-sep">→</span>
+                  <span>{{ formatDate(item.endDate) }}</span>
+                }
+                <span class="duration">
+                  {{ daysDiff(item.startDate, item.endDate) }} jour{{ daysDiff(item.startDate, item.endDate) > 1 ? 's' : '' }}
+                </span>
+              </div>
+
+              @if (item.comment) {
+                <p class="absence-card__comment">{{ item.comment }}</p>
+              }
+
+              @if (canCancel(item)) {
+                <div class="absence-card__actions">
+                  <button
+                    class="btn-outline btn-xs btn-danger"
+                    type="button"
+                    (click)="openCancelModal(item._id!)"
+                  >
+                    <span class="material-icons notranslate">cancel</span>
+                    Annuler la demande
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+
+  <app-confirm-delete-modal
+    [open]="deleteModalOpen()"
+    title="Annuler la demande"
+    entityLabel="la demande d'absence"
+    [entityName]="pendingDeleteName()"
+    [entityId]="pendingDeleteId()"
+    dangerHint="La demande sera supprimée définitivement."
+    confirmText="Confirmer l'annulation"
+    confirmLoadingText="Annulation…"
+    confirmIcon="fa-solid fa-ban"
+    [confirming]="deleting()"
+    (cancel)="closeCancelModal()"
+    (confirm)="confirmCancel()"
+  ></app-confirm-delete-modal>
+</section>
+
+<app-technician-mobile-nav></app-technician-mobile-nav>

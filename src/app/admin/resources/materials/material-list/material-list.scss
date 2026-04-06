@@ -7,7 +7,7 @@
 .page-loading {
   position: fixed;
   inset: 0;
-  background: rgba(4, 10, 20, 0.45);
+  background: color-mix(in srgb, var(--fxn-bg) 55%, transparent);
   display: grid;
   place-items: center;
   backdrop-filter: blur(6px);
@@ -20,10 +20,10 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 14px;
-  border: 1px solid rgba(88, 123, 255, 0.35);
-  background: rgba(12, 18, 30, 0.9);
-  color: #fff;
-  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-surface);
+  color: var(--fxn-text);
+  box-shadow: var(--fxn-shadow-md);
 }
 
 .page-loading-text {
@@ -31,19 +31,19 @@
   flex-direction: column;
   gap: 4px;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fxn-text-soft);
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 3px solid rgba(88, 123, 255, 0.3);
-  border-top-color: #6ba4ff;
+  border: 3px solid var(--fxn-primary-soft);
+  border-top-color: var(--fxn-primary);
   animation: spin 0.9s linear infinite;
 }
 
@@ -176,7 +176,7 @@
   }
 
   .sort-btn:hover {
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--fxn-text);
   }
 
   body.theme-default & .sort-btn:hover {
@@ -211,8 +211,8 @@
   .main {
     .name {
       font-weight: 750;
-      background: #0b1f3a;
-      color: #e2f0ff;
+      background: var(--fxn-surface-soft);
+      color: var(--fxn-text);
       padding: .25rem .55rem;
       border-radius: .6rem;
       display: inline-flex;
@@ -241,8 +241,8 @@
   align-items: center;
   padding: .2rem .55rem;
   border-radius: 999px;
-  border: 1px solid rgba(33, 182, 182, 0.4);
-  background: rgba(33, 182, 182, 0.15);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-primary-soft);
   font-size: .78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -251,8 +251,8 @@
 
 .tag.tag-epi {
   border-color: rgba(59, 130, 246, 0.65);
-  background: rgba(37, 99, 235, 0.2);
-  color: #dbeafe;
+  background: color-mix(in srgb, #3b82f6 15%, var(--fxn-surface-soft));
+  color: var(--fxn-text-soft);
 }
 
 .qty {
@@ -260,8 +260,8 @@
   align-items: center;
   padding: .2rem .6rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(15, 25, 35, 0.6);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
   font-weight: 700;
 }
 
@@ -322,10 +322,10 @@ td.actions {
   }
 
   .table .row {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--fxn-border);
     border-radius: 14px;
     padding: .6rem .7rem;
-    background: rgba(10, 16, 28, 0.6);
+    background: var(--fxn-surface-soft);
   }
 
   .table td {

@@ -1,0 +1,178 @@
+<section class="absence-list">
+
+  <!-- ── Page header ───────────────────────────────────────────── -->
+  <header class="page-header">
+    <div>
+      <h1>Absences &amp; Congés</h1>
+      <p class="subtitle">Gestion des demandes d'absence des techniciens</p>
+    </div>
+  </header>
+
+  <!-- ── Toolbar ───────────────────────────────────────────────── -->
+  <div class="toolbar card">
+    <div class="filters">
+      <select
+        [value]="statusFilter()"
+        (change)="setStatusFilter($any($event.target).value)"
+        aria-label="Filtrer par statut"
+      >
+        <option value="">Tous les statuts</option>
+        <option value="EN_ATTENTE">En attente</option>
+        <option value="APPROUVE">Approuvé</option>
+        <option value="REFUSE">Refusé</option>
+      </select>
+
+      <select
+        [value]="typeFilter()"
+        (change)="setTypeFilter($any($event.target).value)"
+        aria-label="Filtrer par type"
+      >
+        <option value="">Tous les types</option>
+        <option value="CONGE">Congé</option>
+        <option value="MALADIE">Maladie</option>
+        <option value="PERMISSION">Permission</option>
+        <option value="FORMATION">Formation</option>
+        <option value="AUTRE">Autre</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ── Stats bar ─────────────────────────────────────────────── -->
+  <div class="stats-bar">
+    <div class="stat-pill pending">
+      <span class="stat-count">{{ pendingCount() }}</span>
+      <span class="stat-label">En attente</span>
+    </div>
+    <div class="stat-pill approved">
+      <span class="stat-count">{{ approvedCount() }}</span>
+      <span class="stat-label">Approuvées</span>
+    </div>
+    <div class="stat-pill refused">
+      <span class="stat-count">{{ refusedCount() }}</span>
+      <span class="stat-label">Refusées</span>
+    </div>
+  </div>
+
+  <!-- ── Loading ───────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="state loading card" aria-live="polite" aria-busy="true">
+      <span class="spinner" aria-hidden="true"></span>
+      <span>Chargement des absences…</span>
+    </div>
+  }
+
+  <!-- ── Error ─────────────────────────────────────────────────── -->
+  @if (!loading() && error()) {
+    <div class="state error card" role="alert">
+      <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      <strong>Erreur :</strong> {{ error() }}
+    </div>
+  }
+
+  <!-- ── Table / Cards ─────────────────────────────────────────── -->
+  @if (!loading() && !error()) {
+    <div class="absence-table card">
+      <table>
+        <thead>
+          <tr>
+            <th>Technicien</th>
+            <th>Type</th>
+            <th>Période</th>
+            <th>Durée</th>
+            <th>Statut</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (absence of filteredItems(); track trackById($index, absence)) {
+            <tr>
+              <td data-label="Technicien">
+                <span class="technician-name">{{ technicianName(absence) }}</span>
+              </td>
+
+              <td data-label="Type">
+                <span
+                  class="badge"
+                  [class.badge-conge]="absence.type === 'CONGE'"
+                  [class.badge-maladie]="absence.type === 'MALADIE'"
+                  [class.badge-permission]="absence.type === 'PERMISSION'"
+                  [class.badge-formation]="absence.type === 'FORMATION'"
+                  [class.badge-autre]="absence.type === 'AUTRE'"
+                >{{ typeLabel(absence.type) }}</span>
+              </td>
+
+              <td data-label="Période">
+                <span class="date-range">
+                  {{ formatDateShort(absence.startDate) }} – {{ formatDate(absence.endDate) }}
+                </span>
+              </td>
+
+              <td data-label="Durée">
+                <span class="duration-pill">{{ daysDiff(absence.startDate, absence.endDate) }}&nbsp;j</span>
+              </td>
+
+              <td data-label="Statut">
+                <span
+                  class="badge"
+                  [class.badge-pending]="absence.status === 'EN_ATTENTE'"
+                  [class.badge-approved]="absence.status === 'APPROUVE'"
+                  [class.badge-refused]="absence.status === 'REFUSE'"
+                >{{ statusLabel(absence.status) }}</span>
+              </td>
+
+              <td data-label="Actions" class="col-actions">
+                @if (absence.status === 'EN_ATTENTE') {
+                  <div class="action-btns">
+                    <button
+                      type="button"
+                      class="btn-approve"
+                      (click)="approve(absence._id!)"
+                      title="Approuver cette demande"
+                    >
+                      <i class="bi bi-check-lg" aria-hidden="true"></i>
+                      <span>Approuver</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-reject"
+                      (click)="reject(absence._id!)"
+                      title="Refuser cette demande"
+                    >
+                      <i class="bi bi-x-lg" aria-hidden="true"></i>
+                      <span>Refuser</span>
+                    </button>
+                  </div>
+                } @else {
+                  <span class="no-action">—</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr class="empty-row">
+              <td colspan="6">
+                <div class="empty-state">
+                  <i class="bi bi-calendar-x" aria-hidden="true"></i>
+                  <p>Aucune demande d'absence trouvée.</p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ── Confirm reject modal ──────────────────────────────────── -->
+  <app-confirm-action-modal
+    [open]="confirmRejectOpen()"
+    title="Refuser la demande"
+    message="Confirmer le refus de cette demande ?"
+    confirmText="Refuser"
+    cancelText="Annuler"
+    tone="danger"
+    [confirming]="rejecting()"
+    (cancel)="onRejectCancel()"
+    (confirm)="onRejectConfirm()"
+  />
+
+</section>

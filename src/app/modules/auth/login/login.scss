@@ -94,8 +94,8 @@
   gap: 0.35rem;
   padding: 0.2rem 0.45rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(10, 14, 22, 0.7);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
 }
 
 .login-lang-switch .lang-pill {
@@ -109,7 +109,7 @@
 }
 
 .login-lang-switch .lang-pill.active {
-  color: #ffffff;
+  color: var(--fxn-text);
   background: rgba(47, 107, 255, 0.35);
   border: 1px solid rgba(47, 107, 255, 0.6);
 }
@@ -131,7 +131,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   border: 1px solid rgba(47, 107, 255, 0.45);
-  color: #bcd3ff;
+  color: var(--fxn-pill-text-primary);
   text-transform: uppercase;
 }
 
@@ -195,7 +195,7 @@
     border: 1px solid var(--stroke);
     border-radius: 12px;
     font-size: 1rem;
-    background: #151a24;
+    background: var(--fxn-surface-soft);
     color: var(--ink);
     transition: border-color 160ms ease, box-shadow 160ms ease;
   }
@@ -273,7 +273,7 @@ button {
   font-size: 1rem;
   font-weight: 600;
   background: linear-gradient(120deg, var(--accent), #0f2f80);
-  color: #fff;
+  color: var(--fxn-text);
   border: none;
   border-radius: 12px;
   cursor: pointer;
@@ -294,7 +294,7 @@ button:disabled {
 
 .error {
   background: rgba(255, 100, 100, 0.18);
-  color: #ffc4c4;
+  color: var(--fxn-danger);
   border: 1px solid rgba(255, 180, 180, 0.2);
   padding: 0.75rem 1rem;
   border-radius: 12px;
@@ -341,7 +341,7 @@ button:disabled {
 .mfa-setup .secret {
   font-size: 0.85rem;
   color: var(--muted);
-  background: rgba(15, 20, 32, 0.6);
+  background: var(--fxn-surface-soft);
   border: 1px dashed rgba(100, 145, 255, 0.2);
   padding: 0.4rem 0.6rem;
   border-radius: 10px;

@@ -190,6 +190,7 @@
             <th>Raison</th>
             <th>Import</th>
             <th>Date</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -200,12 +201,48 @@
               <td>{{ ticket.reason || '—' }}</td>
               <td>{{ ticket.importBatchId?.originalName || ticket.importBatchId?.storedName || '—' }}</td>
               <td>{{ ticket.createdAt | date:'short' }}</td>
+              <td class="ticket-actions">
+                <button class="btn-outline btn-xs" type="button" (click)="autoResolveTicket(ticket)">
+                  Valider auto
+                </button>
+                <button class="btn-outline btn-xs" type="button" (click)="openTicketEdit(ticket)">
+                  Corriger
+                </button>
+              </td>
             </tr>
           }
         </tbody>
       </table>
     }
   </section>
+  @if (ticketEditOpen()) {
+    <div class="ticket-edit card">
+      <div class="table-head">
+        <h3>Corriger une prestation</h3>
+        <button class="btn-outline btn-xs" type="button" (click)="closeTicketEdit()">Fermer</button>
+      </div>
+      <div class="ticket-edit-body">
+        <label>
+          Prestation (BPU)
+          <select [(ngModel)]="ticketEditCode" [disabled]="ticketEditSaving()">
+            <option value="">Sélectionner…</option>
+            @for (p of prestationRules; track p.code) {
+              <option [value]="p.code">{{ p.code }} — {{ p.label }}</option>
+            }
+          </select>
+        </label>
+        @if (ticketEditError()) {
+          <div class="state error">{{ ticketEditError() }}</div>
+        }
+        <div class="actions">
+          <button class="btn-outline" type="button" (click)="closeTicketEdit()" [disabled]="ticketEditSaving()">Annuler</button>
+          <button class="btn-primary" type="button" (click)="saveTicketEdit()" [disabled]="ticketEditSaving()">
+            @if (ticketEditSaving()) { Enregistrement… } @else { Valider }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
   <section class="card import-validation">
     <div class="table-head">
       <h2><span class="material-icons notranslate">assignment_turned_in</span>Vérification export</h2>

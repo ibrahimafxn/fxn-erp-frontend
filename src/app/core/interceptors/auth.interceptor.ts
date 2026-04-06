@@ -1,10 +1,13 @@
 // src/app/core/interceptors/auth.interceptor.ts
-import {inject} from '@angular/core';
-import {HttpErrorResponse, HttpHandlerFn, HttpInterceptorFn, HttpRequest} from '@angular/common/http';
-import {throwError} from 'rxjs';
-import {catchError, switchMap} from 'rxjs/operators';
-import {AuthService} from '../services/auth.service';
-import {environment} from '../../environments/environment';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { HttpErrorResponse, HttpHandlerFn, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
+import { throwError, TimeoutError } from 'rxjs';
+import { catchError, switchMap, timeout } from 'rxjs/operators';
+import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
+
+const HTTP_TIMEOUT_MS = 30_000;
 
 function readCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -46,6 +49,7 @@ export const authInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn
 ) => {
   const auth = inject(AuthService);
+  const router = inject(Router);
 
   // 1) Ne pas toucher les requêtes vers des domaines externes
   const apiBase = environment.apiBaseUrl?.replace(/\/+$/, '') || '';
@@ -62,32 +66,49 @@ export const authInterceptor: HttpInterceptorFn = (
     authReq = req.clone({ headers, withCredentials: true });
   }
 
-  // 3) Passer la requête
+  // 3) Passer la requête avec timeout
   return next(authReq).pipe(
+    timeout(HTTP_TIMEOUT_MS),
     catchError((err: unknown) => {
-      // gestion 401 uniquement pour requêtes API internes
-      if (err instanceof HttpErrorResponse && err.status === 401 && isApiReq) {
-        // éviter boucle si on est déjà sur refresh/login
-        const url = req.url.split('?')[0]; // ignore query params
-        const isRefreshOrLogin = url.includes('/auth/refresh') || url.includes('/auth/login');
-        if (isRefreshOrLogin) {
-          // logout + laisser l'erreur remonter
-          auth.logout(true);
-          return throwError(() => err);
-        }
-
-        // tenter refresh (AuthService doit mutualiser les requêtes)
-        return auth.refreshToken().pipe(
-          switchMap(() => next(authReq)),
-          catchError(refreshErr => {
-            // refresh KO -> logout et rethrow
-            auth.logout(true);
-            return throwError(() => refreshErr);
-          })
-        );
+      // Timeout dépassé
+      if (err instanceof TimeoutError) {
+        return throwError(() => new HttpErrorResponse({
+          error: { success: false, message: 'La requête a expiré. Vérifiez votre connexion.' },
+          status: 408,
+          statusText: 'Request Timeout',
+          url: req.url
+        }));
       }
 
-      // pour tous les autres cas, ré-émettre l'erreur
+      if (err instanceof HttpErrorResponse && isApiReq) {
+        const url = req.url.split('?')[0];
+        const isRefreshOrLogin = url.includes('/auth/refresh') || url.includes('/auth/login');
+
+        // 401 : tentative de refresh
+        if (err.status === 401) {
+          if (isRefreshOrLogin) {
+            auth.logout(true);
+            return throwError(() => err);
+          }
+          return auth.refreshToken().pipe(
+            switchMap(() => next(authReq)),
+            catchError(refreshErr => {
+              auth.logout(true);
+              return throwError(() => refreshErr);
+            })
+          );
+        }
+
+        // 403 : accès interdit → redirection (sauf endpoints auth/flux mdp)
+        if (err.status === 403) {
+          const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/change-password');
+          const isPasswordFlow = !!(err.error && (err.error.passwordExpired || err.error.mustChangePassword));
+          if (!isAuthEndpoint && !isPasswordFlow) {
+            router.navigate(['/unauthorized']);
+          }
+        }
+      }
+
       return throwError(() => err);
     })
   );

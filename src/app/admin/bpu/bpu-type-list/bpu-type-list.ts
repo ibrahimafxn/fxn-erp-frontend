@@ -6,9 +6,15 @@ import { BpuType } from '../../../core/models';
 import { BpuTypeService } from '../../../core/services/bpu-type.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
+import { environment } from '../../../environments/environment';
 import { User } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import {
+  INTERVENTION_PRESTATION_FIELDS,
+  InterventionPrestationField
+} from '../../../core/constant/intervention-prestations';
 
 @Component({
   standalone: true,
@@ -24,6 +30,7 @@ export class BpuTypeList {
   private svc = inject(BpuTypeService);
   private bpuSelectionService = inject(BpuSelectionService);
   private userService = inject(UserService);
+  private auth = inject(AuthService);
 
   readonly items = signal<BpuType[]>([]);
   readonly loading = signal(false);
@@ -43,6 +50,24 @@ export class BpuTypeList {
   readonly pendingDeleteId = signal<string | null>(null);
   readonly pendingDeleteName = signal('');
   readonly deletingId = signal<string | null>(null);
+  readonly showStitRef = signal(false);
+  readonly stitFields: InterventionPrestationField[] = INTERVENTION_PRESTATION_FIELDS;
+  readonly BPU_STIT_PDF = 'assets/docs/bpu_list.pdf';
+  readonly stitFieldsForView = computed(() => {
+    const role = this.auth.getUserRole();
+    if (role !== Role.TECHNICIEN) return this.stitFields;
+    const blocked = new Set(['BIFIBRE', 'NACELLE', 'CABLE_SL', 'PLV_PRO_C']);
+    return this.stitFields.filter((field) => !blocked.has(field.code));
+  });
+  readonly isAdmin = computed(() => this.auth.getUserRole() === Role.ADMIN);
+  readonly canViewStitRef = computed(() => {
+    const role = this.auth.getUserRole();
+    return role === Role.ADMIN || role === Role.DIRIGEANT || role === Role.TECHNICIEN;
+  });
+  readonly canDownloadStitPdf = computed(() => {
+    const role = this.auth.getUserRole();
+    return role === Role.ADMIN || role === Role.DIRIGEANT;
+  });
 
   readonly sortedItems = computed(() => {
     const list = [...this.items()];

@@ -8,72 +8,143 @@ export type InterventionPrestationField = {
 };
 
 export const INTERVENTION_PRESTATION_FIELDS: InterventionPrestationField[] = [
+  // ── Raccordements pavillon (scindés en 3 codes) ──────────────────────────────
   {
     key: 'racPavillon',
-    label: 'Raccordement pavillon',
-    code: 'RACPAV',
-    description: 'Insertion d’un raccordement dans un logement individuel.'
+    label: 'Raccordement pavillon (souterrain)',
+    code: 'RAC_PBO_SOUT',
+    description: 'Forfait pavillon souterrain.'
   },
   {
-    key: 'cablePav1',
-    label: 'Câble pavillon tranche 1',
-    code: 'CABLE_PAV_1',
-    description: 'Premier segment de câblage pavillonnaire (courtes longueurs).'
+    key: 'racAerien',
+    label: 'Raccordement pavillon (aérien nacelle)',
+    code: 'RAC_PBO_AERIEN',
+    description: 'Forfait pavillon aérien avec nacelle obligatoire.'
   },
   {
-    key: 'cablePav2',
-    label: 'Câble pavillon tranche 2',
-    code: 'CABLE_PAV_2',
-    description: 'Deuxième segment de câblage pavillonnaire (moyennes longueurs).'
+    key: 'racFacade',
+    label: 'Raccordement pavillon (façade nacelle)',
+    code: 'RAC_PBO_FACADE',
+    description: 'Forfait pavillon façade avec nacelle obligatoire.'
+  },
+  // ── Raccordement immeuble ────────────────────────────────────────────────────
+  {
+    key: 'racImmeuble',
+    label: 'Raccordement immeuble',
+    code: 'RACIH',
+    description: 'Forfait immeuble — y compris kit — sans mise en service.'
+  },
+  // ── PLV PRO ─────────────────────────────────────────────────────────────────
+  {
+    key: 'racProS',
+    label: 'PLV PRO simple',
+    code: 'PLV_PRO_S',
+    description: 'Plus-value PRO simple B2B FTTH (≤ 100 m tirage intrasite).'
   },
   {
-    key: 'cablePav3',
-    label: 'Câble pavillon tranche 3',
-    code: 'CABLE_PAV_3',
-    description: 'Troisième segment de câblage pavillonnaire (longueurs importantes).'
+    key: 'racProC',
+    label: 'PLV PRO complexe',
+    code: 'PLV_PRO_C',
+    description: 'Plus-value PRO complexe B2B FTTH (100–220 m tirage intrasite).'
   },
-  {
-    key: 'cablePav4',
-    label: 'Câble pavillon tranche 4',
-    code: 'CABLE_PAV_4',
-    description: 'Quatrième segment de câblage pavillonnaire (très longues distances).'
-  },
+  // ── Mise en service / reconnexion ────────────────────────────────────────────
   {
     key: 'clem',
     label: 'Mise en service',
     code: 'CLEM',
-    description: 'Réouverture ou lancement d’un service pour un client.'
+    description: 'Mise en service équipements abonné (TV, Internet, téléphone…).'
   },
   {
     key: 'reconnexion',
     label: 'Reconnexion',
     code: 'RECOIP',
-    description: 'Reconnexion après suspension ou déménagement.'
+    description: 'Reconnexion immeuble ou pavillon.'
   },
-  {
-    key: 'racImmeuble',
-    label: 'Raccordement immeuble',
-    code: 'RACIH',
-    description: 'Raccordement d’un immeuble collectif ou d’un site groupé.'
-  },
-  {
-    key: 'racProS',
-    label: 'Raccordement pro simple',
-    code: 'RACPRO_S',
-    description: 'Installation pro classique sans contraintes techniques.'
-  },
-  {
-    key: 'racProC',
-    label: 'Raccordement pro complexe',
-    code: 'RACPRO_C',
-    description: 'Installation professionnelle nécessitant du matériel ou du temps supplémentaire.'
-  },
+  // ── Fourreaux ────────────────────────────────────────────────────────────────
   {
     key: 'racF8',
-    label: 'Prestation F8',
-    code: 'REPFOU_PRI',
-    description: 'Réparation de fourreaux bouchés en domaine privé.'
+    label: 'Fourreau cassé — domaine privé',
+    code: 'FOURREAU_CASSE_PRIVE',
+    description: 'Réparation-débouchage fourreau — domaine privé.'
   },
+  {
+    key: 'fourreauBeton',
+    label: 'Fourreau cassé — voirie béton/asphalte',
+    code: 'FOURREAU_CASSE_BETON',
+    description: 'Réparation-débouchage fourreau — voirie asphalte/béton.'
+  },
+  // ── Réfections ───────────────────────────────────────────────────────────────
+  {
+    key: 'refrac',
+    label: 'Réfection raccordement',
+    code: 'REFRAC',
+    description: 'Réfection/modification raccordement hors garantie 2 ans.'
+  },
+  {
+    key: 'refcDgr',
+    label: 'Réfection dégradation client',
+    code: 'REFRAC_DEGRADATION',
+    description: "Réfection d'installation suite à dégradation client."
+  },
+  // ── Déplacements ─────────────────────────────────────────────────────────────
+  {
+    key: 'deplacementPrise',
+    label: 'Déplacement de prise',
+    code: 'DEPLACEMENT_PRISE',
+    description: "Plus-value déplacement de prise à la demande de l'abonné."
+  },
+  {
+    key: 'deplacementOffert',
+    label: 'Déplacement offert',
+    code: 'DEPLACEMENT_OFFERT',
+    description: "Déplacement offert — cause liée à l'opérateur."
+  },
+  {
+    key: 'deplacementATort',
+    label: 'Déplacement à tort',
+    code: 'DEPLACEMENT_A_TORT',
+    description: 'Déplacement à tort — cause liée au client.'
+  },
+  // ── SAV ──────────────────────────────────────────────────────────────────────
+  {
+    key: 'sav',
+    label: 'SAV (ancien)',
+    code: 'SAV',
+    description: 'Code SAV générique conservé pour compatibilité avec les anciens imports.'
+  },
+  {
+    key: 'savExp',
+    label: 'SAV EXP',
+    code: 'SAV_EXP',
+    description: 'Déplacement technicien — non présence OI au RDV.'
+  },
+  // ── Matériel / équipement ────────────────────────────────────────────────────
+  {
+    key: 'swapEquipement',
+    label: 'Swap équipement',
+    code: 'SWAP_EQUIPEMENT',
+    description: "Remplacement matériel SFR chez l'abonné (ONT, BOX…) suite défaillance technique."
+  },
+  {
+    key: 'bifibre',
+    label: 'Bi-fibre',
+    code: 'BIFIBRE',
+    description: 'Plus-value raccordement bi fibre (OI AXIONE / ALTITUDE).'
+  },
+  {
+    key: 'nacelle',
+    label: 'Nacelle',
+    code: 'NACELLE',
+    description: 'Mise à disposition nacelle avec chauffeur (accroche câble en hauteur).'
+  },
+  // ── Câble ────────────────────────────────────────────────────────────────────
+  {
+    key: 'cableSl',
+    label: 'Câble pavillon (au ml)',
+    code: 'CABLE_SL',
+    description: 'Plus-value longueur câble pavillon au ml (au-delà de 300 m).'
+  },
+  // ── Divers ───────────────────────────────────────────────────────────────────
   {
     key: 'prestaCompl',
     label: 'Prestation complémentaire',
@@ -81,39 +152,9 @@ export const INTERVENTION_PRESTATION_FIELDS: InterventionPrestationField[] = [
     description: 'Prestation complémentaire facturée en supplément.'
   },
   {
-    key: 'deprise',
-    label: 'Déplacement prise',
-    code: 'DEPLPRISE',
-    description: 'Modification ou déplacement d’une prise existante.'
-  },
-  {
     key: 'demo',
     label: 'Démonstration service',
     code: 'DEMO',
-    description: 'Présentation du service au client (démonstration commerciale).'
+    description: 'Présentation du service au client.'
   },
-  {
-    key: 'sav',
-    label: 'Service après-vente',
-    code: 'SAV',
-    description: 'Intervention corrective suite à une anomalie détectée.'
-  },
-  {
-    key: 'savExp',
-    label: 'SAV EXP',
-    code: 'SAV_EXP',
-    description: 'SAV sans déplacement physique (expédition ou assistance à distance).'
-  },
-  {
-    key: 'refrac',
-    label: 'Refaire raccordement',
-    code: 'REFRAC',
-    description: 'Refait d’un raccordement suite à une reprise ou une erreur.'
-  },
-  {
-    key: 'refcDgr',
-    label: 'Dégradation client',
-    code: 'REFC_DGR',
-    description: 'Travail lié à des dégradations volontaires ou involontaires du client.'
-  }
 ];

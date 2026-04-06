@@ -18,25 +18,14 @@
           }
         </select>
       </label>
-      <label class="import-client">
-        Fournisseur
-        <input
-          #importClientInput
-          type="text"
-          placeholder="Nom du fournisseur"
-          [disabled]="importLoading()"
-          [value]="importClient()"
-          (input)="importClient.set(importClientInput.value)"
-        />
-      </label>
-      <label class="btn-outline file-upload" [class.disabled]="importLoading() || !importClient().trim() || !selectedDepotId()">
+      <label class="btn-outline file-upload" [class.disabled]="importLoading() || !selectedDepotId()">
         <input
           type="file"
-          accept="application/pdf"
-          [disabled]="importLoading() || !importClient().trim() || !selectedDepotId()"
+          accept="application/pdf,image/jpeg,image/jpg,image/png"
+          [disabled]="importLoading() || !selectedDepotId()"
           (change)="importPdf($event)"
         />
-        <i class="bi bi-upload"></i> Importer PDF
+        <i class="bi bi-upload"></i> Importer fichier
       </label>
       <button class="btn-primary" type="button" [disabled]="importLoading()" (click)="createNew()">
         <i class="bi bi-plus"></i>
@@ -81,7 +70,7 @@
     </div>
 
     @if (importLoading()) {
-      <div class="state loading">Import PDF en cours…</div>
+      <div class="state loading">Import fichier en cours…</div>
     } @else if (importError()) {
       <div class="state error">Erreur import : {{ importError() }}</div>
     }
@@ -166,7 +155,6 @@
                       (click)="$event.stopPropagation()"
                     ><i class="bi bi-file-earmark-pdf"></i></a>
                   }
-                  <button class="btn-outline" type="button" title="Dépôt" (click)="$event.stopPropagation(); openDetail(order)"><i class="bi bi-box-seam"></i></button>
                   <button class="btn-outline edit" type="button" title="Modifier" (click)="$event.stopPropagation(); openEdit(order)"><i class="bi bi-pencil"></i></button>
                   <button class="btn-outline delete" type="button" title="Supprimer" (click)="$event.stopPropagation(); openDeleteModal(order)"><i class="fa-solid fa-trash"></i></button>
                 </td>
@@ -231,6 +219,9 @@
         Fournisseur
         <input type="text" [value]="preview.client" (input)="updatePreviewField('client', $any($event.target).value)" />
       </label>
+      @if (preview.supplierExists === false) {
+        <div class="state warning">Fournisseur introuvable. Il sera créé à la validation.</div>
+      }
       <label>
         Date
         <input type="date" [value]="preview.date | date:'yyyy-MM-dd'" (input)="updatePreviewField('date', $any($event.target).value)" />
@@ -240,7 +231,7 @@
         <input type="number" min="0" step="0.01" [value]="preview.deliveryFee ?? 0" (input)="updatePreviewField('deliveryFee', $any($event.target).value)" />
       </label>
       @if (previewPdfUrl()) {
-        <a class="btn-outline" [href]="previewPdfUrl()" target="_blank" rel="noopener">Ouvrir la facture PDF</a>
+        <a class="btn-outline" [href]="previewPdfUrl()" target="_blank" rel="noopener">Ouvrir le fichier</a>
       }
     </div>
 
@@ -267,6 +258,7 @@
           <th>Montant HT</th>
           <th>TVA</th>
           <th>TTC</th>
+          <th></th>
         </tr>
         </thead>
         <tbody>
@@ -295,6 +287,16 @@
               <td>{{ line.totalHt ?? line.total | number:'1.2-2' }}</td>
               <td>{{ line.totalTva ?? 0 | number:'1.2-2' }}</td>
               <td>{{ line.totalTtc ?? 0 | number:'1.2-2' }}</td>
+              <td>
+                <button
+                  class="btn-remove-preview-line"
+                  type="button"
+                  title="Supprimer cette ligne"
+                  (click)="removePreviewLine($index)"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
             </tr>
           }
         </tbody>

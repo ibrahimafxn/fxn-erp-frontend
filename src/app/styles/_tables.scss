@@ -13,7 +13,7 @@ th, td {
 }
 
 thead {
-  background: rgba(20, 32, 45, 0.85);
+  background: var(--fxn-surface-soft);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -28,7 +28,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-  background: rgba(33, 182, 182, 0.08);
+  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
 }
 
 .card:has(.pager-fixed) .table,
@@ -49,8 +49,9 @@ tbody tr:hover {
   justify-content: space-between;
   gap: 16px;
   padding: 8px 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.95));
+  border-top: 1px solid var(--fxn-border);
+  background: linear-gradient(180deg, var(--fxn-surface-glass), var(--fxn-bg) 120%);
+  backdrop-filter: blur(14px);
   z-index: 1000;
 }
 
@@ -63,44 +64,46 @@ tbody tr:hover {
 
 .pager-fixed .page-size {
   display: inline-flex;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--fxn-border-strong);
   border-radius: 6px;
   overflow: hidden;
-  background: #05070c;
+  background: var(--fxn-surface);
 }
 
 .pager-fixed .page-size button {
   appearance: none;
   border: 0;
   background: transparent;
-  color: #ffffff;
+  color: var(--fxn-text);
   padding: 4px 10px;
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .pager-fixed .page-size button:hover {
-  background: #2563eb;
+  background: var(--fxn-primary-soft);
 }
 
 .pager-fixed .page-size button.active {
-  background: #1d4ed8;
+  background: var(--fxn-primary);
+  color: #ffffff;
 }
 
 .pager-fixed .pager-label,
 .pager-fixed .pager-range {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--fxn-text-muted);
 }
 
 .pager-fixed .pager-range {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fxn-text-soft);
 }
 
 .pager-fixed .pager-nav {
   display: inline-flex;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--fxn-border-strong);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -109,14 +112,15 @@ tbody tr:hover {
   appearance: none;
   border: 0;
   background: transparent;
-  color: #ffffff;
+  color: var(--fxn-text);
   padding: 4px 10px;
   line-height: 1;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .pager-fixed .pager-nav button:hover {
-  background: #2563eb;
+  background: var(--fxn-primary-soft);
 }
 
 .pager-fixed .pager-nav button:disabled {

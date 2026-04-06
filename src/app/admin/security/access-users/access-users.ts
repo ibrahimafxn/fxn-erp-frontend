@@ -84,6 +84,14 @@ export class AccessUsers {
   readonly credSaving = signal(false);
   readonly credError = signal<string | null>(null);
 
+  // confirm enable access
+  readonly enableOpen = signal(false);
+  readonly pendingEnableUser = signal<User | null>(null);
+
+  // confirm reset password
+  readonly resetOpen = signal(false);
+  readonly pendingResetUser = signal<User | null>(null);
+
   // confirm disable access (on réutilise ton ConfirmDeleteModal)
   readonly disableOpen = signal(false);
   readonly disableSaving = signal(false);
@@ -209,17 +217,13 @@ export class AccessUsers {
   // Modal enable/reset
   // -----------------------------
   openEnable(u: User): void {
-    this.selectedUser.set(u);
-    this.credMode.set('enable');
-    this.credError.set(null);
-    this.credOpen.set(true);
+    this.pendingEnableUser.set(u);
+    this.enableOpen.set(true);
   }
 
   openReset(u: User): void {
-    this.selectedUser.set(u);
-    this.credMode.set('reset');
-    this.credError.set(null);
-    this.credOpen.set(true);
+    this.pendingResetUser.set(u);
+    this.resetOpen.set(true);
   }
 
   closeCred(): void {
@@ -227,6 +231,38 @@ export class AccessUsers {
     this.selectedUser.set(null);
     this.credSaving.set(false);
     this.credError.set(null);
+  }
+
+  closeEnable(): void {
+    this.enableOpen.set(false);
+    this.pendingEnableUser.set(null);
+  }
+
+  confirmEnable(): void {
+    const u = this.pendingEnableUser();
+    if (!u) return;
+    this.enableOpen.set(false);
+    this.pendingEnableUser.set(null);
+    this.selectedUser.set(u);
+    this.credMode.set('enable');
+    this.credError.set(null);
+    this.credOpen.set(true);
+  }
+
+  closeReset(): void {
+    this.resetOpen.set(false);
+    this.pendingResetUser.set(null);
+  }
+
+  confirmReset(): void {
+    const u = this.pendingResetUser();
+    if (!u) return;
+    this.resetOpen.set(false);
+    this.pendingResetUser.set(null);
+    this.selectedUser.set(u);
+    this.credMode.set('reset');
+    this.credError.set(null);
+    this.credOpen.set(true);
   }
 
   confirmCred(payload: { password: string; mustChangePassword: boolean }): void {

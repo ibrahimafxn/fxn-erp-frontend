@@ -48,76 +48,217 @@ type SortField = 'date' | 'type' | 'statut' | 'duree';
 type InterventionDetailField = { key: keyof InterventionItem; label: string };
 
 const TYPE_CANONICAL_ALIASES = new Map([
-  ['RACIH', 'RACIH'],
-  ['RAC_IH', 'RACIH'],
-  ['RACPAV', 'RACPAV'],
-  ['RAC_PAV', 'RACPAV'],
-  ['PRESTA COMPL', 'PRESTA_COMPL'],
-  ['PRESTA COMPL', 'PRESTA COMPL'],
-  ['REPFOU_PRI', 'REPFOU_PRI'],
-  ['REPFOU PRI', 'REPFOU_PRI'],
-  ['REPFOU-PRI', 'REPFOU_PRI'],
-  ['RACC PRO S', 'RACPRO_S'],
-  ['RACC PRO_S', 'RACPRO_S'],
-  ['RACC PRO-S', 'RACPRO_S'],
-  ['RACPRO S', 'RACPRO_S'],
-  ['RACPRO_S', 'RACPRO_S'],
-  ['RACPRO-S', 'RACPRO_S'],
-  ['RACC PRO C', 'RACPRO_C'],
-  ['RACC PRO_C', 'RACPRO_C'],
-  ['RACC PRO-C', 'RACPRO_C'],
-  ['RACPRO C', 'RACPRO_C'],
-  ['RACPRO_C', 'RACPRO_C'],
-  ['RACPRO-C', 'RACPRO_C'],
+  // ── Raccordement immeuble (RACIM remplace RACIH) ───────────────────────────
+  ['RACIM', 'RACIM'],
+  ['RACIH', 'RACIM'],       // rétrocompat anciens imports
+  ['RAC_IH', 'RACIM'],      // rétrocompat anciens imports
+  // ── Raccordement pavillon ──────────────────────────────────────────────────
+  ['RAC_PBO_SOUT', 'RAC_PBO_SOUT'],
+  ['RAC_PBO-SOUT', 'RAC_PBO_SOUT'],
+  ['RAC_PBO_AERIEN', 'RAC_PBO_AERIEN'],
+  ['RAC_PBO_FACADE', 'RAC_PBO_FACADE'],
+  ['RACPAV', 'RAC_PBO_SOUT'],  // rétrocompat anciens imports → souterrain par défaut
+  ['RAC_PAV', 'RAC_PBO_SOUT'],
+  // ── PLV PRO (PLV_PRO_S/C remplacent RACPRO_S/C) ───────────────────────────
+  ['PLV_PRO_S', 'PLV_PRO_S'],
+  ['RACC PRO S', 'PLV_PRO_S'],
+  ['RACC PRO_S', 'PLV_PRO_S'],
+  ['RACC PRO-S', 'PLV_PRO_S'],
+  ['RACPRO S', 'PLV_PRO_S'],
+  ['RACPRO_S', 'PLV_PRO_S'],   // rétrocompat
+  ['RACPRO-S', 'PLV_PRO_S'],
+  ['PLV_PRO_C', 'PLV_PRO_C'],
+  ['RACC PRO C', 'PLV_PRO_C'],
+  ['RACC PRO_C', 'PLV_PRO_C'],
+  ['RACC PRO-C', 'PLV_PRO_C'],
+  ['RACPRO C', 'PLV_PRO_C'],
+  ['RACPRO_C', 'PLV_PRO_C'],   // rétrocompat
+  ['RACPRO-C', 'PLV_PRO_C'],
+  // ── Fourreaux ──────────────────────────────────────────────────────────────
+  ['FOURREAU_CASSE_PRIVE', 'FOURREAU_CASSE_PRIVE'],
+  ['REPFOU_PRI', 'FOURREAU_CASSE_PRIVE'],   // rétrocompat
+  ['REPFOU PRI', 'FOURREAU_CASSE_PRIVE'],
+  ['REPFOU-PRI', 'FOURREAU_CASSE_PRIVE'],
+  ['FOURREAU_CASSE_BETON', 'FOURREAU_CASSE_BETON'],
+  // ── Réfections ────────────────────────────────────────────────────────────
+  ['REFRAC', 'REFRAC'],
+  ['REFRAC_DEGRADATION', 'REFRAC_DEGRADATION'],
+  ['REFC_DGR', 'REFRAC_DEGRADATION'],      // rétrocompat
+  // ── Reconnexion / CLEM ────────────────────────────────────────────────────
   ['RECOIP', 'RECOIP'],
   ['RECO IP', 'RECOIP'],
   ['RECO-IP', 'RECOIP'],
   ['RECO', 'RECOIP'],
+  ['CLEM', 'CLEM'],
+  // ── Déplacements ──────────────────────────────────────────────────────────
+  ['DEPLACEMENT_PRISE', 'DEPLACEMENT_PRISE'],
+  ['DEPLPRISE', 'DEPLACEMENT_PRISE'],       // rétrocompat
+  ['DEPLACEMENT_OFFERT', 'DEPLACEMENT_OFFERT'],
+  ['DEPLACEMENT_A_TORT', 'DEPLACEMENT_A_TORT'],
+  // ── SAV ───────────────────────────────────────────────────────────────────
   ['SAV', 'SAV'],
-  ['CABLE_PAV_1', 'CABLE_PAV_1'],
-  ['CABLE_PAV_2', 'CABLE_PAV_2'],
-  ['CABLE_PAV_3', 'CABLE_PAV_3'],
-  ['CABLE_PAV_4', 'CABLE_PAV_4']
+  ['SAV_EXP', 'SAV_EXP'],
+  // ── Matériel / équipement ─────────────────────────────────────────────────
+  ['SWAP_EQUIPEMENT', 'SWAP_EQUIPEMENT'],
+  ['BIFIBRE', 'BIFIBRE'],
+  ['NACELLE', 'NACELLE'],
+  // ── Câble (CABLE_SL remplace CABLE_PAV_1/2/3/4) ───────────────────────────
+  ['CABLE_SL', 'CABLE_SL'],
+  ['CABLE_PAV_1', 'CABLE_SL'],   // rétrocompat
+  ['CABLE_PAV_2', 'CABLE_SL'],
+  ['CABLE_PAV_3', 'CABLE_SL'],
+  ['CABLE_PAV_4', 'CABLE_SL'],
+  // ── Divers ────────────────────────────────────────────────────────────────
+  ['PRESTA_COMPL', 'PRESTA_COMPL'],
+  ['PRESTA COMPL', 'PRESTA_COMPL'],
+  ['DEMO', 'DEMO'],
+  // ── Pénalités ─────────────────────────────────────────────────────────────
+  ['PEN_SECU_Activigie', 'PEN_SECU_Activigie'],
+  ['PEN_SECU_EPI', 'PEN_SECU_EPI'],
+  ['PEN_A_Nacelle', 'PEN_A_Nacelle'],
+  ['PEN_A_TORT', 'PEN_A_TORT'],
+  ['PEN_NON_CLOS', 'PEN_NON_CLOS'],
+  ['PEN_NON_HONORE', 'PEN_NON_HONORE'],
+  ['PEN_INSTANCE', 'PEN_INSTANCE'],
+  ['PEN_RESILIATION', 'PEN_RESILIATION'],
+  ['PEN_NCVT', 'PEN_NCVT'],
+  ['PEN_RECLAMATION_7j', 'PEN_RECLAMATION_7j'],
+  ['PEN_EXPLOITATION', 'PEN_EXPLOITATION'],
+  ['PEN_OC', 'PEN_OC'],
+  ['SINISTRE', 'SINISTRE'],
+  ['PEN_COMPORTEMENT', 'PEN_COMPORTEMENT'],
+  // ── Bonus ─────────────────────────────────────────────────────────────────
+  ['BONUS_SAV_REPEAT', 'BONUS_SAV_REPEAT'],
+  ['BONUS_SAV_REPARATION_VOISIN', 'BONUS_SAV_REPARATION_VOISIN'],
+  ['BONUS_SAV_CASSE_VOISIN', 'BONUS_SAV_CASSE_VOISIN'],
+  ['BONUS_SAV_B_SUR_P', 'BONUS_SAV_B_SUR_P'],
+  ['BONUS_MALUS_RACC', 'BONUS_MALUS_RACC'],
+  ['SCORING_TECHNICIEN', 'SCORING_TECHNICIEN'],
 ]);
 const ARTICLE_TYPE_LABELS = [
-  { label: 'PRO S', marker: 'RACPRO_S' },
-  { label: 'PRO C', marker: 'RACPRO_C' },
-  { label: 'RACPAV', marker: 'RACPAV' },
-  { label: 'RACIH', marker: 'RACIH' },
+  // Raccordements
+  { label: 'RAC SOUT', marker: 'RAC_PBO_SOUT' },
+  { label: 'RAC AERIEN', marker: 'RAC_PBO_AERIEN' },
+  { label: 'RAC FACADE', marker: 'RAC_PBO_FACADE' },
+  { label: 'RACIM', marker: 'RACIM' },
+  // PLV PRO (nouveaux codes STIT)
+  { label: 'PLV PRO S', marker: 'PLV_PRO_S' },
+  { label: 'PLV PRO C', marker: 'PLV_PRO_C' },
+  // Reconnexion / CLEM
   { label: 'RECO', marker: 'RECOIP' },
   { label: 'CLEM', marker: 'CLEM' },
+  // SAV
   { label: 'SAV', marker: 'SAV' },
   { label: 'SAV EXP', marker: 'SAV_EXP' },
-  { label: 'CABLE PAV 1', marker: 'CABLE_PAV_1' },
-  { label: 'CABLE PAV 2', marker: 'CABLE_PAV_2' },
-  { label: 'CABLE PAV 3', marker: 'CABLE_PAV_3' },
-  { label: 'CABLE PAV 4', marker: 'CABLE_PAV_4' },
-  { label: 'PRESTA COMPL', marker: 'PRESTA_COMPL' },
-  { label: 'PRESTA F8', marker: 'REPFOU_PRI' },
-  { label: 'DEPLPRISE', marker: 'DEPLPRISE' },
-  { label: 'DEMO', marker: 'DEMO' },
+  // Déplacements
+  { label: 'DEPLACEMENT PRISE', marker: 'DEPLACEMENT_PRISE' },
+  { label: 'DEPLACEMENT OFFERT', marker: 'DEPLACEMENT_OFFERT' },
+  { label: 'DEPLACEMENT A TORT', marker: 'DEPLACEMENT_A_TORT' },
+  // Réfections
   { label: 'REFRAC', marker: 'REFRAC' },
-  { label: 'REFC DGR', marker: 'REFC_DGR' }
+  { label: 'REFRAC DEGR', marker: 'REFRAC_DEGRADATION' },
+  // Fourreaux
+  { label: 'FOURREAU PRIVE', marker: 'FOURREAU_CASSE_PRIVE' },
+  { label: 'FOURREAU BETON', marker: 'FOURREAU_CASSE_BETON' },
+  // Matériel
+  { label: 'SWAP', marker: 'SWAP_EQUIPEMENT' },
+  { label: 'BIFIBRE', marker: 'BIFIBRE' },
+  { label: 'NACELLE', marker: 'NACELLE' },
+  // Câble
+  { label: 'CABLE SL', marker: 'CABLE_SL' },
+  // Divers
+  { label: 'PRESTA COMPL', marker: 'PRESTA_COMPL' },
+  { label: 'DEMO', marker: 'DEMO' },
+  // Pénalités
+  { label: 'PEN SECU ACTIVIGIE', marker: 'PEN_SECU_Activigie' },
+  { label: 'PEN SECU EPI', marker: 'PEN_SECU_EPI' },
+  { label: 'PEN NACELLE', marker: 'PEN_A_Nacelle' },
+  { label: 'PEN A TORT', marker: 'PEN_A_TORT' },
+  { label: 'PEN NON CLOS', marker: 'PEN_NON_CLOS' },
+  { label: 'PEN NON HONORE', marker: 'PEN_NON_HONORE' },
+  { label: 'PEN INSTANCE', marker: 'PEN_INSTANCE' },
+  { label: 'PEN RESILIATION', marker: 'PEN_RESILIATION' },
+  { label: 'PEN NCVT', marker: 'PEN_NCVT' },
+  { label: 'PEN RECLAMATION 7J', marker: 'PEN_RECLAMATION_7j' },
+  { label: 'PEN EXPLOITATION', marker: 'PEN_EXPLOITATION' },
+  { label: 'PEN OC', marker: 'PEN_OC' },
+  { label: 'SINISTRE', marker: 'SINISTRE' },
+  { label: 'PEN COMPORTEMENT', marker: 'PEN_COMPORTEMENT' },
+  // Bonus
+  { label: 'BONUS SAV REPEAT', marker: 'BONUS_SAV_REPEAT' },
+  { label: 'BONUS SAV REP VOISIN', marker: 'BONUS_SAV_REPARATION_VOISIN' },
+  { label: 'BONUS SAV CASSE VOISIN', marker: 'BONUS_SAV_CASSE_VOISIN' },
+  { label: 'BONUS SAV B/P', marker: 'BONUS_SAV_B_SUR_P' },
+  { label: 'BONUS MALUS RACC', marker: 'BONUS_MALUS_RACC' },
+  { label: 'SCORING TECH', marker: 'SCORING_TECHNICIEN' },
 ];
 const ARTICLE_TYPE_BY_CODE = new Map([
-  ['RACPRO_S', 'PRO S'],
-  ['RACPRO_C', 'PRO C'],
-  ['RACPAV', 'RACPAV'],
-  ['RACIH', 'RACIH'],
+  // Raccordements
+  ['RAC_PBO_SOUT', 'RAC SOUT'],
+  ['RAC_PBO_AERIEN', 'RAC AERIEN'],
+  ['RAC_PBO_FACADE', 'RAC FACADE'],
+  ['RACIM', 'RACIM'],
+  ['RACIH', 'RACIM'],                    // rétrocompat
+  ['RACPAV', 'RAC SOUT'],               // rétrocompat
+  // PLV PRO
+  ['PLV_PRO_S', 'PLV PRO S'],
+  ['PLV_PRO_C', 'PLV PRO C'],
+  ['RACPRO_S', 'PLV PRO S'],            // rétrocompat
+  ['RACPRO_C', 'PLV PRO C'],            // rétrocompat
+  // Reconnexion / CLEM
   ['RECOIP', 'RECO'],
   ['CLEM', 'CLEM'],
-  ['PRESTA_COMPL', 'PRESTA COMPL'],
-  ['REPFOU_PRI', 'PRESTA F8'],
+  // SAV
   ['SAV', 'SAV'],
   ['SAV_EXP', 'SAV EXP'],
-  ['DEPLPRISE', 'DEPLPRISE'],
-  ['DEMO', 'DEMO'],
+  // Déplacements
+  ['DEPLACEMENT_PRISE', 'DEPLACEMENT PRISE'],
+  ['DEPLPRISE', 'DEPLACEMENT PRISE'],   // rétrocompat
+  ['DEPLACEMENT_OFFERT', 'DEPLACEMENT OFFERT'],
+  ['DEPLACEMENT_A_TORT', 'DEPLACEMENT A TORT'],
+  // Réfections
   ['REFRAC', 'REFRAC'],
-  ['REFC_DGR', 'REFC DGR'],
-  ['CABLE_PAV_1', 'CABLE PAV 1'],
-  ['CABLE_PAV_2', 'CABLE PAV 2'],
-  ['CABLE_PAV_3', 'CABLE PAV 3'],
-  ['CABLE_PAV_4', 'CABLE PAV 4']
+  ['REFRAC_DEGRADATION', 'REFRAC DEGR'],
+  ['REFC_DGR', 'REFRAC DEGR'],          // rétrocompat
+  // Fourreaux
+  ['FOURREAU_CASSE_PRIVE', 'FOURREAU PRIVE'],
+  ['REPFOU_PRI', 'FOURREAU PRIVE'],     // rétrocompat
+  ['FOURREAU_CASSE_BETON', 'FOURREAU BETON'],
+  // Matériel
+  ['SWAP_EQUIPEMENT', 'SWAP'],
+  ['BIFIBRE', 'BIFIBRE'],
+  ['NACELLE', 'NACELLE'],
+  // Câble
+  ['CABLE_SL', 'CABLE SL'],
+  ['CABLE_PAV_1', 'CABLE SL'],          // rétrocompat
+  ['CABLE_PAV_2', 'CABLE SL'],
+  ['CABLE_PAV_3', 'CABLE SL'],
+  ['CABLE_PAV_4', 'CABLE SL'],
+  // Divers
+  ['PRESTA_COMPL', 'PRESTA COMPL'],
+  ['DEMO', 'DEMO'],
+  // Pénalités
+  ['PEN_SECU_Activigie', 'PEN SECU ACTIVIGIE'],
+  ['PEN_SECU_EPI', 'PEN SECU EPI'],
+  ['PEN_A_Nacelle', 'PEN NACELLE'],
+  ['PEN_A_TORT', 'PEN A TORT'],
+  ['PEN_NON_CLOS', 'PEN NON CLOS'],
+  ['PEN_NON_HONORE', 'PEN NON HONORE'],
+  ['PEN_INSTANCE', 'PEN INSTANCE'],
+  ['PEN_RESILIATION', 'PEN RESILIATION'],
+  ['PEN_NCVT', 'PEN NCVT'],
+  ['PEN_RECLAMATION_7j', 'PEN RECLAMATION 7J'],
+  ['PEN_EXPLOITATION', 'PEN EXPLOITATION'],
+  ['PEN_OC', 'PEN OC'],
+  ['SINISTRE', 'SINISTRE'],
+  ['PEN_COMPORTEMENT', 'PEN COMPORTEMENT'],
+  // Bonus
+  ['BONUS_SAV_REPEAT', 'BONUS SAV REPEAT'],
+  ['BONUS_SAV_REPARATION_VOISIN', 'BONUS SAV REP VOISIN'],
+  ['BONUS_SAV_CASSE_VOISIN', 'BONUS SAV CASSE VOISIN'],
+  ['BONUS_SAV_B_SUR_P', 'BONUS SAV B/P'],
+  ['BONUS_MALUS_RACC', 'BONUS MALUS RACC'],
+  ['SCORING_TECHNICIEN', 'SCORING TECH'],
 ]);
 const REQUIRED_TYPE_LABELS = ['RECOIP'];
 
@@ -637,24 +778,51 @@ export class TechnicianInterventions {
 
   private rateForType(type: string, rates: InterventionRates): number {
     const map: Record<string, number> = {
-      RACPAV: rates.racPavillon.total,
-      RACIH: rates.racImmeuble.total,
+      // Raccordements pavillon
+      RAC_PBO_SOUT: rates.racPavillon.total,
+      RAC_PBO_AERIEN: rates.racAerien.total,
+      RAC_PBO_FACADE: rates.racFacade.total,
+      RACPAV: rates.racPavillon.total,         // rétrocompat
+      // Raccordement immeuble
+      RACIM: rates.racImmeuble.total,
+      RACIH: rates.racImmeuble.total,           // rétrocompat
+      // PLV PRO
+      PLV_PRO_S: rates.racProS.total,
+      PLV_PRO_C: rates.racProC.total,
+      RACPRO_S: rates.racProS.total,            // rétrocompat
+      RACPRO_C: rates.racProC.total,            // rétrocompat
+      // Reconnexion / CLEM
       RECOIP: rates.reconnexion.total,
-      RACPRO_S: rates.racProS.total,
-      RACPRO_C: rates.racProC.total,
-      REPFOU_PRI: rates.racF8.total,
-      PRESTA_COMPL: rates.prestaCompl.total,
-      DEPLPRISE: rates.deprise.total,
-      DEMO: rates.demo.total,
+      CLEM: rates.clem.total,
+      // Fourreaux
+      FOURREAU_CASSE_PRIVE: rates.racF8.total,
+      REPFOU_PRI: rates.racF8.total,            // rétrocompat
+      FOURREAU_CASSE_BETON: rates.fourreauBeton.total,
+      // Réfections
+      REFRAC: rates.refrac.total,
+      REFRAC_DEGRADATION: rates.refcDgr.total,
+      REFC_DGR: rates.refcDgr.total,            // rétrocompat
+      // Déplacements
+      DEPLACEMENT_PRISE: rates.deplacementPrise.total,
+      DEPLPRISE: rates.deplacementPrise.total,  // rétrocompat
+      DEPLACEMENT_OFFERT: rates.deplacementOffert.total,
+      DEPLACEMENT_A_TORT: rates.deplacementATort.total,
+      // SAV
       SAV: rates.sav.total,
       SAV_EXP: rates.savExp.total,
-      REFRAC: rates.refrac.total,
-      REFC_DGR: rates.refcDgr.total,
-      CLEM: rates.clem.total,
-      CABLE_PAV_1: rates.cablePav1.total,
-      CABLE_PAV_2: rates.cablePav2.total,
-      CABLE_PAV_3: rates.cablePav3.total,
-      CABLE_PAV_4: rates.cablePav4.total
+      // Matériel
+      SWAP_EQUIPEMENT: rates.swapEquipement.total,
+      BIFIBRE: rates.bifibre.total,
+      NACELLE: rates.nacelle.total,
+      // Câble
+      CABLE_SL: rates.cableSl.total,
+      CABLE_PAV_1: rates.cableSl.total,         // rétrocompat
+      CABLE_PAV_2: rates.cableSl.total,
+      CABLE_PAV_3: rates.cableSl.total,
+      CABLE_PAV_4: rates.cableSl.total,
+      // Divers
+      PRESTA_COMPL: rates.prestaCompl.total,
+      DEMO: rates.demo.total,
     };
     return map[type] ?? 0;
   }
@@ -669,24 +837,29 @@ export class TechnicianInterventions {
       rows.push({ key, qty: count, unit, total: Math.round(count * unit * 100) / 100 });
     };
 
-    push('RACPAV', totals.racPavillon, rates.racPavillon.total);
-    push('CLEM', totals.clem, rates.clem.total);
+    push('RAC_PBO_SOUT', totals.racPavillon, rates.racPavillon.total);
+    push('RAC_PBO_AERIEN', totals.racAerien, rates.racAerien.total);
+    push('RAC_PBO_FACADE', totals.racFacade, rates.racFacade.total);
+    push('RACIM', totals.racImmeuble, rates.racImmeuble.total);
+    push('PLV_PRO_S', totals.racProS, rates.racProS.total);
+    push('PLV_PRO_C', totals.racProC, rates.racProC.total);
     push('RECOIP', totals.reconnexion, rates.reconnexion.total);
-    push('RACIH', totals.racImmeuble, rates.racImmeuble.total);
-    push('RACPRO_S', totals.racProS, rates.racProS.total);
-    push('RACPRO_C', totals.racProC, rates.racProC.total);
-    push('REPFOU_PRI', totals.racF8, rates.racF8.total);
+    push('CLEM', totals.clem, rates.clem.total);
+    push('FOURREAU_CASSE_PRIVE', totals.racF8, rates.racF8.total);
+    push('FOURREAU_CASSE_BETON', totals.fourreauBeton, rates.fourreauBeton.total);
     push('PRESTA_COMPL', totals.prestaCompl, rates.prestaCompl.total);
-    push('DEPLPRISE', totals.deprise, rates.deprise.total);
+    push('DEPLACEMENT_PRISE', totals.deplacementPrise, rates.deplacementPrise.total);
+    push('DEPLACEMENT_OFFERT', totals.deplacementOffert, rates.deplacementOffert.total);
+    push('DEPLACEMENT_A_TORT', totals.deplacementATort, rates.deplacementATort.total);
     push('DEMO', totals.demo, rates.demo.total);
     push('SAV', totals.sav, rates.sav.total);
     push('SAV_EXP', totals.savExp, rates.savExp.total);
+    push('SWAP_EQUIPEMENT', totals.swapEquipement, rates.swapEquipement.total);
+    push('BIFIBRE', totals.bifibre, rates.bifibre.total);
+    push('NACELLE', totals.nacelle, rates.nacelle.total);
     push('REFRAC', totals.refrac, rates.refrac.total);
-    push('REFC_DGR', totals.refcDgr, rates.refcDgr.total);
-    push('CABLE_PAV_1', totals.cablePav1, rates.cablePav1.total);
-    push('CABLE_PAV_2', totals.cablePav2, rates.cablePav2.total);
-    push('CABLE_PAV_3', totals.cablePav3, rates.cablePav3.total);
-    push('CABLE_PAV_4', totals.cablePav4, rates.cablePav4.total);
+    push('REFRAC_DEGRADATION', totals.refcDgr, rates.refcDgr.total);
+    push('CABLE_SL', totals.cableSl, rates.cableSl.total);
 
     if (!rows.length) return;
     const sum = rows.reduce((acc, row) => acc + row.total, 0);
@@ -892,7 +1065,7 @@ export class TechnicianInterventions {
       .slice(0, 3)
       .map(([label, count]) => ({ label, count }));
     const displayBaseTopTypes = baseTopTypes.map((type) => ({
-      label: this.normalizeTypeLabel(type.label),
+      label: this.labelToBpuCode(type.label),
       count: type.count
     }));
     const baseTypeLabels = new Set(displayBaseTopTypes.map((type) => type.label));
@@ -900,12 +1073,12 @@ export class TechnicianInterventions {
       .filter((label) => !baseTopTypes.some((type) => type.label === label))
       .map((label) => ({ label, count: types.get(label) ?? 0 }));
     const articleTypeEntries = ARTICLE_TYPE_LABELS.map(({ label }) => ({
-      label,
+      label: this.labelToBpuCode(label),
       count: articleTypeCounts.get(label) ?? 0
     })).filter((entry) => !baseTypeLabels.has(entry.label));
     const enforcedTypeEntries = enforcedTypes
       .map((entry) => ({
-        label: this.normalizeTypeLabel(entry.label),
+        label: this.labelToBpuCode(entry.label),
         count: entry.count
       }))
       .filter((entry) => !baseTypeLabels.has(entry.label));
@@ -925,7 +1098,7 @@ export class TechnicianInterventions {
     const applyBpuFilter = bpuCodes.size > 0 && bpuEntries.length > 0;
     const bpuTopTypes = applyBpuFilter
       ? bpuEntries.map((entry) => ({
-          label: this.normalizeTypeLabel(entry.code),
+          label: entry.code,
           count: types.get(this.normalizeToken(entry.code).replace(/[^A-Z0-9_]/g, '')) ?? 0
         }))
       : [];
@@ -956,7 +1129,9 @@ export class TechnicianInterventions {
           return normalizedEntry === normalizedAllowed || normalizedEntry === normalizedAllowedLabel;
         })
       : filteredTopTypes;
-    const finalTopTypes = bpuOnlyTopTypes ?? computedTopTypes;
+    const finalTopTypes = (bpuOnlyTopTypes ?? computedTopTypes).filter((entry) =>
+      entry.count > 0 && !this.isCablePavLabel(entry.label) && !this.isClemLabel(entry.label)
+    );
     const ALWAYS_STATUSES = ['ECHEC TERMINE', 'ECHEC', 'ANNULEE', 'A COMPLETER'];
     for (const label of ALWAYS_STATUSES) {
       if (!statuses.has(label)) statuses.set(label, 0);
@@ -1045,7 +1220,7 @@ export class TechnicianInterventions {
     amount += get(totals.racProC) * rates.racProC.total;
     amount += get(totals.racF8) * rates.racF8.total;
     amount += get(totals.prestaCompl) * rates.prestaCompl.total;
-    amount += get(totals.deprise) * rates.deprise.total;
+    amount += get(totals.deplacementPrise ?? totals.deprise) * rates.deplacementPrise.total;
     amount += get(totals.demo) * rates.demo.total;
     amount += get(totals.sav) * rates.sav.total;
     amount += get(totals.savExp) * rates.savExp.total;
@@ -1550,6 +1725,17 @@ export class TechnicianInterventions {
   private isPavLabel(label: string): boolean {
     const normalized = this.normalizeToken(label);
     return normalized === 'PAV';
+  }
+
+  private isCablePavLabel(label: string): boolean {
+    const normalized = this.normalizeToken(label);
+    const underscored = normalized.replace(/[\s-]+/g, '_');
+    const compact = normalized.replace(/[\s_-]+/g, '');
+    return underscored.startsWith('CABLE_PAV') || compact.startsWith('CABLEPAV');
+  }
+
+  private isClemLabel(label: string): boolean {
+    return this.normalizeToken(label) === 'CLEM';
   }
 
   private matchesAllowedType(typeLabel: string, allowedType: string): boolean {

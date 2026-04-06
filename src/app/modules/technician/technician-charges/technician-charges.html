@@ -64,7 +64,7 @@
           <div class="label">Charges</div>
           <div class="value">{{ formatAmount(monthlySummary().charges) }}</div>
         </article>
-        <article class="kpi kpi-benefit">
+        <article class="kpi kpi-benefit" [class.is-negative]="monthlySummary().benefit < 0">
           <div class="label">Bénéfice</div>
           <div class="value">{{ formatAmount(monthlySummary().benefit) }}</div>
         </article>
@@ -86,7 +86,9 @@
                 <td data-label="Mois">{{ row.label }}</td>
                 <td data-label="CA">{{ formatAmount(row.ca) }}</td>
                 <td data-label="Charges">{{ formatAmount(row.charges) }}</td>
-                <td data-label="Bénéfice">{{ formatAmount(row.benefit) }}</td>
+                <td data-label="Bénéfice" [class.is-negative]="row.benefit < 0" [class.is-positive]="row.benefit >= 0">
+                  {{ formatAmount(row.benefit) }}
+                </td>
               </tr>
             }
           </tbody>

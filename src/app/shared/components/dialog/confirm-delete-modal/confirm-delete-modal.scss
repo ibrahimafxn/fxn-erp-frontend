@@ -11,8 +11,8 @@
 .modal {
   width: min(520px, 100%);
   border-radius: 1rem;
-  background: rgba(20, 20, 24, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: var(--fxn-surface);
+  border: 1px solid var(--fxn-border-strong);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
   overflow: hidden;
 }
@@ -23,7 +23,7 @@
   justify-content: space-between;
   gap: .75rem;
   padding: 1rem 1rem .75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--fxn-border);
 }
 
 .modal-title {
@@ -32,8 +32,8 @@
 }
 
 .icon-btn {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface-soft);
   color: inherit;
   border-radius: .75rem;
   width: 36px;
@@ -69,8 +69,8 @@
   gap: .25rem;
   padding: .75rem;
   border-radius: .9rem;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--fxn-surface-soft);
+  border: 1px solid var(--fxn-border);
 }
 
 .label {
@@ -89,7 +89,7 @@
   justify-content: flex-end;
   gap: .6rem;
   padding: .9rem 1rem 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--fxn-border);
 }
 
 /* Boutons : même style/couleurs que tes listes */

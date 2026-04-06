@@ -1,7 +1,7 @@
 .page-loading {
   position: fixed;
   inset: 0;
-  background: rgba(4, 10, 20, 0.45);
+  background: color-mix(in srgb, var(--fxn-bg) 55%, transparent);
   display: grid;
   place-items: center;
   backdrop-filter: blur(6px);
@@ -14,10 +14,10 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 14px;
-  border: 1px solid rgba(88, 123, 255, 0.35);
-  background: rgba(12, 18, 30, 0.9);
-  color: #fff;
-  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-surface);
+  color: var(--fxn-text);
+  box-shadow: var(--fxn-shadow-md);
 }
 
 .page-loading-text {
@@ -25,19 +25,19 @@
   flex-direction: column;
   gap: 4px;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fxn-text-soft);
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 3px solid rgba(88, 123, 255, 0.3);
-  border-top-color: #6ba4ff;
+  border: 3px solid var(--fxn-primary-soft);
+  border-top-color: var(--fxn-primary);
   animation: spin 0.9s linear infinite;
 }
 
@@ -217,8 +217,8 @@
     place-items: center;
     font-weight: 700;
     font-size: .95rem;
-    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+    border: 1px solid var(--fxn-border-strong);
     overflow: hidden;
   }
 
@@ -434,7 +434,7 @@
 
     .sort-button.is-active .sort-arrow {
       opacity: 0.95;
-      color: rgba(147, 197, 253, 0.9);
+      color: var(--fxn-accent);
     }
 
     th,
@@ -447,7 +447,7 @@
     th {
       opacity: .8;
       border-bottom: 1px solid var(--fxn-border);
-      background: rgba(12, 20, 35, 0.65);
+      background: var(--fxn-surface-soft);
       position: sticky;
       top: 0;
       z-index: 1;
@@ -459,7 +459,7 @@
     }
 
     tbody tr:nth-child(even) {
-      background: rgba(10, 16, 28, 0.28);
+      background: color-mix(in srgb, var(--fxn-surface-soft) 45%, transparent);
     }
 
     tbody tr.active {
@@ -471,11 +471,11 @@
     }
 
     tbody tr.doc-valid td {
-      color: rgba(72, 217, 166, 0.95);
+      color: var(--fxn-success);
     }
 
     tbody tr.doc-expired td {
-      color: rgba(255, 122, 122, 0.9);
+      color: var(--fxn-danger);
     }
   }
 
@@ -484,7 +484,7 @@
     height: 44px;
     object-fit: cover;
     border-radius: 0.4rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--fxn-border-strong);
   }
 
   .identity {
@@ -511,8 +511,8 @@
       place-items: center;
       font-weight: 700;
       font-size: 1.1rem;
-      background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+      border: 1px solid var(--fxn-border-strong);
       overflow: hidden;
       flex-shrink: 0;
     }
@@ -562,8 +562,8 @@
     place-items: center;
     font-weight: 700;
     font-size: .95rem;
-    background: linear-gradient(135deg, rgba(33, 182, 182, 0.45), rgba(246, 166, 9, 0.35));
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+    border: 1px solid var(--fxn-border-strong);
     overflow: hidden;
     flex-shrink: 0;
   }
@@ -673,11 +673,11 @@
   .role-pill.tech {
     background: rgba(46, 207, 154, 0.18);
     border-color: rgba(46, 207, 154, 0.5);
-    color: #d7ffee;
+    color: var(--fxn-pill-text-success);
   }
 
   .pill.ok {
-    background: rgba(52, 211, 153, 0.16);
+    background: color-mix(in srgb, var(--fxn-success) 13%, var(--fxn-surface-soft));
     border-color: rgba(52, 211, 153, 0.38);
   }
 
@@ -707,7 +707,7 @@
   .overlay-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(6, 10, 14, 0.68);
+    background: var(--fxn-surface-soft);
     display: grid;
     place-items: center;
     z-index: 200;
@@ -719,8 +719,8 @@
     max-height: 85vh;
     overflow: auto;
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(15, 25, 35, 0.98);
+    border: 1px solid var(--fxn-border-strong);
+    background: var(--fxn-surface);
     padding: 1rem;
     display: grid;
     gap: 1rem;
@@ -869,7 +869,7 @@
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0.5rem;
-    background: rgba(10, 18, 32, 0.55);
+    background: var(--fxn-surface-soft);
     border: 1px solid var(--fxn-border);
     border-radius: 0.75rem;
     padding: 0.6rem 0.75rem;
@@ -929,7 +929,7 @@
     padding: 0.6rem;
     border-radius: 0.8rem;
     border: 1px solid var(--fxn-border);
-    background: rgba(12, 20, 35, 0.45);
+    background: color-mix(in srgb, var(--fxn-surface-soft) 65%, transparent);
     min-width: 0;
     width: 100%;
     box-sizing: border-box;
@@ -1099,7 +1099,7 @@
 .overlay-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(6, 10, 14, 0.68);
+  background: var(--fxn-surface-soft);
   display: grid;
   place-items: center;
   z-index: 200;
@@ -1111,8 +1111,8 @@
   max-height: 85vh;
   overflow: auto;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(15, 25, 35, 0.98);
+  border: 1px solid var(--fxn-border-strong);
+  background: var(--fxn-surface);
   padding: 1rem;
   display: grid;
   gap: 1rem;

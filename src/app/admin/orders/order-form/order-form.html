@@ -58,6 +58,19 @@
 
           @for (line of lines.controls; track $index) {
             <div class="line-card" [formGroup]="lineGroup($index)">
+              <div class="line-card-header">
+                <span class="line-num">Article {{ $index + 1 }}</span>
+                <button
+                  class="btn-remove-line"
+                  type="button"
+                  (click)="removeLine($index)"
+                  [disabled]="lines.length <= 1"
+                  title="Supprimer cette ligne"
+                >
+                  <i class="bi bi-trash"></i>
+                  Supprimer
+                </button>
+              </div>
               <div class="line-grid">
                 <label class="line-field designation">
                   Désignation
@@ -79,11 +92,11 @@
                   <input type="text" formControlName="description" placeholder="Précisions (optionnel)" />
                 </label>
                 <label class="line-field unit-price">
-                  Prix unitaire
-                  <input type="number" min="0" formControlName="unitPrice" />
+                  Prix unitaire HT
+                  <input type="number" min="0" step="0.01" formControlName="unitPrice" />
                 </label>
                 <div class="line-total">
-                  <div class="label">Total de la ligne</div>
+                  <div class="label">Total HT de la ligne</div>
                   <div class="value">{{ formatCurrency(lineTotal($index)) }}</div>
                 </div>
                 <div class="line-field tva-row">
@@ -91,10 +104,20 @@
                     <input type="checkbox" formControlName="applyTva" />
                     <span>TVA</span>
                   </label>
-                  <button class="btn-outline danger btn-remove" type="button" (click)="removeLine($index)" [disabled]="lines.length <= 1">
-                    <i class="bi bi-x"></i>
-                    Retirer
-                  </button>
+                  @if (lineGroup($index).get('applyTva')?.value) {
+                    <label class="tva-rate-label">
+                      <input
+                        class="tva-rate-input"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        formControlName="tvaRate"
+                        title="Taux TVA (%)"
+                      />
+                      <span class="tva-rate-symbol">%</span>
+                    </label>
+                  }
                 </div>
               </div>
             </div>

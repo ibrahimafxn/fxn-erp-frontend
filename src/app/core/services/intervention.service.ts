@@ -45,23 +45,38 @@ export type InterventionSummaryItem = {
   technician: string;
   total: number;
   racPavillon: number;
+  racAerien?: number;
+  racFacade?: number;
   racImmeuble: number;
   reconnexion: number;
   racF8: number;
+  fourreauBeton?: number;     // FOURREAU_CASSE_BETON (nouveau)
   racProS: number;
   racProC?: number;
   prestaCompl?: number;
   sav: number;
   clem: number;
+  deplacementPrise?: number;  // DEPLACEMENT_PRISE (ex deprise)
+  /** @deprecated Utiliser deplacementPrise */
   deprise?: number;
   demo?: number;
   refrac?: number;
   refcDgr?: number;
   savExp?: number;
-  cablePav1: number;
-  cablePav2: number;
-  cablePav3: number;
-  cablePav4: number;
+  deplacementOffert?: number;
+  deplacementATort?: number;
+  swapEquipement?: number;
+  bifibre?: number;           // BIFIBRE (nouveau)
+  nacelle?: number;           // NACELLE (nouveau)
+  cableSl?: number;           // CABLE_SL (ex cablePav1/2/3/4)
+  /** @deprecated Utiliser cableSl */
+  cablePav1?: number;
+  /** @deprecated Utiliser cableSl */
+  cablePav2?: number;
+  /** @deprecated Utiliser cableSl */
+  cablePav3?: number;
+  /** @deprecated Utiliser cableSl */
+  cablePav4?: number;
   racAutre: number;
   other: number;
 };
@@ -69,23 +84,38 @@ export type InterventionSummaryItem = {
 export type InterventionTotals = {
   total: number;
   racPavillon: number;
+  racAerien?: number;
+  racFacade?: number;
   racImmeuble: number;
   reconnexion: number;
   racF8: number;
+  fourreauBeton?: number;     // FOURREAU_CASSE_BETON (nouveau)
   racProS: number;
   racProC?: number;
   prestaCompl?: number;
   sav: number;
   clem: number;
+  deplacementPrise?: number;  // DEPLACEMENT_PRISE (ex deprise)
+  /** @deprecated Utiliser deplacementPrise */
   deprise?: number;
   demo?: number;
   refrac?: number;
   refcDgr?: number;
   savExp?: number;
-  cablePav1: number;
-  cablePav2: number;
-  cablePav3: number;
-  cablePav4: number;
+  deplacementOffert?: number;
+  deplacementATort?: number;
+  swapEquipement?: number;
+  bifibre?: number;           // BIFIBRE (nouveau)
+  nacelle?: number;           // NACELLE (nouveau)
+  cableSl?: number;           // CABLE_SL (ex cablePav1/2/3/4)
+  /** @deprecated Utiliser cableSl */
+  cablePav1?: number;
+  /** @deprecated Utiliser cableSl */
+  cablePav2?: number;
+  /** @deprecated Utiliser cableSl */
+  cablePav3?: number;
+  /** @deprecated Utiliser cableSl */
+  cablePav4?: number;
   racAutre: number;
   other: number;
 };
@@ -195,6 +225,10 @@ export type InterventionImportTicket = {
   techFull?: string;
   reason?: string;
   status?: string;
+  correctedCode?: string;
+  correctedLabel?: string;
+  resolvedAt?: string;
+  resolutionType?: string;
   importBatchId?: {
     _id?: string;
     originalName?: string;
@@ -450,6 +484,20 @@ export class InterventionService {
     return this.http.get<{ success: boolean; data: InterventionImportTicketResponse }>(
       `${this.baseUrl}/import-tickets`,
       { params }
+    );
+  }
+
+  resolveImportTicket(ticketId: string, payload: { code: string; label?: string }) {
+    return this.http.patch<{ success: boolean; data: InterventionImportTicket }>(
+      `${this.baseUrl}/import-tickets/${ticketId}/resolve`,
+      payload
+    );
+  }
+
+  resolveImportTicketAuto(ticketId: string) {
+    return this.http.post<{ success: boolean; data: InterventionImportTicket }>(
+      `${this.baseUrl}/import-tickets/${ticketId}/resolve-auto`,
+      {}
     );
   }
 

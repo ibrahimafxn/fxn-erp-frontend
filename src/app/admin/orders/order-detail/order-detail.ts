@@ -35,6 +35,10 @@ export class OrderDetail {
   readonly importError = signal<string | null>(null);
   readonly importResult = signal<string | null>(null);
   readonly importConfirmOpen = signal(false);
+  readonly deleteLineId = signal<string | null>(null);
+  readonly deleteLineConfirmOpen = signal(false);
+  readonly deletingLine = signal(false);
+  readonly deleteLineError = signal<string | null>(null);
   readonly isImportable = computed(() => {
     const status = this.normalizeStatus(this.order()?.status);
     if (!status) return false;
@@ -124,6 +128,48 @@ export class OrderDetail {
   cancelImportModal(): void {
     if (this.importLoading()) return;
     this.importConfirmOpen.set(false);
+  }
+
+  openDeleteLineModal(lineId: string): void {
+    this.deleteLineId.set(lineId);
+    this.deleteLineError.set(null);
+    this.deleteLineConfirmOpen.set(true);
+  }
+
+  cancelDeleteLineModal(): void {
+    if (this.deletingLine()) return;
+    this.deleteLineConfirmOpen.set(false);
+    this.deleteLineId.set(null);
+  }
+
+  confirmDeleteLine(): void {
+    const orderId = this.order()?._id;
+    const lineId = this.deleteLineId();
+    if (!orderId || !lineId || this.deletingLine()) return;
+
+    this.deletingLine.set(true);
+    this.deleteLineError.set(null);
+    this.orders.removeLineFromOrder(orderId, lineId).subscribe({
+      next: (res) => {
+        this.order.set(res.data || null);
+        this.deletingLine.set(false);
+        this.deleteLineConfirmOpen.set(false);
+        this.deleteLineId.set(null);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.deletingLine.set(false);
+        const apiMsg =
+          typeof err.error === 'object' && err.error !== null && 'message' in err.error
+            ? String((err.error as { message?: unknown }).message ?? '')
+            : '';
+        this.deleteLineError.set(apiMsg || err.message || 'Erreur suppression ligne');
+      }
+    });
+  }
+
+  deleteLineEntityName(): string {
+    const line = this.order()?.lines?.find(l => l._id === this.deleteLineId());
+    return line?.name ?? 'cette ligne';
   }
 
   confirmImport(): void {

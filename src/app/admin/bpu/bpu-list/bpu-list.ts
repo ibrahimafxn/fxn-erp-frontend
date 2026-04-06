@@ -11,7 +11,12 @@ import { UserService } from '../../../core/services/user.service';
 import { BpuEntry, BpuSelection, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { downloadBlob } from '../../../core/utils/download';
+import { environment } from '../../../environments/environment';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
+import {
+  INTERVENTION_PRESTATION_FIELDS,
+  InterventionPrestationField
+} from '../../../core/constant/intervention-prestations';
 
 type Segment = 'AUTO' | 'SALARIE' | 'AUTRE';
 type ConfirmAction = 'saveSelection' | 'updateCode' | 'addPrestation' | 'deletePersonalized';
@@ -53,7 +58,50 @@ export class BpuList {
   readonly savingCodes = signal<Set<string>>(new Set());
   readonly newPrestation = signal({ prestation: '', code: '', unitPrice: 0 });
   readonly adding = signal(false);
+  readonly showStitRef = signal(false);
+  readonly stitFields: InterventionPrestationField[] = INTERVENTION_PRESTATION_FIELDS;
+  readonly BPU_STIT_PDF = 'assets/docs/bpu_list.pdf';
   readonly isTechnician = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
+  readonly stitFieldsForView = computed(() => {
+    if (!this.isTechnician()) return this.stitFields;
+    const blocked = new Set(['BIFIBRE', 'NACELLE', 'CABLE_SL', 'PLV_PRO_C']);
+    const pricedCodes = this.stitPriceByCode();
+    return this.stitFields.filter((field) => {
+      if (blocked.has(field.code)) return false;
+      return pricedCodes.has(String(field.code || '').trim().toUpperCase());
+    });
+  });
+  readonly stitPriceByCode = computed(() => {
+    const map = new Map<string, number>();
+    if (this.isTechnician()) {
+      for (const [code, price] of this.editedPrices()) {
+        const key = String(code || '').trim().toUpperCase();
+        if (!key) continue;
+        const value = Number(price);
+        if (Number.isFinite(value)) {
+          map.set(key, value);
+        }
+      }
+      return map;
+    }
+    for (const item of this.items()) {
+      const code = String(item.code || '').trim().toUpperCase();
+      if (!code) continue;
+      const price = Number(item.unitPrice);
+      if (Number.isFinite(price)) {
+        map.set(code, price);
+      }
+    }
+    return map;
+  });
+  readonly canViewStitRef = computed(() => {
+    const role = this.auth.getUserRole();
+    return role === Role.ADMIN || role === Role.DIRIGEANT || role === Role.TECHNICIEN;
+  });
+  readonly canDownloadStitPdf = computed(() => {
+    const role = this.auth.getUserRole();
+    return role === Role.ADMIN || role === Role.DIRIGEANT;
+  });
   readonly confirmOpen = signal(false);
   readonly confirmAction = signal<ConfirmAction | null>(null);
   readonly confirmContext = signal<
@@ -804,27 +852,41 @@ export class BpuList {
   }
 
   isBluePill(code?: string): boolean {
-    return code === 'RACPAV' || code === 'RACIH' || code === 'RACPRO_S' || code === 'RACPRO_C' || code === 'REFRAC' || code === 'REFC_DGR';
+    const c = code?.toUpperCase();
+    // Nouveaux codes BPU STIT 2026
+    if (c === 'RACIM' || c === 'RAC_PBO_SOUT' || c === 'RAC_PBO_AERIEN' || c === 'RAC_PBO_FACADE') return true;
+    if (c === 'PLV_PRO_S' || c === 'PLV_PRO_C') return true;
+    if (c === 'REFRAC' || c === 'REFRAC_DEGRADATION') return true;
+    // Rétrocompat anciens codes
+    if (c === 'RACPAV' || c === 'RACIH' || c === 'RACPRO_S' || c === 'RACPRO_C' || c === 'REFC_DGR') return true;
+    return false;
   }
 
   isOrangePill(code?: string): boolean {
-    return code === 'SAV';
+    return code === 'SAV' || code === 'SAV_EXP';
   }
 
   isGreenPill(code?: string): boolean {
-    return code === 'PRESTA_COMPL';
+    const c = code?.toUpperCase();
+    if (c === 'PRESTA_COMPL') return true;
+    // Codes bonus technicien
+    if (c?.startsWith('BONUS_') || c === 'SCORING_TECHNICIEN') return true;
+    return false;
   }
 
   isYellowPill(code?: string): boolean {
-    return code === 'RECOIP' || code === 'DEPLPRISE';
+    const c = code?.toUpperCase();
+    return c === 'RECOIP' || c === 'DEPLACEMENT_PRISE' || c === 'DEPLPRISE';
   }
 
   isRedText(code?: string): boolean {
-    return code === 'RACPRO_S' || code === 'RACPRO_C';
+    const c = code?.toUpperCase();
+    return c === 'PLV_PRO_S' || c === 'PLV_PRO_C' || c === 'RACPRO_S' || c === 'RACPRO_C';
   }
 
   isAquaPill(code?: string): boolean {
-    return code === 'REPFOU_PRI' || code === 'DEMO';
+    const c = code?.toUpperCase();
+    return c === 'FOURREAU_CASSE_PRIVE' || c === 'FOURREAU_CASSE_BETON' || c === 'REPFOU_PRI' || c === 'DEMO';
   }
 
   isTurquoisePill(code?: string): boolean {
@@ -832,15 +894,34 @@ export class BpuList {
   }
 
   isVioletPill(code?: string): boolean {
-    return code === 'CABLE_PAV_1' || code === 'CABLE_PAV_2' || code === 'CABLE_PAV_3' || code === 'CABLE_PAV_4';
+    const c = code?.toUpperCase();
+    // Nouveaux codes câble et matériel
+    if (c === 'CABLE_SL' || c === 'BIFIBRE' || c === 'NACELLE') return true;
+    // Rétrocompat anciens codes câble pavillon
+    if (c === 'CABLE_PAV_1' || c === 'CABLE_PAV_2' || c === 'CABLE_PAV_3' || c === 'CABLE_PAV_4') return true;
+    return false;
   }
 
+  isPenaltyPill(code?: string): boolean {
+    const c = code?.toUpperCase();
+    return (c?.startsWith('PEN_') ?? false) || c === 'SINISTRE';
+  }
+
+  stitPrice(code?: string): number | null {
+    const key = String(code || '').trim().toUpperCase();
+    if (!key) return null;
+    return this.stitPriceByCode().get(key) ?? null;
+  }
+
+
   private isCablePavCode(code?: string): boolean {
-    return code === 'CABLE_PAV_1'
-      || code === 'CABLE_PAV_2'
-      || code === 'CABLE_PAV_3'
-      || code === 'CABLE_PAV_4'
-      || code === 'CABLE_PAV_SL';
+    const c = code?.toUpperCase();
+    return c === 'CABLE_SL'
+      || c === 'CABLE_PAV_1'
+      || c === 'CABLE_PAV_2'
+      || c === 'CABLE_PAV_3'
+      || c === 'CABLE_PAV_4'
+      || c === 'CABLE_PAV_SL';
   }
 
   private apiError(err: HttpErrorResponse, fallback: string): string {

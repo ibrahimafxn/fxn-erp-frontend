@@ -151,7 +151,7 @@
             @if (showRates()) { Masquer tarifs } @else { Afficher tarifs }
           </button>
           <button class="btn-outline" type="button" (click)="resetRates()" [disabled]="rateSaving() || rateForm.pristine"><i class="bi bi-x"></i> Annuler les modifications</button>
-          <button class="btn-save" type="button" (click)="saveRates()" [disabled]="rateSaving() || rateForm.pristine"><i class="fa-solid fa-check"></i> 
+          <button class="btn-save" type="button" (click)="saveRates()" [disabled]="rateSaving() || rateForm.pristine || rateForm.invalid"><i class="fa-solid fa-check"></i> 
             @if (rateSaving()) { Sauvegarde… } @else { Enregistrer }
           </button>
         </div>

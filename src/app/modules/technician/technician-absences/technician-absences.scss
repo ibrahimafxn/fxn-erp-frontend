@@ -1,0 +1,348 @@
+/* ============================================================
+   TECHNICIAN ABSENCES — Mobile-first
+   Base = 375px+  |  md = 600px+  |  lg = 900px+
+   ============================================================ */
+
+.technician-absences {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 0.9rem;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+
+  /* ── Page header ──────────────────────────────────────────── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .page-icon {
+    font-size: 2rem;
+    color: var(--fxn-primary);
+    flex-shrink: 0;
+  }
+
+  .page-title {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: var(--fxn-font-display);
+  }
+
+  .subtitle {
+    margin: 0;
+    color: var(--fxn-text-muted);
+    font-size: 0.875rem;
+  }
+
+  /* ── Card ─────────────────────────────────────────────────── */
+  .card {
+    border-radius: 1rem;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-glass);
+    padding: 1rem;
+  }
+
+  .section-title {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--fxn-text);
+  }
+
+  /* ── Form grid ────────────────────────────────────────────── */
+  .form-grid {
+    display: grid;
+    gap: 0.85rem;
+    grid-template-columns: 1fr;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .field label {
+    font-size: 0.82rem;
+    color: var(--fxn-text-muted);
+    font-weight: 600;
+  }
+
+  .optional {
+    font-weight: 400;
+    opacity: 0.75;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    color: var(--fxn-text);
+    background: var(--fxn-surface-soft, rgba(15, 23, 42, 0.6));
+    border: 1px solid var(--fxn-border-strong, rgba(148, 163, 184, 0.25));
+    padding: 0.7rem 0.75rem;
+    border-radius: 12px;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.2);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    min-height: 44px;
+    width: 100%;
+    font-size: 0.95rem;
+  }
+
+  .field textarea {
+    min-height: 88px;
+    resize: vertical;
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: var(--fxn-text-muted);
+    opacity: 0.7;
+  }
+
+  .field select:focus,
+  .field input:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: var(--fxn-primary-border);
+    box-shadow: 0 0 0 3px var(--fxn-primary-soft);
+    background: var(--fxn-surface);
+  }
+
+  .field.full {
+    grid-column: 1 / -1;
+  }
+
+  /* ── Form actions ─────────────────────────────────────────── */
+  .form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.25rem;
+  }
+
+  .form-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+
+    .material-icons {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+  }
+
+  .form-message--error {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--fxn-danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .form-message--success {
+    background: color-mix(in srgb, var(--fxn-success) 12%, transparent);
+    color: var(--fxn-success);
+    border: 1px solid color-mix(in srgb, var(--fxn-success) 25%, transparent);
+  }
+
+  .btn-save {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* ── States ───────────────────────────────────────────────── */
+  .state {
+    padding: 0.9rem 1rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-glass);
+    color: var(--fxn-text-muted);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+
+  .state--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2rem 1rem;
+    text-align: center;
+  }
+
+  .state-icon {
+    font-size: 2.25rem;
+    opacity: 0.45;
+  }
+
+  /* ── Absence list ─────────────────────────────────────────── */
+  .absence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .absence-card {
+    background: var(--fxn-surface-soft, rgba(15, 23, 42, 0.5));
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 14px;
+    padding: 0.75rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .absence-card__header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* ── Badges ───────────────────────────────────────────────── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .badge--type {
+    background: color-mix(in srgb, var(--fxn-primary) 14%, transparent);
+    color: var(--fxn-primary);
+    border: 1px solid color-mix(in srgb, var(--fxn-primary) 28%, transparent);
+  }
+
+  .badge--status {
+    background: rgba(148, 163, 184, 0.12);
+    color: var(--fxn-text-muted);
+  }
+
+  .badge--pending {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+  }
+
+  .badge--approved {
+    background: color-mix(in srgb, var(--fxn-success) 12%, transparent);
+    color: var(--fxn-success);
+    border: 1px solid color-mix(in srgb, var(--fxn-success) 25%, transparent);
+  }
+
+  .badge--refused {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--fxn-danger);
+    border: 1px solid rgba(239, 68, 68, 0.22);
+  }
+
+  /* ── Card dates row ───────────────────────────────────────── */
+  .absence-card__dates {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: var(--fxn-text);
+
+    .material-icons {
+      font-size: 1.05rem;
+      color: var(--fxn-text-muted);
+      flex-shrink: 0;
+    }
+  }
+
+  .dates-sep {
+    color: var(--fxn-text-muted);
+    font-size: 0.85rem;
+  }
+
+  .duration {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--fxn-text-muted);
+    background: var(--fxn-surface-glass);
+    border: 1px solid var(--fxn-border);
+    border-radius: 8px;
+    padding: 0.1rem 0.5rem;
+  }
+
+  /* ── Card comment ─────────────────────────────────────────── */
+  .absence-card__comment {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--fxn-text-muted);
+    line-height: 1.45;
+    border-top: 1px solid var(--fxn-border);
+    padding-top: 0.45rem;
+  }
+
+  /* ── Card actions ─────────────────────────────────────────── */
+  .absence-card__actions {
+    border-top: 1px solid var(--fxn-border);
+    padding-top: 0.5rem;
+    margin-top: 0.1rem;
+  }
+
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--fxn-danger) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.08) !important;
+      border-color: var(--fxn-danger) !important;
+    }
+
+    .material-icons {
+      font-size: 0.95rem;
+    }
+  }
+
+  /* ── Responsive: 600px — Tablet ──────────────────────────── */
+  @media (min-width: 600px) {
+    .form-grid {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .form-actions {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .btn-save {
+      width: auto;
+      flex: 0 1 auto;
+      min-height: 40px;
+    }
+
+    .absence-card__dates {
+      flex-wrap: nowrap;
+    }
+  }
+
+  /* ── Responsive: 900px — Desktop ─────────────────────────── */
+  @media (min-width: 900px) {
+    padding: 1.25rem;
+    padding-bottom: 1.25rem;
+
+    .absence-list {
+      gap: 0.85rem;
+    }
+  }
+}

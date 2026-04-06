@@ -57,45 +57,106 @@
   gap: 1rem;
 }
 
-.identity {
+.user-hero {
+  position: relative;
+  padding: 1.75rem 1.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(160deg, var(--fxn-primary-soft) 0%, var(--fxn-surface) 60%);
+  border: 1px solid var(--fxn-border-strong);
+  box-shadow: var(--fxn-shadow-md);
   display: flex;
   align-items: center;
-  gap: .9rem;
+  gap: 1.5rem;
+  overflow: hidden;
 
-  .avatar {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    display: grid;
-    place-items: center;
-    font-weight: 800;
-    background: rgba(255, 255, 255, .08);
-    border: 1px solid rgba(255, 255, 255, .10);
-    overflow: hidden;
+  @media (max-width: 900px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
+.hero-glow {
+  position: absolute;
+  top: -90px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, var(--fxn-primary) 0%, transparent 68%);
+  opacity: 0.12;
+  pointer-events: none;
+}
 
-    span {
-      position: relative;
-      z-index: 1;
-    }
+.user-hero::after {
+  content: "";
+  position: absolute;
+  right: -110px;
+  bottom: -110px;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(246, 166, 9, 0.26), transparent 70%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.user-hero .avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 32px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 2.2rem;
+  background: linear-gradient(135deg, var(--fxn-primary-soft), var(--fxn-accent-soft));
+  border: 3px solid var(--fxn-primary-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .22),
+    0 0 0 6px color-mix(in srgb, var(--fxn-primary) 10%, transparent);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
-  .identity-text {
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    flex-wrap: wrap;
+  span {
+    position: relative;
+    z-index: 1;
+    color: var(--fxn-text);
+  }
+}
 
-    h2 {
-      margin: 0;
-      font-size: 1.15rem;
-    }
+.user-hero .identity-text {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+  position: relative;
+  z-index: 1;
+
+  h2 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+}
+
+.hero-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--fxn-text-muted);
+  font-size: .9rem;
+
+  @media (max-width: 900px) {
+    justify-content: center;
+  }
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
   }
 }
 

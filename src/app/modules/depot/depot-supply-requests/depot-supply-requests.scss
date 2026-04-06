@@ -1,7 +1,7 @@
 .page-loading {
   position: fixed;
   inset: 0;
-  background: rgba(4, 10, 20, 0.45);
+  background: color-mix(in srgb, var(--fxn-bg) 55%, transparent);
   display: grid;
   place-items: center;
   backdrop-filter: blur(6px);
@@ -14,10 +14,10 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 14px;
-  border: 1px solid rgba(88, 123, 255, 0.35);
-  background: rgba(12, 18, 30, 0.9);
-  color: #fff;
-  box-shadow: 0 20px 60px rgba(5, 10, 20, 0.45);
+  border: 1px solid var(--fxn-primary-border);
+  background: var(--fxn-surface);
+  color: var(--fxn-text);
+  box-shadow: var(--fxn-shadow-md);
 }
 
 .page-loading-text {
@@ -25,19 +25,19 @@
   flex-direction: column;
   gap: 4px;
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--fxn-text-soft);
 }
 
 .page-loading-text strong {
-  color: #fff;
+  color: var(--fxn-text);
 }
 
 .spinner {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 3px solid rgba(88, 123, 255, 0.3);
-  border-top-color: #6ba4ff;
+  border: 3px solid var(--fxn-primary-soft);
+  border-top-color: var(--fxn-primary);
   animation: spin 0.9s linear infinite;
 }
 
@@ -75,17 +75,17 @@
     min-width: 190px;
     padding: 0.55rem 0.75rem;
     border-radius: 10px;
-    border: 1px solid var(--fxn-border, #e5e7eb);
-    background: #fff;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface);
     font-weight: 600;
-    color: #0f172a;
+    color: var(--fxn-text);
     box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .filters select:focus {
     outline: none;
-    border-color: var(--fxn-primary, #2563eb);
+    border-color: var(--fxn-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   }
 
@@ -101,18 +101,18 @@
   }
 
   .status-approved {
-    background: rgba(16, 185, 129, 0.12);
-    color: #059669;
+    background: color-mix(in srgb, var(--fxn-success) 10%, var(--fxn-surface-soft));
+    color: var(--fxn-success);
   }
 
   .status-canceled {
     background: rgba(239, 68, 68, 0.12);
-    color: #dc2626;
+    color: var(--fxn-danger);
   }
 
   .status-pending {
     background: rgba(59, 130, 246, 0.12);
-    color: #2563eb;
+    color: var(--fxn-primary);
   }
 
   .availability {
@@ -123,14 +123,14 @@
     padding: 0.15rem 0.5rem;
     border-radius: 999px;
     border: 1px solid rgba(16, 185, 129, 0.35);
-    color: #34d399;
+    color: var(--fxn-success);
     font-weight: 600;
     font-size: 0.8rem;
   }
 
   .availability.low {
     border-color: rgba(239, 68, 68, 0.5);
-    color: #fca5a5;
+    color: var(--fxn-danger);
   }
 
   .decision {
@@ -141,12 +141,12 @@
 
   .decision-note {
     font-size: 0.9rem;
-    color: #0f172a;
+    color: var(--fxn-text);
   }
 
   .decision-meta {
     font-size: 0.78rem;
-    color: var(--fxn-muted, #8a97a8);
+    color: var(--fxn-muted);
   }
 
   .decision-row td {
@@ -175,18 +175,18 @@
     resize: vertical;
     padding: 0.75rem 0.9rem;
     border-radius: 12px;
-    border: 1px solid var(--fxn-border, #e5e7eb);
-    background: #fff;
+    border: 1px solid var(--fxn-border);
+    background: var(--fxn-surface);
     font-size: 0.95rem;
     line-height: 1.4;
-    color: #0f172a;
+    color: var(--fxn-text);
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .decision-panel textarea:focus {
     outline: none;
-    border-color: var(--fxn-primary, #2563eb);
+    border-color: var(--fxn-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
   }
 

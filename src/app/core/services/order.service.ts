@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export type OrderLine = {
+  _id?: string;
   resourceId: string;
   resourceType: 'MATERIAL' | 'CONSUMABLE';
   name: string;
@@ -94,6 +95,12 @@ export class OrderService {
     return this.http.get<{ success: boolean; data: Order }>(`${this.baseUrl}/${id}`);
   }
 
+  removeLineFromOrder(orderId: string, lineId: string): Observable<{ success: boolean; data: Order }> {
+    return this.http.delete<{ success: boolean; data: Order }>(
+      `${this.baseUrl}/${orderId}/lines/${lineId}`
+    );
+  }
+
   importToDepot(id: string, depotId: string): Observable<{ success: boolean; data: { count: number } }> {
     return this.http.post<{ success: boolean; data: { count: number } }>(
       `${this.baseUrl}/${id}/import-to-depot`,
@@ -107,6 +114,7 @@ export class OrderService {
       reference: string;
       client: string;
       supplier?: string;
+      supplierExists?: boolean;
       date: string;
       status: string;
       amount: number;

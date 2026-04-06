@@ -1,3 +1,37 @@
+@if (menuOpen()) {
+  <div class="nav-backdrop" (click)="closeMenu()" aria-hidden="true"></div>
+  <div class="nav-sheet" role="menu">
+    <a class="sheet-item" routerLink="/technician/interventions" (click)="closeMenu()">
+      <span class="material-icons notranslate">assignment</span>
+      <span>Interventions</span>
+    </a>
+    <a class="sheet-item" routerLink="/technician/history" (click)="closeMenu()">
+      <span class="material-icons notranslate">history</span>
+      <span>Historique</span>
+    </a>
+    <a class="sheet-item" routerLink="/technician/resources/materials" (click)="closeMenu()">
+      <span class="material-icons notranslate">handyman</span>
+      <span>Matériels</span>
+    </a>
+    <a class="sheet-item" routerLink="/technician/resources/consumables" (click)="closeMenu()">
+      <span class="material-icons notranslate">inventory_2</span>
+      <span>Consommables</span>
+    </a>
+    <a class="sheet-item" routerLink="/technician/resources/vehicles" (click)="closeMenu()">
+      <span class="material-icons notranslate">directions_car</span>
+      <span>Véhicules</span>
+    </a>
+    <a class="sheet-item" routerLink="/technician/documents" (click)="closeMenu()">
+      <span class="material-icons notranslate">folder</span>
+      <span>Documents</span>
+    </a>
+    <a class="sheet-item" routerLink="/technician/absences" (click)="closeMenu()">
+      <span class="material-icons notranslate">event_busy</span>
+      <span>Congés / Absences</span>
+    </a>
+  </div>
+}
+
 <nav class="tech-mobile-nav" aria-label="Navigation technicien">
   <a class="nav-item" routerLink="/technician" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
     <span class="material-icons notranslate">home</span>
@@ -19,4 +53,8 @@
     <span class="material-icons notranslate">event</span>
     <span class="nav-label">Agenda</span>
   </a>
+  <button type="button" class="nav-item nav-more" [class.active]="menuOpen()" (click)="toggleMenu()" aria-label="Plus de pages">
+    <span class="material-icons notranslate">{{ menuOpen() ? 'close' : 'more_horiz' }}</span>
+    <span class="nav-label">Plus</span>
+  </button>
 </nav>

@@ -1,0 +1,154 @@
+.auth-history {
+  padding: 1.5rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-header .subtitle {
+  opacity: 0.7;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.toolbar .search {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.toolbar label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.toolbar select,
+.toolbar input {
+  height: 38px;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.state {
+  padding: 1rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--fxn-surface-soft);
+  border: 1px solid var(--fxn-border-strong);
+}
+
+.pill.login {
+  background: rgba(46, 203, 137, 0.16);
+  border-color: rgba(46, 203, 137, 0.35);
+  color: var(--fxn-success);
+}
+
+.pill.logout {
+  background: rgba(248, 113, 113, 0.16);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: var(--fxn-danger);
+}
+
+.pill.success {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: var(--fxn-primary);
+}
+
+.pill.fail {
+  background: rgba(248, 113, 113, 0.16);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: var(--fxn-danger);
+}
+
+.agent {
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.audit-row td {
+  padding: 0.75rem 0.6rem 1rem;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.audit-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface);
+}
+
+.audit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.audit-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.audit-title {
+  font-weight: 700;
+}
+
+.audit-sub {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.audit-table table {
+  table-layout: fixed;
+}
+
+.method-pill {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: var(--fxn-primary);
+}
+
+@media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .audit-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

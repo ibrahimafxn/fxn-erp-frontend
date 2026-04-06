@@ -6,17 +6,66 @@
     </div>
 
     <div class="header-actions">
-      <button class="btn-outline" type="button" routerLink="/admin/bpu/osiris-mappings">
+      <button
+        class="btn-outline"
+        type="button"
+        routerLink="/admin/bpu/osiris-mappings"
+        [disabled]="!isAdmin()"
+        [attr.aria-disabled]="!isAdmin()"
+      >
         <i class="bi bi-link-45deg"></i> Mappings OSIRIS
       </button>
       <button class="btn-outline" type="button" routerLink="/admin/bpu/analyze-articles">
         <i class="bi bi-search"></i> Analyser articles OSIRIS
       </button>
+      @if (canViewStitRef()) {
+        <button class="btn-outline" type="button" (click)="showStitRef.set(!showStitRef())">
+          <i class="bi bi-table"></i> Référentiel STIT
+        </button>
+      }
+      @if (canDownloadStitPdf()) {
+        <a class="btn-outline" [href]="BPU_STIT_PDF" target="_blank" rel="noopener">
+          <i class="bi bi-file-earmark-pdf"></i> BPU STIT (PDF)
+        </a>
+      }
       <button class="btn-primary" type="button" (click)="createNew()" [disabled]="loading() || deletingId() !== null">
         <i class="bi bi-plus"></i> Nouveau
       </button>
     </div>
   </header>
+
+  @if (showStitRef()) {
+    <div class="stit-overlay" (click)="showStitRef.set(false)" role="dialog" aria-modal="true" aria-label="Référentiel BPU STIT">
+      <div class="stit-panel card" (click)="$event.stopPropagation()">
+        <div class="stit-panel-header">
+          <h2>Référentiel BPU STIT 2026</h2>
+          <button class="btn-icon subtle" type="button" (click)="showStitRef.set(false)" aria-label="Fermer">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="stit-table-wrap">
+          <table class="stit-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Prestation</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of stitFieldsForView(); track f.key) {
+                <tr>
+                  <td class="mono stit-code">{{ f.code }}</td>
+                  <td class="stit-label">{{ f.label }}</td>
+                  <td class="stit-desc">{{ f.description }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
 
   @if (success()) {
     <div class="state ok card">{{ success() }}</div>
