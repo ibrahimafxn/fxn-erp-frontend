@@ -162,85 +162,102 @@
   border-color: rgba(16, 185, 129, 0.35);
 }
 
-/* ── Table: card display on mobile ──────────────────────── */
-.technician-agenda .table {
-  padding: 0;
+/* ── Absence list — card-based ───────────────────────────── */
+.technician-agenda .absence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
 }
 
-.technician-agenda .table table {
-  display: block;
-  width: 100%;
-}
-
-.technician-agenda .table thead {
-  display: none;
-}
-
-.technician-agenda .table tbody {
-  display: grid;
-  gap: 0.75rem;
-}
-
-/* Carte 2 colonnes : Période (full width) / Type | Statut / Commentaire (full width) / Actions */
-.technician-agenda .table tbody tr {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 0.75rem;
+.technician-agenda .absence-item {
   border: 1px solid var(--fxn-border);
   border-radius: 14px;
-  padding: 0.65rem 0.85rem;
   background: var(--fxn-surface);
-}
-
-.technician-agenda .table td {
-  display: block;
-  padding: 0.2rem 0;
-  border-bottom: none;
-  font-size: 0.9rem;
-}
-
-.technician-agenda .table td::before {
-  content: attr(data-label);
-  display: block;
-  font-weight: 600;
-  color: rgba(148, 163, 184, 0.7);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 2px;
-}
-
-/* Période : pleine largeur, date de début → fin */
-.technician-agenda .table td[data-label='Période'] {
-  grid-column: 1 / -1;
-  font-weight: 600;
-}
-
-/* Commentaire : pleine largeur */
-.technician-agenda .table td[data-label='Commentaire'] {
-  grid-column: 1 / -1;
-  font-size: 0.82rem;
-  color: rgba(226, 232, 240, 0.72);
-}
-
-.technician-agenda .table td.actions {
-  grid-column: 1 / -1;
+  padding: 0.7rem 0.85rem;
   display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.technician-agenda .absence-row-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
-  padding-top: 0.4rem;
-  margin-top: 0.2rem;
-  border-top: 1px solid var(--fxn-border);
 }
 
-.technician-agenda .table td.actions::before {
-  display: none;
+.technician-agenda .absence-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
 }
 
-.technician-agenda .table td.actions .btn-outline,
-.technician-agenda .table td.actions .delete {
-  flex: 1 1 auto;
+.technician-agenda .absence-type {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--fxn-text);
+}
+
+.technician-agenda .absence-dates {
+  font-size: 0.78rem;
+  color: var(--fxn-text-muted);
+}
+
+.technician-agenda .absence-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.technician-agenda .absence-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.technician-agenda .btn-row-edit,
+.technician-agenda .btn-row-delete {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  min-height: 40px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--fxn-border);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.technician-agenda .btn-row-edit {
+  color: var(--fxn-primary);
+}
+
+.technician-agenda .btn-row-edit:hover {
+  background: var(--fxn-primary-soft);
+  border-color: var(--fxn-primary-border);
+}
+
+.technician-agenda .btn-row-delete {
+  color: var(--fxn-danger);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.technician-agenda .btn-row-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.technician-agenda .absence-comment {
+  font-size: 0.78rem;
+  color: var(--fxn-text-muted);
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--fxn-border);
 }
 
 body.theme-default .technician-agenda thead th {
@@ -292,79 +309,14 @@ body.theme-default .technician-agenda thead th {
     justify-content: space-between;
   }
 
-  /* Restore table */
-  .technician-agenda .table table {
-    display: table;
-    border-collapse: collapse;
-    border-spacing: 0;
-    min-width: 560px;
+  .technician-agenda .absence-list {
+    gap: 0.5rem;
   }
 
-  .technician-agenda .table thead {
-    display: table-header-group;
-  }
-
-  .technician-agenda .table thead th {
-    text-align: left;
-    padding: 0.75rem 0.9rem;
-    font-size: 0.8rem;
-    color: var(--fxn-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    border-bottom: 1px solid var(--fxn-border);
-  }
-
-  .technician-agenda .table tbody {
-    display: table-row-group;
-    gap: 0;
-  }
-
-  .technician-agenda .table tbody tr {
-    display: table-row;
-    grid-template-columns: unset;
-    border-radius: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
-  }
-
-  .technician-agenda .table td {
-    display: table-cell;
-    padding: 0.75rem 0.9rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    vertical-align: middle;
-    overflow: unset;
-    text-overflow: unset;
-    font-size: inherit;
-    font-weight: inherit;
-    color: inherit;
-  }
-
-  .technician-agenda .table td[data-label='Période'],
-  .technician-agenda .table td[data-label='Commentaire'] {
-    grid-column: unset;
-    font-size: inherit;
-    font-weight: inherit;
-    color: inherit;
-  }
-
-  .technician-agenda .table td::before {
-    display: none;
-  }
-
-  .technician-agenda .table td.actions {
-    grid-column: unset;
-    display: table-cell;
-    border-top: none;
-    margin-top: 0;
-    justify-content: flex-end;
-    white-space: nowrap;
-    padding: 0.75rem 0.9rem;
-  }
-
-  .technician-agenda .table td.actions .btn-outline {
-    flex: 0 0 auto;
-    min-height: 36px;
+  .technician-agenda .list-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }
 

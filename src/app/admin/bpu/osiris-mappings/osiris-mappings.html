@@ -162,3 +162,24 @@
     </div>
   }
 </section>
+
+<app-confirm-action-modal
+  [open]="deactivateModalOpen()"
+  [title]="'Confirmer la désactivation'"
+  [message]="'Désactiver le mapping « ' + (pendingDeactivate()?.osirisCode || '') + ' » vers « ' + (pendingDeactivate()?.canonicalCode || '') + ' » ?'"
+  [confirmText]="'Désactiver'"
+  [cancelText]="'Annuler'"
+  [confirming]="deactivateLoading()"
+  [tone]="'danger'"
+  (cancel)="closeDeactivateModal()"
+  (confirm)="confirmDeactivate()">
+</app-confirm-action-modal>
+
+<app-confirm-delete-modal
+  [open]="deleteModalOpen()"
+  [entityLabel]="'mapping'"
+  [entityName]="(pendingDelete()?.osirisCode || '') + ' → ' + (pendingDelete()?.canonicalCode || '')"
+  [confirming]="deleteLoading()"
+  (cancel)="closeDeleteModal()"
+  (confirm)="confirmDelete()">
+</app-confirm-delete-modal>

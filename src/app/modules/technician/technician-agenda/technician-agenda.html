@@ -101,40 +101,33 @@
     } @else if (absences().length === 0) {
       <div class="state empty">Aucune demande.</div>
     } @else {
-      <div class="table">
-        <table>
-          <thead>
-            <tr>
-              <th>Période</th>
-              <th>Type</th>
-              <th>Statut</th>
-              <th>Commentaire</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (a of absences(); track a._id || a.startDate) {
-              <tr>
-                <td data-label="Période">{{ formatDate(a.startDate) }} → {{ formatDate(a.endDate) }}</td>
-                <td data-label="Type">{{ a.type }}</td>
-                <td data-label="Statut">
-                  <span class="status-pill" [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span>
-                </td>
-                <td data-label="Commentaire">{{ a.comment || '—' }}</td>
-                <td data-label="Actions" class="actions">
-                  @if (a.status === 'EN_ATTENTE') {
-                    <button class="btn-outline btn-info-outline" type="button" (click)="startEdit(a)">
-                      Modifier
+      <div class="absence-list">
+        @for (a of absences(); track a._id || a.startDate) {
+          <div class="absence-item">
+            <div class="absence-row-main">
+              <div class="absence-left">
+                <span class="absence-type">{{ a.type }}</span>
+                <span class="absence-dates">{{ formatDate(a.startDate) }} → {{ formatDate(a.endDate) }}</span>
+              </div>
+              <div class="absence-right">
+                <span class="status-pill" [class]="statusClass(a.status)">{{ statusLabel(a.status) }}</span>
+                @if (a.status === 'EN_ATTENTE') {
+                  <div class="absence-actions">
+                    <button class="btn-row-edit" type="button" title="Modifier" (click)="startEdit(a)">
+                      <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn-outline delete" type="button" title="Supprimer" (click)="deleteAbsence(a)" [disabled]="deletingId() === a._id">
-                      @if (deletingId() === a._id) { Suppression… } @else { Supprimer }
+                    <button class="btn-row-delete" type="button" title="Supprimer" (click)="deleteAbsence(a)" [disabled]="deletingId() === a._id">
+                      <i class="bi bi-trash"></i>
                     </button>
-                  }
-                </td>
-              </tr>
+                  </div>
+                }
+              </div>
+            </div>
+            @if (a.comment) {
+              <div class="absence-comment">{{ a.comment }}</div>
             }
-          </tbody>
-        </table>
+          </div>
+        }
       </div>
     }
   </section>

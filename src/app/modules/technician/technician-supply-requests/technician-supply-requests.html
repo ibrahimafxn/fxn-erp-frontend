@@ -73,99 +73,62 @@
       </div>
     </div>
 
-    <div class="pager" *ngIf="total() > limit()">
-      <div class="pager-left">
-        <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-      </div>
-      <div class="pager-right">
-        <div class="pager-nav">
-          <button class="btn-outline btn-xs" [disabled]="!canPrev()" (click)="prevPage()">Précédent</button>
-          <button class="btn-outline btn-xs" [disabled]="!canNext()" (click)="nextPage()">Suivant</button>
-        </div>
-      </div>
-    </div>
-
     @if (loading()) {
       <div class="state">Chargement…</div>
     } @else if (items().length === 0) {
       <div class="state">Aucune demande.</div>
     } @else {
-      <div class="pager">
-        <div class="pager-left">
-          <div class="page-size">
-            <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
-            <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
-            <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+      @if (total() > limit()) {
+        <div class="pager">
+          <div class="pager-left">
+            <div class="page-size">
+              <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+              <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+              <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+            </div>
+            <span class="pager-label">Éléments par page</span>
           </div>
-          <span class="pager-label">Éléments par page</span>
-        </div>
-        <div class="pager-right">
-          <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
-          <div class="pager-nav">
-            <button class="btn-outline btn-xs" [disabled]="!canPrev()" (click)="prevPage()">Précédent</button>
-            <button class="btn-outline btn-xs" [disabled]="!canNext()" (click)="nextPage()">Suivant</button>
+          <div class="pager-right">
+            <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+            <div class="pager-nav">
+              <button class="btn-outline" type="button" [disabled]="!canPrev()" (click)="prevPage()"><i class="bi bi-chevron-left"></i></button>
+              <button class="btn-outline" type="button" [disabled]="!canNext()" (click)="nextPage()"><i class="bi bi-chevron-right"></i></button>
+            </div>
           </div>
         </div>
-      </div>
+      }
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th class="sortable" (click)="toggleSort('date')">
-                <span>Date</span>
-                <span class="material-icons notranslate sort-icon">{{ sortIcon('date') }}</span>
-              </th>
-              <th class="sortable" (click)="toggleSort('resource')">
-                <span>Ressource</span>
-                <span class="material-icons notranslate sort-icon">{{ sortIcon('resource') }}</span>
-              </th>
-              <th class="sortable" (click)="toggleSort('type')">
-                <span>Type</span>
-                <span class="material-icons notranslate sort-icon">{{ sortIcon('type') }}</span>
-              </th>
-              <th class="sortable" (click)="toggleSort('quantity')">
-                <span>Quantité</span>
-                <span class="material-icons notranslate sort-icon">{{ sortIcon('quantity') }}</span>
-              </th>
-              <th class="sortable" (click)="toggleSort('status')">
-                <span>Statut</span>
-                <span class="material-icons notranslate sort-icon">{{ sortIcon('status') }}</span>
-              </th>
-              <th>Commentaire</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of sortedItems(); track item._id) {
-              <tr>
-                <td data-label="Date">{{ formattedDate(item.createdAt) }}</td>
-                <td data-label="Ressource">{{ resourceLabel(item) }}</td>
-                <td data-label="Type">{{ item.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
-                <td data-label="Quantité">{{ item.quantity }}</td>
-                <td data-label="Statut"><span class="status-pill" [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span></td>
-                <td data-label="Commentaire">
-                  @if (item.status !== 'PENDING') {
-                    <div class="decision">
-                      <div class="decision-note">{{ item.decisionNote || '—' }}</div>
-                      <div class="decision-meta">{{ formattedDate(item.decidedAt) }}</div>
-                    </div>
-                  } @else {
-                    —
-                  }
-                </td>
-                <td class="actions" data-label="Actions">
-                  @if (item.status === 'PENDING') {
-                    <button class="btn-outline btn-xs edit" type="button" title="Modifier" (click)="editRequest(item)">Modifier</button>
-                    <button class="btn-outline btn-xs delete" type="button" title="Supprimer" (click)="openDeleteModal(item)">
-                      @if (deletingId() === item._id) { Suppression… } @else { Supprimer }
+      <div class="supply-list">
+        @for (item of sortedItems(); track item._id) {
+          <div class="supply-item">
+            <div class="supply-row-main">
+              <div class="supply-left">
+                <span class="supply-resource">{{ resourceLabel(item) }}</span>
+                <span class="supply-meta">
+                  {{ item.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}
+                  · Qté {{ item.quantity }}
+                  · {{ formattedDate(item.createdAt) }}
+                </span>
+              </div>
+              <div class="supply-right">
+                <span class="status-pill" [class]="statusClass(item.status)">{{ statusLabel(item.status) }}</span>
+                @if (item.status === 'PENDING') {
+                  <div class="supply-actions">
+                    <button class="btn-row-edit" type="button" title="Modifier" (click)="editRequest(item)">
+                      <i class="bi bi-pencil"></i>
                     </button>
-                  }
-                </td>
-              </tr>
+                    <button class="btn-row-delete" type="button" title="Supprimer" (click)="openDeleteModal(item)" [disabled]="deletingId() === item._id">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+            @if (item.status !== 'PENDING' && item.decisionNote) {
+              <div class="supply-note">{{ item.decisionNote }} · {{ formattedDate(item.decidedAt) }}</div>
             }
-          </tbody>
-        </table>
+          </div>
+        }
       </div>
     }
 

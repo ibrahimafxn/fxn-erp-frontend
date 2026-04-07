@@ -191,6 +191,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .technician-charges .filters {
@@ -210,18 +211,133 @@
   min-height: 44px;
 }
 
-/* ── Table: card display on mobile ──────────────────────── */
+/* ── Charges list — card-based mobile ───────────────────── */
+.technician-charges .charges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.technician-charges .charge-item {
+  border: 1px solid var(--fxn-border);
+  border-radius: 14px;
+  background: var(--fxn-surface);
+  padding: 0.7rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.technician-charges .charge-row-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.technician-charges .charge-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.technician-charges .charge-type-badge {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--fxn-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.technician-charges .charge-month {
+  font-size: 0.78rem;
+  color: var(--fxn-text-muted);
+}
+
+.technician-charges .charge-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.technician-charges .charge-amount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--fxn-text);
+  white-space: nowrap;
+}
+
+.technician-charges .charge-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.technician-charges .btn-row-edit,
+.technician-charges .btn-row-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--fxn-border);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.technician-charges .btn-row-edit {
+  color: var(--fxn-primary);
+}
+
+.technician-charges .btn-row-edit:hover {
+  background: var(--fxn-primary-soft);
+  border-color: var(--fxn-primary-border);
+}
+
+.technician-charges .btn-row-delete {
+  color: var(--fxn-danger);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.technician-charges .btn-row-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.technician-charges .charge-note {
+  font-size: 0.78rem;
+  color: var(--fxn-text-muted);
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--fxn-border);
+}
+
+/* ── Table: card display on mobile (benefit table) ──────── */
 .technician-charges .table {
   padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .technician-charges .card-table {
   margin-top: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .technician-charges table {
   display: block;
   width: 100%;
+  max-width: 100%;
 }
 
 .technician-charges thead {
@@ -234,7 +350,6 @@
   gap: 0.6rem;
 }
 
-/* ── Base card style (shared) ────────────────────────────── */
 .technician-charges tbody tr {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -243,6 +358,9 @@
   border-radius: 14px;
   padding: 0.65rem 0.85rem;
   background: var(--fxn-surface);
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .technician-charges tbody td {
@@ -251,6 +369,7 @@
   border: none;
   font-size: 0.9rem;
   word-break: break-word;
+  min-width: 0;
 }
 
 .technician-charges tbody td::before {
@@ -262,64 +381,6 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 3px;
-}
-
-/* ── Liste des charges : Type | Montant / Mois / Note / Actions ── */
-
-/* Type col gauche, Montant col droite */
-.technician-charges .list-card td[data-label='Type'] {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.technician-charges .list-card td[data-label='Montant'] {
-  grid-column: 2;
-  grid-row: 1;
-  text-align: right;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #f8fafc;
-}
-
-/* Mois : pleine largeur, petite */
-.technician-charges .list-card td[data-label='Mois'] {
-  grid-column: 1 / -1;
-  grid-row: 2;
-  font-size: 0.82rem;
-  color: rgba(148, 163, 184, 0.85);
-}
-
-/* Note : pleine largeur */
-.technician-charges .list-card td[data-label='Note'] {
-  grid-column: 1 / -1;
-  grid-row: 3;
-  font-size: 0.82rem;
-  color: rgba(226, 232, 240, 0.65);
-}
-
-/* Actions : pleine largeur, boutons côte à côte */
-.technician-charges .list-card td.actions {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 0.5rem;
-  padding-top: 0.5rem;
-  margin-top: 0.25rem;
-  border-top: 1px solid var(--fxn-border);
-}
-
-.technician-charges .list-card td.actions::before {
-  display: none;
-}
-
-.technician-charges .list-card td.actions .btn-outline {
-  flex: 1 1 auto;
-  justify-content: center;
-  min-height: 42px;
-}
-
-.technician-charges .list-card td.actions .btn-outline.delete {
-  border-color: rgba(239, 68, 68, 0.45);
-  color: var(--fxn-danger);
 }
 
 /* ── Table bénéfices : Mois | Bénéfice / CA | Charges ────── */
@@ -401,6 +462,10 @@
 
 /* ── Responsive: 600px — Tablet ─────────────────────────── */
 @media (min-width: 600px) {
+  .technician-charges {
+    padding-bottom: 1.25rem;
+  }
+
   .technician-charges .form-grid {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
@@ -446,7 +511,12 @@
     min-height: 40px;
   }
 
-  /* Switch table back to normal layout */
+  /* Switch benefit table back to normal layout */
+  .technician-charges .table,
+  .technician-charges .card-table {
+    overflow: visible;
+  }
+
   .technician-charges table {
     display: table;
     border-collapse: collapse;
@@ -485,10 +555,6 @@
   }
 
   .technician-charges tbody td,
-  .technician-charges .list-card td[data-label='Type'],
-  .technician-charges .list-card td[data-label='Montant'],
-  .technician-charges .list-card td[data-label='Mois'],
-  .technician-charges .list-card td[data-label='Note'],
   .technician-charges .benefit-card td[data-label='Mois'],
   .technician-charges .benefit-card td[data-label='Bénéfice'],
   .technician-charges .benefit-card td[data-label='CA'],
@@ -511,25 +577,28 @@
     display: none;
   }
 
-  .technician-charges .list-card td.actions,
-  .technician-charges tbody td.actions {
-    display: table-cell;
-    grid-column: unset;
-    padding: 0.75rem 0.9rem;
-    border-top: none;
-    margin-top: 0;
-    text-align: right;
-    white-space: nowrap;
+  /* Charges list stays card-based on tablet too — just wider */
+  .technician-charges .charges-list {
+    gap: 0.5rem;
   }
 
-  .technician-charges .list-card td.actions .btn-outline {
-    flex: 0 0 auto;
-    min-height: 36px;
+  .technician-charges .list-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .technician-charges .list-card td.actions .btn-outline.delete {
-    border-color: rgba(239, 68, 68, 0.35);
-    color: var(--fxn-danger);
+  .technician-charges .filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+  }
+
+  .technician-charges .filters select,
+  .technician-charges .filters input {
+    width: auto;
+    flex: 1 1 160px;
+    min-height: 40px;
   }
 
   .technician-charges .pager {

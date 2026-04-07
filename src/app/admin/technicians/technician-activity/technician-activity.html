@@ -147,10 +147,10 @@
                   <td class="prestations-cell">
                     @if (prestationsSummary(it).length) {
                       <div class="prestations-summary">
-                        @for (item of prestationsSummary(it); track item.label) {
-                          <span class="prestations-pill" [class]="item.className">
-                            <span class="qty">{{ item.value }}</span>
-                            <span>{{ item.label }}</span>
+                        @for (item of prestationsSummary(it); track item.code) {
+                          <span class="prestations-pill">
+                            <span class="qty">{{ item.qty }}</span>
+                            <span class="pill-label">{{ item.code }}</span>
                           </span>
                         }
                       </div>

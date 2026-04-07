@@ -9,12 +9,14 @@ import {
   OsirisCodeMapping,
   CreateMappingDto
 } from '../../../core/services/osiris-mapping.service';
+import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
+import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-osiris-mappings',
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ConfirmActionModal, ConfirmDeleteModal],
   templateUrl: './osiris-mappings.html',
   styleUrls: ['./osiris-mappings.scss']
 })
@@ -39,6 +41,12 @@ export class OsirisMappings implements OnInit {
   readonly editLabel = signal('');
   readonly editLoading = signal(false);
   readonly editError = signal<string | null>(null);
+  readonly deactivateModalOpen = signal(false);
+  readonly deleteModalOpen = signal(false);
+  readonly pendingDeactivate = signal<OsirisCodeMapping | null>(null);
+  readonly pendingDelete = signal<OsirisCodeMapping | null>(null);
+  readonly deactivateLoading = signal(false);
+  readonly deleteLoading = signal(false);
 
   ngOnInit(): void {
     this.load();
@@ -134,11 +142,64 @@ export class OsirisMappings implements OnInit {
   }
 
   deactivate(id: string): void {
-    this.svc.deactivate(id).subscribe({ next: () => this.load() });
+    const mapping = this.mappings().find((item) => item._id === id) || null;
+    if (!mapping) return;
+    this.pendingDeactivate.set(mapping);
+    this.deactivateModalOpen.set(true);
   }
 
   remove(id: string): void {
-    if (!confirm('Supprimer ce mapping ? Cette action est irréversible.')) return;
-    this.svc.remove(id).subscribe({ next: () => this.load() });
+    const mapping = this.mappings().find((item) => item._id === id) || null;
+    if (!mapping) return;
+    this.pendingDelete.set(mapping);
+    this.deleteModalOpen.set(true);
+  }
+
+  closeDeactivateModal(): void {
+    if (this.deactivateLoading()) return;
+    this.deactivateModalOpen.set(false);
+    this.pendingDeactivate.set(null);
+  }
+
+  confirmDeactivate(): void {
+    const mapping = this.pendingDeactivate();
+    if (!mapping?._id) return;
+    this.deactivateLoading.set(true);
+    this.svc.deactivate(mapping._id).subscribe({
+      next: () => {
+        this.deactivateLoading.set(false);
+        this.deactivateModalOpen.set(false);
+        this.pendingDeactivate.set(null);
+        this.load();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.deactivateLoading.set(false);
+        this.error.set(err.error?.message || 'Erreur désactivation');
+      }
+    });
+  }
+
+  closeDeleteModal(): void {
+    if (this.deleteLoading()) return;
+    this.deleteModalOpen.set(false);
+    this.pendingDelete.set(null);
+  }
+
+  confirmDelete(): void {
+    const mapping = this.pendingDelete();
+    if (!mapping?._id) return;
+    this.deleteLoading.set(true);
+    this.svc.remove(mapping._id).subscribe({
+      next: () => {
+        this.deleteLoading.set(false);
+        this.deleteModalOpen.set(false);
+        this.pendingDelete.set(null);
+        this.load();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.deleteLoading.set(false);
+        this.error.set(err.error?.message || 'Erreur suppression');
+      }
+    });
   }
 }

@@ -3,28 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export type TechnicianReportPrestation = { code: string; qty: number };
+
 export type TechnicianReport = {
   _id: string;
   reportDate: string;
   amount?: number;
   interventionsCount?: number;
-  prestations?: {
-    professionnel?: number;
-    pavillon?: number;
-    aerien?: number;
-    facade?: number;
-    immeuble?: number;
-    racProC?: number;
-    prestaComplementaire?: number;
-    reconnexion?: number;
-    /** @deprecated Remplacé par deplacementOffert / deplacementATort / swapEquipement / savExp */
-    sav?: number;
-    savExp?: number;
-    deplacementOffert?: number;
-    deplacementATort?: number;
-    swapEquipement?: number;
-    prestationF8?: number;
-  };
+  prestations?: TechnicianReportPrestation[];
   comment?: string;
   technician?: { _id: string; firstName?: string; lastName?: string; email?: string };
   depot?: { _id: string; name?: string; city?: string };
@@ -37,6 +23,19 @@ export type TechnicianReportList = {
   page: number;
   limit: number;
   items: TechnicianReport[];
+};
+
+type CreatePayload = {
+  date?: string;
+  interventionsCount?: number;
+  prestations?: TechnicianReportPrestation[];
+  comment?: string;
+};
+
+type UpdatePayload = {
+  interventionsCount?: number;
+  prestations?: TechnicianReportPrestation[];
+  comment?: string;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -65,11 +64,11 @@ export class TechnicianReportService {
     return this.http.get<{ success: boolean; data: TechnicianReportList }>(this.baseUrl, { params: httpParams });
   }
 
-  create(payload: { date?: string; interventionsCount?: number; prestations?: TechnicianReport['prestations']; comment?: string }): Observable<{ success: boolean; data: TechnicianReport }> {
+  create(payload: CreatePayload): Observable<{ success: boolean; data: TechnicianReport }> {
     return this.http.post<{ success: boolean; data: TechnicianReport }>(this.baseUrl, payload);
   }
 
-  update(id: string, payload: { interventionsCount?: number; prestations?: TechnicianReport['prestations']; comment?: string }): Observable<{ success: boolean; data: TechnicianReport }> {
+  update(id: string, payload: UpdatePayload): Observable<{ success: boolean; data: TechnicianReport }> {
     return this.http.put<{ success: boolean; data: TechnicianReport }>(`${this.baseUrl}/${id}`, payload);
   }
 
@@ -77,10 +76,12 @@ export class TechnicianReportService {
     return this.http.delete<{ success: boolean }>(`${this.baseUrl}/${id}`);
   }
 
-  summary(params?: { fromDate?: string; toDate?: string; technicianId?: string; depotId?: string }): Observable<{
-    success: boolean;
-    data: { totalAmount: number; count: number };
-  }> {
+  summary(params?: {
+    fromDate?: string;
+    toDate?: string;
+    technicianId?: string;
+    depotId?: string;
+  }): Observable<{ success: boolean; data: { totalAmount: number; count: number } }> {
     let httpParams = new HttpParams();
     if (params?.fromDate) httpParams = httpParams.set('from', params.fromDate);
     if (params?.toDate) httpParams = httpParams.set('to', params.toDate);
@@ -92,10 +93,11 @@ export class TechnicianReportService {
     );
   }
 
-  summaryByMonth(params?: { year?: number; technicianId?: string; depotId?: string }): Observable<{
-    success: boolean;
-    data: { year: number; months: { month: string; totalAmount: number }[] };
-  }> {
+  summaryByMonth(params?: {
+    year?: number;
+    technicianId?: string;
+    depotId?: string;
+  }): Observable<{ success: boolean; data: { year: number; months: { month: string; totalAmount: number }[] } }> {
     let httpParams = new HttpParams();
     if (params?.year) httpParams = httpParams.set('year', String(params.year));
     if (params?.technicianId) httpParams = httpParams.set('technician', params.technicianId);

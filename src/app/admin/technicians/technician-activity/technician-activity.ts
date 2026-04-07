@@ -82,16 +82,6 @@ export class TechnicianActivity {
     toDate: this.fb.nonNullable.control('')
   });
 
-  readonly prestationOptions = [
-    { key: 'professionnel', label: 'Professionnel', className: 'pill-professionnel' },
-    { key: 'pavillon', label: 'Pavillon', className: 'pill-pavillon' },
-    { key: 'immeuble', label: 'Immeuble', className: 'pill-immeuble' },
-    { key: 'racProC', label: 'Professionnel complexe', className: 'pill-pro-c' },
-    { key: 'prestaComplementaire', label: 'Presta Compl.', className: 'pill-complementaire' },
-    { key: 'reconnexion', label: 'Reconnexion', className: 'pill-reconnexion' },
-    { key: 'sav', label: 'SAV', className: 'pill-sav' },
-    { key: 'prestationF8', label: 'Prestation F8', className: 'pill-f8' }
-  ] as const;
   readonly bpuSelections = signal(new Map<string, Map<string, number>>());
   readonly employeeContracts = signal(new Map<string, string>());
   readonly bpuLoaded = signal(false);
@@ -331,16 +321,8 @@ export class TechnicianActivity {
     this.sortDirection.set(field === 'date' || field === 'amount' ? 'desc' : 'asc');
   }
 
-  prestationsSummary(report: TechnicianReport): Array<{ key: string; label: string; value: number; className: string }> {
-    const p = report.prestations || {};
-    return this.prestationOptions
-      .map((option) => ({
-        key: option.key,
-        label: option.label,
-        value: Number(p[option.key] || 0),
-        className: option.className
-      }))
-      .filter((item) => item.value > 0);
+  prestationsSummary(report: TechnicianReport): Array<{ code: string; qty: number }> {
+    return (report.prestations || []).filter((p) => p.qty > 0);
   }
 
   formatAmount(value?: number | null): string {
@@ -487,18 +469,12 @@ export class TechnicianActivity {
 
   private computeBpuAmount(report: TechnicianReport): number {
     const prices = this.resolveBpuPrices(report.technician?._id);
-    const p = report.prestations || {};
-    const get = (value?: number) => Number(value || 0);
-    return (
-      get(p.professionnel) * this.getBpuUnit(prices, 'RACPRO_S')
-      + get(p.racProC) * this.getBpuUnit(prices, 'RACPRO_C')
-      + get(p.pavillon) * this.getBpuUnit(prices, 'RACPAV')
-      + get(p.immeuble) * this.getBpuUnit(prices, 'RACIH')
-      + get(p.prestaComplementaire) * this.getBpuUnit(prices, 'PRESTA_COMPL')
-      + get(p.reconnexion) * this.getBpuUnit(prices, 'RECOIP')
-      + get(p.sav) * this.getBpuUnit(prices, 'SAV')
-      + get(p.prestationF8) * this.getBpuUnit(prices, 'REPFOU_PRI')
-    );
+    let total = 0;
+    for (const { code, qty } of report.prestations || []) {
+      if (!qty) continue;
+      total += qty * this.getBpuUnit(prices, code);
+    }
+    return total;
   }
 
   private getBpuUnit(prices: Map<string, number> | null, code: string): number {

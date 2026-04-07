@@ -122,23 +122,59 @@
           <tr>
             <th>Date</th>
             <th>Montant</th>
-            <th>Interventions</th>
+            <th>Prestations</th>
             <th>Commentaire</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           @for (item of items(); track item._id) {
             <tr>
-              <td data-label="Date">{{ reportDateLabel(item) }}</td>
-              <td data-label="Montant">{{ formatAmount(item.amount) }}</td>
-              <td data-label="Interventions">{{ interventionsLabel(item) }}</td>
-              <td data-label="Commentaire" class="note">{{ item.comment || '—' }}</td>
+              <td class="cell-date">{{ reportDateLabel(item) }}</td>
+              <td class="cell-amount">{{ formatAmount(computeAmount(item)) }}</td>
+              <td class="prestations-cell">
+                @if (prestationsSummary(item).length) {
+                  <div class="prestations-summary">
+                    @for (prestation of prestationsSummary(item); track prestation.code) {
+                      <div class="prestations-pill">
+                        <span class="qty">{{ prestation.qty }}</span>
+                        <span class="pill-label">{{ prestation.code }}</span>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  —
+                }
+              </td>
+              <td class="note">{{ item.comment || '—' }}</td>
+              <td class="cell-actions">
+                <button
+                  class="btn-row-delete"
+                  type="button"
+                  title="Supprimer"
+                  (click)="openDeleteModal(item)"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
             </tr>
+          }
+          @if (deleteError()) {
+            <tr><td colspan="5" class="delete-error">{{ deleteError() }}</td></tr>
           }
         </tbody>
       </table>
     </div>
   }
 </section>
+
+<app-confirm-delete-modal
+  [open]="deleteModalOpen()"
+  entityLabel="rapport"
+  [question]="deleteQuestion()"
+  [confirming]="!!deletingId()"
+  (cancel)="closeDeleteModal()"
+  (confirm)="confirmDelete()"
+></app-confirm-delete-modal>
 
 <app-technician-mobile-nav></app-technician-mobile-nav>

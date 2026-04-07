@@ -52,7 +52,10 @@ export class AuthService {
   /** Base URL de l'API, sans slash final */
   private apiBase = (environment.apiBaseUrl || '').replace(/\/+$/, '');
   /** Token CSRF en mémoire (fallback quand le cookie n'est pas lisible) */
+  private accessToken: string | null = null;
   private csrfToken: string | null = null;
+  private readonly accessStorageKey = 'fxn_access_token';
+  private readonly userStorageKey = 'fxn_user';
   private readonly csrfStorageKey = 'fxn_csrf_token';
 
   /**
@@ -75,6 +78,7 @@ export class AuthService {
   private refreshSubject = new ReplaySubject<boolean | null>(1);
 
   constructor() {
+    this.restoreSession();
     this.restoreCsrfToken();
   }
 
@@ -83,9 +87,63 @@ export class AuthService {
   // ─────────────────────────────────────────────
 
   private persistUser(user: AuthUser | null): void {
-    // maj du signal
     this._user.set(user);
+    try {
+      if (typeof localStorage === 'undefined') return;
+      if (user) {
+        localStorage.setItem(this.userStorageKey, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(this.userStorageKey);
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
+
+  private setAccessToken(token?: string | null): void {
+    this.accessToken = token || null;
+    try {
+      if (typeof localStorage === 'undefined') return;
+      if (this.accessToken) {
+        localStorage.setItem(this.accessStorageKey, this.accessToken);
+      } else {
+        localStorage.removeItem(this.accessStorageKey);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  private restoreSession(): void {
+    try {
+      if (typeof localStorage === 'undefined') return;
+
+      const storedToken = localStorage.getItem(this.accessStorageKey);
+      if (storedToken) {
+        this.accessToken = storedToken;
+      }
+
+      const rawUser = localStorage.getItem(this.userStorageKey);
+      if (!rawUser) return;
+
+      const parsedUser = JSON.parse(rawUser) as AuthUser | null;
+      if (parsedUser?._id && parsedUser?.email && parsedUser?.role) {
+        this._user.set(parsedUser);
+      } else {
+        localStorage.removeItem(this.userStorageKey);
+      }
+    } catch {
+      try {
+        localStorage.removeItem(this.userStorageKey);
+        localStorage.removeItem(this.accessStorageKey);
+      } catch {
+        // ignore storage errors
+      }
+      this._user.set(null);
+      this.accessToken = null;
+    }
+  }
+
   private setCsrfToken(token?: string | null): void {
     this.csrfToken = token || null;
     try {
@@ -118,6 +176,10 @@ export class AuthService {
   /**
    * Retourne le token d'accès courant (utilisé par l'interceptor).
    */
+  getAccessToken(): string | null {
+    return this.accessToken;
+  }
+
   /**
    * Retourne le user courant (ou null si non connecté).
    * Utilise le signal interne.
@@ -189,6 +251,9 @@ export class AuthService {
       })
       .pipe(
         tap(resp => {
+          if (resp?.accessToken) {
+            this.setAccessToken(resp.accessToken);
+          }
           if (resp?.user) {
             this.persistUser(resp.user);
           }
@@ -223,6 +288,7 @@ export class AuthService {
       );
 
     // Nettoyage côté front immédiat
+    this.setAccessToken(null);
     this.persistUser(null);
     this.setCsrfToken(null);
     this.refreshInProgress = false;
@@ -276,6 +342,9 @@ export class AuthService {
         tap(resp => {
           if (!resp) {
             throw new Error('Réponse refresh invalide');
+          }
+          if (resp.accessToken) {
+            this.setAccessToken(resp.accessToken);
           }
           if (resp.user) {
             this.persistUser(resp.user);
