@@ -39,6 +39,14 @@ import { isRacihSuccess, isRacpavSuccess } from '../../../core/utils/interventio
   styleUrls: ['./interventions-dashboard.scss']
 })
 export class InterventionsDashboard {
+  private readonly hiddenPrestationCodes = new Set([
+    'CABLE_SL',
+    'BIFIBRE',
+    'CLEM',
+    'DEMO',
+    'REFRAC'
+  ]);
+
   private readonly RATES_VIS_KEY = 'fxn.interventions.showRates';
   private svc = inject(InterventionService);
   private fb = inject(FormBuilder);
@@ -101,48 +109,44 @@ export class InterventionsDashboard {
   readonly revenueItemsLoading = signal(false);
   readonly revenueError = signal<string | null>(null);
   readonly latestImport = computed(() => this.importBatches()[0] || null);
+  readonly detailSummaryPrestations = [
+    { label: 'RAC_PBO_SOUT', key: 'racPavillon' },
+    { label: 'RAC_PBO_AERIEN', key: 'racAerien' },
+    { label: 'RAC_PBO_FACADE', key: 'racFacade' },
+    { label: 'RACIH', key: 'racImmeuble' },
+    { label: 'RECOIP', key: 'reconnexion' },
+    { label: 'RACPRO_S', key: 'racProS' },
+    { label: 'RACPRO_C', key: 'racProC' },
+    { label: 'SAV', key: 'sav' },
+    { label: 'SAV_EXP', key: 'savExp' },
+    { label: 'DEPLPRISE', key: 'deplacementPrise' },
+    { label: 'DEPLACEMENT_OFFERT', key: 'deplacementOffert' },
+    { label: 'DEPLACEMENT_A_TORT', key: 'deplacementATort' },
+    { label: 'SWAP_EQUIPEMENT', key: 'swapEquipement' }
+  ] as const;
   readonly detailGroups = computed(() => {
     const items = this.detailItems();
     const order = [
-      { key: 'racPavillon', label: 'Raccordement pavillon' },
-      { key: 'racImmeuble', label: 'Raccordement immeuble' },
-      { key: 'reconnexion', label: 'Reconnexion' },
-      { key: 'sav', label: 'SAV' },
-      { key: 'b2b', label: 'Raccordement B2B' },
+      { key: 'RACPAV', label: 'RACPAV' },
+      { key: 'RAC_PBO_AERIEN', label: 'RAC_PBO_AERIEN' },
+      { key: 'RAC_PBO_FACADE', label: 'RAC_PBO_FACADE' },
+      { key: 'RACIH', label: 'RACIH' },
+      { key: 'RECOIP', label: 'RECOIP' },
+      { key: 'RACPRO_S', label: 'RACPRO_S' },
+      { key: 'RACPRO_C', label: 'RACPRO_C' },
+      { key: 'SAV', label: 'SAV' },
+      { key: 'SAV_EXP', label: 'SAV_EXP' },
+      { key: 'DEPLPRISE', label: 'DEPLPRISE' },
+      { key: 'DEPLACEMENT_OFFERT', label: 'DEPLACEMENT_OFFERT' },
+      { key: 'DEPLACEMENT_A_TORT', label: 'DEPLACEMENT_A_TORT' },
+      { key: 'SWAP_EQUIPEMENT', label: 'SWAP_EQUIPEMENT' },
       { key: 'other', label: 'Autres' }
     ];
     const buckets = new Map(order.map((group) => [group.key, [] as InterventionItem[]]));
 
     for (const item of items) {
-      const categories = Array.isArray(item.categories) ? item.categories : [];
-      const type = this.normalizeText(item.type);
-      const status = this.normalizeText(item.statut);
-      const isClosed = status.includes('CLOTURE') && status.includes('TERMINEE');
-      const isReconnexion = type.includes('RECO') || this.hasReconnexionInArticles(item.articlesRaw);
-      const isB2b = categories.includes('racProS')
-        || categories.includes('racProC')
-        || this.hasB2bInArticles(item.articlesRaw);
-      const successMatches = this.resolveSuccessPrestations(item);
-      let key = 'other';
-      if (successMatches.length) {
-        if (successMatches.includes('RACPAV')) key = 'racPavillon';
-        else if (successMatches.includes('RACIH')) key = 'racImmeuble';
-        else if (successMatches.includes('RECOIP')) key = 'reconnexion';
-        else if (successMatches.includes('SAV')) key = 'sav';
-        else if (successMatches.includes('RACPRO_S') || successMatches.includes('RACPRO_C')) key = 'b2b';
-      } else {
-        if (isClosed && isReconnexion) key = 'reconnexion';
-        else if (categories.includes('racPavillon')) key = 'racPavillon';
-        else if (categories.includes('racImmeuble')) key = 'racImmeuble';
-        else if (categories.includes('reconnexion')) key = 'reconnexion';
-        else if (categories.includes('sav')) key = 'sav';
-        else if (isB2b) key = 'b2b';
-        else {
-          if (type.includes('PRESTA') && type.includes('COMPL')) key = 'other';
-          else if (type.includes('SAV')) key = 'sav';
-          else if (isReconnexion) key = 'reconnexion';
-        }
-      }
+      const codes = this.extractImportedArticleCodes(item);
+      const key = order.find((group) => group.key !== 'other' && codes.includes(group.key))?.key || 'other';
       (buckets.get(key) || buckets.get('other'))?.push(item);
     }
 
@@ -197,6 +201,10 @@ export class InterventionsDashboard {
       .map((entry) => entry.replace(/\s+/g, '_'))
       .map((entry) => entry.replace(/[^a-zA-Z0-9_]/g, '').toUpperCase())
       .filter(Boolean);
+  }
+
+  private extractImportedArticleCodes(item: InterventionItem): string[] {
+    return this.extractCodesFromText(item.articlesRaw);
   }
 
   private resolveBillingCodes(item: InterventionItem): string[] {
@@ -327,20 +335,26 @@ export class InterventionsDashboard {
     technicians: [],
     types: []
   });
-  readonly prestationTypeOptions = [
-    { label: 'PRO C', value: 'RACPRO_C' },
-    { label: 'PRO S', value: 'RACPRO_S' },
-    { label: 'RAC PAV', value: 'RACPAV' },
-    { label: 'RAC IMM', value: 'RACIH' },
-    { label: 'RECO', value: 'RECOIP' },
-    { label: 'PRESTA COMPL', value: 'PRESTA_COMPL' },
-    { label: 'SAV', value: 'SAV' },
-    { label: 'PRESTAT F8', value: 'REPFOU_PRI' },
-    { label: 'DEMO', value: 'DEMO' }
-  ] as const;
+  readonly prestationTypeOptions = INTERVENTION_PRESTATION_FIELDS
+    .filter((field) => !this.hiddenPrestationCodes.has(field.code))
+    .map((field) => ({ label: field.code, value: field.code }));
   readonly depots = signal<Depot[]>([]);
   readonly employees = signal<EmployeeSummary[]>([]);
   readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'AUTRE'] as const;
+  readonly quickSummaryPrestations = [
+    { label: 'RAC_PBO_SOUT', key: 'racPavillon' },
+    { label: 'RAC_PBO_AERIEN', key: 'racAerien' },
+    { label: 'RAC_PBO_FACADE', key: 'racFacade' },
+    { label: 'RACIH', key: 'racImmeuble' },
+    { label: 'RECOIP', key: 'reconnexion' },
+    { label: 'PLV_PRO_S', key: 'racProS' },
+    { label: 'PLV_PRO_C', key: 'racProC' },
+    { label: 'SAV', key: 'sav' },
+    { label: 'DEPLACEMENT_PRISE', key: 'deplacementPrise' },
+    { label: 'DEPLACEMENT_OFFERT', key: 'deplacementOffert' },
+    { label: 'DEPLACEMENT_A_TORT', key: 'deplacementATort' },
+    { label: 'SWAP_EQUIPEMENT', key: 'swapEquipement' }
+  ] as const;
 
   readonly averagePerTech = computed(() => {
     const items = this.summaryItems();
@@ -1316,15 +1330,20 @@ export class InterventionsDashboard {
     const totals: InterventionTotals = {
       total: 0,
       racPavillon: 0,
+      racAerien: 0,
+      racFacade: 0,
       racImmeuble: 0,
       reconnexion: 0,
       racF8: 0,
+      fourreauBeton: 0,
       racProS: 0,
       racProC: 0,
       prestaCompl: 0,
       sav: 0,
       clem: 0,
       deprise: 0,
+      deplacementOffert: 0,
+      deplacementATort: 0,
       demo: 0,
       refrac: 0,
       refcDgr: 0,
@@ -1333,21 +1352,29 @@ export class InterventionsDashboard {
       cablePav2: 0,
       cablePav3: 0,
       cablePav4: 0,
+      swapEquipement: 0,
+      bifibre: 0,
+      nacelle: 0,
       racAutre: 0,
       other: 0
     };
     for (const item of items) {
       totals.total = (totals.total ?? 0) + (item.total || 0);
       totals.racPavillon = (totals.racPavillon ?? 0) + (item.racPavillon || 0);
+      totals.racAerien = (totals.racAerien ?? 0) + (item.racAerien || 0);
+      totals.racFacade = (totals.racFacade ?? 0) + (item.racFacade || 0);
       totals.racImmeuble = (totals.racImmeuble ?? 0) + (item.racImmeuble || 0);
       totals.reconnexion = (totals.reconnexion ?? 0) + (item.reconnexion || 0);
       totals.racF8 = (totals.racF8 ?? 0) + (item.racF8 || 0);
+      totals.fourreauBeton = (totals.fourreauBeton ?? 0) + (item.fourreauBeton || 0);
       totals.racProS = (totals.racProS ?? 0) + (item.racProS || 0);
       totals.racProC = (totals.racProC ?? 0) + (item.racProC || 0);
       totals.prestaCompl = (totals.prestaCompl ?? 0) + (item.prestaCompl || 0);
       totals.sav = (totals.sav ?? 0) + (item.sav || 0);
       totals.clem = (totals.clem ?? 0) + (item.clem || 0);
       totals.deprise = (totals.deprise ?? 0) + (item.deprise || 0);
+      totals.deplacementOffert = (totals.deplacementOffert ?? 0) + (item.deplacementOffert || 0);
+      totals.deplacementATort = (totals.deplacementATort ?? 0) + (item.deplacementATort || 0);
       totals.demo = (totals.demo ?? 0) + (item.demo || 0);
       totals.refrac = (totals.refrac ?? 0) + (item.refrac || 0);
       totals.refcDgr = (totals.refcDgr ?? 0) + (item.refcDgr || 0);
@@ -1356,6 +1383,9 @@ export class InterventionsDashboard {
       totals.cablePav2 = (totals.cablePav2 ?? 0) + (item.cablePav2 || 0);
       totals.cablePav3 = (totals.cablePav3 ?? 0) + (item.cablePav3 || 0);
       totals.cablePav4 = (totals.cablePav4 ?? 0) + (item.cablePav4 || 0);
+      totals.swapEquipement = (totals.swapEquipement ?? 0) + (item.swapEquipement || 0);
+      totals.bifibre = (totals.bifibre ?? 0) + (item.bifibre || 0);
+      totals.nacelle = (totals.nacelle ?? 0) + (item.nacelle || 0);
       totals.racAutre = (totals.racAutre ?? 0) + (item.racAutre || 0);
       totals.other = (totals.other ?? 0) + (item.other || 0);
     }

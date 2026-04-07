@@ -370,12 +370,29 @@ export class TechnicianInterventions {
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly sortedInterventions = computed(() => this.sortedItems());
   readonly typeOptions = computed(() => {
-    const types = this.filters()?.types ?? [];
-    const mapped = types.map((value) => (value === 'RACC' ? 'RACPAV' : value));
-    if (!mapped.includes('RACIH')) {
-      mapped.push('RACIH');
+    const isExcludedType = (value: string) => {
+      const normalized = this.normalizeToken(value);
+      return normalized.startsWith('CABLE')
+        || normalized === 'BIFIBRE'
+        || normalized === 'CLEM'
+        || normalized === 'DEMO'
+        || normalized === 'REFRAC';
+    };
+    const bpuCodes = Array.from(new Set(
+      this.bpuAutoEntries()
+        .map((entry) => String(entry.code || '').trim())
+        .filter((code) => !isExcludedType(code))
+        .filter(Boolean)
+    ));
+    if (bpuCodes.length > 0) {
+      return bpuCodes.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
     }
-    return mapped;
+    const fallbackTypes = (this.filters()?.types ?? [])
+      .map((value) => this.normalizeFilterType(value))
+      .filter((value) => !isExcludedType(value))
+      .filter(Boolean);
+    return Array.from(new Set(fallbackTypes))
+      .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
   });
   constructor() {
     this.loadFilters();
@@ -1639,37 +1656,52 @@ export class TechnicianInterventions {
     const normalized = this.normalizeToken(value).replace(/[^A-Z0-9_]/g, '');
     if (!normalized) return '';
     const aliases = new Map([
-      ['RACPAV', 'RACPAV'],
-      ['RACIH', 'RACIH'],
+      ['RACPBOSOUT', 'RAC_PBO_SOUT'],
+      ['RAC_PBO_SOUT', 'RAC_PBO_SOUT'],
+      ['RACPAV', 'RAC_PBO_SOUT'],
+      ['RACIM', 'RACIM'],
+      ['RACIH', 'RACIM'],
       ['RECOIP', 'RECOIP'],
       ['RECO', 'RECOIP'],
-      ['RACPROS', 'RACPRO_S'],
-      ['RACPRO_S', 'RACPRO_S'],
-      ['RACPROC', 'RACPRO_C'],
-      ['RACPRO_C', 'RACPRO_C'],
+      ['PLVPROS', 'PLV_PRO_S'],
+      ['PLV_PRO_S', 'PLV_PRO_S'],
+      ['RACPROS', 'PLV_PRO_S'],
+      ['RACPRO_S', 'PLV_PRO_S'],
+      ['PLVPROC', 'PLV_PRO_C'],
+      ['PLV_PRO_C', 'PLV_PRO_C'],
+      ['RACPROC', 'PLV_PRO_C'],
+      ['RACPRO_C', 'PLV_PRO_C'],
       ['CLEM', 'CLEM'],
       ['SAV', 'SAV'],
       ['PRESTACOMPL', 'PRESTA_COMPL'],
       ['PRESTA_COMPL', 'PRESTA_COMPL'],
-      ['PRESTAF8', 'REPFOU_PRI'],
-      ['REPFOU_PRI', 'REPFOU_PRI'],
-      ['REFC_DGR', 'REFC_DGR'],
-      ['REFCDGR', 'REFC_DGR'],
-      ['DEPLPRISE', 'DEPLPRISE'],
+      ['FOURREAUCASSEPRIVE', 'FOURREAU_CASSE_PRIVE'],
+      ['FOURREAU_CASSE_PRIVE', 'FOURREAU_CASSE_PRIVE'],
+      ['PRESTAF8', 'FOURREAU_CASSE_PRIVE'],
+      ['REPFOU_PRI', 'FOURREAU_CASSE_PRIVE'],
+      ['REFRACDEGRADATION', 'REFRAC_DEGRADATION'],
+      ['REFRAC_DEGRADATION', 'REFRAC_DEGRADATION'],
+      ['REFC_DGR', 'REFRAC_DEGRADATION'],
+      ['REFCDGR', 'REFRAC_DEGRADATION'],
+      ['DEPLACEMENTPRISE', 'DEPLACEMENT_PRISE'],
+      ['DEPLACEMENT_PRISE', 'DEPLACEMENT_PRISE'],
+      ['DEPLPRISE', 'DEPLACEMENT_PRISE'],
       ['REFRAC', 'REFRAC'],
       ['DEMO', 'DEMO'],
       ['SAVEXP', 'SAV_EXP'],
       ['SAV_EXP', 'SAV_EXP'],
-      ['CABLE_PAV_1', 'CABLE_PAV_1'],
-      ['CABLE_PAV_2', 'CABLE_PAV_2'],
-      ['CABLE_PAV_3', 'CABLE_PAV_3'],
-      ['CABLE_PAV_4', 'CABLE_PAV_4'],
-      ['CABLEPAV1', 'CABLE_PAV_1'],
-      ['CABLEPAV2', 'CABLE_PAV_2'],
-      ['CABLEPAV3', 'CABLE_PAV_3'],
-      ['CABLEPAV4', 'CABLE_PAV_4']
+      ['CABLESL', 'CABLE_SL'],
+      ['CABLE_SL', 'CABLE_SL'],
+      ['CABLE_PAV_1', 'CABLE_SL'],
+      ['CABLE_PAV_2', 'CABLE_SL'],
+      ['CABLE_PAV_3', 'CABLE_SL'],
+      ['CABLE_PAV_4', 'CABLE_SL'],
+      ['CABLEPAV1', 'CABLE_SL'],
+      ['CABLEPAV2', 'CABLE_SL'],
+      ['CABLEPAV3', 'CABLE_SL'],
+      ['CABLEPAV4', 'CABLE_SL']
     ]);
-    return aliases.get(normalized) ?? '';
+    return aliases.get(normalized) ?? String(value ?? '').trim();
   }
 
   private normalizeTypeLabel(label: string): string {

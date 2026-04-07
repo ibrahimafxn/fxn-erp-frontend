@@ -297,42 +297,12 @@
           <span class="label">Total</span>
           <span class="value">{{ totals()?.total ?? 0 }}</span>
         </div>
-        <div class="summary-pill">
-          <span class="label">Presta compl</span>
-          <span class="value">{{ totals()?.prestaCompl ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Rac pavillon</span>
-          <span class="value">{{ totals()?.racPavillon ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Rac immeuble</span>
-          <span class="value">{{ totals()?.racImmeuble ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Reconnexion</span>
-          <span class="value">{{ totals()?.reconnexion ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Prestation F8</span>
-          <span class="value">{{ totals()?.racF8 ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Rac PRO S</span>
-          <span class="value">{{ totals()?.racProS ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Rac PRO C</span>
-          <span class="value">{{ totals()?.racProC ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">SAV</span>
-          <span class="value">{{ totals()?.sav ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">CLEM</span>
-          <span class="value">{{ totals()?.clem ?? 0 }}</span>
-        </div>
+        @for (item of quickSummaryPrestations; track item.key) {
+          <div class="summary-pill">
+            <span class="label">{{ item.label }}</span>
+            <span class="value">{{ totals()?.[item.key] ?? 0 }}</span>
+          </div>
+        }
       </div>
 
       <div class="summary-filters">
@@ -438,14 +408,9 @@
         <tr>
           <th><span class="th-label" title="Technicien">Technicien</span></th>
           <th><span class="th-label" title="Total">Tot.</span></th>
-          <th><span class="th-label" title="Rac pavillon">Rac pav.</span></th>
-          <th><span class="th-label" title="Rac immeuble">Rac imm.</span></th>
-          <th><span class="th-label" title="Reconnexion">Reconn.</span></th>
-          <th><span class="th-label" title="Rac F8">Rac F8</span></th>
-          <th><span class="th-label" title="Rac PRO S">PRO S</span></th>
-          <th><span class="th-label" title="Rac PRO C">PRO C</span></th>
-          <th><span class="th-label" title="SAV">SAV</span></th>
-          <th><span class="th-label" title="CLEM">CLEM</span></th>
+          @for (col of detailSummaryPrestations; track col.key) {
+            <th><span class="th-label" [title]="col.label">{{ col.label }}</span></th>
+          }
           <th><span class="th-label" title="Autres">Autres</span></th>
           <th><span class="th-label" title="CA FXN">CA FXN</span></th>
           <th><span class="th-label" title="CA Tech">CA Tech</span></th>
@@ -471,14 +436,9 @@
                 </button>
               </td>
               <td data-label="Total">{{ it.total }}</td>
-              <td data-label="Rac pavillon">{{ it.racPavillon }}</td>
-              <td data-label="Rac immeuble">{{ it.racImmeuble }}</td>
-              <td data-label="Reconnexion">{{ it.reconnexion }}</td>
-              <td data-label="Rac F8">{{ it.racF8 }}</td>
-              <td data-label="Rac PRO S">{{ it.racProS }}</td>
-              <td data-label="Rac PRO C">{{ it.racProC }}</td>
-              <td data-label="SAV">{{ it.sav }}</td>
-              <td data-label="CLEM">{{ it.clem }}</td>
+              @for (col of detailSummaryPrestations; track col.key) {
+                <td [attr.data-label]="col.label">{{ it[col.key] ?? 0 }}</td>
+              }
               <td data-label="Autres">{{ it.other + it.racAutre }}</td>
               <td data-label="CA FXN">{{ fxnRevenue(it) | number:'1.0-0' }} €</td>
               <td data-label="CA Tech">{{ techRevenue(it) | number:'1.0-0' }} €</td>
