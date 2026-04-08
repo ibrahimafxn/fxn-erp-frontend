@@ -55,7 +55,12 @@ export class App implements AfterViewInit, OnDestroy {
   readonly currentYear = new Date().getFullYear();
   readonly appVersion = packageJson.version ?? '—';
   constructor() {
-    this.auth.bootstrapSession();
+    const initialUrl = this.router.url;
+    if (this.usesAuthenticatedShell(initialUrl) || this.auth.hasSessionHint()) {
+      this.auth.bootstrapSession();
+    } else {
+      this.auth.markReady();
+    }
     this.routeSub = this.router.events
       .pipe(filter((evt) => evt instanceof NavigationEnd))
       .subscribe((evt) => {

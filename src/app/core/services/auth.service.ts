@@ -226,6 +226,14 @@ export class AuthService {
     this.ensureSessionReady().subscribe();
   }
 
+  hasSessionHint(): boolean {
+    return !!this.accessToken || !!this._user() || !!this.csrfToken;
+  }
+
+  markReady(): void {
+    this._ready.set(true);
+  }
+
   clearSession(): void {
     this.setAccessToken(null);
     this.persistUser(null);
