@@ -6,6 +6,25 @@
   <div class="user-gif-overlay" aria-hidden="true"></div>
 }
 
+@if (showUpdateBanner()) {
+  <section class="app-update-banner" [class.with-header]="showHeader()" role="status" aria-live="polite">
+    <div class="update-copy">
+      <strong>Mise a jour disponible</strong>
+      <span>Une nouvelle version de l'application est prete.</span>
+    </div>
+    <div class="update-actions">
+      <button class="btn-outline" type="button" (click)="dismissUpdateBanner()" [disabled]="updateApplying()">Plus tard</button>
+      <button class="btn-primary" type="button" (click)="applyAppUpdate()" [disabled]="updateApplying()">
+        @if (updateApplying()) {
+          <span>Actualisation...</span>
+        } @else {
+          <span>Actualiser</span>
+        }
+      </button>
+    </div>
+  </section>
+}
+
 <main class="app-content">
   <router-outlet />
 </main>
