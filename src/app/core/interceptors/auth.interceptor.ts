@@ -82,22 +82,22 @@ export const authInterceptor: HttpInterceptorFn = (
 
       if (err instanceof HttpErrorResponse && isApiReq) {
         const url = req.url.split('?')[0];
-        const isRefreshEndpoint = url.includes('/auth/refresh');
-        const isLoginEndpoint = url.includes('/auth/login');
-        const isRefreshOrLogin = isRefreshEndpoint || isLoginEndpoint;
+        const isRefreshEndpoint = /\/auth\/refresh$/.test(url);
+        const isLogoutEndpoint = /\/auth\/(refresh\/logout|logout)$/.test(url);
+        const isLoginEndpoint = /\/auth\/login$/.test(url);
+        const isAuthBootstrapEndpoint = isRefreshEndpoint || isLoginEndpoint || isLogoutEndpoint;
 
         // 401 : tentative de refresh automatique
         if (err.status === 401) {
-          if (isRefreshOrLogin) {
-            // Refresh ou login échoués → on nettoie et on redirige
-            auth.logout(false);
+          if (isAuthBootstrapEndpoint) {
+            auth.clearSession();
             router.navigate(['/login']);
             return throwError(() => err);
           }
           return auth.refreshToken().pipe(
             switchMap(() => next(authReq)),
             catchError(refreshErr => {
-              auth.logout(false);
+              auth.clearSession();
               router.navigate(['/login']);
               return throwError(() => refreshErr);
             })
@@ -106,14 +106,19 @@ export const authInterceptor: HttpInterceptorFn = (
 
         // 403 sur /auth/refresh = compte désactivé → logout immédiat
         if (err.status === 403 && isRefreshEndpoint) {
-          auth.logout(false);
+          auth.clearSession();
           router.navigate(['/login']);
+          return throwError(() => err);
+        }
+
+        if (err.status === 403 && isLogoutEndpoint) {
+          auth.clearSession();
           return throwError(() => err);
         }
 
         // 403 sur tout autre endpoint (sauf login/change-password et flux mdp)
         if (err.status === 403) {
-          const isAuthEndpoint = isLoginEndpoint || url.includes('/auth/change-password');
+          const isAuthEndpoint = isLoginEndpoint || isLogoutEndpoint || url.includes('/auth/change-password');
           const isPasswordFlow = !!(err.error && (err.error.passwordExpired || err.error.mustChangePassword));
           if (!isAuthEndpoint && !isPasswordFlow) {
             router.navigate(['/unauthorized']);

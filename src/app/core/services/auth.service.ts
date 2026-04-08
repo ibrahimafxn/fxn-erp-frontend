@@ -226,6 +226,14 @@ export class AuthService {
     this.ensureSessionReady().subscribe();
   }
 
+  clearSession(): void {
+    this.setAccessToken(null);
+    this.persistUser(null);
+    this.setCsrfToken(null);
+    this.refreshInProgress = false;
+    this.refreshSubject = new ReplaySubject<boolean | null>(1);
+  }
+
   ensureSessionReady(): Observable<boolean> {
     if (this._ready()) {
       return of(this.isAuthenticated());
@@ -325,11 +333,7 @@ export class AuthService {
       );
 
     // Clear local state immediately so the UI reflects the logout at once
-    this.setAccessToken(null);
-    this.persistUser(null);
-    this.setCsrfToken(null);
-    this.refreshInProgress = false;
-    this.refreshSubject = new ReplaySubject<boolean | null>(1);
+    this.clearSession();
 
     if (redirect) {
       logout$.subscribe(() => this.router.navigate(['/login']));
