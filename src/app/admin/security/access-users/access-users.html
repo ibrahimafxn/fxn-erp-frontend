@@ -21,6 +21,10 @@
         <span class="label">Sans accès</span>
         <span class="value">{{ noAccessCount() }}</span>
       </div>
+      <div class="mini-kpi">
+        <span class="label">Verrouillés</span>
+        <span class="value">{{ lockedCount() }}</span>
+      </div>
       <button class="btn-outline" type="button" (click)="refresh(true)"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
     </div>
   </header>
@@ -64,6 +68,54 @@
   } @else if (visibleItems().length === 0) {
     <div class="state empty card">Aucun utilisateur.</div>
   } @else {
+    @if (lockedItems().length > 0) {
+      <section class="card">
+        <div class="page-header">
+          <div>
+            <h2>Utilisateurs verrouillés</h2>
+            <p class="subtitle">Comptes bloqués après plusieurs tentatives de connexion échouées.</p>
+          </div>
+        </div>
+
+        <div class="table">
+          <table class="access-table">
+            <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Rôle</th>
+              <th>État du verrouillage</th>
+              <th class="actions">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+              @for (u of lockedItems(); track trackById($index, u)) {
+                <tr class="row">
+                  <td class="main" data-label="Utilisateur">
+                    <div class="name">{{ userLabel(u) }}</div>
+                    <div class="sub">{{ u.email || '—' }}</div>
+                  </td>
+                  <td data-label="Rôle">
+                    <span
+                      class="badge role-badge"
+                      [class.role-admin]="u.role === 'ADMIN'"
+                      [class.role-dir]="u.role === 'DIRIGEANT'"
+                      [class.role-depot]="u.role === 'GESTION_DEPOT'"
+                      [class.role-tech]="u.role === 'TECHNICIEN'">
+                      {{ u.role || '—' }}
+                    </span>
+                  </td>
+                  <td data-label="État du verrouillage">{{ lockStatusText(u) }}</td>
+                  <td class="actions" data-label="Actions">
+                    <button class="btn-primary" type="button" (click)="openUnlock(u)">Débloquer</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
     <div class="pager card">
       <div class="pager-left">
         <div class="page-size">
@@ -91,6 +143,7 @@
           <th>Rôle</th>
           <th>Dépôt</th>
           <th>Accès</th>
+          <th>Verrouillage</th>
           <th>Dernière connexion</th>
           <th class="actions">Actions</th>
         </tr>
@@ -118,12 +171,14 @@
 
               <td data-label="Accès">
                 @switch (accessBadge(u)) {
+                  @case ('LOCKED') { <span class="pill danger status-pill">Verrouillé</span> }
                   @case ('DISABLED') { <span class="pill danger status-pill">Désactivé</span> }
                   @case ('MUST_CHANGE') { <span class="pill warn status-pill">Actif · MDP à changer</span> }
                   @default { <span class="pill ok status-pill">Actif</span> }
                 }
               </td>
 
+              <td data-label="Verrouillage">{{ lockStatusText(u) }}</td>
               <td data-label="Dernière connexion">{{ lastLoginText(u) }}</td>
 
               <td class="actions" data-label="Actions">
@@ -132,6 +187,9 @@
                     <button class="btn-outline" type="button" disabled>Reset MDP</button>
                     <button class="btn-primary" type="button" (click)="openEnable(u)">Activer</button>
                   } @else {
+                    @if (isLocked(u)) {
+                      <button class="btn-primary" type="button" (click)="openUnlock(u)">Débloquer</button>
+                    }
                     <button class="btn-outline" type="button" (click)="openReset(u)">Reset MDP</button>
                     <button class="btn-danger" type="button" (click)="openDisable(u)">Désactiver</button>
                   }
@@ -193,5 +251,18 @@
     [confirming]="disableSaving()"
     (cancel)="closeDisable()"
     (confirm)="confirmDisable()"
+  ></app-confirm-delete-modal>
+
+  <app-confirm-delete-modal
+    [open]="unlockOpen()"
+    entityLabel="le verrouillage du compte"
+    [entityName]="pendingUnlockUser() ? userLabel(pendingUnlockUser()!) : ''"
+    [entityId]="pendingUnlockUser()?._id ?? null"
+    dangerHint="Les tentatives échouées seront réinitialisées et l’utilisateur pourra se reconnecter."
+    cancelText="Annuler"
+    confirmText="Débloquer"
+    [confirming]="unlockSaving()"
+    (cancel)="closeUnlock()"
+    (confirm)="confirmUnlock()"
   ></app-confirm-delete-modal>
 </section>

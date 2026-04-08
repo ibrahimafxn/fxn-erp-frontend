@@ -1,10 +1,10 @@
 // src/app/core/services/auth.service.ts
 
 import {inject, Injectable, signal} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {Observable, of, ReplaySubject, throwError} from 'rxjs';
-import {catchError, filter, map, take, tap} from 'rxjs/operators';
+import {catchError, filter, finalize, map, shareReplay, take, tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {Role} from '../models/roles.model';
 import { UserPreferences } from '../models';
@@ -68,6 +68,7 @@ export class AuthService {
   /** Indique si l'init auth est terminée (refresh tenté) */
   private readonly _ready = signal(false);
   readonly ready$ = this._ready.asReadonly();
+  private bootstrapRequest$: Observable<boolean> | null = null;
 
   /**
    * Gestion mutualisée des refresh token :
@@ -222,10 +223,38 @@ export class AuthService {
   }
 
   bootstrapSession(): void {
-    this.refreshToken().subscribe({
-      next: () => this._ready.set(true),
-      error: () => this._ready.set(true)
-    });
+    this.ensureSessionReady().subscribe();
+  }
+
+  ensureSessionReady(): Observable<boolean> {
+    if (this._ready()) {
+      return of(this.isAuthenticated());
+    }
+
+    if (this.bootstrapRequest$) {
+      return this.bootstrapRequest$;
+    }
+
+    this.bootstrapRequest$ = this.refreshToken().pipe(
+      map(() => this.isAuthenticated()),
+      catchError((err: unknown) => {
+        if (err instanceof HttpErrorResponse && (err.status === 401 || err.status === 403)) {
+          this.setAccessToken(null);
+          this.persistUser(null);
+          this.setCsrfToken(null);
+          this.refreshInProgress = false;
+          this.refreshSubject = new ReplaySubject<boolean | null>(1);
+        }
+        return of(this.isAuthenticated());
+      }),
+      finalize(() => {
+        this._ready.set(true);
+        this.bootstrapRequest$ = null;
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    return this.bootstrapRequest$;
   }
 
   // ─────────────────────────────────────────────
@@ -276,18 +305,26 @@ export class AuthService {
    * - redirige vers /login si redirect = true
    */
   logout(redirect = true): Observable<any> {
+    // Capture the CSRF token BEFORE clearing it so the HTTP request can use it.
+    // In a cross-site prod setup (Vercel ↔ Render), document.cookie won't expose
+    // the backend's XSRF-TOKEN, so we must pass it explicitly via header.
+    const savedCsrf = this.csrfToken;
+
+    const headers: Record<string, string> = {};
+    if (savedCsrf) {
+      headers['X-XSRF-TOKEN'] = savedCsrf;
+    }
+
     const logout$ = this.http
       .post(`${this.apiBase}/auth/refresh/logout`, {}, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       })
       .pipe(
-        catchError(() => {
-          // même si le backend renvoie une erreur, on force le logout côté front
-          return of(null);
-        })
+        catchError(() => of(null))
       );
 
-    // Nettoyage côté front immédiat
+    // Clear local state immediately so the UI reflects the logout at once
     this.setAccessToken(null);
     this.persistUser(null);
     this.setCsrfToken(null);

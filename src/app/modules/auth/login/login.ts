@@ -46,6 +46,11 @@ export class Login {
 
   constructor() {
     this.currentLocale.set(this.detectLocale());
+    this.auth.ensureSessionReady().subscribe(() => {
+      if (this.auth.isAuthenticated()) {
+        this.redirectAfterLogin();
+      }
+    });
   }
 
   // --- Soumission du formulaire ---

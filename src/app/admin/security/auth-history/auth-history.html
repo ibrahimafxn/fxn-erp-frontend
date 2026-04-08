@@ -87,9 +87,6 @@
             <th>Utilisateur</th>
             <th>Action</th>
             <th>Statut</th>
-            <th>Raison</th>
-            <th>IP</th>
-            <th>Localisation</th>
             <th>Agent</th>
             <th>Opérations</th>
           </tr>
@@ -109,9 +106,6 @@
                   {{ statusLabel(item.status, item.action) }}
                 </span>
               </td>
-              <td>{{ reasonLabel(item.reason) }}</td>
-              <td>{{ item.ip || '—' }}</td>
-              <td>{{ locationLabel(item) }}</td>
               <td class="agent">{{ item.userAgent || '—' }}</td>
               <td>
                 @if (item.action === 'LOGIN' && item.status === 'SUCCESS') {
@@ -125,7 +119,7 @@
             </tr>
             @if (auditOpen() && auditSessionId() === item._id) {
               <tr class="audit-row">
-                <td colspan="9">
+                <td colspan="6">
                   <div class="card audit-card">
                     <div class="audit-head">
                       <div>

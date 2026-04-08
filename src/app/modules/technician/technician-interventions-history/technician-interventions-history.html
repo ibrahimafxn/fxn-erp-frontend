@@ -84,88 +84,53 @@
       </div>
     </div>
 
-    <div class="table card">
-      <table>
-        <thead>
-          <tr>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('date')" [class.is-active]="sortField() === 'date'">
-                Date <span class="sort-arrow">{{ sortArrow('date') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('numInter')" [class.is-active]="sortField() === 'numInter'">
-                Numero <span class="sort-arrow">{{ sortArrow('numInter') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('client')" [class.is-active]="sortField() === 'client'">
-                Client <span class="sort-arrow">{{ sortArrow('client') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('type')" [class.is-active]="sortField() === 'type'">
-                Type <span class="sort-arrow">{{ sortArrow('type') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('typeOperation')" [class.is-active]="sortField() === 'typeOperation'">
-                Type opération <span class="sort-arrow">{{ sortArrow('typeOperation') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('typeLogement')" [class.is-active]="sortField() === 'typeLogement'">
-                Type logement <span class="sort-arrow">{{ sortArrow('typeLogement') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('statut')" [class.is-active]="sortField() === 'statut'">
-                Statut <span class="sort-arrow">{{ sortArrow('statut') }}</span>
-              </button>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (item of sortedItems(); track item._id) {
-            <tr
-              class="is-expandable"
-              (click)="toggleDetails(item)"
-              [class.is-expanded]="isExpanded(item)"
-              [class.row-closed]="item.statut === 'CLOTURE TERMINEE'"
-              [class.row-failed]="item.statut === 'ECHEC' || item.statut === 'ECHEC TERMINE'"
-              [class.row-cancelled]="item.statut === 'ANNULE' || item.statut === 'ANNULEE'"
-            >
-              <td data-label="Date">{{ dateLabel(item.dateRdv) }}</td>
-              <td data-label="Numero">{{ item.numInter || '—' }}</td>
-              <td data-label="Client">{{ item.client || '—' }}</td>
-              <td data-label="Type">{{ item.type || '—' }}</td>
-              <td data-label="Type opération">{{ item.typeOperation || '—' }}</td>
-              <td data-label="Type logement">{{ item.typeLogement || '—' }}</td>
-              <td data-label="Statut">
-                {{ item.statut || '—' }}
-                <span class="details-hint">{{ isExpanded(item) ? 'Masquer' : 'Voir détails' }}</span>
-              </td>
-            </tr>
-            @if (isExpanded(item)) {
-              <tr class="details-row">
-                <td colspan="7">
-                  <div class="details-card">
-                    <div class="details-title">Détails de l’intervention</div>
-                    <div class="details-grid">
-                      @for (row of detailRows(item); track row.label) {
-                        <div class="detail-item">
-                          <span class="detail-label">{{ row.label }}</span>
-                          <span class="detail-value">{{ row.value }}</span>
-                        </div>
-                      }
-                    </div>
+    <div class="sort-bar">
+      <span class="sort-label">Trier par</span>
+      <button class="sort-button" type="button" (click)="setSort('date')" [class.is-active]="sortField() === 'date'">
+        Date <span class="sort-arrow">{{ sortArrow('date') }}</span>
+      </button>
+      <button class="sort-button" type="button" (click)="setSort('numInter')" [class.is-active]="sortField() === 'numInter'">
+        Numéro <span class="sort-arrow">{{ sortArrow('numInter') }}</span>
+      </button>
+      <button class="sort-button" type="button" (click)="setSort('statut')" [class.is-active]="sortField() === 'statut'">
+        Statut <span class="sort-arrow">{{ sortArrow('statut') }}</span>
+      </button>
+    </div>
+
+    <div class="intervention-list">
+      @for (item of sortedItems(); track item._id) {
+        <div class="intervention-item"
+             (click)="toggleDetails(item)"
+             [class.is-expanded]="isExpanded(item)"
+             [class.row-closed]="item.statut === 'CLOTURE TERMINEE'"
+             [class.row-failed]="item.statut === 'ECHEC' || item.statut === 'ECHEC TERMINE'"
+             [class.row-cancelled]="item.statut === 'ANNULE' || item.statut === 'ANNULEE'">
+          <div class="intervention-row-main">
+            <div class="intervention-left">
+              <span class="intervention-num">{{ item.numInter || '—' }}</span>
+              <span class="intervention-meta">{{ dateLabel(item.dateRdv) }} · {{ item.client || '—' }}</span>
+              <span class="intervention-type">{{ item.type || '—' }}@if (item.typeOperation) { · {{ item.typeOperation }}}@if (item.typeLogement) { · {{ item.typeLogement }}}</span>
+            </div>
+            <div class="intervention-right">
+              <span class="intervention-statut">{{ item.statut || '—' }}</span>
+              <span class="details-hint">{{ isExpanded(item) ? "Masquer" : "Détails" }}</span>
+            </div>
+          </div>
+          @if (isExpanded(item)) {
+            <div class="details-card">
+              <div class="details-title">Détails de l'intervention</div>
+              <div class="details-grid">
+                @for (row of detailRows(item); track row.label) {
+                  <div class="detail-item">
+                    <span class="detail-label">{{ row.label }}</span>
+                    <span class="detail-value">{{ row.value }}</span>
                   </div>
-                </td>
-              </tr>
-            }
+                }
+              </div>
+            </div>
           }
-        </tbody>
-      </table>
+        </div>
+      }
     </div>
   }
 </section>

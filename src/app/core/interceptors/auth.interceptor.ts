@@ -82,26 +82,38 @@ export const authInterceptor: HttpInterceptorFn = (
 
       if (err instanceof HttpErrorResponse && isApiReq) {
         const url = req.url.split('?')[0];
-        const isRefreshOrLogin = url.includes('/auth/refresh') || url.includes('/auth/login');
+        const isRefreshEndpoint = url.includes('/auth/refresh');
+        const isLoginEndpoint = url.includes('/auth/login');
+        const isRefreshOrLogin = isRefreshEndpoint || isLoginEndpoint;
 
-        // 401 : tentative de refresh
+        // 401 : tentative de refresh automatique
         if (err.status === 401) {
           if (isRefreshOrLogin) {
-            auth.logout(true);
+            // Refresh ou login échoués → on nettoie et on redirige
+            auth.logout(false);
+            router.navigate(['/login']);
             return throwError(() => err);
           }
           return auth.refreshToken().pipe(
             switchMap(() => next(authReq)),
             catchError(refreshErr => {
-              auth.logout(true);
+              auth.logout(false);
+              router.navigate(['/login']);
               return throwError(() => refreshErr);
             })
           );
         }
 
-        // 403 : accès interdit → redirection (sauf endpoints auth/flux mdp)
+        // 403 sur /auth/refresh = compte désactivé → logout immédiat
+        if (err.status === 403 && isRefreshEndpoint) {
+          auth.logout(false);
+          router.navigate(['/login']);
+          return throwError(() => err);
+        }
+
+        // 403 sur tout autre endpoint (sauf login/change-password et flux mdp)
         if (err.status === 403) {
-          const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/change-password');
+          const isAuthEndpoint = isLoginEndpoint || url.includes('/auth/change-password');
           const isPasswordFlow = !!(err.error && (err.error.passwordExpired || err.error.mustChangePassword));
           if (!isAuthEndpoint && !isPasswordFlow) {
             router.navigate(['/unauthorized']);

@@ -16,33 +16,24 @@
   } @else if (docs().length === 0) {
     <div class="state empty card">Aucun document disponible.</div>
   } @else {
-    <div class="table card">
-      <table>
-        <thead>
-          <tr>
-            <th>Document</th>
-            <th>Détail</th>
-            <th>Expiration</th>
-            <th>Statut</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (doc of docs(); track doc._id) {
-            <tr>
-              <td data-label="Document">{{ doc.type }}</td>
-              <td data-label="Détail">{{ docLabel(doc) }}</td>
-              <td data-label="Expiration">{{ doc.expiryDate ? (doc.expiryDate | date:'shortDate') : '—' }}</td>
-              <td data-label="Statut">
-                <span class="status" [ngClass]="statusClass(doc)">{{ statusLabel(doc) }}</span>
-              </td>
-              <td data-label="Action">
-                <button class="btn-outline" type="button" (click)="openDoc(doc)">Ouvrir</button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <div class="docs-list">
+      @for (doc of docs(); track doc._id) {
+        <div class="doc-item">
+          <div class="doc-row-main">
+            <div class="doc-left">
+              <span class="doc-type">{{ doc.type }}</span>
+              <span class="doc-detail">{{ docLabel(doc) }}</span>
+              @if (doc.expiryDate) {
+                <span class="doc-expiry">Exp. {{ doc.expiryDate | date:'shortDate' }}</span>
+              }
+            </div>
+            <div class="doc-right">
+              <span class="status" [ngClass]="statusClass(doc)">{{ statusLabel(doc) }}</span>
+              <button class="btn-open" type="button" (click)="openDoc(doc)">Ouvrir</button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   }
 </section>

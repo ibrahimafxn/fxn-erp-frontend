@@ -32,8 +32,9 @@ export class App implements AfterViewInit, OnDestroy {
   readonly showHeader = computed(() =>
     this.auth.ready$() &&
     this.auth.isAuthenticated() &&
-    !this.isLoginRoute(this.routeUrl())
+    this.usesAuthenticatedShell(this.routeUrl())
   );
+  readonly showFooter = computed(() => !this.isFullscreenAuthRoute(this.routeUrl()));
   readonly showHeidiOverlay = computed(() => {
     const user = this.auth.user$();
     if (!user || user.role !== Role.ADMIN) return false;
@@ -145,9 +146,21 @@ export class App implements AfterViewInit, OnDestroy {
     }
   }
 
-  private isLoginRoute(url: string): boolean {
+  private isFullscreenAuthRoute(url: string): boolean {
     const clean = (url || '').split('?')[0].split('#')[0].toLowerCase();
-    return clean === '/login' || clean.endsWith('/auth/login') || clean.includes('/login');
+    return clean === '/login';
+  }
+
+  private usesAuthenticatedShell(url: string): boolean {
+    const clean = (url || '').split('?')[0].split('#')[0].toLowerCase();
+    return (
+      clean.startsWith('/admin') ||
+      clean.startsWith('/depot') ||
+      clean.startsWith('/technician') ||
+      clean.startsWith('/profile') ||
+      clean.startsWith('/preferences') ||
+      clean.startsWith('/unauthorized')
+    );
   }
 
   private isAdminDashboardRoute(url: string): boolean {

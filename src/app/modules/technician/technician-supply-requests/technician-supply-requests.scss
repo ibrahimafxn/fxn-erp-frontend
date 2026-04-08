@@ -260,112 +260,105 @@
     flex-wrap: wrap;
   }
 
-  /* ── Table: card display on mobile ──────────────────────── */
-  .table-wrap {
-    overflow: visible;
-    margin-top: 0.75rem;
-  }
-
-  table {
-    display: block;
-    width: 100%;
-  }
-
-  thead {
-    display: none;
-  }
-
-  tbody {
+  /* ── Supply list — card-based ───────────────────────────── */
+  .supply-list {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
+    margin-top: 0.75rem;
   }
 
-  /* Carte 2 colonnes — Ressource titre pleine largeur, Actions en pied */
-  tbody tr {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 0.75rem;
-    background: var(--fxn-surface-soft);
-    border: 1px solid rgba(148, 163, 184, 0.2);
+  .supply-item {
+    border: 1px solid var(--fxn-border);
     border-radius: 14px;
-    padding: 0.65rem 0.85rem;
+    background: var(--fxn-surface);
+    padding: 0.7rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
   }
 
-  tbody td {
-    display: block;
-    padding: 0.2rem 0;
-    border: none;
-    color: var(--fxn-text, #e2e8f0);
-    font-size: 0.9rem;
-  }
-
-  tbody td::before {
-    content: attr(data-label);
-    display: block;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--fxn-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 2px;
-  }
-
-  /* Ressource : titre pleine largeur en haut */
-  td[data-label='Ressource'] {
-    grid-column: 1 / -1;
-    font-weight: 600;
-    font-size: 0.95rem;
-  }
-
-  /* Commentaire : pleine largeur si présent */
-  td[data-label='Commentaire'] {
-    grid-column: 1 / -1;
-    font-size: 0.82rem;
-    color: rgba(226, 232, 240, 0.72);
-  }
-
-  /* Actions : pleine largeur, boutons côte à côte */
-  td.actions {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  .supply-row-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.5rem;
-    padding-top: 0.4rem;
-    margin-top: 0.2rem;
-    border-top: 1px solid var(--fxn-border);
   }
 
-  td.actions::before {
-    display: none;
+  .supply-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
   }
 
-  .actions .btn-outline {
-    width: 100%;
-    justify-content: center;
-    min-height: 40px;
+  .supply-resource {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fxn-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  /* Sort headers */
-  th.sortable {
-    cursor: pointer;
-    user-select: none;
+  .supply-meta {
+    font-size: 0.78rem;
+    color: var(--fxn-text-muted);
   }
 
-  th.sortable span {
-    display: inline-flex;
+  .supply-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .supply-actions {
+    display: flex;
     align-items: center;
     gap: 0.35rem;
   }
 
-  .sort-icon {
-    font-size: 1rem;
-    opacity: 0.65;
+  .btn-row-edit,
+  .btn-row-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--fxn-border);
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: background 0.12s ease, border-color 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  body.theme-default & thead th {
+  .btn-row-edit {
     color: var(--fxn-primary);
-    opacity: 0.95;
+  }
+
+  .btn-row-edit:hover {
+    background: var(--fxn-primary-soft);
+    border-color: var(--fxn-primary-border);
+  }
+
+  .btn-row-delete {
+    color: var(--fxn-danger);
+    border-color: rgba(239, 68, 68, 0.35);
+  }
+
+  .btn-row-delete:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+
+  .supply-note {
+    font-size: 0.78rem;
+    color: var(--fxn-text-muted);
+    padding-top: 0.2rem;
+    border-top: 1px solid var(--fxn-border);
   }
 
   /* ── States ───────────────────────────────────────────────── */
@@ -411,98 +404,6 @@
       width: auto;
       flex: 1 1 160px;
       min-height: 40px;
-    }
-
-    /* Restore table */
-    .table-wrap {
-      overflow-x: auto;
-    }
-
-    table {
-      display: table;
-      border-collapse: collapse;
-      border-spacing: 0;
-      min-width: 640px;
-    }
-
-    thead {
-      display: table-header-group;
-    }
-
-    thead th {
-      text-align: left;
-      padding: 0.65rem 0.75rem;
-      font-size: 0.8rem;
-      color: var(--fxn-text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      border-bottom: 1px solid var(--fxn-border-strong);
-    }
-
-    tbody {
-      display: table-row-group;
-      flex-direction: unset;
-      gap: 0;
-    }
-
-    tbody tr {
-      display: table-row;
-      grid-template-columns: unset;
-      border-radius: 0;
-      padding: 0;
-      background: transparent;
-      border: none;
-    }
-
-    tbody td {
-      display: table-cell;
-      padding: 0.65rem 0.75rem;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-      vertical-align: middle;
-      overflow: unset;
-      text-overflow: unset;
-      font-size: inherit;
-      font-weight: inherit;
-      color: inherit;
-    }
-
-    td[data-label='Ressource'],
-    td[data-label='Commentaire'] {
-      grid-column: unset;
-      border-top: none;
-      margin-top: 0;
-    }
-
-    td.actions {
-      grid-column: unset;
-      display: table-cell;
-      grid-template-columns: unset;
-      border-top: none;
-      margin-top: 0;
-    }
-
-    tbody td::before {
-      display: none;
-    }
-
-    td.actions {
-      vertical-align: middle;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 0.5rem;
-      width: auto;
-      justify-content: flex-end;
-      padding-top: 0;
-    }
-
-    .actions .btn-outline {
-      width: auto;
-      flex: 0 0 auto;
-      min-width: 88px;
-      min-height: 32px;
     }
 
     .pager {

@@ -56,6 +56,8 @@ export class AccessUsers {
 
   readonly items = computed<User[]>(() => this.result()?.items ?? []);
   readonly noAccessCount = computed(() => this.items().filter(u => !u.authEnabled).length);
+  readonly lockedItems = computed(() => this.items().filter((u) => this.isLocked(u)));
+  readonly lockedCount = computed(() => this.lockedItems().length);
   readonly total = computed(() => this.result()?.total ?? 0);
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -96,6 +98,11 @@ export class AccessUsers {
   readonly disableOpen = signal(false);
   readonly disableSaving = signal(false);
   readonly pendingDisableUser = signal<User | null>(null);
+
+  // unlock (compte verrouillé par trop de tentatives)
+  readonly unlockOpen = signal(false);
+  readonly unlockSaving = signal(false);
+  readonly pendingUnlockUser = signal<User | null>(null);
 
   constructor() {
     this.loadDepots();
@@ -207,7 +214,23 @@ export class AccessUsers {
     return dt ? (this.datePipe.transform(dt as any, 'short') ?? '—') : '—';
   }
 
-  accessBadge(u: User): 'ACTIVE' | 'DISABLED' | 'MUST_CHANGE' {
+  isLocked(u: User): boolean {
+    if (!u.lockUntil) return false;
+    const lockDate = new Date(u.lockUntil).getTime();
+    return Number.isFinite(lockDate) && lockDate > Date.now();
+  }
+
+  lockStatusText(u: User): string {
+    if (!this.isLocked(u)) return '—';
+    const until = this.datePipe.transform(u.lockUntil as any, 'short') ?? 'date inconnue';
+    const attempts = Number(u.failedLoginAttempts ?? 0);
+    return attempts > 0
+      ? `Verrouillé jusqu’au ${until} · ${attempts} tentative(s)`
+      : `Verrouillé jusqu’au ${until}`;
+  }
+
+  accessBadge(u: User): 'ACTIVE' | 'DISABLED' | 'MUST_CHANGE' | 'LOCKED' {
+    if (this.isLocked(u)) return 'LOCKED';
     if (!u.authEnabled) return 'DISABLED';
     if (u.mustChangePassword) return 'MUST_CHANGE';
     return 'ACTIVE';
@@ -323,6 +346,35 @@ export class AccessUsers {
       error: () => {
         this.disableSaving.set(false);
         this.closeDisable();
+      }
+    });
+  }
+
+  openUnlock(u: User): void {
+    this.pendingUnlockUser.set(u);
+    this.unlockOpen.set(true);
+  }
+
+  closeUnlock(): void {
+    this.unlockOpen.set(false);
+    this.pendingUnlockUser.set(null);
+    this.unlockSaving.set(false);
+  }
+
+  confirmUnlock(): void {
+    const u = this.pendingUnlockUser();
+    if (!u) return;
+
+    this.unlockSaving.set(true);
+    this.usersSvc.unlockUser(u._id).subscribe({
+      next: () => {
+        this.unlockSaving.set(false);
+        this.closeUnlock();
+        this.refresh(true);
+      },
+      error: () => {
+        this.unlockSaving.set(false);
+        this.closeUnlock();
       }
     });
   }
