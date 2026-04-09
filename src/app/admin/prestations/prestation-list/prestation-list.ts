@@ -1,11 +1,13 @@
 import { Component, Signal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { catchError, map, of } from 'rxjs';
 
 import { PrestationService } from '../../../core/services/prestation.service';
-import { Prestation, PrestationListResult } from '../../../core/models';
+import { PrestationCatalogService } from '../../../core/services/prestation-catalog.service';
+import { Prestation, PrestationCatalog, PrestationListResult } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { DetailBack } from '../../../core/utils/detail-back';
 import { formatPageRange } from '../../../core/utils/pagination';
@@ -21,11 +23,13 @@ import { formatPageRange } from '../../../core/utils/pagination';
 })
 export class PrestationList extends DetailBack {
   private svc = inject(PrestationService);
+  private catalogService = inject(PrestationCatalogService);
   private fb = inject(FormBuilder);
 
   readonly loading = this.svc.loading;
   readonly error = this.svc.error;
   readonly result: Signal<PrestationListResult | null> = this.svc.result;
+  readonly usesCatalogApi = signal(false);
 
   readonly deletingId = signal<string | null>(null);
   readonly page = signal(1);
@@ -36,7 +40,7 @@ export class PrestationList extends DetailBack {
     q: this.fb.nonNullable.control('')
   });
 
-  readonly items = computed(() => this.result()?.items ?? []);
+  readonly items = computed(() => (this.result()?.items ?? []) as Prestation[]);
   readonly total = computed(() => this.result()?.total ?? 0);
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -55,11 +59,31 @@ export class PrestationList extends DetailBack {
 
   refresh(force = false): void {
     const { q } = this.filterForm.getRawValue();
-    this.svc.refreshPrestations(force, {
+    this.catalogService.list({
       q: q.trim() || undefined,
       page: this.page(),
       limit: this.limit()
-    }).subscribe({ error: () => {} });
+    }).pipe(
+      map((catalogResult) => this.mapCatalogToLegacyResult(catalogResult)),
+      catchError(() => this.svc.refreshPrestations(force, {
+        q: q.trim() || undefined,
+        page: this.page(),
+        limit: this.limit()
+      }).pipe(
+        map((legacyResult) => {
+          this.usesCatalogApi.set(false);
+          return legacyResult;
+        })
+      ))
+    ).subscribe({
+      next: (result) => {
+        if (result.items.some((item) => 'segment' in item || 'libelle' in item)) {
+          this.usesCatalogApi.set(true);
+        }
+        (this.svc as any)._result.set(result);
+      },
+      error: () => {}
+    });
   }
 
   search(): void {
@@ -146,5 +170,37 @@ export class PrestationList extends DetailBack {
     return `${p.prix.toFixed(2)} €`;
   }
 
+  designationLabel(p: Prestation): string {
+    return p.designation || p.code || '';
+  }
+
+  segmentLabel(p: Prestation): string {
+    return (p as Prestation & { segment?: string }).segment || '—';
+  }
+
+  statusLabel(p: Prestation): string {
+    const active = (p as Prestation & { active?: boolean }).active;
+    if (typeof active !== 'boolean') return '—';
+    return active ? 'Actif' : 'Inactif';
+  }
+
   trackById = (_: number, p: Prestation) => p._id;
+
+  private mapCatalogToLegacyResult(result: { total: number; page: number; limit: number; items: PrestationCatalog[] }): PrestationListResult {
+    return {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      items: result.items.map((item) => ({
+        _id: item.id,
+        code: item.code,
+        designation: item.libelle,
+        prix: item.prixUnitaireBase,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        segment: item.segment,
+        active: item.active
+      } as Prestation))
+    };
+  }
 }

@@ -3,8 +3,13 @@
     <div>
       <h1>{{ title() }}</h1>
       <p class="subtitle">
-        @if (isCreate()) { Créer un nouveau code article et sa désignation. }
-        @else { Modifier les informations de la prestation. }
+        @if (usesCatalogApi()) {
+          @if (isCreate()) { Créer une prestation du catalogue maître. }
+          @else { Modifier une prestation du catalogue maître. }
+        } @else {
+          @if (isCreate()) { Créer un nouveau code article et sa désignation. }
+          @else { Modifier les informations de la prestation. }
+        }
       </p>
     </div>
     <div class="header-actions">
@@ -69,6 +74,16 @@
         }
       </div>
 
+      <div class="field">
+        <label>Segment</label>
+        <select formControlName="segment">
+          @for (segment of segmentOptions; track segment) {
+            <option [value]="segment">{{ segment }}</option>
+          }
+        </select>
+        <small class="hint">Utilisé par le nouveau catalogue BPU. Sans impact si l'ancien backend répond encore.</small>
+      </div>
+
       <!-- DÉSIGNATION -->
       <div class="field col-2">
         <label>Désignation *</label>
@@ -82,6 +97,14 @@
         } @else if (form.controls.designation.touched && form.controls.designation.invalid) {
           <small class="hint error">La désignation est requise (min 2 caractères).</small>
         }
+      </div>
+
+      <div class="field col-2">
+        <label class="checkbox-row">
+          <input formControlName="active" type="checkbox" />
+          <span>Prestation active</span>
+        </label>
+        <small class="hint">Préparation de la gestion catalogue avec activation/désactivation.</small>
       </div>
 
     </div>

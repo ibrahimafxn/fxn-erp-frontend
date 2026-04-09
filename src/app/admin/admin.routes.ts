@@ -120,6 +120,10 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'bpu',
+    loadComponent: () => import('./bpu/bpu-list/bpu-list').then(m => m.BpuList)
+  },
+  {
+    path: 'bpu/types',
     loadComponent: () => import('./bpu/bpu-type-list/bpu-type-list').then(m => m.BpuTypeList)
   },
   {

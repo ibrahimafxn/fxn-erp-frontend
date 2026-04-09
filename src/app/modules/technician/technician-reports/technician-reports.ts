@@ -1,18 +1,30 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
 import { BpuService } from '../../../core/services/bpu.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
-import { BpuEntry, BpuSelection } from '../../../core/models';
+import { AuthService } from '../../../core/services/auth.service';
+import { EffectiveBpuService } from '../../../core/services/effective-bpu.service';
+import { BpuEntry, BpuSelection, EffectiveBpuItem } from '../../../core/models';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
-type BpuItem = { code: string; prestation: string };
+type BpuItem = {
+  prestationId?: string;
+  code: string;
+  prestation: string;
+  unitPrice: number;
+};
+
+type ResolvedBpuState = {
+  items: BpuItem[];
+  prices: Map<string, number>;
+};
 
 @Component({
   selector: 'app-technician-reports',
@@ -28,6 +40,8 @@ export class TechnicianReports {
   private reportService = inject(TechnicianReportService);
   private bpuService = inject(BpuService);
   private bpuSelectionService = inject(BpuSelectionService);
+  private effectiveBpuService = inject(EffectiveBpuService);
+  private auth = inject(AuthService);
   private datePipe = inject(DatePipe);
 
   // ── BPU dynamique ──────────────────────────────────────────────────────────
@@ -76,6 +90,12 @@ export class TechnicianReports {
   });
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly selectedCount = computed(() =>
+    Array.from(this.qtys().values()).reduce((sum, qty) => sum + (qty > 0 ? qty : 0), 0)
+  );
+  readonly formTotalAmount = computed(() =>
+    this.bpuItems().reduce((sum, item) => sum + this.lineAmount(item.code), 0)
+  );
 
   readonly isDefaultForm = computed(() => {
     const hasQtys = Array.from(this.qtys().values()).some((v) => v > 0);
@@ -92,52 +112,15 @@ export class TechnicianReports {
   loadBpu(): void {
     this.bpuLoading.set(true);
     this.bpuError.set(null);
-
-    this.bpuSelectionService.list().pipe(
-      switchMap((selections: BpuSelection[]) => {
-        // Utiliser la sélection la plus récente (une seule active par technicien)
-        const sorted = [...selections].sort(
-          (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
-        );
-        const active = sorted[0] ?? null;
-        const allowedCodes = new Set(
-          (active?.prestations || []).map((p) => String(p.code || '').toUpperCase())
-        );
-        // Si aucune prestation attribuée, on bloque la page
-        if (!allowedCodes.size) {
-          this.hasBpu.set(false);
-          this.bpuItems.set([]);
-          this.bpuPrices.set(new Map());
-          this.bpuLoading.set(false);
-          return [];
-        }
-        // Construire la price map depuis la sélection active
-        const priceMap = new Map<string, number>();
-        for (const p of active?.prestations || []) {
-          const code = String(p.code || '').toUpperCase();
-          if (code) priceMap.set(code, Number(p.unitPrice ?? 0));
-        }
-        this.bpuPrices.set(priceMap);
-        this.hasBpu.set(true);
-        // Charger le catalogue BPU pour récupérer les libellés
-        return this.bpuService.list().pipe(
-          switchMap((allItems: BpuEntry[]) => {
-            const seen = new Set<string>();
-            const bpuItems: BpuItem[] = [];
-            for (const item of allItems) {
-              const code = String(item.code || '').toUpperCase();
-              if (!allowedCodes.has(code) || seen.has(code)) continue;
-              seen.add(code);
-              bpuItems.push({ code, prestation: item.prestation || item.code || '' });
-            }
-            this.bpuItems.set(bpuItems);
-            this.bpuLoading.set(false);
-            return [];
-          })
-        );
-      })
-    ).subscribe({
+    this.resolveBpuState$().subscribe({
+      next: (state) => {
+        this.applyBpuState(state);
+        this.bpuLoading.set(false);
+      },
       error: (err) => {
+        this.hasBpu.set(false);
+        this.bpuItems.set([]);
+        this.bpuPrices.set(new Map());
         this.bpuError.set(this.apiError(err, 'Erreur chargement BPU'));
         this.bpuLoading.set(false);
       }
@@ -174,13 +157,27 @@ export class TechnicianReports {
     const prestations = Array.from(this.qtys().entries())
       .filter(([, qty]) => qty > 0)
       .map(([code, qty]) => ({ code, qty }));
+    const entries = this.bpuItems()
+      .map((item) => ({
+        prestationId: item.prestationId,
+        quantite: this.qtyFor(item.code)
+      }))
+      .filter((item) => !!item.prestationId && item.quantite > 0)
+      .map((item) => ({ prestationId: item.prestationId as string, quantite: item.quantite }));
 
     this.loading.set(true);
     this.error.set(null);
     const current = this.editing();
     const request$ = current?._id
-      ? this.reportService.update(current._id, { prestations, comment })
-      : this.reportService.create({ date, prestations, comment });
+      ? this.reportService.update(current._id, { prestations, entries, comment, commentaire: comment })
+      : this.reportService.create({
+          date,
+          dateActivite: date,
+          prestations,
+          entries,
+          comment,
+          commentaire: comment
+        });
 
     request$.subscribe({
       next: () => {
@@ -205,8 +202,17 @@ export class TechnicianReports {
 
     // Restaurer les quantités depuis le rapport
     const next = new Map<string, number>();
-    for (const { code, qty } of report.prestations || []) {
-      next.set(String(code).toUpperCase(), qty);
+    const entries = Array.isArray(report.entries) ? report.entries : [];
+    if (entries.length) {
+      for (const entry of entries) {
+        const code = String(entry.codeSnapshot || entry.code || '').toUpperCase();
+        const qty = Number(entry.quantite ?? entry.qty ?? 0);
+        if (code && qty > 0) next.set(code, qty);
+      }
+    } else {
+      for (const { code, qty } of report.prestations || []) {
+        next.set(String(code).toUpperCase(), qty);
+      }
     }
     this.qtys.set(next);
   }
@@ -245,6 +251,16 @@ export class TechnicianReports {
   }
 
   prestationsSummary(report: TechnicianReport): Array<{ code: string; label: string; qty: number }> {
+    const entries = Array.isArray(report.entries) ? report.entries : [];
+    if (entries.length) {
+      return entries
+        .filter((entry) => Number(entry.quantite ?? entry.qty ?? 0) > 0)
+        .map((entry) => ({
+          code: String(entry.codeSnapshot || entry.code || '').toUpperCase(),
+          label: entry.libelleSnapshot || String(entry.codeSnapshot || entry.code || ''),
+          qty: Number(entry.quantite ?? entry.qty ?? 0)
+        }));
+    }
     const prestations = Array.isArray(report.prestations) ? report.prestations : [];
     return prestations
       .filter((p) => p.qty > 0)
@@ -260,6 +276,18 @@ export class TechnicianReports {
   };
 
   computeAmount(report: TechnicianReport): number {
+    if (Number.isFinite(report.totalCa)) return Number(report.totalCa);
+    const entries = Array.isArray(report.entries) ? report.entries : [];
+    if (entries.length) {
+      const total = entries.reduce((sum, entry) => {
+        if (Number.isFinite(entry.totalCaLigne)) return sum + Number(entry.totalCaLigne);
+        if (Number.isFinite(entry.montantLigne)) return sum + Number(entry.montantLigne);
+        const qty = Number(entry.quantite ?? entry.qty ?? 0);
+        const price = Number(entry.prixUnitaireSnapshot ?? 0);
+        return sum + (qty > 0 && Number.isFinite(price) ? qty * price : 0);
+      }, 0);
+      if (total > 0) return Number(total.toFixed(2));
+    }
     const prestations = Array.isArray(report.prestations) ? report.prestations : [];
     if (!prestations.length) return Number(report.amount ?? 0);
     const prices = this.bpuPrices();
@@ -274,7 +302,21 @@ export class TechnicianReports {
       }
       if (Number.isFinite(price)) total += qty * (price as number);
     }
-    return Number(total.toFixed(2));
+    return total > 0 ? Number(total.toFixed(2)) : Number(report.amount ?? 0);
+  }
+
+  unitPriceFor(code: string): number {
+    const key = String(code || '').toUpperCase();
+    let price = this.bpuPrices().get(key);
+    if (!Number.isFinite(price)) {
+      const aliasKey = TechnicianReports.CODE_ALIASES[key];
+      if (aliasKey) price = this.bpuPrices().get(aliasKey);
+    }
+    return Number.isFinite(price) ? Number(price) : 0;
+  }
+
+  lineAmount(code: string): number {
+    return Number((this.qtyFor(code) * this.unitPriceFor(code)).toFixed(2));
   }
 
   // ── Pagination ─────────────────────────────────────────────────────────────
@@ -336,6 +378,81 @@ export class TechnicianReports {
     return this.datePipe.transform(new Date(), 'yyyy-MM-dd') || '';
   }
 
+  private resolveBpuState$(): Observable<ResolvedBpuState> {
+    const technicianId = this.currentUserId();
+    if (!technicianId) return this.resolveLegacyBpuState$();
+
+    return this.effectiveBpuService.getTechnicianEffectiveBpu(technicianId).pipe(
+      map((items) => {
+        const normalized = [...(items || [])]
+          .filter((item) => !!String(item.code || '').trim())
+          .sort((a, b) => Number(a.ordreAffichage ?? 0) - Number(b.ordreAffichage ?? 0));
+        if (!normalized.length) {
+          throw new Error('EMPTY_EFFECTIVE_BPU');
+        }
+        const prices = new Map<string, number>();
+        const resolvedItems: BpuItem[] = normalized.map((item: EffectiveBpuItem) => {
+          const code = String(item.code || '').trim().toUpperCase();
+          const unitPrice = Number(item.prixUnitaire ?? 0);
+          prices.set(code, unitPrice);
+          return {
+            prestationId: item.prestationId,
+            code,
+            prestation: item.libelle || code,
+            unitPrice
+          };
+        });
+        return { items: resolvedItems, prices };
+      }),
+      catchError(() => this.resolveLegacyBpuState$())
+    );
+  }
+
+  private resolveLegacyBpuState$(): Observable<ResolvedBpuState> {
+    return this.bpuSelectionService.list().pipe(
+      switchMap((selections: BpuSelection[]) => {
+        const sorted = [...selections].sort(
+          (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+        );
+        const active = sorted[0] ?? null;
+        const allowedCodes = new Set(
+          (active?.prestations || []).map((p) => String(p.code || '').toUpperCase())
+        );
+        if (!allowedCodes.size) {
+          return of({ items: [], prices: new Map<string, number>() });
+        }
+        const prices = new Map<string, number>();
+        for (const p of active?.prestations || []) {
+          const code = String(p.code || '').toUpperCase();
+          if (code) prices.set(code, Number(p.unitPrice ?? 0));
+        }
+        return this.bpuService.list().pipe(
+          map((allItems: BpuEntry[]) => {
+            const seen = new Set<string>();
+            const items: BpuItem[] = [];
+            for (const item of allItems) {
+              const code = String(item.code || '').toUpperCase();
+              if (!allowedCodes.has(code) || seen.has(code)) continue;
+              seen.add(code);
+              items.push({
+                code,
+                prestation: item.prestation || item.code || '',
+                unitPrice: prices.get(code) ?? 0
+              });
+            }
+            return { items, prices };
+          })
+        );
+      })
+    );
+  }
+
+  private applyBpuState(state: ResolvedBpuState): void {
+    this.bpuItems.set(state.items);
+    this.bpuPrices.set(state.prices);
+    this.hasBpu.set(state.items.length > 0);
+  }
+
   private resetForm(): void {
     this.form.reset({ date: this.todayInput(), comment: '' });
     this.qtys.set(new Map());
@@ -355,5 +472,10 @@ export class TechnicianReports {
       ? String(err.error.message ?? '')
       : '';
     return apiMsg || err?.message || fallback;
+  }
+
+  private currentUserId(): string | null {
+    const user = this.auth.getCurrentUser();
+    return user?._id ? String(user._id) : null;
   }
 }

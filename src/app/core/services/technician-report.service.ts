@@ -2,16 +2,39 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { ReportStatus } from '../models';
 
 export type TechnicianReportPrestation = { code: string; qty: number };
+
+export type TechnicianReportEntry = {
+  prestationId?: string;
+  code?: string;
+  qty?: number;
+  quantite?: number;
+  codeSnapshot?: string;
+  libelleSnapshot?: string;
+  segmentSnapshot?: string;
+  prixUnitaireSnapshot?: number;
+  montantLigne?: number;
+  compteDansCaSnapshot?: boolean;
+  compteDansAttachementSnapshot?: boolean;
+  coefficientCaSnapshot?: number;
+  coefficientAttachementSnapshot?: number;
+  totalCaLigne?: number;
+  totalAttachementLigne?: number;
+};
 
 export type TechnicianReport = {
   _id: string;
   reportDate: string;
   amount?: number;
+  totalCa?: number;
+  totalAttachement?: number;
   interventionsCount?: number;
   prestations?: TechnicianReportPrestation[];
+  entries?: TechnicianReportEntry[];
   comment?: string;
+  status?: ReportStatus;
   technician?: { _id: string; firstName?: string; lastName?: string; email?: string };
   depot?: { _id: string; name?: string; city?: string };
   createdAt?: string;
@@ -27,15 +50,21 @@ export type TechnicianReportList = {
 
 type CreatePayload = {
   date?: string;
+  dateActivite?: string;
   interventionsCount?: number;
   prestations?: TechnicianReportPrestation[];
+  entries?: Array<{ prestationId: string; quantite: number }>;
   comment?: string;
+  commentaire?: string;
 };
 
 type UpdatePayload = {
   interventionsCount?: number;
   prestations?: TechnicianReportPrestation[];
+  entries?: Array<{ prestationId: string; quantite: number }>;
   comment?: string;
+  commentaire?: string;
+  status?: ReportStatus;
 };
 
 @Injectable({ providedIn: 'root' })

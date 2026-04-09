@@ -31,15 +31,33 @@
             @for (item of bpuItems(); track item.code; let i = $index) {
               <div class="prestation-item">
                 <div [class]="'prestation-pill pill-color-' + (i % 8)">{{ item.prestation || item.code }}</div>
+                <div class="prestation-meta">
+                  <span class="prestation-price">{{ formatAmount(unitPriceFor(item.code)) }}</span>
+                </div>
                 <div class="prestation-stepper">
                   <button type="button" class="stepper-btn" (click)="stepCode(item.code, -1)" aria-label="Diminuer">−</button>
                   <input type="number" min="0" [value]="qtyFor(item.code)" (change)="setQty(item.code, $event)" />
                   <button type="button" class="stepper-btn" (click)="stepCode(item.code, 1)" aria-label="Augmenter">+</button>
                 </div>
+                <div class="prestation-total">
+                  <span>Montant ligne</span>
+                  <strong>{{ formatAmount(lineAmount(item.code)) }}</strong>
+                </div>
               </div>
             }
           </div>
         }
+      </div>
+
+      <div class="full form-summary">
+        <div class="summary-card">
+          <span class="summary-label">Quantité totale</span>
+          <strong class="summary-value">{{ selectedCount() }}</strong>
+        </div>
+        <div class="summary-card accent">
+          <span class="summary-label">CA estimé</span>
+          <strong class="summary-value">{{ formatAmount(formTotalAmount()) }}</strong>
+        </div>
       </div>
 
       <label class="full">

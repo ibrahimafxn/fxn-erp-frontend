@@ -18,7 +18,7 @@ import {
   InterventionPrestationField
 } from '../../../core/constant/intervention-prestations';
 
-type Segment = 'AUTO' | 'SALARIE' | 'AUTRE';
+type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE';
 type ConfirmAction = 'saveSelection' | 'updateCode' | 'addPrestation' | 'deletePersonalized';
 
 @Component({
@@ -49,7 +49,7 @@ export class BpuList {
   readonly personalizedOwnerIds = signal<Set<string>>(new Set());
   readonly personalizedSelectionByOwner = signal<Map<string, BpuSelection>>(new Map());
   readonly selectedTechnicianId = signal<string | null>(null);
-  readonly currentSegment = signal<Segment>('AUTO');
+  readonly currentSegment = signal<Segment>('PERSONNALISE');
   readonly isEditing = signal(false);
   readonly sortDir = signal<'asc' | 'desc'>('asc');
   readonly selectedCodes = signal<Set<string>>(new Set());
@@ -139,13 +139,16 @@ export class BpuList {
 
   constructor() {
     const segment = this.route.snapshot.queryParamMap.get('segment');
-    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'AUTRE') {
+    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'PERSONNALISE' || segment === 'AUTRE') {
       this.currentSegment.set(segment);
       this.isEditing.set(true);
     }
     const technician = this.route.snapshot.queryParamMap.get('technician');
     if (technician) {
       this.selectedTechnicianId.set(technician);
+    }
+    if (this.route.snapshot.queryParamMap.get('saved') === '1') {
+      this.success.set('BPU enregistré avec succès.');
     }
     if (!this.isTechnician()) {
       this.loadTechnicians();
@@ -181,7 +184,9 @@ export class BpuList {
     this.success.set(null);
     this.warning.set(null);
     const segment = this.currentSegment();
-    const items$ = segment === 'AUTRE'
+    const items$ = segment === 'PERSONNALISE'
+      ? this.bpuService.list()
+      : segment === 'AUTRE'
       ? this.bpuService.list(segment).pipe(
           switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
         )
@@ -243,10 +248,10 @@ export class BpuList {
           const personalized = Array.isArray(selectionPayload)
             ? []
             : (selectionPayload.personalized || []);
-          const segmentKey = this.normalizeSelectionType(segment);
           for (const entry of personalized) {
             if (!entry?.owner) continue;
-            if (!this.isSelectionActiveForSegment(entry, segment)) continue;
+            const entryType = this.normalizeSelectionType(entry.type);
+            if (entryType === 'DEFAULT_RATES') continue;
             const ownerId = String(entry.owner);
             ownerIds.add(ownerId);
             const current = ownerSelections.get(ownerId);
@@ -255,8 +260,11 @@ export class BpuList {
               continue;
             }
             const currentType = this.normalizeSelectionType(current.type);
-            const entryType = this.normalizeSelectionType(entry.type);
-            if (currentType !== segmentKey && entryType === segmentKey) {
+            if (currentType !== 'PERSONNALISE' && entryType === 'PERSONNALISE') {
+              ownerSelections.set(ownerId, entry);
+              continue;
+            }
+            if (currentType !== 'PERSONNALISE' && currentType !== entryType) {
               ownerSelections.set(ownerId, entry);
             }
           }
@@ -294,6 +302,7 @@ export class BpuList {
     this.isEditing.set(false);
     this.selectedCodes.set(new Set());
     this.editedPrices.set(new Map());
+    this.syncQueryParams();
     this.load();
   }
 
@@ -310,6 +319,7 @@ export class BpuList {
     }
     this.selectedCodes.set(new Set());
     this.editedPrices.set(new Map());
+    this.syncQueryParams();
     this.load();
   }
 
@@ -362,7 +372,9 @@ export class BpuList {
     this.loading.set(true);
     this.error.set(null);
     const segment = this.currentSegment();
-    const items$ = segment === 'AUTRE'
+    const items$ = segment === 'PERSONNALISE'
+      ? this.bpuService.list()
+      : segment === 'AUTRE'
       ? this.bpuService.list(segment).pipe(
           switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
         )
@@ -512,9 +524,11 @@ export class BpuList {
 
   editPersonalized(techId: string): void {
     if (!techId) return;
+    this.currentSegment.set('PERSONNALISE');
     this.selectedTechnicianId.set(techId);
     this.selectedCodes.set(new Set());
     this.editedPrices.set(new Map());
+    this.syncQueryParams();
     this.load();
   }
 
@@ -790,7 +804,12 @@ export class BpuList {
   }
 
   private performSaveSelection(): void {
-    const type = this.isTechnician() ? 'DEFAULT_RATES' : this.currentSegment();
+    const isPersonalizedSave = !this.isTechnician() && !!this.selectedTechnicianId();
+    const type = this.isTechnician()
+      ? 'DEFAULT_RATES'
+      : isPersonalizedSave
+        ? 'PERSONNALISE'
+        : this.currentSegment();
     const selected = this.items().filter((item) => item.code && this.selectedCodes().has(item.code));
     const prestations = selected
       .map((item) => ({
@@ -819,11 +838,17 @@ export class BpuList {
       next: () => {
         this.saving.set(false);
         this.selectedCodes.set(new Set());
-        this.success.set('BPU enregistré avec succès.');
+        const queryParams: Record<string, string> = {
+          saved: '1',
+          segment: isPersonalizedSave ? 'PERSONNALISE' : this.currentSegment()
+        };
+        if (!this.isTechnician() && this.selectedTechnicianId()) {
+          queryParams['technician'] = this.selectedTechnicianId() as string;
+        }
         if (this.isTechnician()) {
-          this.router.navigate(['/technician/bpu'], { queryParams: { saved: '1' } }).then();
+          this.router.navigate(['/technician/bpu'], { queryParams }).then();
         } else {
-          this.router.navigate(['/admin/bpu'], { queryParams: { saved: '1' } }).then();
+          this.router.navigate(['/admin/bpu'], { queryParams }).then();
         }
       },
       error: (err: HttpErrorResponse) => {
@@ -935,10 +960,17 @@ export class BpuList {
   private resolveSelection(ownerSelections: BpuSelection[], globalSelections: BpuSelection[], segment: Segment): BpuSelection | null {
     const segmentKey = this.normalizeSelectionType(segment);
     const pick = (items: BpuSelection[], type: string) => items.find((item) => this.normalizeSelectionType(item.type) === type);
+    const pickAnyOwnerSpecific = (items: BpuSelection[]) =>
+      items.find((item) => {
+        const type = this.normalizeSelectionType(item.type);
+        return !!item?.owner && type !== 'DEFAULT_RATES';
+      });
     return (
-      pick(ownerSelections, segmentKey)
+      pick(ownerSelections, 'PERSONNALISE')
+      || (segmentKey === 'PERSONNALISE' ? pickAnyOwnerSpecific(ownerSelections) : null)
+      || (segmentKey !== 'PERSONNALISE' ? pick(ownerSelections, segmentKey) : null)
       || pick(ownerSelections, 'DEFAULT_RATES')
-      || pick(globalSelections, segmentKey)
+      || (segmentKey !== 'PERSONNALISE' ? pick(globalSelections, segmentKey) : null)
       || pick(globalSelections, 'DEFAULT_RATES')
       || null
     );
@@ -965,5 +997,20 @@ export class BpuList {
       result.push(item);
     }
     return result;
+  }
+
+  private syncQueryParams(): void {
+    if (this.isTechnician()) return;
+    const queryParams: Record<string, string | null> = {
+      segment: this.currentSegment(),
+      technician: this.selectedTechnicianId(),
+      saved: null
+    };
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    }).then();
   }
 }

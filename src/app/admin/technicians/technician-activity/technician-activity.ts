@@ -337,7 +337,24 @@ export class TechnicianActivity {
   }
 
   reportAmount(report: TechnicianReport): number {
-    return this.computeBpuAmount(report);
+    if (Number.isFinite(Number(report.totalCa))) {
+      return Number(report.totalCa);
+    }
+    if (Number.isFinite(Number(report.amount))) {
+      return Number(report.amount);
+    }
+    if (Array.isArray(report.entries) && report.entries.length > 0) {
+      return report.entries.reduce((sum, entry) => {
+        if (Number.isFinite(Number(entry.totalCaLigne))) {
+          return sum + Number(entry.totalCaLigne);
+        }
+        if (Number.isFinite(Number(entry.montantLigne))) {
+          return sum + Number(entry.montantLigne);
+        }
+        return sum;
+      }, 0);
+    }
+    return 0;
   }
 
   reportBpuLabel(report: TechnicianReport): string {
@@ -426,38 +443,19 @@ export class TechnicianActivity {
 
     this.summaryLoading.set(true);
     this.error.set(null);
-    await this.ensureBpuSelections();
-    await this.ensureEmployeeContracts();
-
-    const baseQuery = {
-      fromDate: dates.fromDate,
-      toDate: dates.toDate,
-      technicianId,
-      depotId
-    };
-
-    const limit = 200;
-    let page = 1;
-    let total = 0;
-    let amount = 0;
 
     try {
-      do {
-        const res = await firstValueFrom(this.reportService.list({ ...baseQuery, page, limit }));
-        if (requestId !== this.summaryRequestId) return;
-        if (!res?.success) {
-          throw new Error('Erreur chargement montant');
-        }
-        const items = res.data.items || [];
-        for (const item of items) {
-          amount += this.computeBpuAmount(item);
-        }
-        total = res.data.total ?? (items.length + (page - 1) * limit);
-        page += 1;
-      } while ((page - 1) * limit < total);
-
+      const res = await firstValueFrom(this.reportService.summary({
+        fromDate: dates.fromDate,
+        toDate: dates.toDate,
+        technicianId,
+        depotId
+      }));
       if (requestId !== this.summaryRequestId) return;
-      this.summaryTotalAmount.set(amount);
+      if (!res?.success) {
+        throw new Error('Erreur chargement montant');
+      }
+      this.summaryTotalAmount.set(Number(res.data?.totalAmount || 0));
     } catch (err) {
       if (requestId !== this.summaryRequestId) return;
       this.error.set(this.apiError(err, 'Erreur chargement montant'));
@@ -465,16 +463,6 @@ export class TechnicianActivity {
       if (requestId !== this.summaryRequestId) return;
       this.summaryLoading.set(false);
     }
-  }
-
-  private computeBpuAmount(report: TechnicianReport): number {
-    const prices = this.resolveBpuPrices(report.technician?._id);
-    let total = 0;
-    for (const { code, qty } of report.prestations || []) {
-      if (!qty) continue;
-      total += qty * this.getBpuUnit(prices, code);
-    }
-    return total;
   }
 
   private getBpuUnit(prices: Map<string, number> | null, code: string): number {

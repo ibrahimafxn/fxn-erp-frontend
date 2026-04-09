@@ -5,7 +5,7 @@ import { RouterModule, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BpuService } from '../../../core/services/bpu.service';
 
-type Segment = 'AUTO' | 'SALARIE' | 'AUTRE';
+type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE';
 
 @Component({
   standalone: true,
@@ -24,7 +24,7 @@ export class BpuForm {
   readonly error = signal<string | null>(null);
 
   readonly form = this.fb.nonNullable.group({
-    segment: this.fb.nonNullable.control<Segment>('AUTO'),
+    segment: this.fb.nonNullable.control<Segment>('PERSONNALISE'),
     prestation: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
     code: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(2)]),
     unitPrice: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)])

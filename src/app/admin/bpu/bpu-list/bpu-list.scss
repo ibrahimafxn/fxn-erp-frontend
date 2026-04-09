@@ -40,6 +40,39 @@
   box-shadow: var(--fxn-shadow-sm);
 }
 
+.guidance-card {
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.guidance-item {
+  display: grid;
+  gap: .2rem;
+  padding: .8rem .9rem;
+  border-radius: .9rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface);
+}
+
+.guidance-item.accent {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.guidance-label {
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fxn-text-muted);
+}
+
+.guidance-value {
+  color: var(--fxn-text);
+  font-size: .95rem;
+}
+
 .toolbar.card {
   padding: 1rem;
   display: grid;
@@ -395,6 +428,10 @@ tbody tr:hover {
 @media (max-width: 980px) {
   .page-header {
     flex-direction: column;
+  }
+
+  .guidance-card {
+    grid-template-columns: 1fr;
   }
 }
 

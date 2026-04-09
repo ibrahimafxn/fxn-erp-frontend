@@ -70,7 +70,8 @@
   opacity: 0.9;
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   padding: 0.6rem 0.75rem;
   border-radius: 0.75rem;
@@ -78,6 +79,19 @@
   background: var(--fxn-surface-soft);
   color: inherit;
   outline: none;
+}
+
+.checkbox-row {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0;
+
+  input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    margin: 0;
+  }
 }
 
 .input-group {

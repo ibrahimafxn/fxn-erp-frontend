@@ -164,6 +164,33 @@
   transition: border-color 0.15s ease;
 }
 
+.technician-reports .prestation-meta,
+.technician-reports .prestation-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.78rem;
+}
+
+.technician-reports .prestation-meta {
+  color: var(--fxn-text-muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.technician-reports .prestation-code {
+  font-family: var(--fxn-font-mono, monospace);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.technician-reports .prestation-price {
+  font-weight: 700;
+  color: var(--fxn-text);
+}
+
 /* Stepper row: [−] [value] [+] */
 .technician-reports .prestation-stepper {
   display: flex;
@@ -217,6 +244,17 @@
   background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
 }
 
+.technician-reports .prestation-total {
+  border-top: 1px solid var(--fxn-border);
+  color: var(--fxn-text-muted);
+  background: var(--fxn-surface-soft);
+}
+
+.technician-reports .prestation-total strong {
+  color: var(--fxn-text);
+  font-size: 0.88rem;
+}
+
 /* Pill = full-width card header with gradient */
 .technician-reports .prestation-item [class^='pill-color-'],
 .technician-reports .prestation-item [class*=' pill-color-'] {
@@ -260,6 +298,39 @@
 }
 .technician-reports .prestation-item .pill-color-7 {
   background: linear-gradient(135deg, #7c3aed, #6366f1);
+}
+
+.technician-reports .form-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.technician-reports .summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--fxn-border);
+  border-radius: 14px;
+  background: var(--fxn-surface);
+}
+
+.technician-reports .summary-card.accent {
+  border-color: var(--fxn-primary-border);
+  background: linear-gradient(135deg, var(--fxn-surface), rgba(59, 130, 246, 0.08));
+}
+
+.technician-reports .summary-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fxn-text-muted);
+}
+
+.technician-reports .summary-value {
+  font-size: 1rem;
+  color: var(--fxn-text);
 }
 
 /* ── List / History section ──────────────────────────────── */
@@ -551,6 +622,10 @@ body.theme-default .technician-reports thead th {
 
   .technician-reports .prestations-list {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .technician-reports .form-summary {
+    max-width: 420px;
   }
 
   .technician-reports .history-filters {

@@ -1,15 +1,15 @@
 <section class="bpu-page">
   <header class="page-header">
     <div>
-      <h1>BPU prestations</h1>
+      <h1>BPU technicien</h1>
       <p class="subtitle">
         @if (isTechnician()) {
-          Bordereau des prix unitaires (personnel).
+          Votre liste de prestations autorisées et les prix appliqués à votre activité.
         } @else {
           @if (selectedTechnicianLabel()) {
-            Bordereau des prix unitaires (BPU de suivi pour {{ selectedTechnicianLabel() }}).
+            Personnalisez les prestations et les prix appliqués à {{ selectedTechnicianLabel() }}.
           } @else {
-            Bordereau des prix unitaires (global).
+            Gérez la base de personnalisation avant affectation à un technicien.
           }
         }
       </p>
@@ -27,6 +27,27 @@
       }
     </div>
   </header>
+
+  <section class="card guidance-card">
+    <div class="guidance-item">
+      <span class="guidance-label">Catalogue source</span>
+      <strong class="guidance-value">Prestations + prix</strong>
+    </div>
+    <div class="guidance-item">
+      <span class="guidance-label">Cible</span>
+      <strong class="guidance-value">
+        @if (selectedTechnicianLabel()) {
+          {{ selectedTechnicianLabel() }}
+        } @else {
+          Configuration par défaut
+        }
+      </strong>
+    </div>
+    <div class="guidance-item accent">
+      <span class="guidance-label">Rôle de cette page</span>
+      <strong class="guidance-value">Affecter et personnaliser</strong>
+    </div>
+  </section>
 
   @if (showStitRef()) {
     <div class="stit-overlay" (click)="showStitRef.set(false)" role="dialog" aria-modal="true" aria-label="Référentiel BPU STIT">
@@ -75,30 +96,31 @@
 
   <section class="toolbar card">
     @if (isTechnician()) {
-      <div class="toolbar-label">BPU de suivi</div>
+      <div class="toolbar-label">Vue lecture seule de votre BPU effectif</div>
     } @else {
       @if (isPersonalized()) {
         <div class="toolbar-badge">
-          BPU de suivi
+          Technicien ciblé
           <span class="mono">{{ selectedTechnicianLabel() }}</span>
         </div>
       }
       <label>
-        Type BPU
+        Segment catalogue
         <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
           <option value="AUTO">AUTO-ENTREPRENEUR</option>
           <option value="SALARIE">SALARIE</option>
-          <option value="AUTRE">AUTRE</option>
+          <option value="PERSONNALISE">PERSONNALISÉ</option>
+          <option value="AUTRE">AUTRES</option>
         </select>
       </label>
       <label>
-        Technicien
+        Personnaliser pour
         <select
           [value]="selectedTechnicianId() || ''"
           (change)="onTechnicianChange($event)"
           [disabled]="loading() || saving() || techniciansLoading()"
         >
-          <option value="">Global (par défaut)</option>
+          <option value="">Configuration par défaut</option>
           @for (tech of technicians(); track tech._id) {
             <option [value]="tech._id">
               {{ tech.firstName }} {{ tech.lastName }}
@@ -110,7 +132,7 @@
         }
       </label>
       <div class="personalized-box">
-        <div class="personalized-title">Techniciens avec BPU de suivi actif</div>
+        <div class="personalized-title">Techniciens avec BPU personnalisé actif</div>
         @if (techniciansLoading()) {
           <div class="personalized-empty">Chargement…</div>
         } @else if (activePersonalizedTechnicians().length === 0) {
@@ -139,7 +161,7 @@
         (click)="copyFromGlobal()"
         [disabled]="loading() || saving() || !selectedTechnicianId()"
       >
-        Copier depuis le global
+        Copier la configuration par défaut
       </button>
     }
   </section>
@@ -184,7 +206,7 @@
             </button>
           </th>
           <th>Code</th>
-          <th>Prix unitaire</th>
+          <th>Prix appliqué</th>
         </tr>
         </thead>
         <tbody>
@@ -220,7 +242,7 @@
                   />
                 }
               </td>
-              <td data-label="Prix unitaire">
+              <td data-label="Prix appliqué">
                 <input
                   type="number"
                   min="0"
@@ -240,7 +262,7 @@
               <td data-label="Prestation">
                 <input
                   type="text"
-                  placeholder="Nouvelle prestation"
+                  placeholder="Nouvelle prestation catalogue"
                   [value]="newPrestation().prestation"
                   [disabled]="adding() || loading() || saving()"
                   (input)="onNewPrestationChange('prestation', $event)"
@@ -258,7 +280,7 @@
                   (keydown)="onNewPrestationKeydown($event)"
                 />
               </td>
-              <td data-label="Prix unitaire">
+              <td data-label="Prix appliqué">
                 <input
                   type="number"
                   min="0"
@@ -278,7 +300,7 @@
       @if (!isTechnician()) {
         <button class="btn-outline" type="button" (click)="addPrestation()" [disabled]="adding() || loading() || saving() || !canAddPrestation()">
           <i class="bi bi-plus"></i>
-          @if (adding()) { Ajout… } @else { Ajouter la prestation }
+          @if (adding()) { Ajout… } @else { Ajouter au catalogue BPU }
         </button>
       }
       @if (!isTechnician()) {
@@ -287,7 +309,7 @@
           @if (saving()) {
             Enregistrement…
           } @else {
-            @if (isEditing()) { Modifier BPU } @else { Enregistrer BPU }
+            @if (selectedTechnicianId()) { Enregistrer le BPU technicien } @else { Enregistrer la configuration par défaut }
           }
         </button>
       }

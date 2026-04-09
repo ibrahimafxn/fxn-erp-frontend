@@ -20,11 +20,12 @@
   <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
     <div class="grid">
       <label>
-        Type BPU
+        Segment catalogue
         <select formControlName="segment">
           <option value="AUTO">Auto-entrepreneur</option>
           <option value="SALARIE">Salarié</option>
-              <option value="AUTRE">AUTRE</option>
+          <option value="PERSONNALISE">PERSONNALISÉ</option>
+          <option value="AUTRE">Autres</option>
         </select>
       </label>
 
