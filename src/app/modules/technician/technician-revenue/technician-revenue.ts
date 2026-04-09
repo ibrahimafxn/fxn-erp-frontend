@@ -206,7 +206,7 @@ export class TechnicianRevenue {
       }
       if (Number.isFinite(price)) total += qty * (price as number);
     }
-    return Number(total.toFixed(2));
+    return total > 0 ? Number(total.toFixed(2)) : Number(report.amount ?? 0);
   }
 
   formatAmount(value?: number | null): string {
