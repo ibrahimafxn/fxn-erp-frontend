@@ -15,6 +15,9 @@ import { Movement, Depot, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
+import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 
 type SortField = 'date' | 'technician' | 'depot' | 'amount';
 
@@ -22,7 +25,7 @@ type SortField = 'date' | 'technician' | 'depot' | 'amount';
   selector: 'app-technician-activity',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ReportPrestationsBadges, AmountCurrencyPipe],
   providers: [DatePipe],
   templateUrl: './technician-activity.html',
   styleUrl: './technician-activity.scss'
@@ -43,6 +46,7 @@ export class TechnicianActivity {
   readonly reservations = signal<Movement[]>([]);
   readonly interventions = signal<TechnicianReport[]>([]);
   readonly summaryTotalAmount = signal(0);
+  readonly summaryTotalCount = signal(0);
   readonly reservationsLoading = signal(false);
   readonly interventionsLoading = signal(false);
   readonly summaryLoading = signal(false);
@@ -87,7 +91,6 @@ export class TechnicianActivity {
   readonly bpuLoaded = signal(false);
   readonly employeesLoaded = signal(false);
   readonly selectedTechnicianId = signal('');
-  readonly customBpuLoading = signal(false);
   readonly hasCustomBpu = signal(false);
   readonly selectedTechnicianLabel = computed(() => {
     const techId = this.selectedTechnicianId();
@@ -122,6 +125,9 @@ export class TechnicianActivity {
     });
     return items;
   });
+  readonly visiblePageAmount = computed(() =>
+    this.interventions().reduce((sum, report) => sum + Number(this.reportAmount(report) || 0), 0)
+  );
 
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly managerDepotId = computed(() => {
@@ -322,39 +328,11 @@ export class TechnicianActivity {
   }
 
   prestationsSummary(report: TechnicianReport): Array<{ code: string; qty: number }> {
-    return (report.prestations || []).filter((p) => p.qty > 0);
-  }
-
-  formatAmount(value?: number | null): string {
-    const amount = Number(value ?? 0);
-    if (!Number.isFinite(amount)) return '0,00 €';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    return normalizeReportPrestations(report).map(({ code, qty }) => ({ code, qty }));
   }
 
   reportAmount(report: TechnicianReport): number {
-    if (Number.isFinite(Number(report.totalCa))) {
-      return Number(report.totalCa);
-    }
-    if (Number.isFinite(Number(report.amount))) {
-      return Number(report.amount);
-    }
-    if (Array.isArray(report.entries) && report.entries.length > 0) {
-      return report.entries.reduce((sum, entry) => {
-        if (Number.isFinite(Number(entry.totalCaLigne))) {
-          return sum + Number(entry.totalCaLigne);
-        }
-        if (Number.isFinite(Number(entry.montantLigne))) {
-          return sum + Number(entry.montantLigne);
-        }
-        return sum;
-      }, 0);
-    }
-    return 0;
+    return computeReportAmount(report);
   }
 
   reportBpuLabel(report: TechnicianReport): string {
@@ -456,6 +434,7 @@ export class TechnicianActivity {
         throw new Error('Erreur chargement montant');
       }
       this.summaryTotalAmount.set(Number(res.data?.totalAmount || 0));
+      this.summaryTotalCount.set(Number(res.data?.count || 0));
     } catch (err) {
       if (requestId !== this.summaryRequestId) return;
       this.error.set(this.apiError(err, 'Erreur chargement montant'));
@@ -463,16 +442,6 @@ export class TechnicianActivity {
       if (requestId !== this.summaryRequestId) return;
       this.summaryLoading.set(false);
     }
-  }
-
-  private getBpuUnit(prices: Map<string, number> | null, code: string): number {
-    if (!prices) return 0;
-    return Number(prices.get(code) || 0);
-  }
-
-  private resolveBpuPrices(technicianId?: string | null): Map<string, number> | null {
-    const type = this.resolveBpuSegment(technicianId);
-    return this.bpuSelections().get(type) || null;
   }
 
   private resolveBpuSegment(technicianId?: string | null): string {
@@ -513,15 +482,12 @@ export class TechnicianActivity {
       this.hasCustomBpu.set(false);
       return;
     }
-    this.customBpuLoading.set(true);
     this.bpuSelectionService.list({ owner: techId }).subscribe({
       next: (items) => {
         this.hasCustomBpu.set((items || []).length > 0);
-        this.customBpuLoading.set(false);
       },
       error: () => {
         this.hasCustomBpu.set(false);
-        this.customBpuLoading.set(false);
       }
     });
   }

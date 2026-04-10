@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,6 +10,7 @@ import { MaterialService } from '../../../core/services/material.service';
 import { ConsumableService } from '../../../core/services/consumable.service';
 import { AttributionService } from '../../../core/services/attribution.service';
 import { Material, Consumable, User } from '../../../core/models';
+import { DetailBack } from '../../../core/utils/detail-back';
 import { formatPersonName, formatResourceName } from '../../../core/utils/text-format';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 
@@ -24,14 +24,13 @@ type ResourceType = 'MATERIAL' | 'CONSUMABLE';
   templateUrl: './depot-attribution.html',
   styleUrls: ['./depot-attribution.scss']
 })
-export class DepotAttribution {
+export class DepotAttribution extends DetailBack {
   private auth = inject(AuthService);
   private userService = inject(UserService);
   private materialService = inject(MaterialService);
   private consumableService = inject(ConsumableService);
   private attributionService = inject(AttributionService);
   private fb = inject(FormBuilder);
-  private router = inject(Router);
 
   readonly technicians = signal<User[]>([]);
   readonly materials = signal<Material[]>([]);
@@ -64,6 +63,7 @@ export class DepotAttribution {
   });
 
   constructor() {
+    super();
     effect(() => {
       const depotId = this.depotId();
       if (!depotId) return;
@@ -184,7 +184,7 @@ export class DepotAttribution {
   }
 
   goBack(): void {
-    this.router.navigate(['/depot']).then();
+    this.back('/depot');
   }
 
   resourceLabel(item: Material | Consumable): string {

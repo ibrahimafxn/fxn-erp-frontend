@@ -15,17 +15,19 @@ import { VehicleHistoryItem, VehicleHistoryResult } from '../../../../core/model
 import {DetailBack} from '../../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
 import { formatPageRange } from '../../../../core/utils/pagination';
+import { ConfirmActionModal } from '../../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 
 type AssignMode = 'idle' | 'assign' | 'release';
+type PendingVehicleAction = 'assign' | 'release' | null;
 
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-detail',
   providers: [DatePipe],
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ConfirmActionModal],
   templateUrl: './vehicle-detail.html',
-  styleUrls: ['./vehicle-detail.scss'],
+  styleUrl: './vehicle-detail.scss',
 })
 export class VehicleDetail extends DetailBack {
   private svc = inject(VehicleService);
@@ -71,6 +73,8 @@ export class VehicleDetail extends DetailBack {
   readonly selectedDepotId = signal<string>('');
   readonly assignNote = signal<string>('');
   readonly releaseNote = signal<string>('');
+  readonly actionConfirmOpen = signal(false);
+  readonly pendingVehicleAction = signal<PendingVehicleAction>(null);
 
   // -----------------------------
   // History (timeline)
@@ -116,6 +120,21 @@ export class VehicleDetail extends DetailBack {
     const role = this.auth.getUserRole();
     return role === Role.ADMIN || role === Role.DIRIGEANT || role === Role.GESTION_DEPOT;
   });
+  readonly actionConfirmTitle = computed(() => (
+    this.pendingVehicleAction() === 'release' ? 'Confirmer la reprise' : 'Confirmer l’assignation'
+  ));
+  readonly actionConfirmMessage = computed(() => {
+    if (this.pendingVehicleAction() === 'release') {
+      return 'Confirmer la reprise de ce véhicule vers le dépôt sélectionné ?';
+    }
+    return 'Confirmer l’assignation de ce véhicule au technicien sélectionné ?';
+  });
+  readonly actionConfirmText = computed(() => (
+    this.pendingVehicleAction() === 'release' ? 'Reprendre' : 'Assigner'
+  ));
+  readonly actionConfirmTone = computed<'primary' | 'danger' | 'success'>(() => (
+    this.pendingVehicleAction() === 'release' ? 'danger' : 'success'
+  ));
 
   constructor() {
     super();
@@ -376,6 +395,42 @@ export class VehicleDetail extends DetailBack {
     this.actionError.set(null);
     this.assignNote.set('');
     this.releaseNote.set('');
+    this.closeActionConfirm();
+  }
+
+  openAssignConfirm(): void {
+    if (!this.selectedTechId()) {
+      this.actionError.set('Veuillez sélectionner un technicien.');
+      return;
+    }
+    this.pendingVehicleAction.set('assign');
+    this.actionConfirmOpen.set(true);
+  }
+
+  openReleaseConfirm(): void {
+    if (!this.selectedDepotId()) {
+      this.actionError.set('Veuillez sélectionner un dépôt de retour.');
+      return;
+    }
+    this.pendingVehicleAction.set('release');
+    this.actionConfirmOpen.set(true);
+  }
+
+  closeActionConfirm(): void {
+    if (this.actionSaving()) return;
+    this.actionConfirmOpen.set(false);
+    this.pendingVehicleAction.set(null);
+  }
+
+  confirmVehicleAction(): void {
+    const action = this.pendingVehicleAction();
+    if (action === 'release') {
+      this.releaseToDepot();
+      return;
+    }
+    if (action === 'assign') {
+      this.assignToTech();
+    }
   }
 
   // Si tu as un AuthService, remplace ici par auth.userId()
@@ -405,6 +460,7 @@ export class VehicleDetail extends DetailBack {
     this.svc.assignVehicle(v._id, payload).subscribe({
       next: () => {
         this.actionSaving.set(false);
+        this.closeActionConfirm();
         this.assignMode.set('idle');
         this.selectedTechId.set('');
         this.assignNote.set('');
@@ -439,6 +495,7 @@ export class VehicleDetail extends DetailBack {
     this.svc.releaseVehicle(v._id, payload).subscribe({
       next: () => {
         this.actionSaving.set(false);
+        this.closeActionConfirm();
         this.assignMode.set('idle');
         this.releaseNote.set('');
         this.load();

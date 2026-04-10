@@ -42,21 +42,21 @@
           <div class="kpi-title">Journalier</div>
           <div class="kpi-sub">Aujourd'hui</div>
         </div>
-        <div class="kpi-value">{{ formatAmount(dailyAmount()) }}</div>
+        <div class="kpi-value">{{ dailyAmount() | amountCurrency }}</div>
       </article>
       <article class="kpi-card kpi-weekly">
         <div class="kpi-info">
           <div class="kpi-title">Hebdomadaire</div>
           <div class="kpi-sub">Cette semaine</div>
         </div>
-        <div class="kpi-value">{{ formatAmount(weeklyAmount()) }}</div>
+        <div class="kpi-value">{{ weeklyAmount() | amountCurrency }}</div>
       </article>
       <article class="kpi-card kpi-monthly">
         <div class="kpi-info">
           <div class="kpi-title">Mensuel</div>
           <div class="kpi-sub">Mois en cours</div>
         </div>
-        <div class="kpi-value">{{ formatAmount(monthlyAmount()) }}</div>
+        <div class="kpi-value">{{ monthlyAmount() | amountCurrency }}</div>
       </article>
     </div>
   </section>
@@ -85,9 +85,19 @@
           <div class="kpi-title">Total prestations</div>
           <div class="kpi-sub">Sur la liste affichée</div>
         </div>
-        <div class="kpi-value">{{ formatAmount(listTotalAmount()) }}</div>
+        <div class="kpi-value">{{ listTotalAmount() | amountCurrency }}</div>
       </article>
     </div>
+    @if (prestationCounts().length) {
+      <div class="prestation-counts">
+        @for (item of prestationCounts(); track item.code) {
+          <div class="prestation-count-pill">
+            <span class="count-value">{{ item.qty }}</span>
+            <span class="count-label">{{ item.code }}</span>
+          </div>
+        }
+      </div>
+    }
   </section>
 
   @if (loading()) {
@@ -131,20 +141,9 @@
           @for (item of items(); track item._id) {
             <tr>
               <td class="cell-date">{{ reportDateLabel(item) }}</td>
-              <td class="cell-amount">{{ formatAmount(computeAmount(item)) }}</td>
+              <td class="cell-amount">{{ computeAmount(item) | amountCurrency }}</td>
               <td class="prestations-cell">
-                @if (prestationsSummary(item).length) {
-                  <div class="prestations-summary">
-                    @for (prestation of prestationsSummary(item); track prestation.code) {
-                      <div class="prestations-pill">
-                        <span class="qty">{{ prestation.qty }}</span>
-                        <span class="pill-label">{{ prestation.code }}</span>
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  —
-                }
+                <app-report-prestations-badges [items]="prestationsSummary(item)"></app-report-prestations-badges>
               </td>
               <td class="note">{{ item.comment || '—' }}</td>
               <td class="cell-actions">

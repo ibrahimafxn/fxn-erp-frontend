@@ -196,7 +196,7 @@ export class MaterialForm extends DetailBack {
   }
 
   cancel(): void {
-    this.router.navigate(['/admin/resources/materials']).then();
+    this.back('/admin/resources/materials');
   }
 
   convertToConsumable(): void {

@@ -42,6 +42,13 @@ export class VehicleForm extends DetailBack {
 
   readonly current = signal<Vehicle | null>(null);
 
+  selectedDepotLabel(): string {
+    const depotId = this.form.controls.idDepot.value;
+    if (!depotId) return 'Non attribué';
+    const depot = this.depots().find((item) => item._id === depotId);
+    return depot ? this.depotOptionLabel(depot) : 'Non attribué';
+  }
+
   depotOptionLabel(d: Depot): string {
     return formatDepotName(d.name ?? '') || '—';
   }
@@ -167,7 +174,7 @@ export class VehicleForm extends DetailBack {
   }
 
   cancel(): void {
-    this.router.navigate(['/admin/resources/vehicles']).then();
+    this.back('/admin/resources/vehicles');
   }
 
   isInvalid(name: keyof typeof this.form.controls): boolean {

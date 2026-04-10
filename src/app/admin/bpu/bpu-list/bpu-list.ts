@@ -8,6 +8,7 @@ import { BpuService } from '../../../core/services/bpu.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { HrService } from '../../../core/services/hr.service';
 import { BpuEntry, BpuSelection, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { downloadBlob } from '../../../core/utils/download';
@@ -36,6 +37,7 @@ export class BpuList {
   private bpuSelectionService = inject(BpuSelectionService);
   private auth = inject(AuthService);
   private userService = inject(UserService);
+  private hrService = inject(HrService);
 
   readonly items = signal<BpuEntry[]>([]);
   readonly loading = signal(false);
@@ -46,6 +48,7 @@ export class BpuList {
   readonly technicians = signal<User[]>([]);
   readonly techniciansLoading = signal(false);
   readonly techniciansError = signal<string | null>(null);
+  readonly technicianSegments = signal<Map<string, Segment>>(new Map());
   readonly personalizedOwnerIds = signal<Set<string>>(new Set());
   readonly personalizedSelectionByOwner = signal<Map<string, BpuSelection>>(new Map());
   readonly selectedTechnicianId = signal<string | null>(null);
@@ -124,9 +127,43 @@ export class BpuList {
     if (!ids.size) return [];
     return this.technicians().filter((tech) => ids.has(tech._id) && tech.authEnabled !== false);
   });
+  readonly attachedSegmentTechnicians = computed(() => {
+    const segment = this.currentSegment();
+    if (segment === 'PERSONNALISE') {
+      return this.activePersonalizedTechnicians();
+    }
+    const segmentMap = this.technicianSegments();
+    return this.technicians().filter((tech) => {
+      if (tech.authEnabled === false) return false;
+      return segmentMap.get(tech._id) === segment;
+    });
+  });
   readonly isPersonalized = computed(() => {
     if (this.isTechnician()) return true;
     return this.selectedTechnicianId() !== null;
+  });
+  readonly contextModeLabel = computed(() => {
+    if (this.isTechnician()) return 'BPU effectif technicien';
+    return this.isPersonalized() ? 'BPU personnalisé' : 'BPU par défaut';
+  });
+  readonly segmentLabel = computed(() => {
+    const labels: Record<Segment, string> = {
+      AUTO: 'Freelance',
+      SALARIE: 'Salarié',
+      PERSONNALISE: 'Personnalisé',
+      AUTRE: 'Autres'
+    };
+    return labels[this.currentSegment()];
+  });
+  readonly contextSummary = computed(() => {
+    if (this.isTechnician()) {
+      return 'Vue lecture seule du BPU réellement appliqué à votre activité.';
+    }
+    const target = this.selectedTechnicianLabel() || 'BPU par défaut';
+    if (this.isPersonalized()) {
+      return `Vous modifiez le ${this.contextModeLabel()} de ${target}.`;
+    }
+    return `Vous modifiez le ${this.contextModeLabel()} du segment ${this.segmentLabel()}.`;
   });
 
   readonly sortedItems = computed(() => {
@@ -160,15 +197,26 @@ export class BpuList {
     if (this.isTechnician()) return;
     this.techniciansLoading.set(true);
     this.techniciansError.set(null);
-    this.userService.refreshUsers(true, { role: Role.TECHNICIEN, limit: 1000 }).subscribe({
-      next: (result) => {
-        const list = [...(result?.items || [])];
+    forkJoin({
+      users: this.userService.refreshUsers(true, { role: Role.TECHNICIEN, limit: 1000 }),
+      employees: this.hrService.listEmployees({ role: Role.TECHNICIEN, limit: 1000 })
+    }).subscribe({
+      next: ({ users, employees }) => {
+        const list = [...(users?.items || [])];
         list.sort((a, b) => {
           const nameA = `${a.lastName || ''} ${a.firstName || ''}`.trim().toLowerCase();
           const nameB = `${b.lastName || ''} ${b.firstName || ''}`.trim().toLowerCase();
           return nameA.localeCompare(nameB);
         });
+        const segmentMap = new Map<string, Segment>();
+        for (const entry of employees?.items || []) {
+          const user = entry.user;
+          const id = String(user?._id || '').trim();
+          if (!id) continue;
+          segmentMap.set(id, this.segmentFromContractType(entry.profile?.contractType));
+        }
         this.technicians.set(list);
+        this.technicianSegments.set(segmentMap);
         this.techniciansLoading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -466,7 +514,7 @@ export class BpuList {
     const action = this.confirmAction();
     if (action === 'addPrestation') return 'Confirmer l’ajout';
     if (action === 'updateCode') return 'Confirmer la modification';
-    if (action === 'deletePersonalized') return 'Confirmer la suppression';
+    if (action === 'deletePersonalized') return 'Confirmer la suppression du BPU personnalisé';
     return 'Confirmer la validation';
   }
 
@@ -480,7 +528,7 @@ export class BpuList {
       return `Le code sera modifié de ${context.currentCode} vers ${context.nextCode}.`;
     }
     if (action === 'deletePersonalized' && context?.action === 'deletePersonalized') {
-      return `Le BPU de suivi de ${context.technicianLabel} sera supprimé.`;
+      return `Le BPU personnalisé de ${context.technicianLabel} sera supprimé. Cette action retire sa configuration dédiée et le technicien reviendra sur le BPU par défaut.`;
     }
     if (action === 'saveSelection' && context?.action === 'saveSelection') {
       if (context.technicianLabel) {
@@ -525,6 +573,19 @@ export class BpuList {
   editPersonalized(techId: string): void {
     if (!techId) return;
     this.currentSegment.set('PERSONNALISE');
+    this.selectedTechnicianId.set(techId);
+    this.selectedCodes.set(new Set());
+    this.editedPrices.set(new Map());
+    this.syncQueryParams();
+    this.load();
+  }
+
+  openAttachedTechnician(techId: string): void {
+    if (!techId) return;
+    if (this.currentSegment() === 'PERSONNALISE') {
+      this.editPersonalized(techId);
+      return;
+    }
     this.selectedTechnicianId.set(techId);
     this.selectedCodes.set(new Set());
     this.editedPrices.set(new Map());
@@ -997,6 +1058,14 @@ export class BpuList {
       result.push(item);
     }
     return result;
+  }
+
+  private segmentFromContractType(contractType: string | null | undefined): Segment {
+    const contract = String(contractType || '').trim().toUpperCase();
+    if (contract === 'PERSONNALISE') return 'PERSONNALISE';
+    if (contract === 'FREELANCE') return 'AUTO';
+    if (contract === 'AUTRE') return 'AUTRE';
+    return 'SALARIE';
   }
 
   private syncQueryParams(): void {

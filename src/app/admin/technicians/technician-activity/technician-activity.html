@@ -58,13 +58,18 @@
 
       <div class="amount-summary">
         <span class="label">Montant</span>
-        <span class="value">{{ formatAmount(totalAmount()) }}</span>
+        <span class="value">{{ totalAmount() | amountCurrency }}</span>
         <span class="hint">
-          Total sur la période filtrée
+          Total de {{ summaryTotalCount() }} intervention(s) correspondant aux filtres
           @if (selectedBpuLabel()) {
             • BPU {{ selectedBpuLabel() }}
           }
         </span>
+        @if (interventions().length > 0 && interventionTotal() > interventions().length) {
+          <span class="hint secondary">
+            Page affichée : {{ visiblePageAmount() | amountCurrency }}
+          </span>
+        }
       </div>
 
       <div class="actions">
@@ -145,20 +150,9 @@
                   <td>{{ technicianName(it) }}</td>
                   <td>{{ depotName(it) }}</td>
                   <td class="prestations-cell">
-                    @if (prestationsSummary(it).length) {
-                      <div class="prestations-summary">
-                        @for (item of prestationsSummary(it); track item.code) {
-                          <span class="prestations-pill">
-                            <span class="qty">{{ item.qty }}</span>
-                            <span class="pill-label">{{ item.code }}</span>
-                          </span>
-                        }
-                      </div>
-                    } @else {
-                      —
-                    }
+                    <app-report-prestations-badges [items]="prestationsSummary(it)"></app-report-prestations-badges>
                   </td>
-                  <td>{{ formatAmount(reportAmount(it)) }}</td>
+                  <td>{{ reportAmount(it) | amountCurrency }}</td>
                   <td class="note">{{ it.comment || '—' }}</td>
                 </tr>
               }

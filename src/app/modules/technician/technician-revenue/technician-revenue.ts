@@ -1,22 +1,25 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { TechnicianReport, TechnicianReportService } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { formatPageRange } from '../../../core/utils/pagination';
-import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { BpuSelection } from '../../../core/models';
+import { formatFrDate } from '../../../core/utils/date-format';
+import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { TechnicianBpuResolverService } from '../../../core/services/technician-bpu-resolver.service';
+import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
+import { AmountCurrencyPipe, formatAmountCurrency } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
-
-const CODE_ALIASES: Record<string, string> = { 'RACPAV': 'RAC_PBO_SOUT' };
 
 @Component({
   selector: 'app-technician-revenue',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TechnicianMobileNav, ConfirmDeleteModal],
+  imports: [CommonModule, ReactiveFormsModule, TechnicianMobileNav, ConfirmDeleteModal, ReportPrestationsBadges, AmountCurrencyPipe],
   providers: [DatePipe],
   templateUrl: './technician-revenue.html',
   styleUrl: './technician-revenue.scss'
@@ -26,18 +29,19 @@ export class TechnicianRevenue {
   private reports = inject(TechnicianReportService);
   private auth = inject(AuthService);
   private datePipe = inject(DatePipe);
-  private bpuSelectionsApi = inject(BpuSelectionService);
+  private bpuResolver = inject(TechnicianBpuResolverService);
 
   readonly summaryLoading = signal(false);
   readonly summaryError = signal<string | null>(null);
   readonly dailyAmount = signal(0);
   readonly weeklyAmount = signal(0);
   readonly monthlyAmount = signal(0);
-  readonly todayLabel = computed(() => new Date().toLocaleDateString('fr-FR'));
+  readonly todayLabel = computed(() => formatFrDate(new Date()));
   readonly bpuLoading = signal(false);
   readonly bpuError = signal<string | null>(null);
   readonly bpuSelections = signal<BpuSelection[]>([]);
-  readonly hasPersonalizedBpu = computed(() => this.bpuSelections().length > 0);
+  readonly usesPersonalizedBpu = signal(false);
+  readonly hasPersonalizedBpu = computed(() => this.usesPersonalizedBpu());
   readonly bpuPrices = signal<Map<string, number>>(new Map());
 
   readonly loading = signal(false);
@@ -54,6 +58,22 @@ export class TechnicianRevenue {
   readonly listTotalAmount = computed(() =>
     this.items().reduce((sum, item) => sum + this.computeAmount(item), 0)
   );
+  readonly prestationCounts = computed(() => {
+    const counts = new Map<string, { code: string; qty: number }>();
+    for (const report of this.items()) {
+      for (const item of this.prestationsSummary(report)) {
+        const code = String(item.code || '').toUpperCase();
+        if (!code || item.qty <= 0) continue;
+        const current = counts.get(code);
+        if (current) {
+          current.qty += item.qty;
+        } else {
+          counts.set(code, { code, qty: item.qty });
+        }
+      }
+    }
+    return Array.from(counts.values()).sort((a, b) => b.qty - a.qty || a.code.localeCompare(b.code));
+  });
 
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -132,24 +152,8 @@ export class TechnicianRevenue {
   loadSummary(): void {
     this.summaryLoading.set(true);
     this.summaryError.set(null);
-    const today = new Date();
-    const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const weekStart = this.startOfWeek(dayStart);
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    const fmt = (d: Date) => {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    };
     const userId = this.currentUserId();
-    const toDate = fmt(dayStart);
-
-    forkJoin({
-      daily: this.reports.summary({ fromDate: fmt(dayStart), toDate, technicianId: userId || undefined }),
-      weekly: this.reports.summary({ fromDate: fmt(weekStart), toDate, technicianId: userId || undefined }),
-      monthly: this.reports.summary({ fromDate: fmt(monthStart), toDate, technicianId: userId || undefined })
-    }).subscribe({
+    this.reports.summaryPeriods(userId || undefined).subscribe({
       next: (res) => {
         this.dailyAmount.set(res.daily.data.totalAmount || 0);
         this.weeklyAmount.set(res.weekly.data.totalAmount || 0);
@@ -166,25 +170,17 @@ export class TechnicianRevenue {
   loadBpuInfo(): void {
     this.bpuLoading.set(true);
     this.bpuError.set(null);
-    this.bpuSelectionsApi.list().subscribe({
-      next: (items) => {
-        this.bpuSelections.set(items || []);
-        // Sélection active = la plus récente
-        const sorted = [...(items || [])].sort(
-          (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
-        );
-        const active = sorted[0] ?? null;
-        const priceMap = new Map<string, number>();
-        for (const p of active?.prestations || []) {
-          const code = String(p.code || '').toUpperCase();
-          if (code) priceMap.set(code, Number(p.unitPrice ?? 0));
-        }
-        this.bpuPrices.set(priceMap);
+    this.resolveBpuPrices$().subscribe({
+      next: ({ selections, prices, usesPersonalizedBpu }) => {
+        this.bpuSelections.set(selections);
+        this.bpuPrices.set(prices);
+        this.usesPersonalizedBpu.set(usesPersonalizedBpu);
         this.bpuLoading.set(false);
       },
       error: () => {
         this.bpuSelections.set([]);
         this.bpuPrices.set(new Map());
+        this.usesPersonalizedBpu.set(false);
         this.bpuLoading.set(false);
         this.bpuError.set('Erreur chargement BPU');
       }
@@ -192,32 +188,7 @@ export class TechnicianRevenue {
   }
 
   computeAmount(report: TechnicianReport): number {
-    const prestations = Array.isArray(report.prestations) ? report.prestations : [];
-    if (!prestations.length) return Number(report.amount ?? 0);
-    const prices = this.bpuPrices();
-    let total = 0;
-    for (const { code, qty } of prestations) {
-      if (!qty) continue;
-      const key = String(code || '').toUpperCase();
-      let price = prices.get(key);
-      if (!Number.isFinite(price)) {
-        const aliasKey = CODE_ALIASES[key];
-        if (aliasKey) price = prices.get(aliasKey);
-      }
-      if (Number.isFinite(price)) total += qty * (price as number);
-    }
-    return total > 0 ? Number(total.toFixed(2)) : Number(report.amount ?? 0);
-  }
-
-  formatAmount(value?: number | null): string {
-    const amount = Number(value ?? 0);
-    if (!Number.isFinite(amount)) return '0,00 €';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    return computeReportAmount(report, this.bpuPrices());
   }
 
   reportDateLabel(report: TechnicianReport): string {
@@ -225,7 +196,7 @@ export class TechnicianRevenue {
   }
 
   prestationsSummary(report: TechnicianReport): Array<{ code: string; qty: number }> {
-    return (report.prestations || []).filter((p) => p.qty > 0);
+    return normalizeReportPrestations(report).map(({ code, qty }) => ({ code, qty }));
   }
 
   private currentUserId(): string | null {
@@ -253,7 +224,7 @@ export class TechnicianRevenue {
     this.deleteError.set(null);
     this.reports.remove(id).subscribe({
       next: () => {
-        this.items.update((list) => list.filter((r) => r._id !== id));
+        this.refresh(true);
         this.deletingId.set(null);
         this.closeDeleteModal();
       },
@@ -268,11 +239,17 @@ export class TechnicianRevenue {
   deleteQuestion = computed(() => {
     const item = this.deleteTarget();
     if (!item) return '';
-    return `Supprimer le rapport du ${this.reportDateLabel(item)} (${this.formatAmount(item.amount)}) ?`;
+    const amount = formatAmountCurrency(this.computeAmount(item));
+    return `Supprimer le rapport du ${this.reportDateLabel(item)} (${amount}) ?`;
   });
 
-  private startOfWeek(date: Date): Date {
-    const day = (date.getDay() + 6) % 7;
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate() - day);
+  private resolveBpuPrices$(): Observable<{ selections: BpuSelection[]; prices: Map<string, number>; usesPersonalizedBpu: boolean }> {
+    return this.bpuResolver.resolve(this.currentUserId()).pipe(
+      map((state) => ({
+        selections: state.selections,
+        prices: state.prices,
+        usesPersonalizedBpu: state.usesPersonalizedBpu
+      }))
+    );
   }
 }

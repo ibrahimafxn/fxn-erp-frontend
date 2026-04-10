@@ -522,3 +522,265 @@ La prochaine implémentation concrète côté frontend consiste à :
 2. afficher le prix appliqué et le montant de ligne
 3. envoyer des entrées `prestationId + quantite`
 4. conserver un fallback temporaire sur l'ancien format tant que le backend n'est pas basculé
+
+## Priorités UX
+
+Les priorités ergonomiques identifiées à ce stade sont les suivantes :
+
+1. simplifier `/admin/bpu` en séparant plus clairement le choix du contexte et la modification de la grille
+2. rendre l'action principale plus évidente sur chaque écran métier
+3. réduire la charge cognitive sur mobile, surtout sur les vues admin
+4. uniformiser les termes métier dans toute l'application
+
+Ces priorités doivent guider les prochaines retouches UI avant les refontes plus profondes.
+
+## Audit UX concret
+
+### Synthèse
+
+Le produit est visuellement cohérent et déjà crédible en usage réel. La principale faiblesse ne vient pas du style graphique, mais de la densité métier sur certains écrans admin, où plusieurs intentions sont encore mélangées.
+
+### `/admin/bpu`
+
+Points bons :
+
+- l'écran donne une vue riche sur le BPU, les personnalisations et les techniciens concernés
+- la présence du segment, du technicien ciblé et des prestations dans une seule page est efficace pour un utilisateur expert
+- les blocs `Techniciens avec BPU personnalisé actif` et `Techniciens rattachés au segment` apportent du contexte utile
+
+Points gênants :
+
+- la page mélange sélection de contexte, édition du catalogue, personnalisation technicien et affectation
+- l'utilisateur doit comprendre plusieurs concepts avant d'agir : segment, global, personnalisé, technicien ciblé, héritage
+- l'action principale varie selon le contexte mais la structure de l'écran reste presque identique
+- le mot `Segment catalogue` n'est pas immédiat pour un nouveau dirigeant
+
+Priorités de correction :
+
+- séparer visuellement la zone `Contexte` de la zone `Prestations`
+- afficher un résumé d'état plus direct, par exemple `Vous éditez le BPU PERSONNALISÉ de X`
+- renommer ou expliciter `Segment catalogue`
+- réduire les actions concurrentes visibles en même temps
+
+### `/admin/prestations`
+
+Points bons :
+
+- l'idée de référentiel central est claire
+- la page correspond bien au rôle dirigeant
+- la structure liste + formulaire fonctionne bien pour la maintenance courante
+
+Points gênants :
+
+- la différence entre prestation catalogue et BPU n'est pas encore toujours évidente selon les libellés
+- certains champs métier ont le même poids visuel alors qu'ils n'ont pas la même importance
+
+Priorités de correction :
+
+- faire ressortir plus fortement `code`, `libellé`, `prix unitaire` et `segment`
+- placer les règles avancées dans une zone secondaire
+- ajouter un court texte d'aide sur le rôle du catalogue dans les calculs
+
+### `/technician/reports`
+
+Points bons :
+
+- la page est orientée tâche et le technicien comprend rapidement quoi saisir
+- l'ajout du prix appliqué et du montant de ligne améliore fortement la confiance
+- le lien entre saisie et CA devient visible
+
+Points gênants :
+
+- quand la liste des prestations est longue, la lecture devient vite dense
+- la différence entre quantité, prix unitaire et montant peut rester trop compacte sur petit écran
+
+Priorités de correction :
+
+- rendre les totaux et sous-totaux plus visibles pendant la saisie
+- mieux espacer les lignes sur mobile
+- mettre en avant les prestations déjà renseignées
+
+### `/admin/technicians/activity`
+
+Points bons :
+
+- le tableau permet une lecture rapide de l'historique
+- les filtres de période, technicien et dépôt répondent bien au besoin métier
+- le bloc `Montant` en tête donne un repère utile
+
+Points gênants :
+
+- la page donne beaucoup d'information tabulaire sans guider la lecture
+- la zone de filtres et la table ont un poids visuel proche
+- l'absence de filtre technicien n'était pas évidente dans la lecture du total
+
+Priorités de correction :
+
+- mieux distinguer `filtres`, `résumé`, `résultats`
+- ajouter un libellé plus explicite quand le total affiché concerne tous les techniciens
+- alléger la table sur mobile en repliant certaines colonnes secondaires
+
+### `/technician`
+
+Points bons :
+
+- le dashboard technicien est clair et rassurant
+- les cartes journalier, hebdomadaire et mensuel sont lisibles
+- les accès rapides couvrent bien les usages récurrents
+
+Points gênants :
+
+- certains modules secondaires ont presque le même poids que le CA
+- la lecture de l'import du jour est correcte mais un peu dense sur petit écran
+
+Priorités de correction :
+
+- renforcer encore la hiérarchie entre CA, import et raccourcis
+- condenser les métadonnées d'import sur mobile
+
+### `/technician/documents`
+
+Points bons :
+
+- la page est simple et compréhensible
+- l'action principale `Recharger` est bien visible
+
+Points gênants :
+
+- l'état vide, l'état erreur et la liste de documents restent assez proches visuellement
+- quand un document est indisponible, l'utilisateur ne sait pas toujours si le problème vient du fichier ou du réseau
+
+Priorités de correction :
+
+- différencier plus nettement les états de la page
+- proposer des messages plus orientés action quand un document doit être réimporté
+
+## Ligne directrice UX
+
+La ligne directrice recommandée pour la suite est simple :
+
+- une page = une intention principale
+- un vocabulaire métier unique
+- un niveau de priorité visuelle clair
+- moins d'actions concurrentes sur les écrans admin
+- une lecture mobile pensée comme un vrai parcours, pas comme une simple réduction du desktop
+
+## Plan d'amélioration UX priorisé
+
+### Lot UX-01
+
+Objectif :
+
+- clarifier `/admin/bpu` sans changer le modèle métier
+
+Tickets :
+
+- `UX-01-01` Créer une vraie zone `Contexte` en haut de page avec `segment`, `technicien`, `statut de personnalisation`
+- `UX-01-02` Ajouter un bandeau d'état du type `Vous modifiez le BPU PERSONNALISÉ de X`
+- `UX-01-03` Renommer les libellés ambigus
+  cible :
+  `Segment catalogue` -> `Segment source`
+  `Configuration par défaut` -> `BPU par défaut`
+- `UX-01-04` Réduire la concurrence visuelle entre `copier`, `supprimer`, `modifier`, `enregistrer`
+- `UX-01-05` Améliorer la version mobile de `/admin/bpu` en séparant filtres et tableau
+
+Impact attendu :
+
+- baisse de la charge cognitive
+- meilleure compréhension du contexte courant
+- moins d'erreurs de manipulation
+
+### Lot UX-02
+
+Objectif :
+
+- rendre la saisie technicien plus fluide et plus lisible
+
+Tickets :
+
+- `UX-02-01` Mettre davantage en avant le total courant pendant la saisie
+- `UX-02-02` Faire ressortir les prestations déjà renseignées
+- `UX-02-03` Augmenter l'espacement et la lisibilité des lignes sur mobile
+- `UX-02-04` Ajouter un résumé compact `quantité totale / montant estimé`
+- `UX-02-05` Uniformiser les libellés `prix appliqué`, `montant ligne`, `total CA`
+
+Impact attendu :
+
+- meilleure vitesse de saisie
+- baisse des erreurs de lecture
+- compréhension plus directe du calcul
+
+### Lot UX-03
+
+Objectif :
+
+- améliorer les vues d'historique et d'analyse admin
+
+Tickets :
+
+- `UX-03-01` Séparer visuellement `filtres`, `résumé`, `résultats` dans `/admin/technicians/activity`
+- `UX-03-02` Expliciter le sens du total quand aucun technicien n'est sélectionné
+- `UX-03-03` Alléger la table sur mobile en repliant les colonnes secondaires
+- `UX-03-04` Ajouter des libellés de contexte sur la période active
+- `UX-03-05` Rendre les montants plus saillants que les métadonnées secondaires
+
+Impact attendu :
+
+- lecture plus rapide
+- meilleure compréhension du périmètre affiché
+- confort amélioré sur petit écran
+
+### Lot UX-04
+
+Objectif :
+
+- renforcer la clarté du référentiel prestations
+
+Tickets :
+
+- `UX-04-01` Mettre en avant les champs structurants du catalogue : `code`, `libellé`, `prix`, `segment`
+- `UX-04-02` Déplacer les règles avancées dans une section secondaire ou repliable
+- `UX-04-03` Ajouter un texte d'aide expliquant le rôle du catalogue dans le calcul du CA
+- `UX-04-04` Harmoniser les termes entre catalogue, BPU et report
+- `UX-04-05` Vérifier la cohérence des termes entre admin et technicien
+
+Impact attendu :
+
+- meilleure compréhension de la source de vérité
+- moins de confusion entre catalogue et BPU
+
+### Lot UX-05
+
+Objectif :
+
+- améliorer les états système et messages d'aide
+
+Tickets :
+
+- `UX-05-01` Différencier plus nettement les états `vide`, `chargement`, `succès`, `erreur`
+- `UX-05-02` Rendre les messages d'erreur plus orientés action
+- `UX-05-03` Ajouter des messages de confirmation plus contextuels après sauvegarde
+- `UX-05-04` Réduire les erreurs génériques au profit de messages métier
+- `UX-05-05` Uniformiser le ton des feedbacks dans toute l'application
+
+Impact attendu :
+
+- moins d'ambiguïté
+- meilleure autonomie utilisateur
+
+## Ordre recommandé de mise en oeuvre UX
+
+1. `UX-01` `/admin/bpu`
+2. `UX-03` `/admin/technicians/activity`
+3. `UX-02` `/technician/reports`
+4. `UX-04` `/admin/prestations`
+5. `UX-05` états globaux et messages
+
+## Règle d'exécution
+
+Pour chaque lot UX :
+
+- commencer par une correction faible risque de structure et de wording
+- vérifier le rendu mobile et desktop
+- ne pas mélanger refonte fonctionnelle et retouche ergonomique dans le même ticket
+- mesurer si l'écran devient plus lisible avant d'ajouter de nouvelles actions

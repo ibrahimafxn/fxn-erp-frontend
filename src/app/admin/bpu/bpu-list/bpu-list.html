@@ -28,27 +28,6 @@
     </div>
   </header>
 
-  <section class="card guidance-card">
-    <div class="guidance-item">
-      <span class="guidance-label">Catalogue source</span>
-      <strong class="guidance-value">Prestations + prix</strong>
-    </div>
-    <div class="guidance-item">
-      <span class="guidance-label">Cible</span>
-      <strong class="guidance-value">
-        @if (selectedTechnicianLabel()) {
-          {{ selectedTechnicianLabel() }}
-        } @else {
-          Configuration par défaut
-        }
-      </strong>
-    </div>
-    <div class="guidance-item accent">
-      <span class="guidance-label">Rôle de cette page</span>
-      <strong class="guidance-value">Affecter et personnaliser</strong>
-    </div>
-  </section>
-
   @if (showStitRef()) {
     <div class="stit-overlay" (click)="showStitRef.set(false)" role="dialog" aria-modal="true" aria-label="Référentiel BPU STIT">
       <div class="stit-panel card" (click)="$event.stopPropagation()">
@@ -98,71 +77,66 @@
     @if (isTechnician()) {
       <div class="toolbar-label">Vue lecture seule de votre BPU effectif</div>
     } @else {
-      @if (isPersonalized()) {
-        <div class="toolbar-badge">
-          Technicien ciblé
-          <span class="mono">{{ selectedTechnicianLabel() }}</span>
+      <div class="context-banner">
+        <div class="context-copy">
+          <span class="context-kicker">Contexte de travail</span>
+          <strong>{{ contextModeLabel() }}</strong>
+          <p>{{ contextSummary() }}</p>
         </div>
-      }
-      <label>
-        Segment catalogue
-        <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
-          <option value="AUTO">AUTO-ENTREPRENEUR</option>
-          <option value="SALARIE">SALARIE</option>
-          <option value="PERSONNALISE">PERSONNALISÉ</option>
-          <option value="AUTRE">AUTRES</option>
-        </select>
-      </label>
-      <label>
-        Personnaliser pour
-        <select
-          [value]="selectedTechnicianId() || ''"
-          (change)="onTechnicianChange($event)"
-          [disabled]="loading() || saving() || techniciansLoading()"
-        >
-          <option value="">Configuration par défaut</option>
-          @for (tech of technicians(); track tech._id) {
-            <option [value]="tech._id">
-              {{ tech.firstName }} {{ tech.lastName }}
-            </option>
-          }
-        </select>
-        @if (techniciansError()) {
-          <span class="toolbar-help error">{{ techniciansError() }}</span>
-        }
-      </label>
-      <div class="personalized-box">
-        <div class="personalized-title">Techniciens avec BPU personnalisé actif</div>
-        @if (techniciansLoading()) {
-          <div class="personalized-empty">Chargement…</div>
-        } @else if (activePersonalizedTechnicians().length === 0) {
-          <div class="personalized-empty">Aucun technicien actif.</div>
-        } @else {
-          <div class="personalized-list">
-            @for (tech of activePersonalizedTechnicians(); track tech._id) {
-              <div class="personalized-item">
-                <button class="personalized-chip" type="button" (click)="editPersonalized(tech._id)">
-                  {{ tech.firstName }} {{ tech.lastName }}
-                </button>
-                <button class="btn-icon subtle" type="button" title="Modifier" (click)="editPersonalized(tech._id)">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn-icon subtle danger" type="button" title="Supprimer" (click)="requestDeletePersonalized(tech._id)">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
+        <div class="context-pills">
+          <span class="context-pill">Catalogue : prestations + prix</span>
+          <span class="context-pill">Segment source : {{ segmentLabel() }}</span>
+          <span class="context-pill">
+            Cible :
+            @if (selectedTechnicianLabel()) {
+              {{ selectedTechnicianLabel() }}
+            } @else {
+              BPU par défaut
             }
-          </div>
-        }
+          </span>
+        </div>
       </div>
-      <button
-        class="btn-outline toolbar-copy"
-        type="button"
-        (click)="copyFromGlobal()"
-        [disabled]="loading() || saving() || !selectedTechnicianId()"
-      >
-        Copier la configuration par défaut
-      </button>
+
+      <div class="context-controls-row">
+        <div class="context-panel">
+          <div class="context-panel-title">Contexte</div>
+          @if (isPersonalized()) {
+            <div class="toolbar-badge">
+              Technicien ciblé
+              <span class="mono">{{ selectedTechnicianLabel() }}</span>
+            </div>
+          }
+          <div class="context-fields">
+            <label>
+              Segment source
+              <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
+                <option value="AUTO">FREELANCE</option>
+                <option value="SALARIE">SALARIÉ</option>
+                <option value="PERSONNALISE">PERSONNALISÉ</option>
+                <option value="AUTRE">AUTRES</option>
+              </select>
+            </label>
+            <label>
+              Technicien ciblé
+              <select
+                [value]="selectedTechnicianId() || ''"
+                (change)="onTechnicianChange($event)"
+                [disabled]="loading() || saving() || techniciansLoading()"
+              >
+                <option value="">BPU par défaut</option>
+                @for (tech of technicians(); track tech._id) {
+                  <option [value]="tech._id">
+                    {{ tech.firstName }} {{ tech.lastName }}
+                  </option>
+                }
+              </select>
+              @if (techniciansError()) {
+                <span class="toolbar-help error">{{ techniciansError() }}</span>
+              }
+            </label>
+          </div>
+        </div>
+      </div>
     }
   </section>
 
@@ -181,139 +155,220 @@
   } @else if (items().length === 0) {
     <div class="state empty card">Aucune prestation BPU.</div>
   } @else {
-    <div class="table card">
-      <table>
-        <thead>
-        <tr>
-          @if (!isTechnician()) {
-            <th class="select-col select-all">
-              <label class="select-all-label">
-                <input
-                  class="select-box"
-                  type="checkbox"
-                  [checked]="allSelected()"
-                  [disabled]="loading() || saving()"
-                  (change)="toggleSelectAll()"
-                  aria-label="Tout sélectionner"
-                />
-                <span>Tout</span>
-              </label>
-            </th>
-          }
-          <th>
-            <button class="sort-btn" type="button" (click)="toggleSortPrestation()">
-              Prestation <span class="sort-indicator">{{ sortIndicator() }}</span>
-            </button>
-          </th>
-          <th>Code</th>
-          <th>Prix appliqué</th>
-        </tr>
-        </thead>
-        <tbody>
-          @for (item of sortedItems(); track item._id || item.code) {
+    <div class="content-layout">
+      <div class="content-main">
+        <div class="table card">
+          <table>
+            <thead>
             <tr>
               @if (!isTechnician()) {
-                <td data-label="Sélection" class="select-col">
-                  <input
-                    class="select-box"
-                    type="checkbox"
-                    [checked]="isSelected(item)"
-                    [disabled]="loading() || saving()"
-                    (change)="toggleSelection(item)"
-                  />
-                </td>
+                <th class="select-col select-all">
+                  <label class="select-all-label">
+                    <input
+                      class="select-box"
+                      type="checkbox"
+                      [checked]="allSelected()"
+                      [disabled]="loading() || saving()"
+                      (change)="toggleSelectAll()"
+                      aria-label="Tout sélectionner"
+                    />
+                    <span>Tout</span>
+                  </label>
+                </th>
               }
-              <td data-label="Prestation">
-                {{ item.prestation || '—' }}
-              </td>
-              <td data-label="Code" class="mono">
-                @if (isTechnician()) {
-                  <span class="pill-blue">
-                    {{ item.code || '—' }}
-                  </span>
-                } @else {
-                  <input
-                    class="code-input"
-                    type="text"
-                    [value]="codeValue(item)"
-                    [disabled]="loading() || saving() || isCodeSaving(item)"
-                    (input)="onCodeInput(item, $event)"
-                    (blur)="commitCode(item)"
-                  />
-                }
-              </td>
-              <td data-label="Prix appliqué">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  [value]="priceValue(item)"
-                  [disabled]="loading() || saving() || isTechnician()"
-                  (input)="onPriceChange(item, $event)"
-                />
-              </td>
+              <th>
+                <button class="sort-btn" type="button" (click)="toggleSortPrestation()">
+                  Prestation <span class="sort-indicator">{{ sortIndicator() }}</span>
+                </button>
+              </th>
+              <th>Code</th>
+              <th>Prix appliqué</th>
             </tr>
+            </thead>
+            <tbody>
+              @for (item of sortedItems(); track item._id || item.code) {
+                <tr>
+                  @if (!isTechnician()) {
+                    <td data-label="Sélection" class="select-col">
+                      <input
+                        class="select-box"
+                        type="checkbox"
+                        [checked]="isSelected(item)"
+                        [disabled]="loading() || saving()"
+                        (change)="toggleSelection(item)"
+                      />
+                    </td>
+                  }
+                  <td data-label="Prestation">
+                    {{ item.prestation || '—' }}
+                  </td>
+                  <td data-label="Code" class="mono">
+                    @if (isTechnician()) {
+                      <span class="pill-blue">
+                        {{ item.code || '—' }}
+                      </span>
+                    } @else {
+                      <input
+                        class="code-input"
+                        type="text"
+                        [value]="codeValue(item)"
+                        [disabled]="loading() || saving() || isCodeSaving(item)"
+                        (input)="onCodeInput(item, $event)"
+                        (blur)="commitCode(item)"
+                      />
+                    }
+                  </td>
+                  <td data-label="Prix appliqué">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      [value]="priceValue(item)"
+                      [disabled]="loading() || saving() || isTechnician()"
+                      (input)="onPriceChange(item, $event)"
+                    />
+                  </td>
+                </tr>
+              }
+              @if (!isTechnician()) {
+                <tr class="new-row">
+                  <td data-label="Sélection" class="select-col">
+                    <span class="new-label">Nouveau</span>
+                  </td>
+                  <td data-label="Prestation">
+                    <input
+                      type="text"
+                      placeholder="Nouvelle prestation catalogue"
+                      [value]="newPrestation().prestation"
+                      [disabled]="adding() || loading() || saving()"
+                      (input)="onNewPrestationChange('prestation', $event)"
+                      (keydown)="onNewPrestationKeydown($event)"
+                    />
+                  </td>
+                  <td data-label="Code" class="mono">
+                    <input
+                      class="code-input"
+                      type="text"
+                      placeholder="CODE"
+                      [value]="newPrestation().code"
+                      [disabled]="adding() || loading() || saving()"
+                      (input)="onNewPrestationChange('code', $event)"
+                      (keydown)="onNewPrestationKeydown($event)"
+                    />
+                  </td>
+                  <td data-label="Prix appliqué">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      [value]="newPrestation().unitPrice"
+                      [disabled]="adding() || loading() || saving()"
+                      (input)="onNewPrestationChange('unitPrice', $event)"
+                      (keydown)="onNewPrestationKeydown($event)"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <footer class="actions-footer">
+          @if (!isTechnician()) {
+            <button class="btn-outline" type="button" (click)="addPrestation()" [disabled]="adding() || loading() || saving() || !canAddPrestation()">
+              <i class="bi bi-plus"></i>
+              @if (adding()) { Ajout… } @else { Ajouter au catalogue BPU }
+            </button>
           }
           @if (!isTechnician()) {
-            <tr class="new-row">
-              <td data-label="Sélection" class="select-col">
-                <span class="new-label">Nouveau</span>
-              </td>
-              <td data-label="Prestation">
-                <input
-                  type="text"
-                  placeholder="Nouvelle prestation catalogue"
-                  [value]="newPrestation().prestation"
-                  [disabled]="adding() || loading() || saving()"
-                  (input)="onNewPrestationChange('prestation', $event)"
-                  (keydown)="onNewPrestationKeydown($event)"
-                />
-              </td>
-              <td data-label="Code" class="mono">
-                <input
-                  class="code-input"
-                  type="text"
-                  placeholder="CODE"
-                  [value]="newPrestation().code"
-                  [disabled]="adding() || loading() || saving()"
-                  (input)="onNewPrestationChange('code', $event)"
-                  (keydown)="onNewPrestationKeydown($event)"
-                />
-              </td>
-              <td data-label="Prix appliqué">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  [value]="newPrestation().unitPrice"
-                  [disabled]="adding() || loading() || saving()"
-                  (input)="onNewPrestationChange('unitPrice', $event)"
-                  (keydown)="onNewPrestationKeydown($event)"
-                />
-              </td>
-            </tr>
+            <button class="btn-primary" type="button" (click)="saveSelection()" [disabled]="saving() || loading() || !hasSelection()">
+              <i class="bi bi-check"></i>
+              @if (saving()) {
+                Enregistrement…
+              } @else {
+                @if (selectedTechnicianId()) { Enregistrer le BPU personnalisé } @else { Enregistrer le BPU par défaut }
+              }
+            </button>
           }
-        </tbody>
-      </table>
+        </footer>
+      </div>
+
+      @if (!isTechnician()) {
+        <aside class="content-side">
+          <section class="card attached-tech-card">
+            <div class="attached-tech-header">
+              <div>
+                <h2>Techniciens rattachés au segment</h2>
+                <p>
+                  @if (currentSegment() === 'PERSONNALISE') {
+                    Techniciens disposant d’un BPU personnalisé actif.
+                  } @else {
+                    Techniciens rattachés au segment source {{ segmentLabel() }}.
+                  }
+                </p>
+              </div>
+              <span class="attached-tech-count">{{ attachedSegmentTechnicians().length }}</span>
+            </div>
+
+            @if (techniciansLoading()) {
+              <div class="attached-tech-empty">Chargement…</div>
+            } @else if (attachedSegmentTechnicians().length === 0) {
+              <div class="attached-tech-empty">Aucun technicien rattaché à ce segment.</div>
+            } @else {
+              <div class="attached-tech-list">
+                @for (tech of attachedSegmentTechnicians(); track tech._id) {
+                  <button
+                    class="attached-tech-chip"
+                    type="button"
+                    (click)="openAttachedTechnician(tech._id)">
+                    {{ tech.firstName }} {{ tech.lastName }}
+                  </button>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="card attached-tech-card quick-access-card">
+            <div class="attached-tech-header">
+              <div>
+                <h2>Accès rapide</h2>
+                <p>Techniciens avec BPU personnalisé actif.</p>
+              </div>
+            </div>
+
+            <button
+              class="btn-outline toolbar-copy quick-access-copy"
+              type="button"
+              (click)="copyFromGlobal()"
+              [disabled]="loading() || saving() || !selectedTechnicianId()"
+            >
+              Copier le BPU par défaut
+            </button>
+
+            @if (techniciansLoading()) {
+              <div class="personalized-empty">Chargement…</div>
+            } @else if (activePersonalizedTechnicians().length === 0) {
+              <div class="personalized-empty">Aucun technicien actif.</div>
+            } @else {
+              <div class="personalized-list">
+                @for (tech of activePersonalizedTechnicians(); track tech._id) {
+                  <div class="personalized-item">
+                    <button class="personalized-chip" type="button" (click)="editPersonalized(tech._id)">
+                      {{ tech.firstName }} {{ tech.lastName }}
+                    </button>
+                    <button class="btn-icon subtle" type="button" title="Modifier" (click)="editPersonalized(tech._id)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn-icon subtle danger" type="button" title="Supprimer" (click)="requestDeletePersonalized(tech._id)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        </aside>
+      }
     </div>
-    <footer class="actions-footer">
-      @if (!isTechnician()) {
-        <button class="btn-outline" type="button" (click)="addPrestation()" [disabled]="adding() || loading() || saving() || !canAddPrestation()">
-          <i class="bi bi-plus"></i>
-          @if (adding()) { Ajout… } @else { Ajouter au catalogue BPU }
-        </button>
-      }
-      @if (!isTechnician()) {
-        <button class="btn-primary" type="button" (click)="saveSelection()" [disabled]="saving() || loading() || !hasSelection()">
-          <i class="bi bi-check"></i>
-          @if (saving()) {
-            Enregistrement…
-          } @else {
-            @if (selectedTechnicianId()) { Enregistrer le BPU technicien } @else { Enregistrer la configuration par défaut }
-          }
-        </button>
-      }
-    </footer>
   }
 </section>
 

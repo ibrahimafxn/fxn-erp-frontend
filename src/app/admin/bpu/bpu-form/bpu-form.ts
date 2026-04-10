@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BpuService } from '../../../core/services/bpu.service';
+import { DetailBack } from '../../../core/utils/detail-back';
 
 type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE';
 
@@ -15,10 +16,13 @@ type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE';
   templateUrl: './bpu-form.html',
   styleUrl: './bpu-form.scss'
 })
-export class BpuForm {
+export class BpuForm extends DetailBack {
   private fb = inject(FormBuilder);
-  private router = inject(Router);
   private bpuService = inject(BpuService);
+
+  constructor() {
+    super();
+  }
 
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
@@ -58,7 +62,7 @@ export class BpuForm {
   }
 
   cancel(): void {
-    this.router.navigate(['/admin/bpu/new']);
+    this.back('/admin/bpu/new');
   }
 
   isInvalid(name: 'segment' | 'prestation' | 'code' | 'unitPrice'): boolean {

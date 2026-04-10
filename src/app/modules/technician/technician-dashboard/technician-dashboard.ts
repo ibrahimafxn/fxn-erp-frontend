@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import {
   InterventionImportBatch,
   InterventionImportTechnicianSummary,
@@ -10,13 +9,16 @@ import {
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { TechnicianReportService } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { formatDateInput, formatFrDate, formatFrDateTime, startOfToday } from '../../../core/utils/date-format';
+import { parseFiniteNumber } from '../../../core/utils/number';
+import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-technician-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, RouterModule, TechnicianMobileNav],
+  imports: [CommonModule, RouterModule, TechnicianMobileNav, AmountCurrencyPipe],
   templateUrl: './technician-dashboard.html',
   styleUrl: './technician-dashboard.scss'
 })
@@ -32,7 +34,7 @@ export class TechnicianDashboard {
   readonly dailyAmount = signal(0);
   readonly weeklyAmount = signal(0);
   readonly monthlyAmount = signal(0);
-  readonly todayLabel = computed(() => new Date().toLocaleDateString('fr-FR'));
+  readonly todayLabel = computed(() => formatFrDate(new Date()));
 
   readonly importLoading = signal(false);
   readonly importError = signal<string | null>(null);
@@ -44,7 +46,7 @@ export class TechnicianDashboard {
     const batch = this.importBatch();
     const date = summaryDate || batch?.importedAt || batch?.createdAt;
     if (!date) return 'Aucun import du jour';
-    const formatted = new Date(date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' });
+    const formatted = formatFrDateTime(date);
     return `Dernier import : ${formatted}`;
   });
 
@@ -107,23 +109,12 @@ export class TechnicianDashboard {
   private loadCa(): void {
     this.caLoading.set(true);
     this.caError.set(null);
-    const day = this.startOfToday();
-    const monthStart = new Date(day.getFullYear(), day.getMonth(), 1);
-    const weekStart = this.startOfWeek(day);
-    const todayStr = this.formatDateInput(day);
-    const weekStartStr = this.formatDateInput(weekStart);
-    const monthStartStr = this.formatDateInput(monthStart);
-
     const userId = this.currentUserId();
-    forkJoin({
-      daily: this.reports.summary({ fromDate: todayStr, toDate: todayStr, technicianId: userId || undefined }),
-      weekly: this.reports.summary({ fromDate: weekStartStr, toDate: todayStr, technicianId: userId || undefined }),
-      monthly: this.reports.summary({ fromDate: monthStartStr, toDate: todayStr, technicianId: userId || undefined })
-    }).subscribe({
+    this.reports.summaryPeriods(userId || undefined).subscribe({
       next: (res) => {
-        this.dailyAmount.set(this.parseAmount(res.daily.data.totalAmount));
-        this.weeklyAmount.set(this.parseAmount(res.weekly.data.totalAmount));
-        this.monthlyAmount.set(this.parseAmount(res.monthly.data.totalAmount));
+        this.dailyAmount.set(parseFiniteNumber(res.daily.data.totalAmount));
+        this.weeklyAmount.set(parseFiniteNumber(res.weekly.data.totalAmount));
+        this.monthlyAmount.set(parseFiniteNumber(res.monthly.data.totalAmount));
         this.caLoading.set(false);
         this.cdr.markForCheck();
       },
@@ -143,8 +134,8 @@ export class TechnicianDashboard {
         const items = res.data.items || [];
         const batch = items.find((item) => item.isToday) || items[0] || null;
         this.importBatch.set(batch);
-        const today = this.startOfToday();
-        const todayStr = this.formatDateInput(today);
+        const today = startOfToday();
+        const todayStr = formatDateInput(today);
         const summary$ = batch?._id
           ? this.interventions.importSummaryTechnician({ importBatchId: batch._id })
           : this.interventions.importSummaryTechnician({ fromDate: todayStr, toDate: todayStr });
@@ -181,50 +172,9 @@ export class TechnicianDashboard {
     });
   }
 
-  formatAmount(value?: number | null): string {
-    const amount = Number(value ?? 0);
-    if (!Number.isFinite(amount)) return '0,00 €';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
-  }
-
-  private startOfToday(): Date {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  }
-
-  private startOfWeek(date: Date): Date {
-    const day = date.getDay();
-    const diff = (day === 0 ? -6 : 1) - day;
-    const start = new Date(date);
-    start.setDate(date.getDate() + diff);
-    return new Date(start.getFullYear(), start.getMonth(), start.getDate());
-  }
-
-  private formatDateInput(d: Date): string {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const dayOfMonth = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${dayOfMonth}`;
-  }
-
   private currentUserId(): string | null {
     const user = this.auth.getCurrentUser();
     if (!user?._id) return null;
     return String(user._id);
   }
-
-  private parseAmount(value?: number | string | null): number {
-    if (value === null || value === undefined) return 0;
-    const raw = typeof value === 'string'
-      ? value.replace(/\s+/g, '').replace(',', '.')
-      : value;
-    const num = Number(raw);
-    return Number.isFinite(num) ? num : 0;
-  }
-
 }

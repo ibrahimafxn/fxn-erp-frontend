@@ -15,7 +15,7 @@ export type EmployeeProfile = {
   _id?: string;
   user: string | User;
   jobTitle?: string;
-  contractType?: 'CDI' | 'CDD' | 'STAGE' | 'FREELANCE' | 'AUTRE';
+  contractType?: 'FREELANCE' | 'SALARIE' | 'AUTRE' | 'PERSONNALISE' | 'CDI' | 'CDD' | 'STAGE';
   startDate?: string | null;
   endDate?: string | null;
   address?: string;

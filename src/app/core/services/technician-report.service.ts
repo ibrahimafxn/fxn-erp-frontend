@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { ReportStatus } from '../models';
 
@@ -135,5 +135,34 @@ export class TechnicianReportService {
       `${this.baseUrl}/summary-by-month`,
       { params: httpParams }
     );
+  }
+
+  summaryPeriods(technicianId?: string, referenceDate = new Date()): Observable<{
+    daily: { success: boolean; data: { totalAmount: number; count: number } };
+    weekly: { success: boolean; data: { totalAmount: number; count: number } };
+    monthly: { success: boolean; data: { totalAmount: number; count: number } };
+  }> {
+    const dayStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+    const weekStart = this.startOfWeek(dayStart);
+    const monthStart = new Date(dayStart.getFullYear(), dayStart.getMonth(), 1);
+    const toDate = this.formatDate(dayStart);
+
+    return forkJoin({
+      daily: this.summary({ fromDate: this.formatDate(dayStart), toDate, technicianId }),
+      weekly: this.summary({ fromDate: this.formatDate(weekStart), toDate, technicianId }),
+      monthly: this.summary({ fromDate: this.formatDate(monthStart), toDate, technicianId })
+    });
+  }
+
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private startOfWeek(date: Date): Date {
+    const day = (date.getDay() + 6) % 7;
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() - day);
   }
 }

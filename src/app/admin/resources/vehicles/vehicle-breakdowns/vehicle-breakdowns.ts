@@ -203,7 +203,7 @@ export class VehicleBreakdowns extends DetailBack {
       : this.isReadOnly()
         ? '/technician/resources/vehicles'
         : '/admin/resources/vehicles';
-    this.router.navigate([base, this.id, 'detail']).then();
+    this.back(`${base}/${this.id}/detail`);
   }
 
   authorLabel(b: VehicleBreakdown): string {

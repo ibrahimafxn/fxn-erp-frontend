@@ -2,8 +2,9 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { BpuTypeService } from '../../../core/services/bpu-type.service';
+import { DetailBack } from '../../../core/utils/detail-back';
 
 @Component({
   standalone: true,
@@ -13,9 +14,8 @@ import { BpuTypeService } from '../../../core/services/bpu-type.service';
   templateUrl: './bpu-type-form.html',
   styleUrl: './bpu-type-form.scss'
 })
-export class BpuTypeForm {
+export class BpuTypeForm extends DetailBack {
   private fb = inject(FormBuilder);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
   private svc = inject(BpuTypeService);
 
@@ -31,6 +31,7 @@ export class BpuTypeForm {
   readonly canSubmit = computed(() => !this.saving() && !this.loading() && this.form.valid);
 
   constructor() {
+    super();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.editingId.set(id);
@@ -77,7 +78,7 @@ export class BpuTypeForm {
   }
 
   cancel(): void {
-    this.router.navigate(['/admin/bpu']);
+    this.back('/admin/bpu');
   }
 
   isInvalid(name: 'type'): boolean {

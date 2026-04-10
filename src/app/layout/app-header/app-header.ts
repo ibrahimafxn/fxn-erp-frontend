@@ -382,6 +382,7 @@ export class AppHeader {
    * --------------------------- */
   private hasLocalBack(url: string): boolean {
     if (!url) return false;
+    if (/^\/admin\/resources\/vehicles\/[^/]+\/detail$/.test(url)) return false;
     if (url.includes('/detail')) return true;
     if (url.includes('/edit')) return true;
     if (url.includes('/new')) return true;

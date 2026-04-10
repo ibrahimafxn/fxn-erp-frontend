@@ -32,7 +32,7 @@
               <div class="prestation-item">
                 <div [class]="'prestation-pill pill-color-' + (i % 8)">{{ item.prestation || item.code }}</div>
                 <div class="prestation-meta">
-                  <span class="prestation-price">{{ formatAmount(unitPriceFor(item.code)) }}</span>
+                  <span class="prestation-price">{{ unitPriceFor(item.code) | amountCurrency }}</span>
                 </div>
                 <div class="prestation-stepper">
                   <button type="button" class="stepper-btn" (click)="stepCode(item.code, -1)" aria-label="Diminuer">−</button>
@@ -41,7 +41,7 @@
                 </div>
                 <div class="prestation-total">
                   <span>Montant ligne</span>
-                  <strong>{{ formatAmount(lineAmount(item.code)) }}</strong>
+                  <strong>{{ lineAmount(item.code) | amountCurrency }}</strong>
                 </div>
               </div>
             }
@@ -56,7 +56,7 @@
         </div>
         <div class="summary-card accent">
           <span class="summary-label">CA estimé</span>
-          <strong class="summary-value">{{ formatAmount(formTotalAmount()) }}</strong>
+          <strong class="summary-value">{{ formTotalAmount() | amountCurrency }}</strong>
         </div>
       </div>
 
@@ -146,20 +146,9 @@
               <tr [class.border-primary]="isToday(report)">
                 <td data-label="Date">{{ report.reportDate | date:'shortDate' }}</td>
                 <td class="prestations-cell" data-label="Prestations">
-                  @if (prestationsSummary(report).length) {
-                    <div class="prestations-summary">
-                      @for (item of prestationsSummary(report); track item.code) {
-                        <div class="prestations-pill">
-                          <span class="qty">{{ item.qty }}</span>
-                          <span class="pill-label">{{ item.code }}</span>
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    —
-                  }
+                  <app-report-prestations-badges [items]="prestationsSummary(report)"></app-report-prestations-badges>
                 </td>
-                <td data-label="Montant">{{ formatAmount(computeAmount(report)) }}</td>
+                <td data-label="Montant">{{ computeAmount(report) | amountCurrency }}</td>
                 <td class="note" data-label="Commentaire" [class.is-empty]="!report.comment">
                   @if (report.comment) { {{ report.comment }} }
                 </td>

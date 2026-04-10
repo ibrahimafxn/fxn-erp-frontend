@@ -1,6 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { AbsenceService } from '../../../core/services/absence.service';
@@ -45,6 +46,7 @@ export class HrList {
   private auth = inject(AuthService);
   private depotService = inject(DepotService);
   private datePipe = inject(DatePipe);
+  private router = inject(Router);
 
   readonly tab = signal<'employees' | 'leaves'>('employees');
   readonly employeeSection = signal<'employees' | 'profile' | 'documents'>('employees');
@@ -117,7 +119,12 @@ export class HrList {
     { value: 'HABILITATION', label: 'Habilitation' }
   ];
   readonly leaveTypes = ['CONGE', 'MALADIE', 'PERMISSION', 'FORMATION', 'AUTRE'];
-  readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'AUTRE'];
+  readonly contractTypes = [
+    { value: 'FREELANCE', label: 'Freelance' },
+    { value: 'SALARIE', label: 'Salarié' },
+    { value: 'AUTRE', label: 'Autres' },
+    { value: 'PERSONNALISE', label: 'Personnalisé' }
+  ] as const;
   readonly employeeRoles = [
     { value: '', label: 'Tous les rôles' },
     { value: 'ADMIN', label: 'ADMIN' },
@@ -290,6 +297,12 @@ export class HrList {
     const role = this.auth.user$()?.role;
     return role === Role.ADMIN || role === Role.DIRIGEANT;
   });
+  readonly selectedContractLabel = computed(() => this.contractLabel(this.profileForm.controls.contractType.value));
+  readonly selectedSegmentSourceLabel = computed(() => this.segmentSourceLabel(this.profileForm.controls.contractType.value));
+  readonly requiredDocCount = computed(() => this.requiredDocsForUser(this.selected()?.user).length);
+  readonly satisfiedRequiredDocCount = computed(() =>
+    this.requiredDocsForUser(this.selected()?.user).filter((type) => this.isRequiredDocSatisfied(type)).length
+  );
 
   readonly docForm = this.fb.nonNullable.group({
     type: this.fb.nonNullable.control('CNI'),
@@ -569,7 +582,7 @@ export class HrList {
   patchProfile(profile: EmployeeProfile | null): void {
     this.profileForm.reset({
       jobTitle: profile?.jobTitle || '',
-      contractType: profile?.contractType || 'AUTRE',
+      contractType: this.normalizeContractType(profile?.contractType),
       startDate: profile?.startDate ? String(profile.startDate).slice(0, 10) : '',
       endDate: profile?.endDate ? String(profile.endDate).slice(0, 10) : '',
       address: profile?.address || '',
@@ -598,7 +611,7 @@ export class HrList {
     const raw = this.profileForm.getRawValue();
     const payload: Partial<EmployeeProfile> = {
       ...raw,
-      contractType: raw.contractType as EmployeeProfile['contractType']
+      contractType: this.normalizeContractType(raw.contractType) as EmployeeProfile['contractType']
     };
     this.hr.upsertProfile(current.user._id, payload).subscribe({
       next: (profile: EmployeeProfile) => {
@@ -613,6 +626,52 @@ export class HrList {
         this.error.set(err?.message || 'Erreur sauvegarde profil');
       }
     });
+  }
+
+  private normalizeContractType(contractType: string | null | undefined): 'FREELANCE' | 'SALARIE' | 'AUTRE' | 'PERSONNALISE' {
+    const value = String(contractType || '').trim().toUpperCase();
+    if (value === 'FREELANCE') return 'FREELANCE';
+    if (value === 'PERSONNALISE') return 'PERSONNALISE';
+    if (value === 'AUTRE') return 'AUTRE';
+    if (value === 'CDI' || value === 'CDD' || value === 'STAGE' || value === 'SALARIE') return 'SALARIE';
+    return 'AUTRE';
+  }
+
+  contractLabel(value?: string | null): string {
+    const type = this.normalizeContractType(value);
+    if (type === 'FREELANCE') return 'Freelance';
+    if (type === 'SALARIE') return 'Salarié';
+    if (type === 'PERSONNALISE') return 'Personnalisé';
+    return 'Autres';
+  }
+
+  segmentSourceLabel(value?: string | null): string {
+    return this.contractLabel(value);
+  }
+
+  openEmployeeDocuments(): void {
+    this.employeeSection.set('documents');
+  }
+
+  openEmployeeBpu(): void {
+    const current = this.selected();
+    const userId = current?.user?._id;
+    if (!userId) return;
+    const segment = this.bpuSegmentFromContractType(this.profileForm.controls.contractType.value);
+    this.router.navigate(['/admin/bpu'], {
+      queryParams: {
+        technician: userId,
+        segment
+      }
+    }).then();
+  }
+
+  private bpuSegmentFromContractType(contractType: string | null | undefined): 'AUTO' | 'SALARIE' | 'AUTRE' | 'PERSONNALISE' {
+    const type = this.normalizeContractType(contractType);
+    if (type === 'FREELANCE') return 'AUTO';
+    if (type === 'PERSONNALISE') return 'PERSONNALISE';
+    if (type === 'AUTRE') return 'AUTRE';
+    return 'SALARIE';
   }
 
   openPayslipConfirm(): void {
@@ -1278,7 +1337,7 @@ export class HrList {
     }, 0);
   }
 
-  private scrollToPayslip(): void {
+  scrollToPayslip(): void {
     setTimeout(() => {
       const el = document.getElementById('hr-payslip');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });

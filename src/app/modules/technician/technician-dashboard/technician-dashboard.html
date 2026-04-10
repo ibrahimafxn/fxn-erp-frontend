@@ -23,21 +23,21 @@
           <div class="kpi-title">Journalier</div>
           <div class="kpi-sub">Aujourd'hui</div>
         </div>
-        <div class="kpi-value">{{ formatAmount(dailyAmount()) }}</div>
+        <div class="kpi-value">{{ dailyAmount() | amountCurrency }}</div>
       </article>
       <article class="kpi-card kpi-weekly">
         <div class="kpi-info">
           <div class="kpi-title">Hebdomadaire</div>
           <div class="kpi-sub">Cette semaine</div>
         </div>
-        <div class="kpi-value">{{ formatAmount(weeklyAmount()) }}</div>
+        <div class="kpi-value">{{ weeklyAmount() | amountCurrency }}</div>
       </article>
       <article class="kpi-card kpi-monthly">
         <div class="kpi-info">
           <div class="kpi-title">Mensuel</div>
           <div class="kpi-sub">Mois en cours</div>
         </div>
-        <div class="kpi-value">{{ formatAmount(monthlyAmount()) }}</div>
+        <div class="kpi-value">{{ monthlyAmount() | amountCurrency }}</div>
       </article>
     </div>
   </section>

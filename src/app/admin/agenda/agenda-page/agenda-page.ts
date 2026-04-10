@@ -109,6 +109,32 @@ export class AgendaPage {
       return true;
     });
   });
+  readonly activeFilterCount = computed(() => {
+    const filters = this.filterForm.getRawValue();
+    return [
+      filters.technicianId,
+      filters.depotId,
+      filters.status,
+      filters.type,
+      filters.fromDate,
+      filters.toDate
+    ].filter(Boolean).length;
+  });
+  readonly approvedAbsenceCount = computed(() =>
+    this.visibleAbsences().filter((absence) => absence.status === 'APPROUVE').length
+  );
+  readonly pendingAbsenceCount = computed(() =>
+    this.visibleAbsences().filter((absence) => absence.status === 'EN_ATTENTE').length
+  );
+  readonly refusedAbsenceCount = computed(() =>
+    this.visibleAbsences().filter((absence) => absence.status === 'REFUSE').length
+  );
+  readonly viewModeLabel = computed(() => {
+    const mode = this.viewMode();
+    if (mode === 'week') return 'Semaine';
+    if (mode === 'day') return 'Jour';
+    return 'Mois';
+  });
 
   constructor() {
     this.loadUsers();
@@ -119,6 +145,9 @@ export class AgendaPage {
 
   setView(mode: ViewMode): void {
     this.viewMode.set(mode);
+    if (!this.hasFilterRange()) {
+      this.refresh();
+    }
   }
 
   toggleList(): void {
@@ -135,6 +164,9 @@ export class AgendaPage {
       date.setMonth(date.getMonth() - 1);
     }
     this.currentDate.set(date);
+    if (!this.hasFilterRange()) {
+      this.refresh();
+    }
   }
 
   goNext(): void {
@@ -147,6 +179,9 @@ export class AgendaPage {
       date.setMonth(date.getMonth() + 1);
     }
     this.currentDate.set(date);
+    if (!this.hasFilterRange()) {
+      this.refresh();
+    }
   }
 
   openModal(): void {
