@@ -136,26 +136,9 @@ export class TechnicianDashboard {
         this.importBatch.set(batch);
         const today = startOfToday();
         const todayStr = formatDateInput(today);
-        const summary$ = batch?._id
-          ? this.interventions.importSummaryTechnician({ importBatchId: batch._id })
-          : this.interventions.importSummaryTechnician({ fromDate: todayStr, toDate: todayStr });
-        if (!batch?._id) {
-          summary$.subscribe({
-            next: (summaryRes) => {
-              this.importSummary.set(summaryRes.data);
-              this.importLoading.set(false);
-            },
-            error: (err) => {
-              this.importSummary.set(null);
-              this.importLoading.set(false);
-              this.importError.set(err?.message || 'Erreur chargement import');
-            }
-          });
-          return;
-        }
-        summary$.subscribe({
-          next: (importRes) => {
-            this.importSummary.set(importRes.data);
+        this.resolveImportSummary$(batch?._id || null, todayStr).subscribe({
+          next: (summaryRes) => {
+            this.importSummary.set(summaryRes.data);
             this.importLoading.set(false);
           },
           error: (err) => {
@@ -170,6 +153,12 @@ export class TechnicianDashboard {
         this.importError.set(err?.message || 'Erreur chargement import');
       }
     });
+  }
+
+  private resolveImportSummary$(batchId: string | null, todayStr: string) {
+    return batchId
+      ? this.interventions.importSummaryTechnician({ importBatchId: batchId })
+      : this.interventions.importSummaryTechnician({ fromDate: todayStr, toDate: todayStr });
   }
 
   private currentUserId(): string | null {

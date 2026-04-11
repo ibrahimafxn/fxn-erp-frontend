@@ -42,7 +42,7 @@ export class ConfirmDeleteModal {
   readonly cancelText = input('Annuler');
   readonly confirmText = input('Supprimer');
   readonly confirmLoadingText = input('Suppression…');
-  readonly confirmIcon = input('fa-solid fa-trash');
+  readonly confirmIcon = input('bi bi-trash');
 
   /** Si tu veux bloquer le bouton "Supprimer" pendant une requête */
   readonly confirming = input(false);

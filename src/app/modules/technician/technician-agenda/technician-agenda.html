@@ -138,7 +138,7 @@
   title="Confirmer la mise à jour"
   description="Souhaitez-vous modifier cette demande d'absence ?"
   confirmText="Mettre à jour"
-  confirmIcon="fa-solid fa-check"
+  confirmIcon="bi bi-check2"
   [confirming]="saving()"
   (cancel)="confirmUpdateOpen.set(false)"
   (confirm)="confirmUpdate()">
@@ -149,7 +149,7 @@
   title="Confirmer la suppression"
   description="Souhaitez-vous supprimer cette demande ?"
   confirmText="Supprimer"
-  confirmIcon="fa-solid fa-trash"
+  confirmIcon="bi bi-trash"
   [confirming]="deletingId() !== null"
   (cancel)="confirmDeleteOpen.set(false); confirmDeleteTarget.set(null)"
   (confirm)="confirmDelete()">

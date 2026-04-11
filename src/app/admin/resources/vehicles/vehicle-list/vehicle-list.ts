@@ -15,6 +15,7 @@ import { Role } from '../../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
+import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 
 type SortKey = 'title' | 'plate' | 'state' | 'assigned' | 'createdAt';
 
@@ -23,7 +24,7 @@ type SortKey = 'title' | 'plate' | 'state' | 'assigned' | 'createdAt';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-list',
   providers: [DatePipe],
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal, TechnicianMobileNav],
   templateUrl: './vehicle-list.html',
   styleUrls: ['./vehicle-list.scss'],
 })

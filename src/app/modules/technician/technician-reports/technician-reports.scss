@@ -487,23 +487,26 @@
   min-width: 0;
 }
 
-/* Supprimer les labels — le contenu est auto-explicatif */
-/* Ligne 1 col 1 : Date */
+/* Ligne 1 col 1 : Date — badge arrondi discret */
 .technician-reports .table td[data-label='Date'] {
   grid-column: 1;
   grid-row: 1;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--fxn-text-muted);
+  letter-spacing: 0.01em;
 }
 
-/* Ligne 1 col 2 : Montant */
+/* Ligne 1 col 2 : Montant — valeur proéminente */
 .technician-reports .table td[data-label='Montant'] {
   grid-column: 2;
   grid-row: 1;
   text-align: right;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 800;
   white-space: nowrap;
+  color: var(--fxn-text);
+  letter-spacing: -0.01em;
 }
 
 /* Ligne 1 col 3 : Actions (trash / modifier) */
@@ -555,53 +558,41 @@
 }
 
 /* ── Prestation summary pills ────────────────────────────── */
-.technician-reports .prestations-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.technician-reports .prestations-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 7px;
-  border-radius: 999px;
-  border: 1px solid var(--fxn-primary-border);
-  background: var(--fxn-surface-soft);
-  font-size: 11px;
-  width: fit-content;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-}
-
-.technician-reports .prestations-pill .qty {
-  font-weight: 700;
-  color: var(--fxn-text-soft);
-}
-
-.technician-reports .prestations-pill .pill-label {
-  font-weight: 600;
-}
-
-.technician-reports .prestations-pill .pill-code {
-  font-size: 9px;
-  opacity: 0.65;
-  letter-spacing: 0.03em;
-  font-family: var(--fxn-font-mono, monospace);
-}
+/* Styles portés directement dans app-report-prestations-badges.ts */
+/* (encapsulation Angular : seul le composant peut se styler lui-même) */
 
 @media (max-width: 599px) {
-  .technician-reports .table td[data-label='Prestations']::before,
+  /* Séparateur avant la section prestations */
+  .technician-reports .table td[data-label='Prestations'] {
+    border-top: 1px solid var(--fxn-border);
+    margin-top: 0.4rem;
+    padding-top: 0.45rem;
+  }
+
+  /* Label "PRESTATIONS" — discret, typographie micro */
+  .technician-reports .table td[data-label='Prestations']::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fxn-primary);
+    opacity: 0.7;
+  }
+
+  /* Commentaire : même traitement */
   .technician-reports .table td[data-label='Commentaire']::before {
     content: attr(data-label);
     display: block;
-    margin-bottom: 0.3rem;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
+    margin-bottom: 0.2rem;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--fxn-text-muted);
+    opacity: 0.6;
   }
 }
 

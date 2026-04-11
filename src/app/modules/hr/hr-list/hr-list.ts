@@ -1,12 +1,10 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { HrService } from '../../../core/services/hr.service';
-import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 import {
@@ -29,6 +27,18 @@ import { downloadBlob } from '../../../core/utils/download';
 import { Role } from '../../../core/models/roles.model';
 import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 import { formatPageRange } from '../../../core/utils/pagination';
+import {
+  ABSENCE_STATUS_LABELS,
+  ABSENCE_TYPE_LABELS,
+  HR_ALLOWED_ABSENCE_STATUSES,
+  HR_COMPLIANCE_FILTERS,
+  HR_CONTRACT_TYPES,
+  HR_DOC_TYPES,
+  HR_EMPLOYEE_ROLES,
+  HR_HABILITATION_OPTIONS,
+  HR_LEAVE_TYPES,
+  NORMALIZED_CONTRACT_LABELS
+} from './hr-list.constants';
 
 @Component({
   selector: 'app-hr-list',
@@ -46,7 +56,6 @@ export class HrList {
   private auth = inject(AuthService);
   private depotService = inject(DepotService);
   private datePipe = inject(DatePipe);
-  private router = inject(Router);
 
   readonly tab = signal<'employees' | 'leaves'>('employees');
   readonly employeeSection = signal<'employees' | 'profile' | 'documents'>('employees');
@@ -110,33 +119,11 @@ export class HrList {
     return value || (user.email?.[0] ?? '').toUpperCase();
   }
 
-  readonly docTypes = [
-    { value: 'CNI', label: 'CNI' },
-    { value: 'PERMIS', label: 'Permis' },
-    { value: 'CONTRAT', label: 'Contrat' },
-    { value: 'CARTE_VITALE', label: 'Carte vitale' },
-    { value: 'ATTESTATION', label: 'Attestation' },
-    { value: 'HABILITATION', label: 'Habilitation' }
-  ];
-  readonly leaveTypes = ['CONGE', 'MALADIE', 'PERMISSION', 'FORMATION', 'AUTRE'];
-  readonly contractTypes = [
-    { value: 'FREELANCE', label: 'Freelance' },
-    { value: 'SALARIE', label: 'Salarié' },
-    { value: 'AUTRE', label: 'Autres' },
-    { value: 'PERSONNALISE', label: 'Personnalisé' }
-  ] as const;
-  readonly employeeRoles = [
-    { value: '', label: 'Tous les rôles' },
-    { value: 'ADMIN', label: 'ADMIN' },
-    { value: 'DIRIGEANT', label: 'DIRIGEANT' },
-    { value: 'GESTION_DEPOT', label: 'GESTION_DEPOT' },
-    { value: 'TECHNICIEN', label: 'TECHNICIEN' }
-  ];
-  readonly complianceFilters = [
-    { value: '', label: 'Tous les statuts' },
-    { value: 'OK', label: 'Conforme' },
-    { value: 'MISSING', label: 'Manquant' }
-  ];
+  readonly docTypes = HR_DOC_TYPES;
+  readonly leaveTypes = HR_LEAVE_TYPES;
+  readonly contractTypes = HR_CONTRACT_TYPES;
+  readonly employeeRoles = HR_EMPLOYEE_ROLES;
+  readonly complianceFilters = HR_COMPLIANCE_FILTERS;
 
   readonly canApprove = computed(() => {
     const role = this.auth.user$()?.role;
@@ -310,10 +297,7 @@ export class HrList {
     expiryDate: this.fb.nonNullable.control('')
   });
   readonly docFiles = signal<File[]>([]);
-  readonly habilitationOptions = [
-    { value: 'ELECTRIQUE', label: 'Électrique' },
-    { value: 'TRAVAIL_HAUTEUR', label: 'Travail en hauteur' }
-  ];
+  readonly habilitationOptions = HR_HABILITATION_OPTIONS;
 
   constructor() {
     this.depotService.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
@@ -350,8 +334,7 @@ export class HrList {
 
   onLeaveStatusChange(value: string): void {
     const normalized = value as AbsenceStatus;
-    const allowed: AbsenceStatus[] = ['EN_ATTENTE', 'APPROUVE', 'REFUSE'];
-    this.leaveStatus.set(allowed.includes(normalized) ? normalized : 'EN_ATTENTE');
+    this.leaveStatus.set(HR_ALLOWED_ABSENCE_STATUSES.includes(normalized) ? normalized : 'EN_ATTENTE');
     this.loadLeaves();
   }
 
@@ -639,39 +622,11 @@ export class HrList {
 
   contractLabel(value?: string | null): string {
     const type = this.normalizeContractType(value);
-    if (type === 'FREELANCE') return 'Freelance';
-    if (type === 'SALARIE') return 'Salarié';
-    if (type === 'PERSONNALISE') return 'Personnalisé';
-    return 'Autres';
+    return NORMALIZED_CONTRACT_LABELS[type];
   }
 
   segmentSourceLabel(value?: string | null): string {
     return this.contractLabel(value);
-  }
-
-  openEmployeeDocuments(): void {
-    this.employeeSection.set('documents');
-  }
-
-  openEmployeeBpu(): void {
-    const current = this.selected();
-    const userId = current?.user?._id;
-    if (!userId) return;
-    const segment = this.bpuSegmentFromContractType(this.profileForm.controls.contractType.value);
-    this.router.navigate(['/admin/bpu'], {
-      queryParams: {
-        technician: userId,
-        segment
-      }
-    }).then();
-  }
-
-  private bpuSegmentFromContractType(contractType: string | null | undefined): 'AUTO' | 'SALARIE' | 'AUTRE' | 'PERSONNALISE' {
-    const type = this.normalizeContractType(contractType);
-    if (type === 'FREELANCE') return 'AUTO';
-    if (type === 'PERSONNALISE') return 'PERSONNALISE';
-    if (type === 'AUTRE') return 'AUTRE';
-    return 'SALARIE';
   }
 
   openPayslipConfirm(): void {
@@ -756,39 +711,34 @@ export class HrList {
   setPayslipLimit(limit: number): void {
     this.payslipLimit.set(limit);
     this.payslipPage.set(1);
-    const userId = this.selected()?.user?._id;
-    if (userId) this.loadPayslips(userId);
+    this.reloadSelectedPayslips();
   }
 
   setPayslipMonth(value: string): void {
     const parsed = Number(value);
     this.payslipMonth.set(Number.isFinite(parsed) && parsed > 0 ? parsed : '');
     this.payslipPage.set(1);
-    const userId = this.selected()?.user?._id;
-    if (userId) this.loadPayslips(userId);
+    this.reloadSelectedPayslips();
   }
 
   setPayslipYear(value: string): void {
     const parsed = Number(value);
     this.payslipYear.set(Number.isFinite(parsed) && parsed > 0 ? parsed : '');
     this.payslipPage.set(1);
-    const userId = this.selected()?.user?._id;
-    if (userId) this.loadPayslips(userId);
+    this.reloadSelectedPayslips();
   }
 
   prevPayslipPage(): void {
     if (this.payslipPage() <= 1) return;
     this.payslipPage.set(this.payslipPage() - 1);
-    const userId = this.selected()?.user?._id;
-    if (userId) this.loadPayslips(userId);
+    this.reloadSelectedPayslips();
   }
 
   nextPayslipPage(): void {
     const totalPages = Math.max(1, Math.ceil(this.payslipTotal() / this.payslipLimit()));
     if (this.payslipPage() >= totalPages) return;
     this.payslipPage.set(this.payslipPage() + 1);
-    const userId = this.selected()?.user?._id;
-    if (userId) this.loadPayslips(userId);
+    this.reloadSelectedPayslips();
   }
 
   downloadPayslip(slip: Payslip): void {
@@ -1105,24 +1055,21 @@ export class HrList {
   prevHistoryPage(): void {
     const next = Math.max(1, this.historyPage() - 1);
     this.historyPage.set(next);
-    const userId = this.selected()?.user?._id;
-    if (userId) this.loadHistory(userId);
+    this.reloadSelectedHistory();
   }
 
   nextHistoryPage(): void {
     const totalPages = Math.max(1, Math.ceil(this.historyTotal() / this.historyLimit()));
     const next = Math.min(totalPages, this.historyPage() + 1);
     this.historyPage.set(next);
-    const userId = this.selected()?.user?._id;
-    if (userId) this.loadHistory(userId);
+    this.reloadSelectedHistory();
   }
 
   setHistoryLimitValue(value: number): void {
     if (!Number.isFinite(value) || value <= 0) return;
     this.historyLimit.set(value);
     this.historyPage.set(1);
-    const userId = this.selected()?.user?._id;
-    if (userId) this.loadHistory(userId);
+    this.reloadSelectedHistory();
   }
 
   loadLeaves(): void {
@@ -1180,33 +1127,11 @@ export class HrList {
   }
 
   absenceTypeLabel(type?: string): string {
-    switch (type) {
-      case 'CONGE':
-        return 'Congé';
-      case 'MALADIE':
-        return 'Maladie';
-      case 'PERMISSION':
-        return 'Permission';
-      case 'FORMATION':
-        return 'Formation';
-      case 'AUTRE':
-        return 'Autre';
-      default:
-        return type || '—';
-    }
+    return type ? (ABSENCE_TYPE_LABELS[type] || type) : '—';
   }
 
   absenceStatusLabel(status?: AbsenceStatus): string {
-    switch (status) {
-      case 'EN_ATTENTE':
-        return 'En attente';
-      case 'APPROUVE':
-        return 'Approuvé';
-      case 'REFUSE':
-        return 'Refusé';
-      default:
-        return status || '—';
-    }
+    return status ? (ABSENCE_STATUS_LABELS[status] || status) : '—';
   }
 
   depotLabel(user?: any): string {
@@ -1280,10 +1205,6 @@ export class HrList {
     return reqs?.typeLabels?.[type] || type;
   }
 
-  docPdfUrl(doc: EmployeeDoc): string {
-    return `${environment.apiBaseUrl}/hr/docs/${doc._id}/pdf`;
-  }
-
   openDoc(doc: EmployeeDoc): void {
     this.hr.downloadDoc(doc._id).subscribe({
       next: (blob) => {
@@ -1331,15 +1252,26 @@ export class HrList {
   }
 
   private scrollToProfile(): void {
-    setTimeout(() => {
-      const el = document.getElementById('hr-employee-profile');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 0);
+    this.scrollToElement('hr-employee-profile');
   }
 
   scrollToPayslip(): void {
+    this.scrollToElement('hr-payslip');
+  }
+
+  private reloadSelectedPayslips(): void {
+    const userId = this.selected()?.user?._id;
+    if (userId) this.loadPayslips(userId);
+  }
+
+  private reloadSelectedHistory(): void {
+    const userId = this.selected()?.user?._id;
+    if (userId) this.loadHistory(userId);
+  }
+
+  private scrollToElement(id: string): void {
     setTimeout(() => {
-      const el = document.getElementById('hr-payslip');
+      const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 0);
   }

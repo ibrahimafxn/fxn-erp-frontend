@@ -70,7 +70,7 @@
           <div class="actions">
             <button class="btn-outline edit" type="button" title="Modifier" (click)="edit()" [disabled]="!consumable()"><i class="bi bi-pencil"></i> Modifier</button>
             <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal()" [disabled]="deleting() || !consumable()">
-              <i class="fa-solid fa-trash"></i> Supprimer
+              <i class="bi bi-trash"></i> Supprimer
             </button>
           </div>
         }
@@ -242,4 +242,8 @@
     (cancel)="closeDeleteModal()"
     (confirm)="confirmDelete()"
   />
+
+  @if (isReadOnly()) {
+    <app-technician-mobile-nav></app-technician-mobile-nav>
+  }
 </section>

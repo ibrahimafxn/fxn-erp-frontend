@@ -22,6 +22,13 @@ import {
 type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE';
 type ConfirmAction = 'saveSelection' | 'updateCode' | 'addPrestation' | 'deletePersonalized';
 
+const SEGMENT_LABELS: Record<Segment, string> = {
+  AUTO: 'Freelance',
+  SALARIE: 'Salarié',
+  PERSONNALISE: 'Personnalisé',
+  AUTRE: 'Autres'
+};
+
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -147,13 +154,7 @@ export class BpuList {
     return this.isPersonalized() ? 'BPU personnalisé' : 'BPU par défaut';
   });
   readonly segmentLabel = computed(() => {
-    const labels: Record<Segment, string> = {
-      AUTO: 'Freelance',
-      SALARIE: 'Salarié',
-      PERSONNALISE: 'Personnalisé',
-      AUTRE: 'Autres'
-    };
-    return labels[this.currentSegment()];
+    return SEGMENT_LABELS[this.currentSegment()];
   });
   readonly contextSummary = computed(() => {
     if (this.isTechnician()) {
@@ -175,18 +176,7 @@ export class BpuList {
   });
 
   constructor() {
-    const segment = this.route.snapshot.queryParamMap.get('segment');
-    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'PERSONNALISE' || segment === 'AUTRE') {
-      this.currentSegment.set(segment);
-      this.isEditing.set(true);
-    }
-    const technician = this.route.snapshot.queryParamMap.get('technician');
-    if (technician) {
-      this.selectedTechnicianId.set(technician);
-    }
-    if (this.route.snapshot.queryParamMap.get('saved') === '1') {
-      this.success.set('BPU enregistré avec succès.');
-    }
+    this.initFromQueryParams();
     if (!this.isTechnician()) {
       this.loadTechnicians();
     }
@@ -232,13 +222,7 @@ export class BpuList {
     this.success.set(null);
     this.warning.set(null);
     const segment = this.currentSegment();
-    const items$ = segment === 'PERSONNALISE'
-      ? this.bpuService.list()
-      : segment === 'AUTRE'
-      ? this.bpuService.list(segment).pipe(
-          switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
-        )
-      : this.bpuService.list(segment);
+    const items$ = this.listItemsForSegment(segment);
     const selectedOwner = this.isTechnician() ? null : this.selectedTechnicianId();
     const selections$ = this.isTechnician()
       ? this.bpuSelectionService.list()
@@ -285,11 +269,7 @@ export class BpuList {
             })
           : uniqueItems;
         this.items.set(visibleItems);
-        const codes = new Map<string, string>();
-        for (const entry of visibleItems) {
-          if (entry._id) codes.set(entry._id, String(entry.code || '').trim().toUpperCase());
-        }
-        this.editedCodes.set(codes);
+        this.editedCodes.set(this.buildEditedCodesMap(visibleItems));
         if (!this.isTechnician()) {
           const ownerIds = new Set<string>();
           const ownerSelections = new Map<string, BpuSelection>();
@@ -319,19 +299,9 @@ export class BpuList {
           this.personalizedOwnerIds.set(ownerIds);
           this.personalizedSelectionByOwner.set(ownerSelections);
         }
-        const availableCodes = new Set(
-          visibleItems.map((item) => String(item.code || '').trim().toUpperCase()).filter(Boolean)
-        );
-        const selected = new Set<string>();
-        const edited = new Map<string, number>();
-        for (const entry of selection?.prestations || []) {
-          const code = String(entry.code || '').trim().toUpperCase();
-          if (!code || !availableCodes.has(code)) continue;
-          selected.add(code);
-          edited.set(code, Number(entry.unitPrice || 0));
-        }
-        this.selectedCodes.set(selected);
-        this.editedPrices.set(edited);
+        const selectionState = this.buildSelectionState(visibleItems, selection);
+        this.selectedCodes.set(selectionState.selected);
+        this.editedPrices.set(selectionState.edited);
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -420,13 +390,7 @@ export class BpuList {
     this.loading.set(true);
     this.error.set(null);
     const segment = this.currentSegment();
-    const items$ = segment === 'PERSONNALISE'
-      ? this.bpuService.list()
-      : segment === 'AUTRE'
-      ? this.bpuService.list(segment).pipe(
-          switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
-        )
-      : this.bpuService.list(segment);
+    const items$ = this.listItemsForSegment(segment);
     forkJoin({
       items: items$,
       selections: this.bpuSelectionService.list()
@@ -434,23 +398,11 @@ export class BpuList {
       next: ({ items, selections }) => {
         const uniqueItems = this.uniqueItems(items);
         this.items.set(uniqueItems);
-        const codes = new Map<string, string>();
-        for (const entry of uniqueItems) {
-          if (entry._id) codes.set(entry._id, String(entry.code || '').trim().toUpperCase());
-        }
-        this.editedCodes.set(codes);
+        this.editedCodes.set(this.buildEditedCodesMap(uniqueItems));
         const selection = this.resolveSelection(selections, selections, segment);
-        const availableCodes = new Set(uniqueItems.map((item) => item.code).filter(Boolean) as string[]);
-        const selected = new Set<string>();
-        const edited = new Map<string, number>();
-        for (const entry of selection?.prestations || []) {
-          const code = String(entry.code || '').trim().toUpperCase();
-          if (!code || !availableCodes.has(code)) continue;
-          selected.add(code);
-          edited.set(code, Number(entry.unitPrice || 0));
-        }
-        this.selectedCodes.set(selected);
-        this.editedPrices.set(edited);
+        const selectionState = this.buildSelectionState(uniqueItems, selection);
+        this.selectedCodes.set(selectionState.selected);
+        this.editedPrices.set(selectionState.edited);
         this.loading.set(false);
         this.success.set('BPU global copié. Vous pouvez ajuster avant d’enregistrer.');
       },
@@ -1045,6 +997,62 @@ export class BpuList {
     const type = this.normalizeSelectionType(selection?.type);
     const segmentKey = this.normalizeSelectionType(segment);
     return type === segmentKey || type === 'DEFAULT_RATES';
+  }
+
+  private initFromQueryParams(): void {
+    const segment = this.route.snapshot.queryParamMap.get('segment');
+    if (this.isSegment(segment)) {
+      this.currentSegment.set(segment);
+      this.isEditing.set(true);
+    }
+    const technician = this.route.snapshot.queryParamMap.get('technician');
+    if (technician) {
+      this.selectedTechnicianId.set(technician);
+    }
+    if (this.route.snapshot.queryParamMap.get('saved') === '1') {
+      this.success.set('BPU enregistré avec succès.');
+    }
+  }
+
+  private isSegment(value: string | null): value is Segment {
+    return value === 'AUTO' || value === 'SALARIE' || value === 'PERSONNALISE' || value === 'AUTRE';
+  }
+
+  private listItemsForSegment(segment: Segment) {
+    if (segment === 'PERSONNALISE') {
+      return this.bpuService.list();
+    }
+    if (segment === 'AUTRE') {
+      return this.bpuService.list(segment).pipe(
+        switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
+      );
+    }
+    return this.bpuService.list(segment);
+  }
+
+  private buildEditedCodesMap(items: BpuEntry[]): Map<string, string> {
+    const codes = new Map<string, string>();
+    for (const entry of items) {
+      if (entry._id) {
+        codes.set(entry._id, String(entry.code || '').trim().toUpperCase());
+      }
+    }
+    return codes;
+  }
+
+  private buildSelectionState(items: BpuEntry[], selection: BpuSelection | null): { selected: Set<string>; edited: Map<string, number> } {
+    const availableCodes = new Set(
+      items.map((item) => String(item.code || '').trim().toUpperCase()).filter(Boolean)
+    );
+    const selected = new Set<string>();
+    const edited = new Map<string, number>();
+    for (const entry of selection?.prestations || []) {
+      const code = String(entry.code || '').trim().toUpperCase();
+      if (!code || !availableCodes.has(code)) continue;
+      selected.add(code);
+      edited.set(code, Number(entry.unitPrice || 0));
+    }
+    return { selected, edited };
   }
 
   private uniqueItems(items: BpuEntry[]): BpuEntry[] {

@@ -29,6 +29,9 @@ export class App implements AfterViewInit, OnDestroy {
   private lastPrefsUserId: string | null = null;
   private routeSub: Subscription | null = null;
   private updateSub: Subscription | null = null;
+  private updatePollId: ReturnType<typeof setInterval> | null = null;
+  /** Intervalle entre deux vérifications de mise à jour du Service Worker (10 min) */
+  private readonly UPDATE_POLL_MS = 10 * 60 * 1000;
 
   protected readonly title = signal('fxn-erp-frontend');
   private readonly routeUrl = signal(this.router.url);
@@ -71,10 +74,16 @@ export class App implements AfterViewInit, OnDestroy {
       this.updateSub = this.swUpdate.versionUpdates
         .pipe(filter((event): event is VersionReadyEvent => event.type === 'VERSION_READY'))
         .subscribe(() => {
-          this.updateDismissed.set(false);
-          this.updateAvailable.set(true);
+          // Active le nouveau SW et recharge la page immédiatement — aucune action utilisateur requise.
+          this.swUpdate!.activateUpdate()
+            .then(() => this.document.location.reload())
+            .catch(() => this.document.location.reload());
         });
       this.swUpdate.checkForUpdate().catch(() => {});
+      // Vérifie toutes les 10 min pour que les sessions longues détectent les nouveaux déploiements.
+      this.updatePollId = setInterval(() => {
+        this.swUpdate!.checkForUpdate().catch(() => {});
+      }, this.UPDATE_POLL_MS);
     }
   }
   private readonly preferencesEffect = effect(() => {
@@ -139,6 +148,10 @@ export class App implements AfterViewInit, OnDestroy {
     this.routeSub = null;
     this.updateSub?.unsubscribe();
     this.updateSub = null;
+    if (this.updatePollId !== null) {
+      clearInterval(this.updatePollId);
+      this.updatePollId = null;
+    }
   }
 
   dismissUpdateBanner(): void {

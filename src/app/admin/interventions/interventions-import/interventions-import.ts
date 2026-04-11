@@ -132,14 +132,7 @@ export class InterventionsImport {
   }
 
   onFileClick(): void {
-    const input = this.csvInput?.nativeElement;
-    if (input) {
-      input.value = '';
-    }
-    this.selectedFile = null;
-    this.importError.set(null);
-    this.importResult.set(null);
-    this.resetPreview();
+    this.resetSelectedImportFile();
   }
 
   onFileChange(event: Event): void {
@@ -201,7 +194,6 @@ export class InterventionsImport {
           }
           this.resetFileInput();
           this.loadImports();
-          this.loadTickets();
           return;
         }
         this.importError.set(res.message || 'Erreur import CSV');
@@ -548,7 +540,13 @@ export class InterventionsImport {
   private resetFileInput(): void {
     const input = this.csvInput?.nativeElement;
     if (input) input.value = '';
+    this.resetSelectedImportFile();
+  }
+
+  private resetSelectedImportFile(): void {
     this.selectedFile = null;
+    this.importError.set(null);
+    this.importResult.set(null);
     this.resetPreview();
   }
 

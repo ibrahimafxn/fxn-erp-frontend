@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import {CommonModule, Location, NgOptimizedImage} from '@angular/common';
@@ -41,9 +41,6 @@ export class AppHeader {
   readonly absencePendingCount = this.absenceService.pendingCount;
   readonly supplyBadgeCount = signal(0);
   readonly supplyLatestDecidedAt = signal<string | null>(null);
-  readonly showDirigeantWelcome = signal(false);
-  private welcomeShown = false;
-  private welcomeTimer: ReturnType<typeof setTimeout> | null = null;
   readonly showBackButton = computed(() => {
     const url = this.currentUrl();
     if (this.isDashboardUrl(url)) return false;
@@ -71,14 +68,6 @@ export class AppHeader {
     this.alertsService.refresh();
     this.refreshSupplyBadge();
     this.refreshAbsenceBadge();
-    effect(() => {
-      const user = this.user();
-      if (user?.role === 'DIRIGEANT') {
-        this.triggerDirigeantWelcome();
-      } else {
-        this.showDirigeantWelcome.set(false);
-      }
-    });
   }
 
   /* ---------------------------
@@ -365,16 +354,6 @@ export class AppHeader {
         : path;
     const base = locale === 'en' ? `/en${normalized === '/' ? '' : normalized}` : (normalized || '/');
     return `${base}${window.location.search || ''}${window.location.hash || ''}`;
-  }
-
-  private triggerDirigeantWelcome(): void {
-    if (this.welcomeShown) return;
-    this.welcomeShown = true;
-    this.showDirigeantWelcome.set(true);
-    if (this.welcomeTimer) clearTimeout(this.welcomeTimer);
-    this.welcomeTimer = setTimeout(() => {
-      this.showDirigeantWelcome.set(false);
-    }, 5000);
   }
 
   /* ---------------------------

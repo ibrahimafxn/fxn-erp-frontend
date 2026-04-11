@@ -15,6 +15,7 @@ import { Role } from '../../../../core/models/roles.model';
 import { formatResourceName, formatDepotName } from '../../../../core/utils/text-format';
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
+import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 
 type SortKey = 'name' | 'available' | 'category' | 'depot' | 'updatedAt';
 
@@ -23,7 +24,7 @@ type SortKey = 'name' | 'available' | 'category' | 'depot' | 'updatedAt';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-material-list',
   providers: [DatePipe],
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, ConfirmDeleteModal, TechnicianMobileNav],
   templateUrl: './material-list.html',
   styleUrls: ['./material-list.scss'],
 })

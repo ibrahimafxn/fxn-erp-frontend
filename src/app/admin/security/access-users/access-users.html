@@ -21,10 +21,12 @@
         <span class="label">Sans accès</span>
         <span class="value">{{ noAccessCount() }}</span>
       </div>
-      <div class="mini-kpi">
-        <span class="label">Verrouillés</span>
-        <span class="value">{{ lockedCount() }}</span>
-      </div>
+      @if (lockedCount() > 0) {
+        <div class="mini-kpi mini-kpi-warn">
+          <span class="label">Verrouillés</span>
+          <span class="value">{{ lockedCount() }}</span>
+        </div>
+      }
       <button class="btn-outline" type="button" (click)="refresh(true)"><i class="bi bi-arrow-clockwise"></i> Recharger</button>
     </div>
   </header>

@@ -384,4 +384,8 @@
     (cancel)="closeActionConfirm()"
     (confirm)="confirmVehicleAction()"
   />
+
+  @if (isReadOnly()) {
+    <app-technician-mobile-nav></app-technician-mobile-nav>
+  }
 </section>

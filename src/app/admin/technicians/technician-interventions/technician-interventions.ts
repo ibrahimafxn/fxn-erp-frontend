@@ -261,6 +261,12 @@ const ARTICLE_TYPE_BY_CODE = new Map([
   ['SCORING_TECHNICIEN', 'SCORING TECH'],
 ]);
 const REQUIRED_TYPE_LABELS = ['RECOIP'];
+const EUR_FORMATTER = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
 
 @Component({
   standalone: true,
@@ -397,8 +403,7 @@ export class TechnicianInterventions {
   constructor() {
     this.loadFilters();
     this.loadTechnicians();
-    this.loadInterventions();
-    this.loadSummary();
+    this.reloadAll();
     this.loadAutoBpu();
     this.ratesService.refresh().subscribe();
   }
@@ -406,25 +411,14 @@ export class TechnicianInterventions {
   applyFilters(): void {
     this.page.set(1);
     this.ratesService.refresh().subscribe();
-    this.loadInterventions();
-    this.loadSummary();
+    this.reloadAll();
   }
 
   clearFilters(): void {
-    this.filterForm.reset({
-      technician: '',
-      region: '',
-      client: '',
-      numInter: '',
-      status: '',
-      type: '',
-      fromDate: '',
-      toDate: ''
-    });
+    this.resetFilterForm();
     this.page.set(1);
     this.ratesService.refresh().subscribe();
-    this.loadInterventions();
-    this.loadSummary();
+    this.reloadAll();
   }
 
   prevPage(): void {
@@ -1217,12 +1211,25 @@ export class TechnicianInterventions {
   formatAmount(value?: number | null): string {
     const amount = Number(value ?? 0);
     if (!Number.isFinite(amount)) return '0,00 €';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    return EUR_FORMATTER.format(amount);
+  }
+
+  private reloadAll(): void {
+    this.loadInterventions();
+    this.loadSummary();
+  }
+
+  private resetFilterForm(): void {
+    this.filterForm.reset({
+      technician: '',
+      region: '',
+      client: '',
+      numInter: '',
+      status: '',
+      type: '',
+      fromDate: '',
+      toDate: ''
+    });
   }
 
   private computeTotalAmount(totals: InterventionTotals | null, rates: InterventionRates): number {

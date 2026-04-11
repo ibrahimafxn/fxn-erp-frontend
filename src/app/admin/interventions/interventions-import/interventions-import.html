@@ -59,7 +59,7 @@
     [question]="'Un import existe deja pour la periode ' + (overwriteInfo()?.periodLabel || 'selectionnee') + '. Voulez-vous l ecraser ?'"
     confirmText="Ecraser l import"
     cancelText="Annuler"
-    confirmIcon="fa-solid fa-rotate"
+    confirmIcon="bi bi-arrow-repeat"
     (confirm)="confirmOverwrite()"
     (cancel)="cancelOverwrite()"
   />

@@ -152,16 +152,8 @@ export class TechnicianReports {
       return;
     }
     const { date, comment } = this.form.getRawValue();
-    const prestations = Array.from(this.qtys().entries())
-      .filter(([, qty]) => qty > 0)
-      .map(([code, qty]) => ({ code, qty }));
-    const entries = this.bpuItems()
-      .map((item) => ({
-        prestationId: item.prestationId,
-        quantite: this.qtyFor(item.code)
-      }))
-      .filter((item) => !!item.prestationId && item.quantite > 0)
-      .map((item) => ({ prestationId: item.prestationId as string, quantite: item.quantite }));
+    const prestations = this.selectedPrestationsPayload();
+    const entries = this.selectedEntriesPayload();
 
     this.loading.set(true);
     this.error.set(null);
@@ -197,22 +189,7 @@ export class TechnicianReports {
     const date = this.datePipe.transform(report.reportDate, 'yyyy-MM-dd') || this.todayInput();
     this.editing.set(report);
     this.form.patchValue({ date, comment: report.comment || '' });
-
-    // Restaurer les quantités depuis le rapport
-    const next = new Map<string, number>();
-    const entries = Array.isArray(report.entries) ? report.entries : [];
-    if (entries.length) {
-      for (const entry of entries) {
-        const code = String(entry.codeSnapshot || entry.code || '').toUpperCase();
-        const qty = Number(entry.quantite ?? entry.qty ?? 0);
-        if (code && qty > 0) next.set(code, qty);
-      }
-    } else {
-      for (const { code, qty } of report.prestations || []) {
-        next.set(String(code).toUpperCase(), qty);
-      }
-    }
-    this.qtys.set(next);
+    this.qtys.set(this.restoreQtys(report));
   }
 
   openDeleteModal(report: TechnicianReport): void {
@@ -301,7 +278,7 @@ export class TechnicianReports {
 
   applyFilters(): void { this.page.set(1); this.refresh(true); }
   clearFilters(): void {
-    this.filterForm.reset({ year: '', fromDate: '', toDate: '' });
+    this.resetFilters();
     this.page.set(1);
     this.refresh(true);
   }
@@ -348,6 +325,43 @@ export class TechnicianReports {
     this.form.markAsPristine();
   }
 
+  private resetFilters(): void {
+    this.filterForm.reset({ year: '', fromDate: '', toDate: '' });
+  }
+
+  private selectedPrestationsPayload(): Array<{ code: string; qty: number }> {
+    return Array.from(this.qtys().entries())
+      .filter(([, qty]) => qty > 0)
+      .map(([code, qty]) => ({ code, qty }));
+  }
+
+  private selectedEntriesPayload(): Array<{ prestationId: string; quantite: number }> {
+    return this.bpuItems()
+      .map((item) => ({
+        prestationId: item.prestationId,
+        quantite: this.qtyFor(item.code)
+      }))
+      .filter((item) => !!item.prestationId && item.quantite > 0)
+      .map((item) => ({ prestationId: item.prestationId as string, quantite: item.quantite }));
+  }
+
+  private restoreQtys(report: TechnicianReport): Map<string, number> {
+    const next = new Map<string, number>();
+    const entries = Array.isArray(report.entries) ? report.entries : [];
+    if (entries.length) {
+      for (const entry of entries) {
+        const code = String(entry.codeSnapshot || entry.code || '').toUpperCase();
+        const qty = Number(entry.quantite ?? entry.qty ?? 0);
+        if (code && qty > 0) next.set(code, qty);
+      }
+      return next;
+    }
+    for (const { code, qty } of report.prestations || []) {
+      next.set(String(code).toUpperCase(), qty);
+    }
+    return next;
+  }
+
   private normalizeDateRange(yearInput: string, fromInput: string, toInput: string): { fromDate: string; toDate: string } {
     const year = Number(yearInput);
     if (Number.isFinite(year) && year >= 2000) {
@@ -366,5 +380,14 @@ export class TechnicianReports {
   private currentUserId(): string | null {
     const user = this.auth.getCurrentUser();
     return user?._id ? String(user._id) : null;
+  }
+
+  /** Couleur déterministe (0-7) basée sur le code — même index que les pills historique */
+  codeColorIndex(code: string): number {
+    let hash = 0;
+    for (let i = 0; i < code.length; i++) {
+      hash += code.charCodeAt(i);
+    }
+    return hash % 8;
   }
 }

@@ -50,9 +50,6 @@
       </div>
       <div class="import-meta">
         <div>{{ importLabel() }}</div>
-        @if (importBatch()?._id) {
-          <div class="import-batch">Batch: {{ importBatch()?._id }}</div>
-        }
       </div>
     </div>
     @if (importLoading()) {
@@ -62,7 +59,7 @@
       <div class="state error">Erreur : {{ importError() }}</div>
     }
     @if (!importLoading() && !importBatch()) {
-      <div class="state empty">Aucun import detecte aujourd'hui.</div>
+      <div class="state empty">Aucun import détecté aujourd'hui.</div>
     }
     @if (importBatch()) {
       <div class="import-grid">

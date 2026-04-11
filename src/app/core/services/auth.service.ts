@@ -4,7 +4,7 @@ import {inject, Injectable, signal} from '@angular/core';
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {Observable, of, ReplaySubject, throwError} from 'rxjs';
-import {catchError, filter, finalize, map, shareReplay, take, tap} from 'rxjs/operators';
+import {catchError, finalize, map, shareReplay, switchMap, take, tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {Role} from '../models/roles.model';
 import { UserPreferences } from '../models';
@@ -372,12 +372,18 @@ export class AuthService {
    * Si le refresh échoue, l'interceptor appellera logout() puis relancera l'erreur.
    */
   refreshToken(): Observable<void> {
-    // Si un refresh est déjà en cours, on s'abonne au résultat
+    // Si un refresh est déjà en cours, on s'abonne au résultat.
+    // IMPORTANT : take(1) d'abord pour que null (échec) soit bien reçu,
+    // puis switchMap convertit null → throwError pour que tous les appelants
+    // concurrents échouent proprement (sans rester bloqués indéfiniment).
     if (this.refreshInProgress) {
       return this.refreshSubject.asObservable().pipe(
-        filter((ok): ok is boolean => ok === true),
         take(1),
-        map(() => undefined)
+        switchMap(ok =>
+          ok === true
+            ? of(undefined as void)
+            : throwError(() => new Error('Refresh token invalide'))
+        )
       );
     }
 

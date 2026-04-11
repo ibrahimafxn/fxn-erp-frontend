@@ -47,29 +47,15 @@
                 placeholder="Entrez votre mot de passe"
                 i18n-placeholder="@@login.passwordPlaceholder"
               />
-              @if (showPassword()) {
-                <button
-                  type="button"
-                  class="toggle-visibility"
-                  (click)="togglePassword()"
-                  [attr.aria-pressed]="showPassword()"
-                  aria-label="Masquer le mot de passe"
-                  i18n-aria-label="@@login.hidePasswordAria"
-                >
-                  <span i18n="@@login.hidePassword">Masquer</span>
-                </button>
-              } @else {
-                <button
-                  type="button"
-                  class="toggle-visibility"
-                  (click)="togglePassword()"
-                  [attr.aria-pressed]="showPassword()"
-                  aria-label="Afficher le mot de passe"
-                  i18n-aria-label="@@login.showPasswordAria"
-                >
-                  <span i18n="@@login.showPassword">Afficher</span>
-                </button>
-              }
+              <button
+                type="button"
+                class="toggle-visibility"
+                (click)="togglePassword()"
+                [attr.aria-pressed]="showPassword()"
+                [attr.aria-label]="showPassword() ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+              >
+                <i [class]="showPassword() ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+              </button>
             </div>
           </div>
 

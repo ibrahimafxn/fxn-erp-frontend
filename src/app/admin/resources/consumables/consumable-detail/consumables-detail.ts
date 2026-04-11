@@ -16,12 +16,13 @@ import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 import { Role } from '../../../../core/models/roles.model';
 import { ConfirmDeleteModal } from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-consumable-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, DatePipe, ReactiveFormsModule, ConfirmDeleteModal],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, ConfirmDeleteModal, TechnicianMobileNav],
   templateUrl: './consumables-detail.html',
   styleUrl: './consumables-detail.scss',
 })

@@ -149,6 +149,14 @@
   }
 }
 
+.mini-kpi-warn {
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.12);
+
+  .label { color: rgba(245, 158, 11, 0.75); }
+  .value { color: #f59e0b; }
+}
+
 .meta {
   display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; justify-content: space-between;
 

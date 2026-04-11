@@ -7,9 +7,9 @@
 
     <div class="header-actions">
       <button class="btn-outline" type="button" routerLink="/admin/dashboard">
-        <i class="fa-solid fa-arrow-left"></i> Annuler
+        <i class="bi bi-arrow-left"></i> Annuler
       </button>
-      <button class="btn-save" type="button" (click)="submit()" [disabled]="saving()"><i class="fa-solid fa-check"></i> 
+      <button class="btn-save" type="button" (click)="submit()" [disabled]="saving()"><i class="bi bi-check2"></i> 
         @if (saving()) { Enregistrement… } @else { Enregistrer }
       </button>
     </div>

@@ -104,7 +104,7 @@
                     <div class="section-items">
                       <button mat-button (click)="goPreferences()"><span class="material-icons notranslate">tune</span><span i18n="@@header.menu.preferences">Préférences</span></button>
                       <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span><span i18n="@@header.menu.profile">Mon profil</span></button>
-                      <button mat-button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span i18n="@@header.menu.logout">Déconnexion</span></button>
+                      <button mat-button class="btn-danger" (click)="logout()"><i class="bi bi-box-arrow-right"></i> <span i18n="@@header.menu.logout">Déconnexion</span></button>
                     </div>
                   </div>
                 }
@@ -208,7 +208,7 @@
                     <div class="section-items">
                       <button mat-button (click)="goPreferences()"><span class="material-icons notranslate">tune</span><span i18n="@@header.menu.preferences">Préférences</span></button>
                       <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span><span i18n="@@header.menu.profile">Mon profil</span></button>
-                      <button mat-button class="btn-danger" (click)="logout()"><i class="fa-solid fa-right-from-bracket"></i> <span i18n="@@header.menu.logout">Déconnexion</span></button>
+                      <button mat-button class="btn-danger" (click)="logout()"><i class="bi bi-box-arrow-right"></i> <span i18n="@@header.menu.logout">Déconnexion</span></button>
                     </div>
                   </div>
                 }
@@ -219,11 +219,4 @@
       </div>
     }
   </div>
-
-  @if (showDirigeantWelcome()) {
-    <div class="welcome-toast" role="status">
-      <div class="welcome-title" i18n="@@header.welcomeTitle">Bienvenue Patron.</div>
-      <div class="welcome-text" i18n="@@header.welcomeText">Optimisez les stocks et les opérations. Passez au plan FXN complet.</div>
-    </div>
-  }
 </header>

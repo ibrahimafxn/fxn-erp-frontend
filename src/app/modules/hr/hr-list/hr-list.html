@@ -148,7 +148,7 @@
                 @if (canGeneratePayslip()) {
                   <td>
                     <button class="btn-outline" type="button" (click)="$event.stopPropagation(); openPayslipFor(e)">
-                      <i class="fa-solid fa-file-pdf"></i> Paie
+                      <i class="bi bi-file-earmark-pdf"></i> Paie
                     </button>
                   </td>
                 }
@@ -186,7 +186,7 @@
               </div>
             </div>
             <div class="hero-actions">
-              <button class="btn-save" type="button" (click)="openProfileConfirm()"><i class="fa-solid fa-check"></i> Enregistrer</button>
+              <button class="btn-save" type="button" (click)="openProfileConfirm()"><i class="bi bi-check2"></i> Enregistrer</button>
             </div>
           </div>
 
@@ -323,7 +323,7 @@
                 </div>
                 <div class="profile-side-actions">
                   @if (canGeneratePayslip()) {
-                    <button class="btn-outline" type="button" (click)="scrollToPayslip()"><i class="fa-solid fa-file-pdf"></i> Aller à la paie</button>
+                    <button class="btn-outline" type="button" (click)="scrollToPayslip()"><i class="bi bi-file-earmark-pdf"></i> Aller à la paie</button>
                   }
                 </div>
               </section>
@@ -410,7 +410,7 @@
               </form>
               <div class="actions">
                 <button class="btn-outline" type="button" title="À VENIR..." disabled>
-                  <i class="fa-solid fa-file-pdf"></i> Générer PDF
+                  <i class="bi bi-file-earmark-pdf"></i> Générer PDF
                 </button>
               </div>
               @if (payslipError()) {
@@ -452,7 +452,7 @@
                 <div class="payslip-filter export">
                   <label>Export</label>
                   <button class="btn-outline" type="button" (click)="openExportConfirm()" [disabled]="payslipExportLoading()">
-                    <i class="fa-solid fa-file-excel"></i> Excel
+                    <i class="bi bi-file-earmark-excel"></i> Excel
                   </button>
                 </div>
               </div>
@@ -500,7 +500,7 @@
                           <td>{{ slip.createdAt | date: 'shortDate' }}</td>
                           <td>
                             <button class="btn-outline" type="button" (click)="downloadPayslip(slip)">
-                              <i class="fa-solid fa-download"></i> Télécharger
+                              <i class="bi bi-download"></i> Télécharger
                             </button>
                           </td>
                         </tr>
@@ -648,7 +648,7 @@
                               title="Supprimer"
                               [disabled]="deletingDocId() === d._id"
                               (click)="openDeleteDocModal(d)"
-                            ><i class="fa-solid fa-trash"></i>
+                            ><i class="bi bi-trash"></i>
                               @if (deletingDocId() === d._id) { Suppression… }
                             </button>
                           </td>
@@ -750,7 +750,7 @@
                         title="Supprimer"
                         [disabled]="deletingDocId() === d._id"
                         (click)="openDeleteDocModal(d)"
-                      ><i class="fa-solid fa-trash"></i> 
+                      ><i class="bi bi-trash"></i> 
                         @if (deletingDocId() === d._id) { Suppression… }
                       </button>
                     </td>

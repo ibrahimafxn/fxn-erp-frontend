@@ -30,7 +30,7 @@
           <div class="prestations-list">
             @for (item of bpuItems(); track item.code; let i = $index) {
               <div class="prestation-item">
-                <div [class]="'prestation-pill pill-color-' + (i % 8)">{{ item.prestation || item.code }}</div>
+                <div [class]="'prestation-pill pill-color-' + codeColorIndex(item.code)">{{ item.prestation || item.code }}</div>
                 <div class="prestation-meta">
                   <span class="prestation-price">{{ unitPriceFor(item.code) | amountCurrency }}</span>
                 </div>
@@ -156,7 +156,7 @@
                   @if (isToday(report)) {
                     <button class="btn-outline primary-outline" type="button" (click)="editToday(report)" aria-label="Modifier" title="Modifier"><i class="bi bi-pencil"></i></button>
                   }
-                  <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal(report)"><i class="fa-solid fa-trash"></i></button>
+                  <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal(report)"><i class="bi bi-trash"></i></button>
                 </td>
               </tr>
             }
