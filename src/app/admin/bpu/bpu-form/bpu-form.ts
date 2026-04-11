@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { BpuService } from '../../../core/services/bpu.service';
 import { DetailBack } from '../../../core/utils/detail-back';
 
-type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE';
+type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE' | 'ERT';
 
 @Component({
   standalone: true,

@@ -1,4 +1,4 @@
-export type PrestationSegment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE';
+export type PrestationSegment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE' | 'ERT';
 
 export type PrestationOwnerType = 'GLOBAL' | 'SEGMENT' | 'TECHNICIAN';
 

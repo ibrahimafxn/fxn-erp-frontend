@@ -6,7 +6,7 @@ import { environment } from '../../environments/environment';
 import { BpuEntry } from '../models';
 
 type ApiResponse<T> = { success: boolean; data: T; message?: string };
-type BpuSegment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE';
+type BpuSegment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE' | 'ERT';
 type BpuMeta = { segment: BpuSegment; title: string };
 
 @Injectable({ providedIn: 'root' })
