@@ -13,6 +13,7 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 type BpuItem = {
   prestationId?: string;
@@ -62,7 +63,7 @@ export class TechnicianReports {
 
   readonly items = signal<TechnicianReport[]>([]);
   readonly page = signal(1);
-  readonly limit = signal(10);
+  readonly limit = signal(preferredPageSize());
   readonly total = signal(0);
   readonly pageRange = formatPageRange;
   readonly editing = signal<TechnicianReport | null>(null);

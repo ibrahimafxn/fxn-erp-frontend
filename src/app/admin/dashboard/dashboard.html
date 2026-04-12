@@ -58,6 +58,20 @@
               </span>
               <span class="badge">Stock</span>
             </button>
+            <button class="btn-outline btn-onboarding btn-dirigeant-hero" type="button" (click)="goToDirigeant()">
+              <span class="btn-text">
+                <span class="title">Dirigeant</span>
+                <span class="meta">Pilotage CA et RH</span>
+              </span>
+              <span class="badge">Décision</span>
+            </button>
+            <button class="btn-outline btn-onboarding btn-agenda-hero" type="button" (click)="goToAgenda()">
+              <span class="btn-text">
+                <span class="title">Agenda</span>
+                <span class="meta">Planning des absences</span>
+              </span>
+              <span class="badge">Planning</span>
+            </button>
             <button class="btn-outline btn-onboarding btn-onboarding-hero" type="button" (click)="goToOnboarding()">
               <span class="btn-text">
                 <span class="title">Onboarding</span>
@@ -77,6 +91,80 @@
       </div>
     </div>
   </header>
+
+  <section class="command-widgets" *ngIf="stats() as s">
+    <article class="command-widget decisions">
+      <div class="widget-head">
+        <div>
+          <h2>Décisions à prendre</h2>
+          <p>Les priorités qui demandent un arbitrage immédiat.</p>
+        </div>
+        <button class="widget-link" type="button" (click)="goToDirigeant()">Ouvrir</button>
+      </div>
+      <div class="widget-metrics">
+        <button class="metric-chip danger" type="button" (click)="goToAbsences()">
+          <span class="metric-label">Absences en attente</span>
+          <span class="metric-value">{{ pendingAbsenceCount() }}</span>
+        </button>
+        <button class="metric-chip warning" type="button" (click)="goToStockAlerts()">
+          <span class="metric-label">Alertes critiques</span>
+          <span class="metric-value">{{ formatCount(s.totalAlerts ?? s.totalLowStock ?? 0) }}</span>
+        </button>
+        <button class="metric-chip info" type="button" (click)="goToResources('vehicles')">
+          <span class="metric-label">Pannes véhicules</span>
+          <span class="metric-value">{{ formatCount(s.totalVehicleAlerts ?? 0) }}</span>
+        </button>
+      </div>
+    </article>
+
+    <article class="command-widget today">
+      <div class="widget-head">
+        <div>
+          <h2>Aujourd’hui</h2>
+          <p>Lecture rapide de la charge terrain et des indisponibilités.</p>
+        </div>
+        <button class="widget-link" type="button" (click)="goToAgenda()">Agenda</button>
+      </div>
+      <div class="widget-metrics">
+        <button class="metric-chip accent today-activity" type="button" (click)="goToInterventions()">
+          <span class="metric-label">Interventions du jour</span>
+          <span class="metric-value">{{ formatCount(todayInterventionsCount()) }}</span>
+        </button>
+        <button class="metric-chip neutral neutral-absent" type="button" (click)="goToAgenda()">
+          <span class="metric-label">Techniciens absents</span>
+          <span class="metric-value">{{ formatCount(todayAbsentTechniciansCount()) }}</span>
+        </button>
+        <button class="metric-chip neutral neutral-history" type="button" (click)="goToHistory()">
+          <span class="metric-label">Mouvements récents</span>
+          <span class="metric-value">{{ formatCount(recentHistory().length) }}</span>
+        </button>
+      </div>
+    </article>
+
+    <article class="command-widget executive">
+      <div class="widget-head">
+        <div>
+          <h2>Vue dirigeant express</h2>
+          <p>Les repères de pilotage les plus utiles sur une seule ligne.</p>
+        </div>
+        <button class="widget-link" type="button" (click)="goToDirigeant()">Dirigeant</button>
+      </div>
+      <div class="widget-metrics">
+        <button class="metric-chip success" type="button" (click)="goToDirigeant()">
+          <span class="metric-label">Prestations semaine</span>
+          <span class="metric-value">{{ formatCount(s.prestationsWeek ?? 0) }}</span>
+        </button>
+        <button class="metric-chip success" type="button" (click)="goToDirigeant()">
+          <span class="metric-label">Prestations mois</span>
+          <span class="metric-value">{{ formatCount(s.prestationsMonth ?? 0) }}</span>
+        </button>
+        <button class="metric-chip info" type="button" (click)="goToStockAlerts()">
+          <span class="metric-label">Alertes globales</span>
+          <span class="metric-value">{{ formatCount(s.totalAlerts ?? 0) }}</span>
+        </button>
+      </div>
+    </article>
+  </section>
 
   <section class="prestations-block" *ngIf="stats() as s">
     <div class="section-header">

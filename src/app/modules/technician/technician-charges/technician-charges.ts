@@ -9,6 +9,7 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 type BenefitRow = {
   month: string;
@@ -38,7 +39,7 @@ export class TechnicianCharges {
   readonly items = signal<Charge[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(10);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
   readonly editing = signal<Charge | null>(null);
 

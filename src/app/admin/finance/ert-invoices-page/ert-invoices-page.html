@@ -1,0 +1,108 @@
+<section class="ert-invoices-page">
+  <header class="page-header">
+    <div>
+      <h1>Factures ERT</h1>
+      <p class="subtitle">Importe les factures PDF ERT et consulte rapidement les pièces chargées.</p>
+    </div>
+    <div class="header-actions">
+      <label class="file-input" [class.disabled]="importLoading()">
+        <input
+          #invoiceInput
+          type="file"
+          accept=".pdf"
+          multiple
+          [disabled]="importLoading()"
+          (click)="onInvoiceClick()"
+          (change)="onInvoiceChange($event)"
+        />
+        <span class="material-icons notranslate" aria-hidden="true">upload_file</span>
+        <span>Choisir les factures PDF</span>
+      </label>
+      <button class="btn-primary" type="button" (click)="importInvoices()" [disabled]="importLoading()">
+        <span class="material-icons notranslate" aria-hidden="true">cloud_upload</span>
+        @if (importLoading()) { Import… } @else { Importer factures }
+      </button>
+    </div>
+  </header>
+
+  <section class="overview-grid">
+    <article class="overview-card accent">
+      <span class="overview-label">Total facturé</span>
+      <strong>{{ invoiceTotalHt() | number:'1.0-0' }} €</strong>
+      <span>Montant HT des factures affichées</span>
+    </article>
+    <article class="overview-card">
+      <span class="overview-label">Factures visibles</span>
+      <strong>{{ displayedInvoices().length }}</strong>
+      <span>@if (selectedPeriodKey()) { Période filtrée } @else { Toutes périodes }</span>
+    </article>
+    <article class="overview-card">
+      <span class="overview-label">Périodes</span>
+      <strong>{{ periodOptions().length }}</strong>
+      <span>Périodes détectées dans les imports</span>
+    </article>
+  </section>
+
+  <section class="toolbar card">
+    <div class="toolbar-head">
+      <div>
+        <h2>Période facture</h2>
+        <p>Filtre les factures importées par période ERT.</p>
+      </div>
+    </div>
+    <label class="period-filter">
+      <span>Période</span>
+      <select [value]="selectedPeriodKey()" (change)="onPeriodChange($event)">
+        <option value="">Toutes</option>
+        @for (p of periodOptions(); track p.key) {
+          <option [value]="p.key">{{ p.label }}</option>
+        }
+      </select>
+    </label>
+    @if (selectedInvoices.length) {
+      <div class="file-meta">
+        <span class="material-icons notranslate" aria-hidden="true">description</span>
+        <span>{{ selectedInvoices.length }} fichier(s) sélectionné(s)</span>
+      </div>
+    }
+    @if (importError()) {
+      <div class="state error">{{ importError() }}</div>
+    } @else if (importResult()) {
+      <div class="state success">{{ importResult() }}</div>
+    }
+    @if (error()) {
+      <div class="state error">{{ error() }}</div>
+    }
+  </section>
+
+  <section class="invoice-list card">
+    <div class="section-head">
+      <h2>Factures importées</h2>
+      <p>Liste des pièces actuellement connues par le système.</p>
+    </div>
+
+    @if (loading()) {
+      <div class="state">Chargement des factures…</div>
+    } @else if (!displayedInvoices().length) {
+      <div class="state">Aucune facture importée pour cette période.</div>
+    } @else {
+      <div class="invoice-grid">
+        @for (inv of displayedInvoices(); track inv.attachmentRef || inv.filename) {
+          <article class="invoice-card">
+            <div class="invoice-card-head">
+              <span class="material-icons notranslate">receipt_long</span>
+              <span class="invoice-period-pill">{{ inv.periodLabel || inv.periodKey || 'Sans période' }}</span>
+            </div>
+            <div class="invoice-name" [attr.title]="inv.filename || inv.attachmentRef">
+              {{ inv.filename || inv.attachmentRef || 'Facture ERT' }}
+            </div>
+            <div class="invoice-meta">
+              <span class="label">Montant HT</span>
+              <strong>{{ inv.totalHt | number:'1.0-0' }} €</strong>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</section>

@@ -136,6 +136,48 @@
   font-size: 22px;
 }
 
+/* ── Sheet badge (count) ─────────────────────────────────── */
+.sheet-item--badge {
+  position: relative;
+}
+
+.sheet-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--fxn-danger, #e53e3e);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ── Nav-bar dot indicator on "Plus" button ─────────────── */
+.nav-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-dot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fxn-danger, #e53e3e);
+  border: 1.5px solid var(--fxn-surface-glass, #fff);
+  pointer-events: none;
+}
+
 /* Hide on desktop */
 @media (min-width: 900px) {
   .tech-mobile-nav {

@@ -3,6 +3,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@a
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { AbsenceService } from '../../../core/services/absence.service';
+import { AppNotificationService } from '../../../core/services/app-notification.service';
 import { Absence, AbsenceStatus, AbsenceType } from '../../../core/models/absence.model';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 
@@ -19,6 +20,7 @@ type TypeFilter = '' | 'CONGE' | 'MALADIE' | 'PERMISSION' | 'FORMATION' | 'AUTRE
 })
 export class AbsenceList {
   private absenceService = inject(AbsenceService);
+  private notif = inject(AppNotificationService);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -83,7 +85,18 @@ export class AbsenceList {
 
   approve(id: string): void {
     this.absenceService.updateStatus(id, 'APPROUVE').subscribe({
-      next: () => this.load(),
+      next: () => {
+        const item = this.items().find(a => a._id === id);
+        const label = item ? this.typeLabel(item.type) : 'absence';
+        const tech = item ? this.technicianName(item) : '';
+        this.notif.notifyAction(
+          'Absence approuvée',
+          `La demande de ${label}${tech ? ` de ${tech}` : ''} a été approuvée.`,
+          `absence-approve-${id}`
+        );
+        this.notif.beep('success');
+        this.load();
+      },
       error: () => {},
     });
   }
@@ -104,11 +117,20 @@ export class AbsenceList {
     if (!id || this.rejecting()) return;
 
     this.rejecting.set(true);
+    const item = this.items().find(a => a._id === id);
     this.absenceService.updateStatus(id, 'REFUSE').subscribe({
       next: () => {
         this.rejecting.set(false);
         this.confirmRejectOpen.set(false);
         this.pendingRejectId.set(null);
+        const label = item ? this.typeLabel(item.type) : 'absence';
+        const tech = item ? this.technicianName(item) : '';
+        this.notif.notifyAction(
+          'Absence refusée',
+          `La demande de ${label}${tech ? ` de ${tech}` : ''} a été refusée.`,
+          `absence-refuse-${id}`
+        );
+        this.notif.beep('alert');
         this.load();
       },
       error: () => {

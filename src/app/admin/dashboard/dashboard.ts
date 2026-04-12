@@ -7,6 +7,8 @@ import {AdminService} from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Role } from '../../core/models/roles.model';
 import {HistoryItem} from '../../core/models/historyItem.model';
+import { AbsenceService } from '../../core/services/absence.service';
+import { InterventionService } from '../../core/services/intervention.service';
 
 @Component({
   standalone: true,
@@ -20,6 +22,8 @@ export class Dashboard implements OnInit {
   readonly adminService = inject(AdminService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private absenceService = inject(AbsenceService);
+  private interventions = inject(InterventionService);
   private readonly numberFormat = new Intl.NumberFormat('fr-FR');
   private readonly donutRadius = 90;
   private readonly donutCircumference = 2 * Math.PI * this.donutRadius;
@@ -50,12 +54,15 @@ export class Dashboard implements OnInit {
   readonly prestationsTypes = signal<{ key: string; label: string; value: number; percent: number; color: string }[]>([]);
   readonly prestationsTypesWeek = signal<{ key: string; label: string; value: number; percent: number; color: string }[]>([]);
   readonly prestationsTypesRange = signal<{ from: string; to: string } | null>(null);
+  readonly todayInterventionsCount = signal(0);
+  readonly todayAbsentTechniciansCount = signal(0);
 
   // On réexpose les signals du service pour les templates
   readonly stats = this.adminService.stats;       // Signal<DashboardStats | null>
   readonly loading = this.adminService.loading;   // Signal<boolean>
   readonly error = this.adminService.error;       // Signal<any | null>
   readonly historySignal = this.adminService.history; // Signal<HistoryItem[]>
+  readonly pendingAbsenceCount = this.absenceService.pendingCount;
 
   // Derniers mouvements (ex : 10 derniers)
   readonly recentHistory = computed(() => {
@@ -170,6 +177,7 @@ export class Dashboard implements OnInit {
   ngOnInit(): void {
     // Charge les stats du dashboard au chargement de la page
     this.adminService.loadDashboardStats();
+    this.absenceService.refreshPendingCount();
 
     this.adminService.getWeeklyPrestationsTrend(7).subscribe({
       next: (res) => {
@@ -210,6 +218,27 @@ export class Dashboard implements OnInit {
         // l'erreur est déjà stockée dans le signal error(), rien à faire ici
       }
     });
+
+    const today = this.todayInput();
+
+    this.interventions.importSummaryTechnician({ fromDate: today, toDate: today }).subscribe({
+      next: (res) => {
+        this.todayInterventionsCount.set(Number(res?.data?.totals?.total ?? res?.data?.total ?? 0));
+      },
+      error: () => {
+        this.todayInterventionsCount.set(0);
+      }
+    });
+
+    this.absenceService.list({ fromDate: today, toDate: today }).subscribe({
+      next: (res) => {
+        const active = (res?.data ?? []).filter(item => item.status !== 'REFUSE');
+        this.todayAbsentTechniciansCount.set(active.length);
+      },
+      error: () => {
+        this.todayAbsentTechniciansCount.set(0);
+      }
+    });
   }
 
   // Navigation rapide depuis les cartes du dashboard
@@ -237,12 +266,24 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/admin/onboarding']);
   }
 
+  goToDirigeant(): void {
+    this.router.navigate(['/admin/dirigeant']);
+  }
+
+  goToAgenda(): void {
+    this.router.navigate(['/admin/agenda']);
+  }
+
   goToDepotDashboard(): void {
     this.router.navigate(['/depot']);
   }
 
   goToStockAlerts(): void {
     this.router.navigate(['/admin/alerts/stock']);
+  }
+
+  goToAbsences(): void {
+    this.router.navigate(['/admin/hr']);
   }
 
   goToNewUser(): void {
@@ -337,6 +378,14 @@ export class Dashboard implements OnInit {
 
     if (picks.length) return picks.join(' · ');
     return types.slice(0, 3).map(type => type.label).join(' · ');
+  }
+
+  private todayInput(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = `${now.getMonth() + 1}`.padStart(2, '0');
+    const day = `${now.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private mapTrendDays(
@@ -467,12 +516,12 @@ export class Dashboard implements OnInit {
       })
       .sort((a, b) => b.count - a.count);
     const max = Math.max(...ordered.map(item => item.count), 1);
-    return ordered.map((item, index) => ({
+    return ordered.map((item) => ({
       key: item.key,
       label: this.formatTypeLabel(item.key),
       value: item.count,
       percent: Math.round((item.count / max) * 100),
-      color: this.donutPalette[index % this.donutPalette.length]
+      color: this.pickTypeColor(item.key)
     }));
   }
 
@@ -531,10 +580,11 @@ export class Dashboard implements OnInit {
   }
 
   private pickTypeColor(key: string): string {
-    if (!key) return this.donutPalette[0];
+    const normalized = this.normalizeKey(key);
+    if (!normalized) return this.donutPalette[0];
     let hash = 0;
-    for (let i = 0; i < key.length; i += 1) {
-      hash = (hash * 31 + key.charCodeAt(i)) % 2147483647;
+    for (let i = 0; i < normalized.length; i += 1) {
+      hash = (hash * 31 + normalized.charCodeAt(i)) % 2147483647;
     }
     return this.donutPalette[Math.abs(hash) % this.donutPalette.length];
   }

@@ -29,10 +29,12 @@ import { formatPageRange } from '../../../core/utils/pagination';
 import { formatPersonName } from '../../../core/utils/text-format';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { downloadBlob } from '../../../core/utils/download';
+import { preferredPageSize } from '../../../core/utils/page-size';
 import {
   DETAIL_GROUP_ORDER,
   DETAIL_SUMMARY_PRESTATIONS,
   EMPTY_SUMMARY_FILTERS,
+  extractCodesFromText,
   extractImportedArticleCodes,
   HIDDEN_PRESTATION_CODES,
   INTERVENTION_CONTRACT_TYPES,
@@ -104,7 +106,7 @@ export class InterventionsDashboard {
   readonly totals = signal<InterventionTotals | null>(null);
   readonly totalItems = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
   readonly detailOpen = signal(false);
   readonly detailLoading = signal(false);
@@ -179,13 +181,35 @@ export class InterventionsDashboard {
     technicians: [],
     types: []
   });
-  readonly prestationTypeOptions = INTERVENTION_PRESTATION_FIELDS
-    .filter((field) => !this.hiddenPrestationCodes.has(field.code))
-    .map((field) => ({ label: field.code, value: field.code }));
+  readonly prestationTypeOptions = [
+    { label: 'RACPAV', value: 'RACPAV' },
+    ...INTERVENTION_PRESTATION_FIELDS
+      .filter((field) => !this.hiddenPrestationCodes.has(field.code))
+      .map((field) => ({
+        label: field.code,
+        value: field.code
+      }))
+  ].filter((option, index, self) => self.findIndex((item) => item.value === option.value) === index);
   readonly depots = signal<Depot[]>([]);
   readonly employees = signal<EmployeeSummary[]>([]);
   readonly contractTypes = INTERVENTION_CONTRACT_TYPES;
-  readonly quickSummaryPrestations = QUICK_SUMMARY_PRESTATIONS;
+  readonly quickSummarySourceItems = computed(() => {
+    if (!this.revenueItemsLoaded()) return [] as InterventionItem[];
+    const items = this.revenueItems();
+    const selectedCode = this.selectedRevenueCode();
+    if (!selectedCode) return items;
+    return items.filter((item) => this.matchesQuickSummarySelection(item, selectedCode));
+  });
+  readonly quickSummaryTotal = computed(() => {
+    if (this.revenueItemsLoaded()) return this.quickSummarySourceItems().length;
+    return this.totals()?.total ?? 0;
+  });
+  readonly quickSummaryPrestations = computed(() =>
+    QUICK_SUMMARY_PRESTATIONS.map((item) => ({
+      ...item,
+      value: this.quickSummaryValue(item)
+    }))
+  );
 
   readonly averagePerTech = computed(() => {
     const items = this.summaryItems();
@@ -254,11 +278,17 @@ export class InterventionsDashboard {
 
   private readonly revenueKeys = new Set(REVENUE_KEYS);
 
-  private readonly rateCodeMap = new Map<string, keyof InterventionRates>(
-    this.rateFields
+  private readonly rateCodeMap = (() => {
+    const entries = this.rateFields
       .filter((field) => this.revenueKeys.has(field.key))
-      .map((field) => [field.code, field.key as keyof InterventionRates])
-  );
+      .map((field) => [field.code, field.key as keyof InterventionRates] as const);
+    const map = new Map<string, keyof InterventionRates>(entries);
+    for (const [legacyCode, canonicalCode] of REVENUE_CODE_ALIASES.entries()) {
+      const key = map.get(canonicalCode);
+      if (key) map.set(legacyCode, key);
+    }
+    return map;
+  })();
 
   readonly rateForm = this.fb.nonNullable.group({
     racPavillon: this.fb.nonNullable.group({
@@ -394,9 +424,17 @@ export class InterventionsDashboard {
   });
   readonly compareTotals = computed(() => {
     const rows = this.compareRows();
-    if (!rows.length) return null;
+    const invoiceTotal = this.invoiceTotalHt();
+    if (!rows.length) {
+      return invoiceTotal
+        ? {
+            osiris: 0,
+            invoice: invoiceTotal,
+            delta: -invoiceTotal
+          }
+        : null;
+    }
     const osirisTotal = rows.reduce((acc, row) => acc + Number(row.osirisAmount || 0), 0);
-    const invoiceTotal = rows.reduce((acc, row) => acc + Number(row.invoiceAmount || 0), 0);
     return {
       osiris: osirisTotal,
       invoice: invoiceTotal,
@@ -408,11 +446,12 @@ export class InterventionsDashboard {
     const rates = this.rates();
     const compare = this.compareResult();
     const selectedCode = this.selectedRevenueCode();
+    const selectedKey = this.selectedRevenueKey();
     if (!totals) {
       const rows = compare?.rows || [];
       return rows
         .filter((row) => String(row.code || '').toLowerCase() !== 'other')
-        .filter((row) => !selectedCode || String(row.code || '') === selectedCode);
+        .filter((row) => !selectedKey || this.rateCodeMap.get(String(row.code || '')) === selectedKey);
     }
     const invoiceMap = new Map<string, { qty: number; amount: number }>();
     for (const row of compare?.rows || []) {
@@ -434,7 +473,7 @@ export class InterventionsDashboard {
         deltaAmount: osirisAmount - invoice.amount
       };
     }).filter((row) => row.osirisQty || row.invoiceQty)
-      .filter((row) => !selectedCode || row.code === selectedCode);
+      .filter((row) => !selectedKey || this.rateCodeMap.get(row.code) === selectedKey);
     return rows;
   });
 
@@ -1138,6 +1177,56 @@ export class InterventionsDashboard {
     return totals;
   }
 
+  private quickSummaryValue(item: (typeof QUICK_SUMMARY_PRESTATIONS)[number]): number {
+    if ('code' in item) {
+      if (!this.revenueItemsLoaded()) return 0;
+      return this.quickSummarySourceItems().reduce((acc, intervention) => {
+        return acc + (this.hasExactSummaryCode(intervention, item.code) ? 1 : 0);
+      }, 0);
+    }
+    if (this.revenueItemsLoaded()) {
+      const code = this.summaryKeyToCode(item.key);
+      if (!code) return 0;
+      return this.quickSummarySourceItems().reduce((acc, intervention) => {
+        const codes = resolveBillingCodes(intervention);
+        return acc + (codes.includes(code) ? 1 : 0);
+      }, 0);
+    }
+    return Number(this.totals()?.[item.key] ?? 0);
+  }
+
+  private hasExactSummaryCode(item: InterventionItem, code: string): boolean {
+    const exactCodes = new Set([
+      ...extractImportedArticleCodes(item),
+      ...extractCodesFromText(item.listePrestationsRaw)
+    ]);
+    return exactCodes.has(code);
+  }
+
+  private matchesQuickSummarySelection(item: InterventionItem, selectedCode: string): boolean {
+    if (selectedCode === 'RACPAV' || selectedCode === 'RAC_PBO_SOUT') {
+      return this.hasExactSummaryCode(item, selectedCode);
+    }
+    const codes = resolveBillingCodes(item);
+    return codes.includes(selectedCode);
+  }
+
+  private summaryKeyToCode(key: string): string | null {
+    switch (key) {
+      case 'racAerien': return 'RAC_PBO_AERIEN';
+      case 'racFacade': return 'RAC_PBO_FACADE';
+      case 'racImmeuble': return 'RACIH';
+      case 'reconnexion': return 'RECOIP';
+      case 'racProS': return 'RACPRO_S';
+      case 'racProC': return 'RACPRO_C';
+      case 'sav': return 'SAV';
+      case 'deplacementOffert': return 'DEPLACEMENT_OFFERT';
+      case 'deplacementATort': return 'DEPLACEMENT_A_TORT';
+      case 'swapEquipement': return 'SWAP_EQUIPEMENT';
+      default: return null;
+    }
+  }
+
   private buildTechMetaMap(): Map<string, { depotId?: string; contractType?: string }> {
     const map = new Map<string, { depotId?: string; contractType?: string }>();
     for (const entry of this.employees()) {
@@ -1245,17 +1334,26 @@ export class InterventionsDashboard {
 
   totalRevenue = computed(() => {
     const selectedCode = this.selectedRevenueCode();
+    const selectedKey = this.selectedRevenueKey();
+    const totals = this.totals();
+    if (!selectedCode && totals) {
+      return this.estimatedRevenue(totals);
+    }
+    if (selectedCode && selectedKey && (selectedCode === 'RACPAV' || selectedCode === 'RAC_PBO_SOUT')) {
+      const rate = this.rates()[selectedKey];
+      return this.quickSummarySourceItems().length * Number(rate?.total || 0);
+    }
     if (this.revenueItemsLoaded()) {
-      const items = this.revenueItems();
+      const items = selectedCode ? this.quickSummarySourceItems() : this.revenueItems();
       if (!items.length) return 0;
       const rates = this.rates();
       let total = 0;
       for (const item of items) {
         const codes = resolveBillingCodes(item);
         for (const code of codes) {
-          if (selectedCode && code !== selectedCode) continue;
           const key = this.rateCodeMap.get(code);
           if (!key) continue;
+          if (selectedKey && key !== selectedKey) continue;
           const rate = rates[key];
           total += Number(rate?.total || 0);
         }
@@ -1263,7 +1361,6 @@ export class InterventionsDashboard {
       return total;
     }
 
-    const totals = this.totals();
     if (totals) {
       return this.estimatedRevenueByCode(totals, selectedCode);
     }
@@ -1286,6 +1383,13 @@ export class InterventionsDashboard {
     if (this.rateCodeMap.has(underscored)) return underscored;
     if (this.rateCodeMap.has(normalized)) return normalized;
     return null;
+  }
+
+  private selectedRevenueKey(): keyof InterventionRates | null {
+    const code = this.selectedRevenueCode();
+    if (!code) return null;
+    if (code === 'RACPAV' || code === 'RAC_PBO_SOUT') return 'racPavillon';
+    return this.rateCodeMap.get(code) ?? null;
   }
 
   private resolveStatusFilter(status: string, type: string): string | undefined {

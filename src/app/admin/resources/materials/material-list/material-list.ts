@@ -16,6 +16,7 @@ import { formatResourceName, formatDepotName } from '../../../../core/utils/text
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../../core/utils/page-size';
 
 type SortKey = 'name' | 'available' | 'category' | 'depot' | 'updatedAt';
 
@@ -54,7 +55,7 @@ export class MaterialList extends DetailBack {
 
   // Pagination
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   // Depots (filtre)

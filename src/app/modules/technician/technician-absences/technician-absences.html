@@ -96,8 +96,28 @@
           <span>Aucune demande</span>
         </div>
       } @else {
+        @if (total() > limit()) {
+          <div class="pager">
+            <div class="pager-left">
+              <div class="page-size">
+                <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
+                <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
+                <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+              </div>
+              <span class="pager-label">Éléments par page</span>
+            </div>
+            <div class="pager-right">
+              <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
+              <div class="pager-nav">
+                <button class="btn-outline" type="button" [disabled]="!canPrev()" (click)="prevPage()"><i class="bi bi-chevron-left"></i></button>
+                <button class="btn-outline" type="button" [disabled]="!canNext()" (click)="nextPage()"><i class="bi bi-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        }
+
         <div class="absence-list">
-          @for (item of items(); track item._id) {
+          @for (item of pagedItems(); track item._id) {
             <div class="absence-card">
               <div class="absence-card__header">
                 <span class="badge badge--type">{{ typeLabel(item.type) }}</span>

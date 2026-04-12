@@ -5,6 +5,7 @@ import { RevenueService, RevenueAttachment, RevenueItem, RevenueSummaryPoint, Re
 import { formatPageRange } from '../../../core/utils/pagination';
 import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 type SortKey = 'month' | 'amount' | 'penalty' | 'note' | 'attachments' | 'author' | 'updatedAt';
 
@@ -38,7 +39,7 @@ export class RevenueDashboard {
   readonly series = signal<RevenueSummaryPoint[]>([]);
   readonly selectedPeriodLabel = signal('Toutes périodes');
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
   readonly totalCount = signal(0);
   readonly pageCount = computed(() => {

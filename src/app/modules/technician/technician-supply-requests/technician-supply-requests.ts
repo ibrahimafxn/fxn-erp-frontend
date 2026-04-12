@@ -5,10 +5,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ConsumableService } from '../../../core/services/consumable.service';
 import { MaterialService } from '../../../core/services/material.service';
 import { SupplyRequestService } from '../../../core/services/supply-request.service';
+import { AppNotificationService } from '../../../core/services/app-notification.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { SupplyRequest, SupplyRequestStatus, SupplyRequestType } from '../../../core/models';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-supply-requests',
@@ -23,6 +25,7 @@ export class TechnicianSupplyRequests {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private supplyService = inject(SupplyRequestService);
+  private notif = inject(AppNotificationService);
   private consumableService = inject(ConsumableService);
   private materialService = inject(MaterialService);
   private datePipe = inject(DatePipe);
@@ -35,7 +38,7 @@ export class TechnicianSupplyRequests {
   readonly items = signal<SupplyRequest[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(10);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
   readonly editing = signal<SupplyRequest | null>(null);
   readonly deleteModalOpen = signal(false);
@@ -150,6 +153,12 @@ export class TechnicianSupplyRequests {
       next: () => {
         this.loading.set(false);
         this.editing.set(null);
+        this.notif.notifyAction(
+          'Demande envoyée',
+          'Votre demande de stock a bien été transmise au dépôt.',
+          `supply-req-${Date.now()}`
+        );
+        this.notif.beep('success');
         this.resetForm();
         this.loadRequests(true);
       },
@@ -210,6 +219,7 @@ export class TechnicianSupplyRequests {
   loadRequests(force = false): void {
     this.loading.set(true);
     this.error.set(null);
+    const previous = this.items();
     this.supplyService.listMine({
       page: this.page(),
       limit: this.limit(),
@@ -218,13 +228,40 @@ export class TechnicianSupplyRequests {
     }).subscribe({
       next: (res) => {
         const data = res?.data;
-        this.items.set(data?.items || []);
+        const current = data?.items || [];
+        this.notifySupplyStatusChanges(previous, current);
+        this.items.set(current);
         this.total.set(data?.total || 0);
         this.loading.set(false);
       },
       error: (err) => {
         this.loading.set(false);
         this.error.set(this.apiError(err, 'Erreur chargement demandes'));
+      }
+    });
+  }
+
+  private notifySupplyStatusChanges(prev: SupplyRequest[], next: SupplyRequest[]): void {
+    if (!prev.length) return;
+    const prevMap = new Map(prev.map(r => [r._id, r.status]));
+    next.forEach(r => {
+      const prevStatus = prevMap.get(r._id);
+      if (!prevStatus || prevStatus === r.status || prevStatus !== 'PENDING') return;
+      const label = this.resourceLabel(r);
+      if (r.status === 'APPROVED') {
+        this.notif.notifyAction(
+          'Demande approuvée',
+          `Votre demande de ${label} a été approuvée par le dépôt.`,
+          `supply-approved-${r._id}`
+        );
+        this.notif.beep('success');
+      } else if (r.status === 'CANCELED') {
+        this.notif.notifyAction(
+          'Demande annulée',
+          `Votre demande de ${label} a été annulée par le dépôt.`,
+          `supply-canceled-${r._id}`
+        );
+        this.notif.beep('alert');
       }
     });
   }

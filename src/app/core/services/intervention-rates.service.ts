@@ -122,8 +122,7 @@ export class InterventionRatesService {
   private fromApiPayload(data?: Record<string, InterventionRate>): InterventionRates {
     if (!data) return DEFAULT_RATES;
     return {
-      // RAC_PBO_SOUT remplace RACPAV — compatibilité ascendante
-      racPavillon: data['RAC_PBO_SOUT'] ?? data['RACPAV'] ?? DEFAULT_RATES.racPavillon,
+      racPavillon: data['RAC_PBO_SOUT'] ?? DEFAULT_RATES.racPavillon,
       racAerien: data['RAC_PBO_AERIEN'] ?? DEFAULT_RATES.racAerien,
       racFacade: data['RAC_PBO_FACADE'] ?? DEFAULT_RATES.racFacade,
       clem: data['CLEM'] ?? DEFAULT_RATES.clem,
@@ -134,8 +133,7 @@ export class InterventionRatesService {
       racProS: data['PLV_PRO_S'] ?? data['RACPRO_S'] ?? DEFAULT_RATES.racProS,
       // PLV_PRO_C remplace RACPRO_C — compatibilité ascendante
       racProC: data['PLV_PRO_C'] ?? data['RACPRO_C'] ?? DEFAULT_RATES.racProC,
-      // FOURREAU_CASSE_PRIVE remplace REPFOU_PRI — compatibilité ascendante
-      racF8: data['FOURREAU_CASSE_PRIVE'] ?? data['REPFOU_PRI'] ?? DEFAULT_RATES.racF8,
+      racF8: data['FOURREAU_CASSE_PRIVE'] ?? DEFAULT_RATES.racF8,
       fourreauBeton: data['FOURREAU_CASSE_BETON'] ?? DEFAULT_RATES.fourreauBeton,
       prestaCompl: data['PRESTA_COMPL'] ?? DEFAULT_RATES.prestaCompl,
       // DEPLACEMENT_PRISE remplace DEPLPRISE — compatibilité ascendante

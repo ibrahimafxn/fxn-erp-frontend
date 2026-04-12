@@ -6,6 +6,7 @@ import { InterventionItem, InterventionService } from '../../../core/services/in
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-interventions-history',
@@ -24,7 +25,7 @@ export class TechnicianInterventionsHistory {
   readonly items = signal<InterventionItem[]>([]);
   readonly expandedId = signal<string | null>(null);
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly total = signal(0);
   readonly pageRange = formatPageRange;
   readonly sortField = signal<'date' | 'numInter' | 'client' | 'type' | 'typeOperation' | 'typeLogement' | 'statut'>('date');

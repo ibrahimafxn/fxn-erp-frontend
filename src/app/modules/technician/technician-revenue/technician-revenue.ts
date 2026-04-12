@@ -14,6 +14,7 @@ import { ReportPrestationsBadges } from '../../../shared/components/report-prest
 import { AmountCurrencyPipe, formatAmountCurrency } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-revenue',
@@ -52,7 +53,7 @@ export class TechnicianRevenue {
   readonly deleteTarget = signal<TechnicianReport | null>(null);
   readonly items = signal<TechnicianReport[]>([]);
   readonly page = signal(1);
-  readonly limit = signal(10);
+  readonly limit = signal(preferredPageSize());
   readonly total = signal(0);
   readonly pageRange = formatPageRange;
   readonly listTotalAmount = computed(() =>

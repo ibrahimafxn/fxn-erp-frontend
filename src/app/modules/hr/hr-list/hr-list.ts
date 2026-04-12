@@ -27,6 +27,7 @@ import { downloadBlob } from '../../../core/utils/download';
 import { Role } from '../../../core/models/roles.model';
 import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { preferredPageSize } from '../../../core/utils/page-size';
 import {
   ABSENCE_STATUS_LABELS,
   ABSENCE_TYPE_LABELS,
@@ -69,7 +70,7 @@ export class HrList {
   readonly selected = signal<EmployeeSummary | null>(null);
   readonly employeeTotal = signal(0);
   readonly employeePage = signal(1);
-  readonly employeeLimit = signal(10);
+  readonly employeeLimit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
   readonly employeeQuery = signal('');
   readonly employeeRole = signal('');
@@ -80,7 +81,7 @@ export class HrList {
   readonly docFilter = signal<'ALL' | 'EXPIRED' | 'EXPIRING'>('ALL');
   readonly expiringDays = 30;
   readonly docPage = signal(1);
-  readonly docLimit = signal(10);
+  readonly docLimit = signal(preferredPageSize());
   readonly overlayOpen = signal(false);
   readonly overlayFilter = signal<'EXPIRED' | 'EXPIRING'>('EXPIRED');
   readonly overlayDocs = signal<EmployeeDoc[]>([]);

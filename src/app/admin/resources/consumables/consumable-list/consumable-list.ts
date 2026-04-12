@@ -19,6 +19,7 @@ import { formatDepotName, formatResourceName } from '../../../../core/utils/text
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../../core/utils/page-size';
 
 type SortKey = 'name' | 'available' | 'depot' | 'updatedAt' | 'unit';
 
@@ -52,7 +53,7 @@ export class ConsumableList extends DetailBack {
 
   // Pagination state
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   // Depots (select)

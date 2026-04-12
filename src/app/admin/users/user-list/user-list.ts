@@ -15,6 +15,7 @@ import { formatDepotName, formatPersonName } from '../../../core/utils/text-form
 import { downloadBlob } from '../../../core/utils/download';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   standalone: true,
@@ -48,7 +49,7 @@ export class UserList extends DetailBack {
 
   // Pagination state
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   // Depots (filtre)

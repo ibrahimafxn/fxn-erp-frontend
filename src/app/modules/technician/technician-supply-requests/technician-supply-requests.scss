@@ -66,12 +66,12 @@
   .field input,
   .field select,
   .field textarea {
-    color: var(--fxn-text, #e2e8f0);
-    background: var(--fxn-surface-soft, rgba(15, 23, 42, 0.6));
-    border: 1px solid var(--fxn-border-strong, rgba(148, 163, 184, 0.25));
+    color: var(--fxn-text);
+    background: var(--fxn-surface);
+    border: 1px solid var(--fxn-border-strong);
     padding: 0.7rem 0.75rem;
     border-radius: 12px;
-    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.2);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fxn-border) 70%, transparent);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     min-height: 44px;
     width: 100%;
@@ -79,7 +79,13 @@
 
   .field input::placeholder,
   .field textarea::placeholder {
-    color: rgba(226, 232, 240, 0.55);
+    color: var(--fxn-text-muted);
+    opacity: 1;
+  }
+
+  .field select option {
+    color: var(--fxn-text);
+    background: var(--fxn-surface);
   }
 
   .field select:focus,
@@ -139,11 +145,11 @@
     min-height: 44px;
     padding: 0.6rem 0.65rem;
     border-radius: 12px;
-    border: 1px solid var(--fxn-border-strong, rgba(148, 163, 184, 0.25));
-    background: var(--fxn-surface-soft, rgba(15, 23, 42, 0.6));
+    border: 1px solid var(--fxn-border-strong);
+    background: var(--fxn-surface);
     font-weight: 600;
-    color: var(--fxn-text, #e2e8f0);
-    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.2);
+    color: var(--fxn-text);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fxn-border) 70%, transparent);
   }
 
   .filters select:focus {
@@ -162,7 +168,7 @@
   .date-filters input[type='date'] {
     border: none;
     background: transparent;
-    color: var(--fxn-text, #e2e8f0);
+    color: var(--fxn-text);
     font-weight: 600;
     min-height: 28px;
     accent-color: var(--fxn-primary);

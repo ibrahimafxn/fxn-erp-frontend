@@ -152,6 +152,11 @@ export const ADMIN_ROUTES: Routes = [
     loadComponent: () =>
       import('./revenue/revenue-dashboard/revenue-dashboard').then(m => m.RevenueDashboard)
   },
+  {
+    path: 'finance/ert-invoices',
+    loadComponent: () =>
+      import('./finance/ert-invoices-page/ert-invoices-page').then(m => m.ErtInvoicesPage)
+  },
 
   // /admin/dirigeant
   {

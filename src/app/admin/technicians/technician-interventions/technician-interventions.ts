@@ -19,6 +19,7 @@ import { hasRacpavInArticles, isRacihSuccess, isRacpavSuccess } from '../../../c
 import { formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 type TechnicianInterventionStats = {
   total: number;
@@ -59,7 +60,6 @@ const TYPE_CANONICAL_ALIASES = new Map([
   ['RAC_PBO-SOUT', 'RAC_PBO_SOUT'],
   ['RAC_PBO_AERIEN', 'RAC_PBO_AERIEN'],
   ['RAC_PBO_FACADE', 'RAC_PBO_FACADE'],
-  ['RACPAV', 'RAC_PBO_SOUT'],  // rétrocompat anciens imports → souterrain par défaut
   ['RAC_PAV', 'RAC_PBO_SOUT'],
   // ── PLV PRO (PLV_PRO_S/C remplacent RACPRO_S/C) ───────────────────────────
   ['PLV_PRO_S', 'PLV_PRO_S'],
@@ -78,7 +78,6 @@ const TYPE_CANONICAL_ALIASES = new Map([
   ['RACPRO-C', 'PLV_PRO_C'],
   // ── Fourreaux ──────────────────────────────────────────────────────────────
   ['FOURREAU_CASSE_PRIVE', 'FOURREAU_CASSE_PRIVE'],
-  ['REPFOU_PRI', 'FOURREAU_CASSE_PRIVE'],   // rétrocompat
   ['REPFOU PRI', 'FOURREAU_CASSE_PRIVE'],
   ['REPFOU-PRI', 'FOURREAU_CASSE_PRIVE'],
   ['FOURREAU_CASSE_BETON', 'FOURREAU_CASSE_BETON'],
@@ -329,7 +328,7 @@ export class TechnicianInterventions {
   readonly interventions = signal<InterventionItem[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly detailOpen = signal(false);
   readonly selectedDetail = signal<InterventionItem | null>(null);
   readonly initialLoading = signal(true);
@@ -901,7 +900,6 @@ export class TechnicianInterventions {
       RAC_PBO_SOUT: rates.racPavillon.total,
       RAC_PBO_AERIEN: rates.racAerien.total,
       RAC_PBO_FACADE: rates.racFacade.total,
-      RACPAV: rates.racPavillon.total,         // rétrocompat
       // Raccordement immeuble
       RACIM: rates.racImmeuble.total,
       RACIH: rates.racImmeuble.total,           // rétrocompat
@@ -915,7 +913,6 @@ export class TechnicianInterventions {
       CLEM: rates.clem.total,
       // Fourreaux
       FOURREAU_CASSE_PRIVE: rates.racF8.total,
-      REPFOU_PRI: rates.racF8.total,            // rétrocompat
       FOURREAU_CASSE_BETON: rates.fourreauBeton.total,
       // Réfections
       REFRAC: rates.refrac.total,
@@ -1859,7 +1856,6 @@ export class TechnicianInterventions {
     const aliases = new Map([
       ['RACPBOSOUT', 'RAC_PBO_SOUT'],
       ['RAC_PBO_SOUT', 'RAC_PBO_SOUT'],
-      ['RACPAV', 'RAC_PBO_SOUT'],
       ['RACIM', 'RACIM'],
       ['RACIH', 'RACIM'],
       ['RECOIP', 'RECOIP'],
@@ -1879,7 +1875,6 @@ export class TechnicianInterventions {
       ['FOURREAUCASSEPRIVE', 'FOURREAU_CASSE_PRIVE'],
       ['FOURREAU_CASSE_PRIVE', 'FOURREAU_CASSE_PRIVE'],
       ['PRESTAF8', 'FOURREAU_CASSE_PRIVE'],
-      ['REPFOU_PRI', 'FOURREAU_CASSE_PRIVE'],
       ['REFRACDEGRADATION', 'REFRAC_DEGRADATION'],
       ['REFRAC_DEGRADATION', 'REFRAC_DEGRADATION'],
       ['REFC_DGR', 'REFRAC_DEGRADATION'],

@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { SupplierService, Supplier } from '../../../core/services/supplier.service';
 import { Order } from '../../../core/services/order.service';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   standalone: true,
@@ -29,7 +30,7 @@ export class SupplierDetail {
   readonly ordersError = signal<string | null>(null);
   readonly ordersTotal = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly pageCount = computed(() => {

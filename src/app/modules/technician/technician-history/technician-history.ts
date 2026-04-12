@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { AttributionService } from '../../../core/services/attribution.service';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 type AttributionHistoryItem = {
   _id: string;
@@ -46,7 +47,7 @@ export class TechnicianHistory {
   readonly error = signal<string | null>(null);
   readonly items = signal<AttributionHistoryItem[]>([]);
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly total = signal(0);
   readonly pageRange = formatPageRange;
 

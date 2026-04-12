@@ -50,18 +50,18 @@ export const DETAIL_GROUP_ORDER = [
 export const INTERVENTION_CONTRACT_TYPES = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'AUTRE'] as const;
 
 export const QUICK_SUMMARY_PRESTATIONS = [
-  { label: 'RAC_PBO_SOUT', key: 'racPavillon' },
-  { label: 'RAC_PBO_AERIEN', key: 'racAerien' },
-  { label: 'RAC_PBO_FACADE', key: 'racFacade' },
-  { label: 'RACIH', key: 'racImmeuble' },
-  { label: 'RECOIP', key: 'reconnexion' },
-  { label: 'PLV_PRO_S', key: 'racProS' },
-  { label: 'PLV_PRO_C', key: 'racProC' },
-  { label: 'SAV', key: 'sav' },
-  { label: 'DEPLACEMENT_PRISE', key: 'deplacementPrise' },
-  { label: 'DEPLACEMENT_OFFERT', key: 'deplacementOffert' },
-  { label: 'DEPLACEMENT_A_TORT', key: 'deplacementATort' },
-  { label: 'SWAP_EQUIPEMENT', key: 'swapEquipement' }
+  { id: 'racpav', label: 'RACPAV', code: 'RACPAV' },
+  { id: 'rac_pbo_aerien', label: 'RAC_PBO_AERIEN', key: 'racAerien' },
+  { id: 'rac_pbo_facade', label: 'RAC_PBO_FACADE', key: 'racFacade' },
+  { id: 'racih', label: 'RACIH', key: 'racImmeuble' },
+  { id: 'recoip', label: 'RECOIP', key: 'reconnexion' },
+  { id: 'plv_pro_s', label: 'PLV_PRO_S', key: 'racProS' },
+  { id: 'plv_pro_c', label: 'PLV_PRO_C', key: 'racProC' },
+  { id: 'sav', label: 'SAV', key: 'sav' },
+  { id: 'rac_pbo_sout', label: 'RAC_PBO_SOUT', code: 'RAC_PBO_SOUT' },
+  { id: 'deplacement_offert', label: 'DEPLACEMENT_OFFERT', key: 'deplacementOffert' },
+  { id: 'deplacement_a_tort', label: 'DEPLACEMENT_A_TORT', key: 'deplacementATort' },
+  { id: 'swap_equipement', label: 'SWAP_EQUIPEMENT', key: 'swapEquipement' }
 ] as const;
 
 export const REVENUE_KEYS = [

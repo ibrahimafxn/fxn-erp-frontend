@@ -284,12 +284,12 @@
       <div class="summary-grid">
         <div class="summary-pill">
           <span class="label">Total</span>
-          <span class="value">{{ totals()?.total ?? 0 }}</span>
+          <span class="value">{{ quickSummaryTotal() }}</span>
         </div>
-        @for (item of quickSummaryPrestations; track item.key) {
+        @for (item of quickSummaryPrestations(); track item.id) {
           <div class="summary-pill">
             <span class="label">{{ item.label }}</span>
-            <span class="value">{{ totals()?.[item.key] ?? 0 }}</span>
+            <span class="value">{{ item.value }}</span>
           </div>
         }
       </div>

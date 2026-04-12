@@ -64,7 +64,7 @@
                         <span class="material-icons notranslate">assignment</span>
                         <span>Approvisionnements</span>
                         @if (supplyBadgeCount() > 0) {
-                          <span class="badge badge-icon"><span class="material-icons notranslate">assignment</span></span>
+                          <span class="badge">{{ supplyBadgeCount() }}</span>
                         }
                       </button>
                       <button mat-button (click)="goTechVehicles()"><span class="material-icons notranslate">directions_car</span><span i18n="@@header.menu.techVehicles">Véhicules</span></button>
@@ -75,7 +75,13 @@
                       <button mat-button (click)="goTechBpu()"><span class="material-icons notranslate">price_check</span><span i18n="@@header.menu.bpu">BPU prestations</span></button>
                       <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span><span i18n="@@header.menu.techHistory">Historique</span></button>
                       <button mat-button (click)="goTechDocuments()"><span class="material-icons notranslate">description</span><span>Documents</span></button>
-                      <button mat-button (click)="goTechAbsences()"><span class="material-icons notranslate">event_busy</span><span>Congés / Absences</span></button>
+                      <button mat-button (click)="goTechAbsences()">
+                        <span class="material-icons notranslate">event_busy</span>
+                        <span>Congés / Absences</span>
+                        @if (absenceBadgeCount() > 0) {
+                          <span class="badge">{{ absenceBadgeCount() }}</span>
+                        }
+                      </button>
                   </div>
                   </div>
 
@@ -161,6 +167,9 @@
                           <button mat-button (click)="goSupplyRequests()">
                             <span class="material-icons notranslate">assignment</span>
                             <span>Approvisionnements</span>
+                            @if (depotSupplyPendingCount() > 0) {
+                              <span class="badge">{{ depotSupplyPendingCount() }}</span>
+                            }
                           </button>
                         }
                         @if (canViewMovements()) {
@@ -182,6 +191,7 @@
                       <div class="section-items">
                         @if (canManageAccess()) {
                           <button mat-button (click)="goRevenue()"><span class="material-icons notranslate">insights</span><span i18n="@@header.menu.revenue">Chiffre d'affaires</span></button>
+                          <button mat-button (click)="goErtInvoices()"><span class="material-icons notranslate">receipt_long</span><span>Factures ERT</span></button>
                           <button mat-button (click)="goAgenda()"><span class="material-icons notranslate">event</span><span i18n="@@header.menu.agenda">Agenda</span></button>
                           <button mat-button (click)="goBpu()"><span class="material-icons notranslate">price_check</span><span i18n="@@header.menu.bpu">BPU prestations</span></button>
                           <button mat-button (click)="goAbsences()">
