@@ -1,17 +1,36 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { computeReportAmount, normalizeReportPrestations, REPORT_CODE_ALIASES } from '../../../core/utils/technician-report-utils';
+import { TechnicianBpuResolverService } from '../../../core/services/technician-bpu-resolver.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
+import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+
+type BpuItem = {
+  prestationId?: string;
+  code: string;
+  prestation: string;
+  unitPrice: number;
+};
+
+type ResolvedBpuState = {
+  items: BpuItem[];
+  prices: Map<string, number>;
+};
 
 @Component({
   selector: 'app-technician-reports',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal, TechnicianMobileNav],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmDeleteModal, ReportPrestationsBadges, AmountCurrencyPipe, TechnicianMobileNav],
   providers: [DatePipe],
   templateUrl: './technician-reports.html',
   styleUrl: './technician-reports.scss'
@@ -19,16 +38,28 @@ import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-
 export class TechnicianReports {
   private fb = inject(FormBuilder);
   private reportService = inject(TechnicianReportService);
+  private bpuResolver = inject(TechnicianBpuResolverService);
+  private auth = inject(AuthService);
   private datePipe = inject(DatePipe);
 
+  // ── BPU dynamique ──────────────────────────────────────────────────────────
+  readonly bpuLoading = signal(false);
+  readonly bpuError = signal<string | null>(null);
+  /** true dès que le technicien a au moins une prestation attribuée par l'admin */
+  readonly hasBpu = signal(false);
+  /** Prestations disponibles pour ce technicien (depuis sa BpuSelection) */
+  readonly bpuItems = signal<BpuItem[]>([]);
+  /** Prix unitaires de la BpuSelection active : Map<CODE, unitPrice> */
+  readonly bpuPrices = signal<Map<string, number>>(new Map());
+  /** Quantités saisies : Map<code, qty> */
+  readonly qtys = signal<Map<string, number>>(new Map());
+
+  // ── Liste / pagination ─────────────────────────────────────────────────────
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly saveSuccess = signal(false);
   readonly filtersOpen = signal(false);
 
-  toggleFilters(): void {
-    this.filtersOpen.update((v) => !v);
-  }
   readonly items = signal<TechnicianReport[]>([]);
   readonly page = signal(1);
   readonly limit = signal(10);
@@ -45,33 +76,8 @@ export class TechnicianReports {
     toDate: this.fb.nonNullable.control('')
   });
 
-  readonly todayReport = computed(() => {
-    const todayKey = this.todayInput();
-    return (
-      this.items().find(
-        (report) => (this.datePipe.transform(report.reportDate, 'yyyy-MM-dd') || '') === todayKey
-      ) || null
-    );
-  });
-  readonly todayComplexProCount = computed(() => Number(this.todayReport()?.prestations?.racProC ?? 0));
-
   readonly form = this.fb.nonNullable.group({
     date: this.fb.nonNullable.control(this.todayInput(), [Validators.required]),
-    prestations: this.fb.nonNullable.group({
-      professionnel: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      pavillon: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      aerien: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      facade: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      immeuble: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      racProC: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      prestaComplementaire: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      reconnexion: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      deplacementOffert: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      deplacementATort: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      swapEquipement: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      savExp: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
-      prestationF8: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)])
-    }),
     comment: this.fb.nonNullable.control('')
   });
 
@@ -80,51 +86,89 @@ export class TechnicianReports {
     const l = this.limit();
     return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
   });
-
   readonly canPrev = computed(() => this.page() > 1);
   readonly canNext = computed(() => this.page() < this.pageCount());
-  readonly initialFormValue = signal('');
-  readonly formSnapshot = signal('');
-  readonly isDefaultForm = computed(
-    () => this.formSnapshot() === this.initialFormValue()
+  readonly selectedCount = computed(() =>
+    Array.from(this.qtys().values()).reduce((sum, qty) => sum + (qty > 0 ? qty : 0), 0)
   );
-  readonly prestationOptions = [
-    { key: 'professionnel', label: 'Pro simple', className: 'pill-professionnel' },
-    { key: 'racProC', label: 'Pro complexe', className: 'pill-pro-c' },
-    { key: 'immeuble', label: 'Immeuble', className: 'pill-immeuble' },
-    { key: 'pavillon', label: 'Pavillon sout.', className: 'pill-pavillon' },
-    { key: 'aerien', label: 'Aérien', className: 'pill-aerien' },
-    { key: 'facade', label: 'Façade', className: 'pill-facade' },
-    { key: 'prestaComplementaire', label: 'Complémentaire', className: 'pill-complementaire' },
-    { key: 'reconnexion', label: 'Reconnexion', className: 'pill-reconnexion' },
-    { key: 'deplacementOffert', label: 'Dépl. offert', className: 'pill-depl-offert' },
-    { key: 'deplacementATort', label: 'Dépl. à tort', className: 'pill-depl-tort' },
-    { key: 'swapEquipement', label: 'Swap équip.', className: 'pill-swap' },
-    { key: 'savExp', label: 'SAV EXP', className: 'pill-sav-exp' },
-    { key: 'prestationF8', label: 'Fourreau cassé', className: 'pill-f8' }
-  ] as const;
+  readonly formTotalAmount = computed(() =>
+    this.bpuItems().reduce((sum, item) => sum + this.lineAmount(item.code), 0)
+  );
+
+  readonly isDefaultForm = computed(() => {
+    const hasQtys = Array.from(this.qtys().values()).some((v) => v > 0);
+    return !hasQtys && !this.form.get('comment')?.value;
+  });
 
   constructor() {
+    this.loadBpu();
     this.refresh(true);
-    this.initialFormValue.set(this.serializeForm(this.form.getRawValue()));
-    this.formSnapshot.set(this.serializeForm(this.form.getRawValue()));
-    this.form.valueChanges.subscribe(() => {
-      this.formSnapshot.set(this.serializeForm(this.form.getRawValue()));
+  }
+
+  // ── Chargement BPU ─────────────────────────────────────────────────────────
+
+  loadBpu(): void {
+    this.bpuLoading.set(true);
+    this.bpuError.set(null);
+    this.resolveBpuState$().subscribe({
+      next: (state) => {
+        this.applyBpuState(state);
+        this.bpuLoading.set(false);
+      },
+      error: (err) => {
+        this.hasBpu.set(false);
+        this.bpuItems.set([]);
+        this.bpuPrices.set(new Map());
+        this.bpuError.set(this.apiError(err, 'Erreur chargement BPU'));
+        this.bpuLoading.set(false);
+      }
     });
   }
+
+  // ── Stepper quantités ──────────────────────────────────────────────────────
+
+  qtyFor(code: string): number {
+    return this.qtys().get(code) ?? 0;
+  }
+
+  stepCode(code: string, delta: number): void {
+    const next = new Map(this.qtys());
+    next.set(code, Math.max(0, (next.get(code) ?? 0) + delta));
+    this.qtys.set(next);
+  }
+
+  setQty(code: string, event: Event): void {
+    const val = Number((event.target as HTMLInputElement).value);
+    const next = new Map(this.qtys());
+    next.set(code, Math.max(0, Math.round(Number.isFinite(val) ? val : 0)));
+    this.qtys.set(next);
+  }
+
+  // ── CRUD ───────────────────────────────────────────────────────────────────
 
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    const payload = this.form.getRawValue();
+    const { date, comment } = this.form.getRawValue();
+    const prestations = this.selectedPrestationsPayload();
+    const entries = this.selectedEntriesPayload();
+
     this.loading.set(true);
     this.error.set(null);
     const current = this.editing();
     const request$ = current?._id
-      ? this.reportService.update(current._id, payload)
-      : this.reportService.create(payload);
+      ? this.reportService.update(current._id, { prestations, entries, comment, commentaire: comment })
+      : this.reportService.create({
+          date,
+          dateActivite: date,
+          prestations,
+          entries,
+          comment,
+          commentaire: comment
+        });
+
     request$.subscribe({
       next: () => {
         this.loading.set(false);
@@ -144,28 +188,8 @@ export class TechnicianReports {
   editToday(report: TechnicianReport): void {
     const date = this.datePipe.transform(report.reportDate, 'yyyy-MM-dd') || this.todayInput();
     this.editing.set(report);
-    this.form.patchValue({
-      date,
-      prestations: {
-        professionnel: report.prestations?.professionnel ?? 0,
-        pavillon: report.prestations?.pavillon ?? 0,
-        aerien: report.prestations?.aerien ?? 0,
-        facade: report.prestations?.facade ?? 0,
-        immeuble: report.prestations?.immeuble ?? 0,
-        racProC: report.prestations?.racProC ?? 0,
-        prestaComplementaire: report.prestations?.prestaComplementaire ?? 0,
-        reconnexion: report.prestations?.reconnexion ?? 0,
-        deplacementOffert: report.prestations?.deplacementOffert ?? 0,
-        deplacementATort: report.prestations?.deplacementATort ?? 0,
-        swapEquipement: report.prestations?.swapEquipement ?? 0,
-        savExp: report.prestations?.savExp ?? 0,
-        prestationF8: report.prestations?.prestationF8 ?? 0
-      },
-      comment: report.comment || ''
-    });
-    this.initialFormValue.set(this.serializeForm(this.form.getRawValue()));
-    this.formSnapshot.set(this.serializeForm(this.form.getRawValue()));
-    this.form.markAsPristine();
+    this.form.patchValue({ date, comment: report.comment || '' });
+    this.qtys.set(this.restoreQtys(report));
   }
 
   openDeleteModal(report: TechnicianReport): void {
@@ -195,25 +219,41 @@ export class TechnicianReports {
     });
   }
 
+  // ── Helpers liste ──────────────────────────────────────────────────────────
+
   isToday(report: TechnicianReport): boolean {
-    const today = this.todayInput();
-    const reportDay = this.datePipe.transform(report.reportDate, 'yyyy-MM-dd');
-    return reportDay === today;
+    return (this.datePipe.transform(report.reportDate, 'yyyy-MM-dd') || '') === this.todayInput();
   }
 
-  prestationsSummary(report: TechnicianReport): Array<{ key: string; label: string; value: number; className: string }> {
-    const p = report.prestations || {};
-    return this.prestationOptions
-      .map((option) => ({
-        key: option.key,
-        label: option.label,
-        value: Number(p[option.key] || 0),
-        className: option.className
-      }))
-      .filter((item) => item.value > 0);
+  prestationsSummary(report: TechnicianReport): Array<{ code: string; label: string; qty: number }> {
+    return normalizeReportPrestations(report).map((item) => ({
+      ...item,
+      label: item.label || this.bpuItems().find((b) => b.code === item.code)?.prestation || item.code
+    }));
   }
+
+  computeAmount(report: TechnicianReport): number {
+    return computeReportAmount(report, this.bpuPrices());
+  }
+
+  unitPriceFor(code: string): number {
+    const key = String(code || '').toUpperCase();
+    let price = this.bpuPrices().get(key);
+    if (!Number.isFinite(price)) {
+      const aliasKey = REPORT_CODE_ALIASES[key];
+      if (aliasKey) price = this.bpuPrices().get(aliasKey);
+    }
+    return Number.isFinite(price) ? Number(price) : 0;
+  }
+
+  lineAmount(code: string): number {
+    return Number((this.qtyFor(code) * this.unitPriceFor(code)).toFixed(2));
+  }
+
+  // ── Pagination ─────────────────────────────────────────────────────────────
 
   refresh(force = false): void {
+    if (!force && this.loading()) return;
     this.loading.set(true);
     this.error.set(null);
     const filters = this.filterForm.getRawValue();
@@ -236,24 +276,15 @@ export class TechnicianReports {
     });
   }
 
-  applyFilters(): void {
-    this.page.set(1);
-    this.refresh(true);
-  }
-
+  applyFilters(): void { this.page.set(1); this.refresh(true); }
   clearFilters(): void {
-    this.filterForm.reset({ year: '', fromDate: '', toDate: '' });
+    this.resetFilters();
     this.page.set(1);
     this.refresh(true);
   }
-
-  setLimit(event: Event): void {
-    const el = event.target as HTMLSelectElement | null;
-    if (!el) return;
-    const value = Number(el.value);
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.setLimitValue(value);
-  }
+  toggleFilters(): void { this.filtersOpen.update((v) => !v); }
+  prevPage(): void { if (this.canPrev()) { this.page.update((p) => p - 1); this.refresh(true); } }
+  nextPage(): void { if (this.canNext()) { this.page.update((p) => p + 1); this.refresh(true); } }
 
   setLimitValue(value: number): void {
     if (!Number.isFinite(value) || value <= 0) return;
@@ -262,175 +293,101 @@ export class TechnicianReports {
     this.refresh(true);
   }
 
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
-  }
+  // ── Privés ─────────────────────────────────────────────────────────────────
 
   private todayInput(): string {
     return this.datePipe.transform(new Date(), 'yyyy-MM-dd') || '';
   }
 
+  private resolveBpuState$(): Observable<ResolvedBpuState> {
+    return this.bpuResolver.resolve(this.currentUserId()).pipe(
+      map((state) => ({
+        items: state.items.map((item) => ({
+          prestationId: item.prestationId,
+          code: item.code,
+          prestation: item.prestation,
+          unitPrice: item.unitPrice
+        })),
+        prices: state.prices
+      }))
+    );
+  }
+
+  private applyBpuState(state: ResolvedBpuState): void {
+    this.bpuItems.set(state.items);
+    this.bpuPrices.set(state.prices);
+    this.hasBpu.set(state.items.length > 0);
+  }
+
   private resetForm(): void {
-    this.form.reset({
-      date: this.todayInput(),
-      prestations: {
-        professionnel: 0,
-        pavillon: 0,
-        aerien: 0,
-        facade: 0,
-        immeuble: 0,
-        racProC: 0,
-        prestaComplementaire: 0,
-        reconnexion: 0,
-        deplacementOffert: 0,
-        deplacementATort: 0,
-        swapEquipement: 0,
-        savExp: 0,
-        prestationF8: 0
-      },
-      comment: ''
-    });
-    this.initialFormValue.set(this.serializeForm(this.form.getRawValue()));
-    this.formSnapshot.set(this.serializeForm(this.form.getRawValue()));
+    this.form.reset({ date: this.todayInput(), comment: '' });
+    this.qtys.set(new Map());
     this.form.markAsPristine();
+  }
+
+  private resetFilters(): void {
+    this.filterForm.reset({ year: '', fromDate: '', toDate: '' });
+  }
+
+  private selectedPrestationsPayload(): Array<{ code: string; qty: number }> {
+    return Array.from(this.qtys().entries())
+      .filter(([, qty]) => qty > 0)
+      .map(([code, qty]) => ({ code, qty }));
+  }
+
+  private selectedEntriesPayload(): Array<{ prestationId: string; quantite: number }> {
+    return this.bpuItems()
+      .map((item) => ({
+        prestationId: item.prestationId,
+        quantite: this.qtyFor(item.code)
+      }))
+      .filter((item) => !!item.prestationId && item.quantite > 0)
+      .map((item) => ({ prestationId: item.prestationId as string, quantite: item.quantite }));
+  }
+
+  private restoreQtys(report: TechnicianReport): Map<string, number> {
+    const next = new Map<string, number>();
+    const entries = Array.isArray(report.entries) ? report.entries : [];
+    if (entries.length) {
+      for (const entry of entries) {
+        const code = String(entry.codeSnapshot || entry.code || '').toUpperCase();
+        const qty = Number(entry.quantite ?? entry.qty ?? 0);
+        if (code && qty > 0) next.set(code, qty);
+      }
+      return next;
+    }
+    for (const { code, qty } of report.prestations || []) {
+      next.set(String(code).toUpperCase(), qty);
+    }
+    return next;
   }
 
   private normalizeDateRange(yearInput: string, fromInput: string, toInput: string): { fromDate: string; toDate: string } {
     const year = Number(yearInput);
     if (Number.isFinite(year) && year >= 2000) {
-      const fromDate = fromInput || `${year}-01-01`;
-      const toDate = toInput || `${year}-12-31`;
-      return { fromDate, toDate };
+      return { fromDate: fromInput || `${year}-01-01`, toDate: toInput || `${year}-12-31` };
     }
     return { fromDate: fromInput || '', toDate: toInput || '' };
   }
 
-  prestationStyle(key: string): Record<string, string> {
-    switch (key) {
-      case 'pavillon':
-        return {
-          borderColor: 'rgba(59, 130, 246, 0.95)',
-          background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.9), rgba(59, 130, 246, 0.65))',
-          color: '#eff6ff'
-        };
-      case 'aerien':
-        return {
-          borderColor: 'rgba(56, 189, 248, 0.95)',
-          background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.85), rgba(56, 189, 248, 0.6))',
-          color: '#e0f2fe'
-        };
-      case 'facade':
-        return {
-          borderColor: 'rgba(249, 115, 22, 0.95)',
-          background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.85), rgba(249, 115, 22, 0.65))',
-          color: '#fff7ed'
-        };
-      case 'professionnel':
-        return {
-          borderColor: 'rgba(239, 68, 68, 0.9)',
-          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.8), rgba(239, 68, 68, 0.7))',
-          color: '#fff1f2'
-        };
-      case 'racProC':
-        return {
-          borderColor: 'rgba(59, 130, 246, 0.9)',
-          background: 'linear-gradient(135deg, rgba(30, 64, 175, 0.85), rgba(59, 130, 246, 0.7))',
-          color: '#eff6ff'
-        };
-      case 'prestaComplementaire':
-        return {
-          borderColor: 'rgba(34, 197, 94, 0.85)',
-          background: 'linear-gradient(135deg, rgba(22, 163, 74, 0.8), rgba(148, 163, 184, 0.6))',
-          color: '#f0fdf4'
-        };
-      case 'reconnexion':
-        return {
-          borderColor: 'rgba(136, 19, 55, 0.95)',
-          background: 'linear-gradient(135deg, rgba(127, 29, 29, 0.9), rgba(136, 19, 55, 0.75))',
-          color: '#ffe4e6'
-        };
-      case 'immeuble':
-        return {
-          borderColor: 'rgba(34, 211, 238, 0.95)',
-          background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.9), rgba(14, 116, 144, 0.75))',
-          color: '#ecfeff'
-        };
-      case 'deplacementOffert':
-        return {
-          borderColor: 'rgba(34, 197, 94, 0.95)',
-          background: 'linear-gradient(135deg, rgba(21, 128, 61, 0.85), rgba(74, 222, 128, 0.6))',
-          color: '#dcfce7'
-        };
-      case 'deplacementATort':
-        return {
-          borderColor: 'rgba(239, 68, 68, 0.95)',
-          background: 'linear-gradient(135deg, rgba(185, 28, 28, 0.9), rgba(239, 68, 68, 0.7))',
-          color: '#fee2e2'
-        };
-      case 'swapEquipement':
-        return {
-          borderColor: 'rgba(168, 85, 247, 0.95)',
-          background: 'linear-gradient(135deg, rgba(126, 34, 206, 0.85), rgba(168, 85, 247, 0.65))',
-          color: '#f5f3ff'
-        };
-      case 'savExp':
-        return {
-          borderColor: 'rgba(148, 163, 184, 0.95)',
-          background: 'linear-gradient(135deg, rgba(71, 85, 105, 0.9), rgba(100, 116, 139, 0.75))',
-          color: '#f1f5f9'
-        };
-      case 'sav':
-        return {
-          borderColor: 'rgba(148, 163, 184, 0.7)',
-          background: 'linear-gradient(135deg, rgba(51, 65, 85, 0.8), rgba(71, 85, 105, 0.6))',
-          color: '#cbd5e1'
-        };
-      case 'prestationF8':
-        return {
-          borderColor: 'rgba(245, 158, 11, 0.95)',
-          background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.9), rgba(180, 83, 9, 0.75))',
-          color: '#fffbeb'
-        };
-      default:
-        return {};
-    }
-  }
-
-  stepPrestation(key: string, delta: number): void {
-    const group = this.form.get('prestations') as FormGroup;
-    const ctrl = group?.get(key);
-    if (!ctrl) return;
-    ctrl.setValue(Math.max(0, Number(ctrl.value ?? 0) + delta));
-  }
-
   private apiError(err: any, fallback: string): string {
-    const apiMsg =
-      typeof err?.error === 'object' && err.error !== null && 'message' in err.error
-        ? String(err.error.message ?? '')
-        : '';
+    const apiMsg = typeof err?.error === 'object' && err.error !== null && 'message' in err.error
+      ? String(err.error.message ?? '')
+      : '';
     return apiMsg || err?.message || fallback;
   }
 
-  private serializeForm(value: unknown): string {
-    return JSON.stringify(value ?? {});
+  private currentUserId(): string | null {
+    const user = this.auth.getCurrentUser();
+    return user?._id ? String(user._id) : null;
   }
 
-  formatAmount(value?: number | null): string {
-    const amount = Number(value ?? 0);
-    if (!Number.isFinite(amount)) return '0,00 €';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+  /** Couleur déterministe (0-7) basée sur le code — même index que les pills historique */
+  codeColorIndex(code: string): number {
+    let hash = 0;
+    for (let i = 0; i < code.length; i++) {
+      hash += code.charCodeAt(i);
+    }
+    return hash % 8;
   }
 }

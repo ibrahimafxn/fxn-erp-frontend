@@ -8,6 +8,7 @@ import { BpuService } from '../../../core/services/bpu.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
+import { HrService } from '../../../core/services/hr.service';
 import { BpuEntry, BpuSelection, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { downloadBlob } from '../../../core/utils/download';
@@ -18,8 +19,16 @@ import {
   InterventionPrestationField
 } from '../../../core/constant/intervention-prestations';
 
-type Segment = 'AUTO' | 'SALARIE' | 'AUTRE';
+type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE' | 'ERT';
 type ConfirmAction = 'saveSelection' | 'updateCode' | 'addPrestation' | 'deletePersonalized';
+
+const SEGMENT_LABELS: Record<Segment, string> = {
+  AUTO: 'Freelance',
+  SALARIE: 'Salarié',
+  PERSONNALISE: 'Personnalisé',
+  AUTRE: 'Autres',
+  ERT: 'BPU ERT'
+};
 
 @Component({
   standalone: true,
@@ -36,6 +45,7 @@ export class BpuList {
   private bpuSelectionService = inject(BpuSelectionService);
   private auth = inject(AuthService);
   private userService = inject(UserService);
+  private hrService = inject(HrService);
 
   readonly items = signal<BpuEntry[]>([]);
   readonly loading = signal(false);
@@ -46,10 +56,11 @@ export class BpuList {
   readonly technicians = signal<User[]>([]);
   readonly techniciansLoading = signal(false);
   readonly techniciansError = signal<string | null>(null);
+  readonly technicianSegments = signal<Map<string, Segment>>(new Map());
   readonly personalizedOwnerIds = signal<Set<string>>(new Set());
   readonly personalizedSelectionByOwner = signal<Map<string, BpuSelection>>(new Map());
   readonly selectedTechnicianId = signal<string | null>(null);
-  readonly currentSegment = signal<Segment>('AUTO');
+  readonly currentSegment = signal<Segment>('PERSONNALISE');
   readonly isEditing = signal(false);
   readonly sortDir = signal<'asc' | 'desc'>('asc');
   readonly selectedCodes = signal<Set<string>>(new Set());
@@ -124,9 +135,37 @@ export class BpuList {
     if (!ids.size) return [];
     return this.technicians().filter((tech) => ids.has(tech._id) && tech.authEnabled !== false);
   });
+  readonly attachedSegmentTechnicians = computed(() => {
+    const segment = this.currentSegment();
+    if (segment === 'PERSONNALISE') {
+      return this.activePersonalizedTechnicians();
+    }
+    const segmentMap = this.technicianSegments();
+    return this.technicians().filter((tech) => {
+      if (tech.authEnabled === false) return false;
+      return segmentMap.get(tech._id) === segment;
+    });
+  });
   readonly isPersonalized = computed(() => {
     if (this.isTechnician()) return true;
     return this.selectedTechnicianId() !== null;
+  });
+  readonly contextModeLabel = computed(() => {
+    if (this.isTechnician()) return 'BPU effectif technicien';
+    return this.isPersonalized() ? 'BPU personnalisé' : 'BPU par défaut';
+  });
+  readonly segmentLabel = computed(() => {
+    return SEGMENT_LABELS[this.currentSegment()];
+  });
+  readonly contextSummary = computed(() => {
+    if (this.isTechnician()) {
+      return 'Vue lecture seule du BPU réellement appliqué à votre activité.';
+    }
+    const target = this.selectedTechnicianLabel() || 'BPU par défaut';
+    if (this.isPersonalized()) {
+      return `Vous modifiez le ${this.contextModeLabel()} de ${target}.`;
+    }
+    return `Vous modifiez le ${this.contextModeLabel()} du segment ${this.segmentLabel()}.`;
   });
 
   readonly sortedItems = computed(() => {
@@ -138,15 +177,7 @@ export class BpuList {
   });
 
   constructor() {
-    const segment = this.route.snapshot.queryParamMap.get('segment');
-    if (segment === 'AUTO' || segment === 'SALARIE' || segment === 'AUTRE') {
-      this.currentSegment.set(segment);
-      this.isEditing.set(true);
-    }
-    const technician = this.route.snapshot.queryParamMap.get('technician');
-    if (technician) {
-      this.selectedTechnicianId.set(technician);
-    }
+    this.initFromQueryParams();
     if (!this.isTechnician()) {
       this.loadTechnicians();
     }
@@ -157,15 +188,26 @@ export class BpuList {
     if (this.isTechnician()) return;
     this.techniciansLoading.set(true);
     this.techniciansError.set(null);
-    this.userService.refreshUsers(true, { role: Role.TECHNICIEN, limit: 1000 }).subscribe({
-      next: (result) => {
-        const list = [...(result?.items || [])];
+    forkJoin({
+      users: this.userService.refreshUsers(true, { role: Role.TECHNICIEN, limit: 1000 }),
+      employees: this.hrService.listEmployees({ role: Role.TECHNICIEN, limit: 1000 })
+    }).subscribe({
+      next: ({ users, employees }) => {
+        const list = [...(users?.items || [])];
         list.sort((a, b) => {
           const nameA = `${a.lastName || ''} ${a.firstName || ''}`.trim().toLowerCase();
           const nameB = `${b.lastName || ''} ${b.firstName || ''}`.trim().toLowerCase();
           return nameA.localeCompare(nameB);
         });
+        const segmentMap = new Map<string, Segment>();
+        for (const entry of employees?.items || []) {
+          const user = entry.user;
+          const id = String(user?._id || '').trim();
+          if (!id) continue;
+          segmentMap.set(id, this.segmentFromContractType(entry.profile?.contractType));
+        }
         this.technicians.set(list);
+        this.technicianSegments.set(segmentMap);
         this.techniciansLoading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -181,11 +223,7 @@ export class BpuList {
     this.success.set(null);
     this.warning.set(null);
     const segment = this.currentSegment();
-    const items$ = segment === 'AUTRE'
-      ? this.bpuService.list(segment).pipe(
-          switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
-        )
-      : this.bpuService.list(segment);
+    const items$ = this.listItemsForSegment(segment);
     const selectedOwner = this.isTechnician() ? null : this.selectedTechnicianId();
     const selections$ = this.isTechnician()
       ? this.bpuSelectionService.list()
@@ -217,6 +255,7 @@ export class BpuList {
         const selection = this.isTechnician()
           ? this.resolveSelection(selectionsOwner, selectionsOwner, segment)
           : this.resolveSelection(selectionsOwner, selectionsGlobal, segment);
+        const isErtCatalog = !this.isTechnician() && !selectedOwner && segment === 'ERT';
         const uniqueItems = this.uniqueItems(items);
         const allowedCodes = this.isTechnician()
           ? new Set((selection?.prestations || [])
@@ -232,21 +271,17 @@ export class BpuList {
             })
           : uniqueItems;
         this.items.set(visibleItems);
-        const codes = new Map<string, string>();
-        for (const entry of visibleItems) {
-          if (entry._id) codes.set(entry._id, String(entry.code || '').trim().toUpperCase());
-        }
-        this.editedCodes.set(codes);
+        this.editedCodes.set(this.buildEditedCodesMap(visibleItems));
         if (!this.isTechnician()) {
           const ownerIds = new Set<string>();
           const ownerSelections = new Map<string, BpuSelection>();
           const personalized = Array.isArray(selectionPayload)
             ? []
             : (selectionPayload.personalized || []);
-          const segmentKey = this.normalizeSelectionType(segment);
           for (const entry of personalized) {
             if (!entry?.owner) continue;
-            if (!this.isSelectionActiveForSegment(entry, segment)) continue;
+            const entryType = this.normalizeSelectionType(entry.type);
+            if (entryType === 'DEFAULT_RATES') continue;
             const ownerId = String(entry.owner);
             ownerIds.add(ownerId);
             const current = ownerSelections.get(ownerId);
@@ -255,27 +290,23 @@ export class BpuList {
               continue;
             }
             const currentType = this.normalizeSelectionType(current.type);
-            const entryType = this.normalizeSelectionType(entry.type);
-            if (currentType !== segmentKey && entryType === segmentKey) {
+            if (currentType !== 'PERSONNALISE' && entryType === 'PERSONNALISE') {
+              ownerSelections.set(ownerId, entry);
+              continue;
+            }
+            if (currentType !== 'PERSONNALISE' && currentType !== entryType) {
               ownerSelections.set(ownerId, entry);
             }
           }
           this.personalizedOwnerIds.set(ownerIds);
           this.personalizedSelectionByOwner.set(ownerSelections);
         }
-        const availableCodes = new Set(
-          visibleItems.map((item) => String(item.code || '').trim().toUpperCase()).filter(Boolean)
-        );
-        const selected = new Set<string>();
-        const edited = new Map<string, number>();
-        for (const entry of selection?.prestations || []) {
-          const code = String(entry.code || '').trim().toUpperCase();
-          if (!code || !availableCodes.has(code)) continue;
-          selected.add(code);
-          edited.set(code, Number(entry.unitPrice || 0));
+        const selectionState = this.buildSelectionState(visibleItems, selection, isErtCatalog);
+        this.selectedCodes.set(selectionState.selected);
+        this.editedPrices.set(selectionState.edited);
+        if (isErtCatalog && !items.length) {
+          this.warning.set('Le segment BPU ERT est vide. Le catalogue de base est affiché pour initialiser le référentiel ERT.');
         }
-        this.selectedCodes.set(selected);
-        this.editedPrices.set(edited);
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
@@ -294,6 +325,7 @@ export class BpuList {
     this.isEditing.set(false);
     this.selectedCodes.set(new Set());
     this.editedPrices.set(new Map());
+    this.syncQueryParams();
     this.load();
   }
 
@@ -310,6 +342,7 @@ export class BpuList {
     }
     this.selectedCodes.set(new Set());
     this.editedPrices.set(new Map());
+    this.syncQueryParams();
     this.load();
   }
 
@@ -362,11 +395,7 @@ export class BpuList {
     this.loading.set(true);
     this.error.set(null);
     const segment = this.currentSegment();
-    const items$ = segment === 'AUTRE'
-      ? this.bpuService.list(segment).pipe(
-          switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
-        )
-      : this.bpuService.list(segment);
+    const items$ = this.listItemsForSegment(segment);
     forkJoin({
       items: items$,
       selections: this.bpuSelectionService.list()
@@ -374,23 +403,11 @@ export class BpuList {
       next: ({ items, selections }) => {
         const uniqueItems = this.uniqueItems(items);
         this.items.set(uniqueItems);
-        const codes = new Map<string, string>();
-        for (const entry of uniqueItems) {
-          if (entry._id) codes.set(entry._id, String(entry.code || '').trim().toUpperCase());
-        }
-        this.editedCodes.set(codes);
+        this.editedCodes.set(this.buildEditedCodesMap(uniqueItems));
         const selection = this.resolveSelection(selections, selections, segment);
-        const availableCodes = new Set(uniqueItems.map((item) => item.code).filter(Boolean) as string[]);
-        const selected = new Set<string>();
-        const edited = new Map<string, number>();
-        for (const entry of selection?.prestations || []) {
-          const code = String(entry.code || '').trim().toUpperCase();
-          if (!code || !availableCodes.has(code)) continue;
-          selected.add(code);
-          edited.set(code, Number(entry.unitPrice || 0));
-        }
-        this.selectedCodes.set(selected);
-        this.editedPrices.set(edited);
+        const selectionState = this.buildSelectionState(uniqueItems, selection);
+        this.selectedCodes.set(selectionState.selected);
+        this.editedPrices.set(selectionState.edited);
         this.loading.set(false);
         this.success.set('BPU global copié. Vous pouvez ajuster avant d’enregistrer.');
       },
@@ -454,7 +471,7 @@ export class BpuList {
     const action = this.confirmAction();
     if (action === 'addPrestation') return 'Confirmer l’ajout';
     if (action === 'updateCode') return 'Confirmer la modification';
-    if (action === 'deletePersonalized') return 'Confirmer la suppression';
+    if (action === 'deletePersonalized') return 'Confirmer la suppression du BPU personnalisé';
     return 'Confirmer la validation';
   }
 
@@ -468,7 +485,7 @@ export class BpuList {
       return `Le code sera modifié de ${context.currentCode} vers ${context.nextCode}.`;
     }
     if (action === 'deletePersonalized' && context?.action === 'deletePersonalized') {
-      return `Le BPU de suivi de ${context.technicianLabel} sera supprimé.`;
+      return `Le BPU personnalisé de ${context.technicianLabel} sera supprimé. Cette action retire sa configuration dédiée et le technicien reviendra sur le BPU par défaut.`;
     }
     if (action === 'saveSelection' && context?.action === 'saveSelection') {
       if (context.technicianLabel) {
@@ -512,9 +529,24 @@ export class BpuList {
 
   editPersonalized(techId: string): void {
     if (!techId) return;
+    this.currentSegment.set('PERSONNALISE');
     this.selectedTechnicianId.set(techId);
     this.selectedCodes.set(new Set());
     this.editedPrices.set(new Map());
+    this.syncQueryParams();
+    this.load();
+  }
+
+  openAttachedTechnician(techId: string): void {
+    if (!techId) return;
+    if (this.currentSegment() === 'PERSONNALISE') {
+      this.editPersonalized(techId);
+      return;
+    }
+    this.selectedTechnicianId.set(techId);
+    this.selectedCodes.set(new Set());
+    this.editedPrices.set(new Map());
+    this.syncQueryParams();
     this.load();
   }
 
@@ -790,7 +822,16 @@ export class BpuList {
   }
 
   private performSaveSelection(): void {
-    const type = this.isTechnician() ? 'DEFAULT_RATES' : this.currentSegment();
+    if (!this.isTechnician() && !this.selectedTechnicianId() && this.currentSegment() === 'ERT') {
+      this.performSaveErtCatalog();
+      return;
+    }
+    const isPersonalizedSave = !this.isTechnician() && !!this.selectedTechnicianId();
+    const type = this.isTechnician()
+      ? 'DEFAULT_RATES'
+      : isPersonalizedSave
+        ? 'PERSONNALISE'
+        : this.currentSegment();
     const selected = this.items().filter((item) => item.code && this.selectedCodes().has(item.code));
     const prestations = selected
       .map((item) => ({
@@ -819,16 +860,56 @@ export class BpuList {
       next: () => {
         this.saving.set(false);
         this.selectedCodes.set(new Set());
-        this.success.set('BPU enregistré avec succès.');
+        const queryParams: Record<string, string> = {
+          saved: '1',
+          segment: isPersonalizedSave ? 'PERSONNALISE' : this.currentSegment()
+        };
+        if (!this.isTechnician() && this.selectedTechnicianId()) {
+          queryParams['technician'] = this.selectedTechnicianId() as string;
+        }
         if (this.isTechnician()) {
-          this.router.navigate(['/technician/bpu'], { queryParams: { saved: '1' } }).then();
+          this.router.navigate(['/technician/bpu'], { queryParams }).then();
         } else {
-          this.router.navigate(['/admin/bpu'], { queryParams: { saved: '1' } }).then();
+          this.router.navigate(['/admin/bpu'], { queryParams }).then();
         }
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
         this.error.set(this.apiError(err, 'Erreur sauvegarde BPU'));
+      }
+    });
+  }
+
+  private performSaveErtCatalog(): void {
+    const selected = this.items().filter((item) => item.code && this.selectedCodes().has(item.code));
+    const payload = selected
+      .map((item) => ({
+        prestation: String(item.prestation || '').trim(),
+        code: String(item.code || '').trim().toUpperCase(),
+        unitPrice: this.priceValue(item)
+      }))
+      .filter((item) => item.prestation && item.code && Number.isFinite(item.unitPrice));
+
+    if (!payload.length) {
+      this.error.set('Veuillez sélectionner au moins une prestation pour initialiser le BPU ERT.');
+      return;
+    }
+
+    this.saving.set(true);
+    this.error.set(null);
+    this.success.set(null);
+    this.bpuService.bulkUpsert('ERT', payload).subscribe({
+      next: (res) => {
+        this.saving.set(false);
+        this.selectedCodes.set(new Set());
+        const created = Number(res.created || 0);
+        const updated = Number(res.updated || 0);
+        this.success.set(`BPU ERT enregistré (${created} création(s), ${updated} mise(s) à jour).`);
+        this.load();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.saving.set(false);
+        this.error.set(this.apiError(err, 'Erreur sauvegarde BPU ERT'));
       }
     });
   }
@@ -935,10 +1016,17 @@ export class BpuList {
   private resolveSelection(ownerSelections: BpuSelection[], globalSelections: BpuSelection[], segment: Segment): BpuSelection | null {
     const segmentKey = this.normalizeSelectionType(segment);
     const pick = (items: BpuSelection[], type: string) => items.find((item) => this.normalizeSelectionType(item.type) === type);
+    const pickAnyOwnerSpecific = (items: BpuSelection[]) =>
+      items.find((item) => {
+        const type = this.normalizeSelectionType(item.type);
+        return !!item?.owner && type !== 'DEFAULT_RATES';
+      });
     return (
-      pick(ownerSelections, segmentKey)
+      pick(ownerSelections, 'PERSONNALISE')
+      || (segmentKey === 'PERSONNALISE' ? pickAnyOwnerSpecific(ownerSelections) : null)
+      || (segmentKey !== 'PERSONNALISE' ? pick(ownerSelections, segmentKey) : null)
       || pick(ownerSelections, 'DEFAULT_RATES')
-      || pick(globalSelections, segmentKey)
+      || (segmentKey !== 'PERSONNALISE' ? pick(globalSelections, segmentKey) : null)
       || pick(globalSelections, 'DEFAULT_RATES')
       || null
     );
@@ -954,6 +1042,81 @@ export class BpuList {
     return type === segmentKey || type === 'DEFAULT_RATES';
   }
 
+  private initFromQueryParams(): void {
+    const segment = this.route.snapshot.queryParamMap.get('segment');
+    if (this.isSegment(segment)) {
+      this.currentSegment.set(segment);
+      this.isEditing.set(true);
+    }
+    const technician = this.route.snapshot.queryParamMap.get('technician');
+    if (technician) {
+      this.selectedTechnicianId.set(technician);
+    }
+    if (this.route.snapshot.queryParamMap.get('saved') === '1') {
+      this.success.set('BPU enregistré avec succès.');
+    }
+  }
+
+  private isSegment(value: string | null): value is Segment {
+    return value === 'AUTO' || value === 'SALARIE' || value === 'PERSONNALISE' || value === 'AUTRE' || value === 'ERT';
+  }
+
+  private listItemsForSegment(segment: Segment) {
+    if (segment === 'PERSONNALISE') {
+      return this.bpuService.list();
+    }
+    if (segment === 'ERT') {
+      return this.bpuService.list(segment).pipe(
+        switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
+      );
+    }
+    if (segment === 'AUTRE') {
+      return this.bpuService.list(segment).pipe(
+        switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
+      );
+    }
+    return this.bpuService.list(segment);
+  }
+
+  private buildEditedCodesMap(items: BpuEntry[]): Map<string, string> {
+    const codes = new Map<string, string>();
+    for (const entry of items) {
+      if (entry._id) {
+        codes.set(entry._id, String(entry.code || '').trim().toUpperCase());
+      }
+    }
+    return codes;
+  }
+
+  private buildSelectionState(
+    items: BpuEntry[],
+    selection: BpuSelection | null,
+    preserveCatalogPrices = false
+  ): { selected: Set<string>; edited: Map<string, number> } {
+    const availableCodes = new Set(
+      items.map((item) => String(item.code || '').trim().toUpperCase()).filter(Boolean)
+    );
+    const selected = new Set<string>();
+    const edited = new Map<string, number>();
+    if (preserveCatalogPrices) {
+      for (const item of items) {
+        const code = String(item.code || '').trim().toUpperCase();
+        const price = Number(item.unitPrice);
+        if (!code || !Number.isFinite(price)) continue;
+        selected.add(code);
+        edited.set(code, price);
+      }
+      return { selected, edited };
+    }
+    for (const entry of selection?.prestations || []) {
+      const code = String(entry.code || '').trim().toUpperCase();
+      if (!code || !availableCodes.has(code)) continue;
+      selected.add(code);
+      edited.set(code, Number(entry.unitPrice || 0));
+    }
+    return { selected, edited };
+  }
+
   private uniqueItems(items: BpuEntry[]): BpuEntry[] {
     const seen = new Set<string>();
     const result: BpuEntry[] = [];
@@ -965,5 +1128,29 @@ export class BpuList {
       result.push(item);
     }
     return result;
+  }
+
+  private segmentFromContractType(contractType: string | null | undefined): Segment {
+    const contract = String(contractType || '').trim().toUpperCase();
+    if (contract === 'PERSONNALISE') return 'PERSONNALISE';
+    if (contract === 'FREELANCE') return 'AUTO';
+    if (contract === 'AUTRE') return 'AUTRE';
+    if (contract === 'ERT') return 'ERT';
+    return 'SALARIE';
+  }
+
+  private syncQueryParams(): void {
+    if (this.isTechnician()) return;
+    const queryParams: Record<string, string | null> = {
+      segment: this.currentSegment(),
+      technician: this.selectedTechnicianId(),
+      saved: null
+    };
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    }).then();
   }
 }

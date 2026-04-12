@@ -5,7 +5,6 @@
 @use './app/styles/forms' as *;
 @use './app/styles/states' as *;
 @use './app/styles/tables' as *;
-@use './app/styles/admin-dashboard' as *;
 
 @font-face {
   font-family: 'Manrope';
@@ -110,9 +109,8 @@
 }
 
 button .bi,
-button .fa-solid,
-button .fa-regular,
-button .fa-brands {
+button .material-icons,
+button .material-icons-outlined {
   margin-right: .4rem;
 }
 

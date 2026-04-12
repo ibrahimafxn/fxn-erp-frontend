@@ -30,9 +30,11 @@ export class Landing {
   activeFocus = signal<'materiels' | 'flotte' | null>(null);
 
   constructor() {
-    if (this.auth.isAuthenticated()) {
-      this.router.navigateByUrl('/app');
-    }
+    this.auth.ensureSessionReady().subscribe(() => {
+      if (this.auth.isAuthenticated()) {
+        this.router.navigateByUrl('/app');
+      }
+    });
   }
 
   submit(): void {

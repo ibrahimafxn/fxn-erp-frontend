@@ -157,71 +157,60 @@
   &.empty { opacity: 0.8; }
 }
 
-/* ── Table: card display on mobile ──────────────────────── */
-.technician-history .table {
-  padding: 0;
-}
-
-.technician-history .table table {
-  display: block;
-  width: 100%;
-}
-
-.technician-history .table thead {
-  display: none;
-}
-
-.technician-history .table tbody {
-  display: grid;
+/* ── History list — card-based ───────────────────────────── */
+.technician-history .history-list {
+  display: flex;
+  flex-direction: column;
   gap: 0.6rem;
 }
 
-/* Carte : Ressource (titre) + Action badge | puis Date | Quantité / Note */
-.technician-history .table tbody tr {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0 0.75rem;
+.technician-history .history-item {
   border: 1px solid var(--fxn-border);
   border-radius: 14px;
-  padding: 0.65rem 0.85rem;
   background: var(--fxn-surface);
+  padding: 0.7rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
-.technician-history .table tbody td {
-  display: block;
-  padding: 0.2rem 0;
-  border-bottom: none;
+.technician-history .history-row-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.technician-history .history-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.technician-history .history-resource {
   font-size: 0.9rem;
-}
-
-.technician-history .table tbody td::before {
-  content: attr(data-label);
-  display: block;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 2px;
+  color: var(--fxn-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Ressource pleine largeur en titre */
-.technician-history .table tbody td[data-label='Ressource'] {
-  grid-column: 1 / -1;
-  font-weight: 600;
-  font-size: 0.95rem;
+.technician-history .history-meta {
+  font-size: 0.78rem;
+  color: var(--fxn-text-muted);
 }
 
-/* Note pleine largeur si présente */
-.technician-history .table tbody td[data-label='Note'] {
-  grid-column: 1 / -1;
-  font-size: 0.82rem;
-  color: rgba(226, 232, 240, 0.72);
+.technician-history .history-right {
+  flex-shrink: 0;
 }
 
-body.theme-default .technician-history .table thead th {
-  color: var(--fxn-primary);
-  opacity: 0.95;
+.technician-history .history-note {
+  font-size: 0.78rem;
+  color: var(--fxn-text-muted);
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--fxn-border);
 }
 
 /* ── Responsive: 600px — Tablet ─────────────────────────── */
@@ -254,65 +243,6 @@ body.theme-default .technician-history .table thead th {
     justify-content: flex-end;
   }
 
-  /* Restore table */
-  .technician-history .table table {
-    display: table;
-    border-collapse: collapse;
-    border-spacing: 0;
-    min-width: 560px;
-  }
-
-  .technician-history .table thead {
-    display: table-header-group;
-  }
-
-  .technician-history .table thead th {
-    text-align: left;
-    font-size: 0.8rem;
-    opacity: 0.75;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid var(--fxn-border);
-    white-space: nowrap;
-  }
-
-  .technician-history .table tbody {
-    display: table-row-group;
-    gap: 0;
-  }
-
-  .technician-history .table tbody tr {
-    display: table-row;
-    grid-template-columns: unset;
-    border-radius: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
-  }
-
-  .technician-history .table tbody td {
-    display: table-cell;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    vertical-align: middle;
-    overflow: unset;
-    text-overflow: unset;
-    font-size: inherit;
-    font-weight: inherit;
-    color: inherit;
-  }
-
-  .technician-history .table tbody td[data-label='Ressource'],
-  .technician-history .table tbody td[data-label='Note'] {
-    grid-column: unset;
-    font-size: inherit;
-    font-weight: inherit;
-    color: inherit;
-  }
-
-  .technician-history .table tbody td::before {
-    display: none;
-  }
-
   .technician-history .pager {
     flex-direction: row;
     align-items: center;
@@ -327,7 +257,4 @@ body.theme-default .technician-history .table thead th {
     padding-bottom: 1.25rem;
   }
 
-  .technician-history .table {
-    overflow-x: auto;
-  }
 }

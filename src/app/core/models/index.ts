@@ -38,4 +38,6 @@ export * from './resource-movement.model';
 export * from './hr.model';
 export * from './supply-request.model';
 export * from './prestation.model';
+export * from './prestation-catalog.model';
+export * from './effective-bpu.model';
 export * from './auth-history.model';

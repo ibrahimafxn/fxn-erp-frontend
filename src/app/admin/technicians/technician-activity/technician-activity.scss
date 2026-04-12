@@ -118,6 +118,11 @@
   color: var(--fxn-text-muted);
 }
 
+.amount-summary .hint.secondary {
+  margin-top: .15rem;
+  color: var(--fxn-text-soft);
+}
+
 .grid {
   display: grid;
   gap: 1rem;

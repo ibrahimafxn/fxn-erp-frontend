@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, OnDestroy, effect, inject, signal, ChangeDetectionStrategy, computed } from '@angular/core';
 import {DOCUMENT} from '@angular/common';
 import {NavigationEnd, Router, RouterOutlet} from '@angular/router';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import {AppHeader} from './layout/app-header/app-header';
 import {AuthService} from './core/services/auth.service';
 import { UserPreferencesService } from './core/services/user-preferences.service';
@@ -23,16 +24,30 @@ export class App implements AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly preferencesApi = inject(UserPreferencesService);
   private readonly document = inject(DOCUMENT);
+  private readonly swUpdate = inject(SwUpdate, { optional: true });
   private toneObserver: MutationObserver | null = null;
   private lastPrefsUserId: string | null = null;
   private routeSub: Subscription | null = null;
+  private updateSub: Subscription | null = null;
+  private updatePollId: ReturnType<typeof setInterval> | null = null;
+  /** Intervalle entre deux vérifications de mise à jour du Service Worker (10 min) */
+  private readonly UPDATE_POLL_MS = 10 * 60 * 1000;
 
   protected readonly title = signal('fxn-erp-frontend');
   private readonly routeUrl = signal(this.router.url);
+  readonly updateAvailable = signal(false);
+  readonly updateApplying = signal(false);
+  readonly updateDismissed = signal(false);
   readonly showHeader = computed(() =>
     this.auth.ready$() &&
     this.auth.isAuthenticated() &&
-    !this.isLoginRoute(this.routeUrl())
+    this.usesAuthenticatedShell(this.routeUrl())
+  );
+  readonly showFooter = computed(() => !this.isFullscreenAuthRoute(this.routeUrl()));
+  readonly showUpdateBanner = computed(() =>
+    this.updateAvailable() &&
+    !this.updateDismissed() &&
+    !this.isFullscreenAuthRoute(this.routeUrl())
   );
   readonly showHeidiOverlay = computed(() => {
     const user = this.auth.user$();
@@ -43,13 +58,33 @@ export class App implements AfterViewInit, OnDestroy {
   readonly currentYear = new Date().getFullYear();
   readonly appVersion = packageJson.version ?? '—';
   constructor() {
-    this.auth.bootstrapSession();
+    const initialUrl = this.router.url;
+    if (this.usesAuthenticatedShell(initialUrl) || this.auth.hasSessionHint()) {
+      this.auth.bootstrapSession();
+    } else {
+      this.auth.markReady();
+    }
     this.routeSub = this.router.events
       .pipe(filter((evt) => evt instanceof NavigationEnd))
       .subscribe((evt) => {
         const nav = evt as NavigationEnd;
         this.routeUrl.set(nav.urlAfterRedirects || nav.url);
       });
+    if (this.swUpdate?.isEnabled) {
+      this.updateSub = this.swUpdate.versionUpdates
+        .pipe(filter((event): event is VersionReadyEvent => event.type === 'VERSION_READY'))
+        .subscribe(() => {
+          // Active le nouveau SW et recharge la page immédiatement — aucune action utilisateur requise.
+          this.swUpdate!.activateUpdate()
+            .then(() => this.document.location.reload())
+            .catch(() => this.document.location.reload());
+        });
+      this.swUpdate.checkForUpdate().catch(() => {});
+      // Vérifie toutes les 10 min pour que les sessions longues détectent les nouveaux déploiements.
+      this.updatePollId = setInterval(() => {
+        this.swUpdate!.checkForUpdate().catch(() => {});
+      }, this.UPDATE_POLL_MS);
+    }
   }
   private readonly preferencesEffect = effect(() => {
     const user = this.auth.user$();
@@ -111,6 +146,30 @@ export class App implements AfterViewInit, OnDestroy {
     this.toneObserver = null;
     this.routeSub?.unsubscribe();
     this.routeSub = null;
+    this.updateSub?.unsubscribe();
+    this.updateSub = null;
+    if (this.updatePollId !== null) {
+      clearInterval(this.updatePollId);
+      this.updatePollId = null;
+    }
+  }
+
+  dismissUpdateBanner(): void {
+    this.updateDismissed.set(true);
+  }
+
+  applyAppUpdate(): void {
+    this.updateApplying.set(true);
+
+    const reload = () => this.document.location.reload();
+    if (!this.swUpdate?.isEnabled) {
+      reload();
+      return;
+    }
+
+    this.swUpdate.activateUpdate()
+      .then(reload)
+      .catch(reload);
   }
 
   private normalizeTheme(value: string | ThemeOverride | null): ThemeOverride {
@@ -145,9 +204,21 @@ export class App implements AfterViewInit, OnDestroy {
     }
   }
 
-  private isLoginRoute(url: string): boolean {
+  private isFullscreenAuthRoute(url: string): boolean {
     const clean = (url || '').split('?')[0].split('#')[0].toLowerCase();
-    return clean === '/login' || clean.endsWith('/auth/login') || clean.includes('/login');
+    return clean === '/login';
+  }
+
+  private usesAuthenticatedShell(url: string): boolean {
+    const clean = (url || '').split('?')[0].split('#')[0].toLowerCase();
+    return (
+      clean.startsWith('/admin') ||
+      clean.startsWith('/depot') ||
+      clean.startsWith('/technician') ||
+      clean.startsWith('/profile') ||
+      clean.startsWith('/preferences') ||
+      clean.startsWith('/unauthorized')
+    );
   }
 
   private isAdminDashboardRoute(url: string): boolean {

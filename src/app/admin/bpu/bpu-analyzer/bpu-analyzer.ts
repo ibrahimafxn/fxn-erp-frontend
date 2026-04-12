@@ -6,9 +6,10 @@ import {
   ChangeDetectionStrategy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { DetailBack } from '../../../core/utils/detail-back';
 
 // ─── Types du rapport ──────────────────────────────────────────────────────────
 
@@ -82,8 +83,7 @@ type ApiResponse<T> = { success: boolean; data: T; message?: string };
   templateUrl: './bpu-analyzer.html',
   styleUrl: './bpu-analyzer.scss'
 })
-export class BpuAnalyzer {
-  private router = inject(Router);
+export class BpuAnalyzer extends DetailBack {
   private http = inject(HttpClient);
 
   readonly selectedFile = signal<File | null>(null);
@@ -162,7 +162,7 @@ export class BpuAnalyzer {
   }
 
   goBack(): void {
-    this.router.navigate(['/admin/bpu']).then();
+    this.back('/admin/bpu');
   }
 
   matchRateClass(rate: number): string {

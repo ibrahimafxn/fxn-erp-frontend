@@ -148,7 +148,7 @@
                 @if (canGeneratePayslip()) {
                   <td>
                     <button class="btn-outline" type="button" (click)="$event.stopPropagation(); openPayslipFor(e)">
-                      <i class="fa-solid fa-file-pdf"></i> Paie
+                      <i class="bi bi-file-earmark-pdf"></i> Paie
                     </button>
                   </td>
                 }
@@ -162,73 +162,199 @@
       <div class="panel detail" id="hr-employee-profile">
         @if (selected(); as s) {
           <h2 class="section-title"><span class="material-icons notranslate">assignment_ind</span>Dossier employé</h2>
-          <div class="identity">
-            <div class="identity-main">
-              <div class="identity-avatar" [attr.aria-label]="formatUserName(s.user)">
-                @if (avatarSrc(s.user)) {
-                  <img [src]="avatarSrc(s.user)" [alt]="formatUserName(s.user)" loading="lazy" />
-                } @else {
-                  <span>{{ userInitials(s.user) }}</span>
-                }
-              </div>
-              <div class="identity-text">
-                <div class="name">{{ formatUserName(s.user) }}</div>
-                <div class="meta">{{ s.user.email }} · {{ depotLabel(s.user) }}</div>
-                @if (requiredDocsForUser(s.user).length) {
-                  <div class="requirements">
-                    @for (t of requiredDocsForUser(s.user); track t) {
-                      <span class="pill" [class.ok]="isRequiredDocSatisfied(t)" [class.danger]="!isRequiredDocSatisfied(t)">
-                        {{ docTypeLabel(t) }}
-                      </span>
-                    }
+          <div class="profile-hero">
+            <div class="identity">
+              <div class="identity-main">
+                <div class="identity-avatar" [attr.aria-label]="formatUserName(s.user)">
+                  @if (avatarSrc(s.user)) {
+                    <img [src]="avatarSrc(s.user)" [alt]="formatUserName(s.user)" loading="lazy" />
+                  } @else {
+                    <span>{{ userInitials(s.user) }}</span>
+                  }
+                </div>
+                <div class="identity-text">
+                  <div class="name">{{ formatUserName(s.user) }}</div>
+                  <div class="meta">{{ s.user.email }} · {{ depotLabel(s.user) }}</div>
+                  <div class="meta">{{ s.user.phone || 'Téléphone non renseigné' }} · {{ profileForm.controls.jobTitle.value || 'Poste non renseigné' }}</div>
+                  <div class="profile-badges">
+                    <span class="pill role-pill" [class.tech]="s.user.role === 'TECHNICIEN'">{{ s.user.role || '—' }}</span>
+                    <span class="pill contract-pill">{{ selectedContractLabel() }}</span>
+                    <span class="pill source-pill">Segment source : {{ selectedSegmentSourceLabel() }}</span>
+                    <span class="badge" [class.ok]="s.compliance?.ok">{{ complianceLabel(s) }}</span>
                   </div>
-                }
+                </div>
               </div>
             </div>
-            <span class="badge" [class.ok]="s.compliance?.ok">{{ complianceLabel(s) }}</span>
+            <div class="hero-actions">
+              <button class="btn-save" type="button" (click)="openProfileConfirm()"><i class="bi bi-check2"></i> Enregistrer</button>
+            </div>
           </div>
 
-          <form class="form-grid" [formGroup]="profileForm">
-            <div class="field">
-              <label>Poste</label>
-              <input type="text" formControlName="jobTitle" />
-            </div>
-            <div class="field">
-              <label>Contrat</label>
-              <select formControlName="contractType">
-                @for (t of contractTypes; track t) {
-                  <option [value]="t">{{ t }}</option>
-                }
-              </select>
-            </div>
-            <div class="field">
-              <label>Date début</label>
-              <input type="date" formControlName="startDate" />
-            </div>
-            <div class="field">
-              <label>Date fin</label>
-              <input type="date" formControlName="endDate" />
-            </div>
-            <div class="field">
-              <label>Adresse</label>
-              <input type="text" formControlName="address" />
-            </div>
-            <div class="field">
-              <label>Contact urgence</label>
-              <input type="text" formControlName="emergencyName" />
-            </div>
-            <div class="field">
-              <label>Téléphone urgence</label>
-              <input type="text" formControlName="emergencyPhone" />
-            </div>
-            <div class="field full">
-              <label>Notes</label>
-              <textarea rows="3" formControlName="notes"></textarea>
-            </div>
-          </form>
-          <div class="actions">
-            <button class="btn-save" type="button" (click)="openProfileConfirm()"><i class="fa-solid fa-check"></i> Enregistrer</button>
+          <div class="profile-summary-grid">
+            <article class="summary-card">
+              <span class="summary-label">Contrat</span>
+              <strong>{{ selectedContractLabel() }}</strong>
+              <span>{{ profileForm.controls.jobTitle.value || 'Poste non renseigné' }}</span>
+            </article>
+            <article class="summary-card">
+              <span class="summary-label">Date d’entrée</span>
+              <strong>{{ formatDate(profileForm.controls.startDate.value) }}</strong>
+              <span>Fin : {{ formatDate(profileForm.controls.endDate.value) }}</span>
+            </article>
+            <article class="summary-card">
+              <span class="summary-label">Conformité documents</span>
+              <strong>{{ satisfiedRequiredDocCount() }}/{{ requiredDocCount() || 0 }}</strong>
+              <span>Documents requis conformes</span>
+            </article>
+            <article class="summary-card">
+              <span class="summary-label">Segment source BPU</span>
+              <strong>{{ selectedSegmentSourceLabel() }}</strong>
+              <span>Basé sur le contrat RH</span>
+            </article>
           </div>
+
+          <div class="profile-layout">
+            <div class="profile-main">
+              <form class="profile-sections" [formGroup]="profileForm">
+                <section class="profile-section-card">
+                  <div class="profile-section-header">
+                    <h3>Identité</h3>
+                    <p>Informations personnelles et coordonnées principales.</p>
+                  </div>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>Nom complet</label>
+                      <input type="text" [value]="formatUserName(s.user)" readonly />
+                    </div>
+                    <div class="field">
+                      <label>Email</label>
+                      <input type="text" [value]="s.user.email || '—'" readonly />
+                    </div>
+                    <div class="field">
+                      <label>Téléphone</label>
+                      <input type="text" [value]="s.user.phone || '—'" readonly />
+                    </div>
+                    <div class="field">
+                      <label>Dépôt</label>
+                      <input type="text" [value]="depotLabel(s.user)" readonly />
+                    </div>
+                    <div class="field full">
+                      <label>Adresse</label>
+                      <input type="text" formControlName="address" />
+                    </div>
+                  </div>
+                </section>
+
+                <section class="profile-section-card">
+                  <div class="profile-section-header">
+                    <h3>RH</h3>
+                    <p>Contrat, dates de référence et informations administratives.</p>
+                  </div>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>Poste</label>
+                      <input type="text" formControlName="jobTitle" />
+                    </div>
+                    <div class="field">
+                      <label>Contrat</label>
+                      <select formControlName="contractType">
+                        @for (t of contractTypes; track t) {
+                          <option [value]="t.value">{{ t.label }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Date début</label>
+                      <input type="date" formControlName="startDate" />
+                    </div>
+                    <div class="field">
+                      <label>Date fin</label>
+                      <input type="date" formControlName="endDate" />
+                    </div>
+                    <div class="field full">
+                      <label>Notes</label>
+                      <textarea rows="3" formControlName="notes"></textarea>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="profile-section-card">
+                  <div class="profile-section-header">
+                    <h3>Urgence</h3>
+                    <p>Personne à prévenir et coordonnées associées.</p>
+                  </div>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>Contact urgence</label>
+                      <input type="text" formControlName="emergencyName" />
+                    </div>
+                    <div class="field">
+                      <label>Téléphone urgence</label>
+                      <input type="text" formControlName="emergencyPhone" />
+                    </div>
+                  </div>
+                </section>
+
+                <section class="profile-section-card">
+                  <div class="profile-section-header">
+                    <h3>Documents requis</h3>
+                    <p>Suivi rapide des pièces attendues pour ce collaborateur.</p>
+                  </div>
+                  @if (requiredDocsForUser(s.user).length) {
+                    <div class="requirements">
+                      @for (t of requiredDocsForUser(s.user); track t) {
+                        <span class="pill" [class.ok]="isRequiredDocSatisfied(t)" [class.danger]="!isRequiredDocSatisfied(t)">
+                          {{ docTypeLabel(t) }}
+                        </span>
+                      }
+                    </div>
+                  } @else {
+                    <div class="state">Aucun document requis configuré pour ce rôle.</div>
+                  }
+                </section>
+              </form>
+            </div>
+
+            <aside class="profile-side">
+              <section class="profile-section-card side-card">
+                <div class="profile-section-header">
+                  <h3>Actions rapides</h3>
+                  <p>Accès direct aux écrans liés à ce technicien.</p>
+                </div>
+                <div class="profile-side-actions">
+                  @if (canGeneratePayslip()) {
+                    <button class="btn-outline" type="button" (click)="scrollToPayslip()"><i class="bi bi-file-earmark-pdf"></i> Aller à la paie</button>
+                  }
+                </div>
+              </section>
+
+              <section class="profile-section-card side-card">
+                <div class="profile-section-header">
+                  <h3>Repères</h3>
+                  <p>Vue rapide sur l’état actuel du dossier.</p>
+                </div>
+                <div class="profile-side-stats">
+                  <div>
+                    <span>Contrat</span>
+                    <strong>{{ selectedContractLabel() }}</strong>
+                  </div>
+                  <div>
+                    <span>Segment source</span>
+                    <strong>{{ selectedSegmentSourceLabel() }}</strong>
+                  </div>
+                  <div>
+                    <span>Documents conformes</span>
+                    <strong>{{ satisfiedRequiredDocCount() }}/{{ requiredDocCount() || 0 }}</strong>
+                  </div>
+                  <div>
+                    <span>Dépôt</span>
+                    <strong>{{ depotLabel(s.user) }}</strong>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+
           @if (success()) {
             <div class="state success">{{ success() }}</div>
           }
@@ -284,7 +410,7 @@
               </form>
               <div class="actions">
                 <button class="btn-outline" type="button" title="À VENIR..." disabled>
-                  <i class="fa-solid fa-file-pdf"></i> Générer PDF
+                  <i class="bi bi-file-earmark-pdf"></i> Générer PDF
                 </button>
               </div>
               @if (payslipError()) {
@@ -326,7 +452,7 @@
                 <div class="payslip-filter export">
                   <label>Export</label>
                   <button class="btn-outline" type="button" (click)="openExportConfirm()" [disabled]="payslipExportLoading()">
-                    <i class="fa-solid fa-file-excel"></i> Excel
+                    <i class="bi bi-file-earmark-excel"></i> Excel
                   </button>
                 </div>
               </div>
@@ -374,7 +500,7 @@
                           <td>{{ slip.createdAt | date: 'shortDate' }}</td>
                           <td>
                             <button class="btn-outline" type="button" (click)="downloadPayslip(slip)">
-                              <i class="fa-solid fa-download"></i> Télécharger
+                              <i class="bi bi-download"></i> Télécharger
                             </button>
                           </td>
                         </tr>
@@ -522,7 +648,7 @@
                               title="Supprimer"
                               [disabled]="deletingDocId() === d._id"
                               (click)="openDeleteDocModal(d)"
-                            ><i class="fa-solid fa-trash"></i>
+                            ><i class="bi bi-trash"></i>
                               @if (deletingDocId() === d._id) { Suppression… }
                             </button>
                           </td>
@@ -624,7 +750,7 @@
                         title="Supprimer"
                         [disabled]="deletingDocId() === d._id"
                         (click)="openDeleteDocModal(d)"
-                      ><i class="fa-solid fa-trash"></i> 
+                      ><i class="bi bi-trash"></i> 
                         @if (deletingDocId() === d._id) { Suppression… }
                       </button>
                     </td>

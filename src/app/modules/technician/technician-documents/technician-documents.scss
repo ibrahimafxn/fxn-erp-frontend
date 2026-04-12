@@ -86,103 +86,80 @@
   border-color: rgba(239, 68, 68, 0.3);
 }
 
-/* ── Table: card display on mobile ──────────────────────── */
-.technician-documents .table {
-  padding: 0;
-}
-
-.technician-documents table {
-  display: block;
-  width: 100%;
-}
-
-.technician-documents thead {
-  display: none;
-}
-
-.technician-documents tbody {
+/* ── Documents list — card-based ─────────────────────────── */
+.technician-documents .docs-list {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
 
-/* Chaque ligne = une carte à 2 colonnes :
-   col 1 (gauche)  : Document + Détail
-   col 2 (droite)  : Statut + Expiration + bouton Ouvrir */
-.technician-documents tbody tr {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem 0.75rem;
-  align-items: start;
+.technician-documents .doc-item {
   border: 1px solid var(--fxn-border);
   border-radius: 14px;
-  padding: 0.75rem 0.9rem;
   background: var(--fxn-surface);
+  padding: 0.75rem 0.9rem;
 }
 
-/* Document (col 1, ligne 1) */
-.technician-documents tbody td[data-label='Document'] {
-  grid-column: 1;
-  grid-row: 1;
-  display: block;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0;
-}
-
-/* Détail (col 1, ligne 2) */
-.technician-documents tbody td[data-label='Détail'] {
-  grid-column: 1;
-  grid-row: 2;
-  display: block;
-  font-size: 0.82rem;
-  color: var(--fxn-text-muted);
-  padding: 0;
-}
-
-/* Statut (col 2, ligne 1) */
-.technician-documents tbody td[data-label='Statut'] {
-  grid-column: 2;
-  grid-row: 1;
+.technician-documents .doc-row-main {
   display: flex;
-  justify-content: flex-end;
   align-items: flex-start;
-  padding: 0;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
-/* Expiration (col 2, ligne 2) */
-.technician-documents tbody td[data-label='Expiration'] {
-  grid-column: 2;
-  grid-row: 2;
-  display: block;
+.technician-documents .doc-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.technician-documents .doc-type {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--fxn-text);
+}
+
+.technician-documents .doc-detail {
   font-size: 0.82rem;
   color: var(--fxn-text-muted);
-  text-align: right;
-  padding: 0;
 }
 
-/* Action (pleine largeur, ligne 3) */
-.technician-documents tbody td[data-label='Action'] {
-  grid-column: 1 / -1;
-  grid-row: 3;
+.technician-documents .doc-expiry {
+  font-size: 0.78rem;
+  color: var(--fxn-text-muted);
+}
+
+.technician-documents .doc-right {
   display: flex;
-  justify-content: flex-end;
-  padding: 0.25rem 0 0;
-  border-top: 1px solid var(--fxn-border);
-  margin-top: 0.25rem;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
-.technician-documents tbody td[data-label='Action'] .btn-outline {
-  min-height: 40px;
-  padding: 0 1rem;
+.technician-documents .btn-open {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--fxn-border-strong);
+  background: transparent;
+  color: var(--fxn-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  min-height: 34px;
+  transition: background 0.12s ease, border-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Masquer les pseudo-labels (on gère la mise en page par grid positions) */
-.technician-documents tbody td::before {
-  display: none;
+.technician-documents .btn-open:hover {
+  background: var(--fxn-primary-soft);
+  border-color: var(--fxn-primary-border);
 }
 
-/* ── Responsive: 600px — header row + bouton auto ────────── */
+/* ── Responsive: 600px ───────────────────────────────────── */
 @media (min-width: 600px) {
   .technician-documents .page-header {
     flex-direction: row;
@@ -193,68 +170,6 @@
   .technician-documents .header-actions .btn-outline {
     width: auto;
     min-height: 40px;
-  }
-
-  /* Restore table */
-  .technician-documents .table {
-    overflow-x: auto;
-  }
-
-  .technician-documents table {
-    display: table;
-    border-collapse: collapse;
-    border-spacing: 0;
-    min-width: 560px;
-    width: 100%;
-  }
-
-  .technician-documents thead {
-    display: table-header-group;
-  }
-
-  .technician-documents thead th {
-    text-align: left;
-    padding: 0.75rem 0.9rem;
-    font-size: 0.8rem;
-    color: var(--fxn-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .technician-documents tbody {
-    display: table-row-group;
-    flex-direction: unset;
-    gap: 0;
-  }
-
-  .technician-documents tbody tr {
-    display: table-row;
-    grid-template-columns: unset;
-    border-radius: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
-  }
-
-  .technician-documents tbody td[data-label='Document'],
-  .technician-documents tbody td[data-label='Détail'],
-  .technician-documents tbody td[data-label='Statut'],
-  .technician-documents tbody td[data-label='Expiration'],
-  .technician-documents tbody td[data-label='Action'] {
-    display: table-cell;
-    grid-column: unset;
-    grid-row: unset;
-    padding: 0.75rem 0.9rem;
-    border-bottom: 1px solid var(--fxn-border);
-    vertical-align: middle;
-    text-align: left;
-    font-size: inherit;
-    font-weight: inherit;
-    color: inherit;
-    border-top: none;
-    margin-top: 0;
-    justify-content: flex-start;
   }
 }
 

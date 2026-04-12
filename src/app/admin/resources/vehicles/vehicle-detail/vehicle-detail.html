@@ -17,29 +17,17 @@
   } @else if (!hasVehicle()) {
     <div class="state empty card">Aucune donnée véhicule.</div>
   } @else {
-    <section class="grid">
-      <!-- IDENTITÉ -->
-      <article class="card">
-        <div class="card-actions">
-          <button class="btn-outline" type="button" (click)="back()"><i class="bi bi-arrow-left"></i> Retour</button>
-          <button class="btn-outline" type="button" (click)="load()">Actualiser</button>
-          <button class="btn-outline" type="button" (click)="openBreakdowns()">Pannes</button>
-          @if (canDeclareBreakdown()) {
-            <button class="btn-primary" type="button" (click)="declareBreakdown()">Déclarer panne</button>
-          }
-        </div>
-
-        <div class="divider"></div>
-
+    <header class="page-header card">
+      <div class="header-main">
         <div class="identity">
           <div class="avatar">{{ (plateLabel() || 'VE').slice(0,2).toUpperCase() }}</div>
-
           <div class="identity-text">
+            <div class="eyebrow">Véhicule</div>
             <div class="name">{{ titleLabel() }}</div>
-
             <div class="meta">
               <span class="chip">{{ plateLabel() }}</span>
               <span class="chip">{{ yearLabel() }}</span>
+              <span class="chip">{{ depotPreviewLabel() }}</span>
               @if (isAssigned()) {
                 <span class="chip chip-warn">Assigné</span>
               } @else {
@@ -49,201 +37,95 @@
           </div>
         </div>
 
-        <div class="info-grid">
-          <div class="info-item">
-            <label>Plaque</label>
-            <div>{{ plateLabel() }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Dépôt actuel</label>
-            <div>{{ depotPreviewLabel() }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Assigné à</label>
-            <div>{{ assignedToLabel() }}</div>
-          </div>
-
-          <div class="info-item">
-            <label>Créé le</label>
-            <div>
-              @if (createdAtValue()) { {{ createdAtValue() | date:'fullDate' }} } @else { — }
-            </div>
-          </div>
+        <div class="header-actions">
+          <button class="btn-outline" type="button" (click)="load()"><i class="bi bi-arrow-clockwise"></i> Actualiser</button>
+          <button class="btn-outline" type="button" (click)="openBreakdowns()"><i class="bi bi-tools"></i> Pannes</button>
           @if (!isDepotManager() && !isReadOnly()) {
-            <button class="btn-outline edit" type="button" title="Modifier" (click)="edit()" [disabled]="!hasVehicle()"><i class="bi bi-pencil"></i> Modifier</button>
+            <button class="btn-outline" type="button" title="Modifier" (click)="edit()" [disabled]="!hasVehicle()">
+              <i class="bi bi-pencil"></i> Modifier
+            </button>
+          }
+          @if (canDeclareBreakdown()) {
+            <button class="btn-primary" type="button" (click)="declareBreakdown()"><i class="bi bi-exclamation-triangle"></i> Déclarer panne</button>
           }
         </div>
-      </article>
+      </div>
 
-      <!-- ACTIONS -->
-      @if (!isReadOnly()) {
-      <article class="card">
-        <div class="card-title-row">
-          <h2>Actions rapides</h2>
-          <span class="hint">Assignation / Reprise</span>
-        </div>
+      <section class="overview-grid">
+        <article class="overview-card emphasis">
+          <span class="overview-label">Statut</span>
+          <strong>{{ statusLabel() }}</strong>
+          <span>
+            @if (isAssigned()) { En cours d’utilisation } @else { Disponible au dépôt }
+          </span>
+        </article>
+        <article class="overview-card">
+          <span class="overview-label">Affectation</span>
+          <strong>{{ assignedToLabel() }}</strong>
+          <span>Technicien actuel</span>
+        </article>
+        <article class="overview-card">
+          <span class="overview-label">Dépôt</span>
+          <strong>{{ depotPreviewLabel() }}</strong>
+          <span>Point de rattachement</span>
+        </article>
+        <article class="overview-card">
+          <span class="overview-label">Historique</span>
+          <strong>{{ historyTotal() }}</strong>
+          <span>Événement(s) enregistré(s)</span>
+        </article>
+      </section>
+    </header>
 
-        @if (actionError()) {
-          <div class="state error">{{ actionError() }}</div>
-        }
-
-        <div class="quick-actions">
-          <button class="btn-primary" type="button" (click)="openAssign()" [disabled]="actionSaving() || isAssigned()">
-            Assigner
-          </button>
-
-          <button class="btn-danger" type="button" (click)="openRelease()" [disabled]="actionSaving() || !isAssigned()">
-            Reprendre
-          </button>
-
-          <button class="btn-outline" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x-lg"></i> Fermer</button>
-        </div>
-
-        @if (assignMode() === 'assign') {
-          <div class="panel">
-            <div class="panel-title">Assigner à un technicien</div>
-
-            @if (techniciansLoading()) {
-              <div class="state loading">Chargement techniciens…</div>
-            } @else if (techniciansError()) {
-              <div class="state error">{{ techniciansError() }}</div>
-            } @else {
-              <label class="sub-label">Technicien</label>
-              <select class="select" [value]="selectedTechId()" (change)="onTechSelect($event)">
-                <option value="">— Sélectionner —</option>
-                @for (t of technicians(); track t._id) {
-                  <option [value]="t._id">
-                    {{ technicianLabel(t) }} · {{ t.email || '—' }}
-                  </option>
-                }
-              </select>
-
-              <label class="sub-label">Note</label>
-              <textarea
-                class="note-input"
-                rows="3"
-                placeholder="Optionnel : raison, chantier, commentaire..."
-                [value]="assignNote()"
-                (input)="onAssignNoteChange($event)"
-              ></textarea>
-
-              <div class="panel-actions">
-                <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x"></i> Annuler</button>
-
-                <button
-                  class="btn-primary btn-xs"
-                  type="button"
-                  (click)="assignToTech()"
-                  [disabled]="actionSaving() || !selectedTechId()"
-                >
-                  @if (actionSaving()) { Assignation… } @else { Assigner }
-                </button>
-              </div>
-            }
+    <section class="content-grid">
+      <section class="main-column">
+        <article class="card">
+          <div class="card-title-row">
+            <h2>Fiche véhicule</h2>
+            <span class="hint">Informations principales</span>
           </div>
-        }
 
-        @if (assignMode() === 'release') {
-          <div class="panel">
-            <div class="panel-title">Reprendre vers un dépôt</div>
-
-            @if (depotsLoading()) {
-              <div class="state loading">Chargement dépôts…</div>
-            } @else if (depotsError()) {
-              <div class="state error">{{ depotsError() }}</div>
-            } @else {
-              <label class="sub-label">Dépôt cible</label>
-              <select class="select" [value]="selectedDepotId()" (change)="onDepotSelect($event)">
-                <option value="">— Sélectionner —</option>
-                @for (d of depots(); track d._id) {
-                  <option [value]="d._id">{{ depotOptionLabel(d) }} @if (d.city) { · {{ d.city }} }</option>
-                }
-              </select>
-
-              <label class="sub-label">Note</label>
-              <textarea
-                class="note-input"
-                rows="3"
-                placeholder="Optionnel : raison, dépôt de retour, commentaire..."
-                [value]="releaseNote()"
-                (input)="onReleaseNoteChange($event)"
-              ></textarea>
-
-              <div class="panel-actions">
-                <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x"></i> Annuler</button>
-
-                <button
-                  class="btn-danger btn-xs"
-                  type="button"
-                  (click)="releaseToDepot()"
-                  [disabled]="actionSaving() || !selectedDepotId()"
-                >
-                  @if (actionSaving()) { Reprise… } @else { Reprendre }
-                </button>
-              </div>
-            }
-          </div>
-        }
-      </article>
-      }
-
-      <!-- PANNE / REPARATION -->
-      <article class="card">
-        <div class="card-title-row">
-          <h2>Panne / Réparation</h2>
-          <span class="hint">Dernière panne déclarée</span>
-        </div>
-
-        @if (breakdownLoading()) {
-          <div class="state loading">Chargement…</div>
-        } @else if (breakdownError()) {
-          <div class="state error">{{ breakdownError() }}</div>
-        } @else if (!latestBreakdown()) {
-          <div class="state empty">Aucune panne enregistrée.</div>
-        } @else {
           <div class="info-grid">
             <div class="info-item">
-              <label>Type</label>
-              <div>{{ latestBreakdown()!.problemType || '—' }}</div>
+              <label>Plaque</label>
+              <div>{{ plateLabel() }}</div>
             </div>
-            <div class="info-item">
-              <label>Statut</label>
-              <div>{{ breakdownStatusLabel() }}</div>
-            </div>
-            <div class="info-item">
-              <label>Retour</label>
-              <div>{{ breakdownReturnDate() }}</div>
-            </div>
-            <div class="info-item">
-              <label>Coût</label>
-              <div>{{ breakdownCost() }}</div>
-            </div>
-            <div class="info-item">
-              <label>Garage</label>
-              <div>{{ latestBreakdown()!.resolvedGarage || latestBreakdown()!.garageName || '—' }}</div>
-            </div>
-            <div class="info-item">
-              <label>Adresse garage</label>
-              <div>{{ latestBreakdown()!.garageAddress || '—' }}</div>
-            </div>
-            <div class="info-item">
-              <label>Adresse panne</label>
-              <div>{{ latestBreakdown()!.address || '—' }}</div>
-            </div>
-            @if (latestBreakdown()!.resolvedNote) {
-              <div class="info-item">
-                <label>Note</label>
-                <div>{{ latestBreakdown()!.resolvedNote }}</div>
-              </div>
-            }
-          </div>
-        }
-      </article>
 
-      <!-- HISTORIQUE -->
-      <article class="card history-card">
+            <div class="info-item">
+              <label>Dépôt actuel</label>
+              <div>{{ depotPreviewLabel() }}</div>
+            </div>
+
+            <div class="info-item">
+              <label>Assigné à</label>
+              <div>{{ assignedToLabel() }}</div>
+            </div>
+
+            <div class="info-item">
+              <label>Créé le</label>
+              <div>
+                @if (createdAtValue()) { {{ createdAtValue() | date:'fullDate' }} } @else { — }
+              </div>
+            </div>
+
+            <div class="info-item">
+              <label>Marque / modèle</label>
+              <div>{{ titleLabel() }}</div>
+            </div>
+
+            <div class="info-item">
+              <label>Année</label>
+              <div>{{ yearLabel() }}</div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card history-card">
+          <div class="card-title-row">
+            <h2>Historique</h2>
+            <span class="hint">{{ historyTotal() }} événement(s)</span>
+          </div>
+
         @if (historyLoading()) {
           <div class="state loading">Chargement historique…</div>
         } @else if (historyError()) {
@@ -318,7 +200,192 @@
           </div>
 
         }
-      </article>
+        </article>
+      </section>
+
+      <aside class="side-column">
+        @if (!isReadOnly()) {
+          <article class="card side-card">
+            <div class="card-title-row">
+              <h2>Actions rapides</h2>
+              <span class="hint">Assignation / Reprise</span>
+            </div>
+
+            @if (actionError()) {
+              <div class="state error">{{ actionError() }}</div>
+            }
+
+            <div class="quick-actions">
+              <button class="btn-primary" type="button" (click)="openAssign()" [disabled]="actionSaving() || isAssigned()">
+                Assigner
+              </button>
+
+              <button class="btn-danger" type="button" (click)="openRelease()" [disabled]="actionSaving() || !isAssigned()">
+                Reprendre
+              </button>
+
+              @if (assignMode() !== 'idle') {
+                <button class="btn-outline" type="button" (click)="closeActions()" [disabled]="actionSaving()">
+                  <i class="bi bi-x-lg"></i> Fermer
+                </button>
+              }
+            </div>
+
+            @if (assignMode() === 'assign') {
+              <div class="panel">
+                <div class="panel-title">Assigner à un technicien</div>
+
+                @if (techniciansLoading()) {
+                  <div class="state loading">Chargement techniciens…</div>
+                } @else if (techniciansError()) {
+                  <div class="state error">{{ techniciansError() }}</div>
+                } @else {
+                  <label class="sub-label">Technicien</label>
+                  <select class="select" [value]="selectedTechId()" (change)="onTechSelect($event)">
+                    <option value="">— Sélectionner —</option>
+                    @for (t of technicians(); track t._id) {
+                      <option [value]="t._id">
+                        {{ technicianLabel(t) }} · {{ t.email || '—' }}
+                      </option>
+                    }
+                  </select>
+
+                  <label class="sub-label">Note</label>
+                  <textarea
+                    class="note-input"
+                    rows="3"
+                    placeholder="Optionnel : raison, chantier, commentaire..."
+                    [value]="assignNote()"
+                    (input)="onAssignNoteChange($event)"
+                  ></textarea>
+
+                  <div class="panel-actions">
+                    <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x"></i> Annuler</button>
+
+                    <button
+                      class="btn-primary btn-xs"
+                      type="button"
+                      (click)="openAssignConfirm()"
+                      [disabled]="actionSaving() || !selectedTechId()"
+                    >
+                      @if (actionSaving()) { Assignation… } @else { Assigner }
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (assignMode() === 'release') {
+              <div class="panel">
+                <div class="panel-title">Reprendre vers un dépôt</div>
+
+                @if (depotsLoading()) {
+                  <div class="state loading">Chargement dépôts…</div>
+                } @else if (depotsError()) {
+                  <div class="state error">{{ depotsError() }}</div>
+                } @else {
+                  <label class="sub-label">Dépôt cible</label>
+                  <select class="select" [value]="selectedDepotId()" (change)="onDepotSelect($event)">
+                    <option value="">— Sélectionner —</option>
+                    @for (d of depots(); track d._id) {
+                      <option [value]="d._id">{{ depotOptionLabel(d) }} @if (d.city) { · {{ d.city }} }</option>
+                    }
+                  </select>
+
+                  <label class="sub-label">Note</label>
+                  <textarea
+                    class="note-input"
+                    rows="3"
+                    placeholder="Optionnel : raison, dépôt de retour, commentaire..."
+                    [value]="releaseNote()"
+                    (input)="onReleaseNoteChange($event)"
+                  ></textarea>
+
+                  <div class="panel-actions">
+                    <button class="btn-outline btn-xs" type="button" (click)="closeActions()" [disabled]="actionSaving()"><i class="bi bi-x"></i> Annuler</button>
+
+                    <button
+                      class="btn-danger btn-xs"
+                      type="button"
+                      (click)="openReleaseConfirm()"
+                      [disabled]="actionSaving() || !selectedDepotId()"
+                    >
+                      @if (actionSaving()) { Reprise… } @else { Reprendre }
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </article>
+        }
+
+        <article class="card side-card">
+          <div class="card-title-row">
+            <h2>Panne / Réparation</h2>
+            <span class="hint">Dernière panne déclarée</span>
+          </div>
+
+          @if (breakdownLoading()) {
+            <div class="state loading">Chargement…</div>
+          } @else if (breakdownError()) {
+            <div class="state error">{{ breakdownError() }}</div>
+          } @else if (!latestBreakdown()) {
+            <div class="state empty">Aucune panne enregistrée.</div>
+          } @else {
+            <div class="breakdown-stack">
+              <div class="breakdown-highlight">
+                <span class="overview-label">Statut panne</span>
+                <strong>{{ breakdownStatusLabel() }}</strong>
+                <span>{{ latestBreakdown()!.problemType || '—' }}</span>
+              </div>
+
+              <div class="info-stack">
+                <div class="info-item">
+                  <label>Retour</label>
+                  <div>{{ breakdownReturnDate() }}</div>
+                </div>
+                <div class="info-item">
+                  <label>Coût</label>
+                  <div>{{ breakdownCost() }}</div>
+                </div>
+                <div class="info-item">
+                  <label>Garage</label>
+                  <div>{{ latestBreakdown()!.resolvedGarage || latestBreakdown()!.garageName || '—' }}</div>
+                </div>
+                <div class="info-item">
+                  <label>Adresse garage</label>
+                  <div>{{ latestBreakdown()!.garageAddress || '—' }}</div>
+                </div>
+                <div class="info-item">
+                  <label>Adresse panne</label>
+                  <div>{{ latestBreakdown()!.address || '—' }}</div>
+                </div>
+                @if (latestBreakdown()!.resolvedNote) {
+                  <div class="info-item">
+                    <label>Note</label>
+                    <div>{{ latestBreakdown()!.resolvedNote }}</div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </article>
+      </aside>
     </section>
+  }
+
+  <app-confirm-action-modal
+    [open]="actionConfirmOpen()"
+    [title]="actionConfirmTitle()"
+    [message]="actionConfirmMessage()"
+    [confirmText]="actionConfirmText()"
+    [tone]="actionConfirmTone()"
+    [confirming]="actionSaving()"
+    (cancel)="closeActionConfirm()"
+    (confirm)="confirmVehicleAction()"
+  />
+
+  @if (isReadOnly()) {
+    <app-technician-mobile-nav></app-technician-mobile-nav>
   }
 </section>

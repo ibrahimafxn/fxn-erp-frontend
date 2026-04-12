@@ -9,12 +9,13 @@ import { Vehicle } from '../../../../core/models';
 import { DetailBack } from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
+import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-breakdown',
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, TechnicianMobileNav],
   templateUrl: './vehicle-breakdown.html',
   styleUrls: ['./vehicle-breakdown.scss']
 })
@@ -50,6 +51,7 @@ export class VehicleBreakdown extends DetailBack {
     initialValue: this.form.controls.repairMode.value
   });
 
+  readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
   readonly canSubmit = computed(() => !this.saving() && this.formStatus() === 'VALID');
   readonly showGarageField = computed(() => this.repairMode() === 'GARAGE');
 

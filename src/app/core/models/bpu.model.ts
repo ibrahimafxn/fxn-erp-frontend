@@ -3,7 +3,7 @@ export type BpuEntry = {
   prestation: string;
   code: string;
   unitPrice: number;
-  segment: 'AUTO' | 'SALARIE' | 'AUTRE';
+  segment: 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE' | 'ERT';
   createdAt?: string;
   updatedAt?: string;
 };

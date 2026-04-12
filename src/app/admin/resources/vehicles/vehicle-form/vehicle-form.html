@@ -1,16 +1,54 @@
 <section class="vehicles-form">
   <header class="page-header card">
-    <div>
-      <h1>{{ title() }}</h1>
-      <p class="subtitle">Créer ou modifier un véhicule.</p>
+    <div class="header-main">
+      <div class="identity-block">
+        <div class="avatar">
+          {{ (form.controls.plateNumber.value || current()?.plateNumber || 'VE').slice(0, 2).toUpperCase() }}
+        </div>
+        <div class="identity-copy">
+          <span class="eyebrow">Véhicule</span>
+          <h1>{{ title() }}</h1>
+          <p class="subtitle">
+            @if (mode() === 'create') {
+              Renseignez les informations essentielles avant d’ajouter le véhicule au parc.
+            } @else {
+              Mettez à jour la fiche du véhicule sans perdre l’historique existant.
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-outline" type="button" (click)="cancel()"><i class="bi bi-arrow-left"></i> Annuler</button>
+        <button class="btn-save" type="button" (click)="submit()" [disabled]="!canSubmit()">
+          <i class="bi bi-check2"></i>
+          @if (saving()) { Enregistrement… } @else { Enregistrer }
+        </button>
+      </div>
     </div>
 
-    <div class="header-actions">
-      <button class="btn-outline" type="button" (click)="cancel()"><i class="bi bi-arrow-left"></i> Annuler</button>
-      <button class="btn-save" type="button" (click)="submit()" [disabled]="!canSubmit()"><i class="fa-solid fa-check"></i> 
-        @if (saving()) { Enregistrement… } @else { Enregistrer }
-      </button>
-    </div>
+    <section class="overview-grid">
+      <article class="overview-card emphasis">
+        <span class="overview-label">Mode</span>
+        <strong>@if (mode() === 'create') { Création } @else { Édition }</strong>
+        <span>@if (mode() === 'create') { Nouveau véhicule } @else { Fiche existante }</span>
+      </article>
+      <article class="overview-card">
+        <span class="overview-label">Plaque</span>
+        <strong>{{ form.controls.plateNumber.value || 'À renseigner' }}</strong>
+        <span>Identifiant visible du véhicule</span>
+      </article>
+      <article class="overview-card">
+        <span class="overview-label">Dépôt</span>
+        <strong>{{ selectedDepotLabel() }}</strong>
+        <span>Point de rattachement</span>
+      </article>
+      <article class="overview-card">
+        <span class="overview-label">État</span>
+        <strong>{{ form.controls.state.value || 'À préciser' }}</strong>
+        <span>Disponibilité terrain</span>
+      </article>
+    </section>
   </header>
 
   @if (loading()) {
@@ -19,50 +57,122 @@
     <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
   }
 
-  <form class="card form" [formGroup]="form" (ngSubmit)="submit()">
-    <div class="grid">
-      <div class="field">
-        <label>Plaque</label>
-        <input type="text" formControlName="plateNumber" placeholder="Ex: AB-123-CD" />
-        @if (isInvalid('plateNumber')) { <small class="hint error">Plaque invalide</small> }
+  <section class="content-grid">
+    <form class="card form-card" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="section-head">
+        <div>
+          <h2>Informations principales</h2>
+          <p>Saisissez les données de base utilisées dans le parc et les affectations.</p>
+        </div>
+        <span class="section-badge">Formulaire</span>
       </div>
 
-      <div class="field">
-        <label>Marque</label>
-        <input type="text" formControlName="brand" placeholder="Ex: Renault" />
+      <div class="form-section">
+        <h3>Identité du véhicule</h3>
+        <div class="grid">
+          <div class="field">
+            <label>Plaque</label>
+            <input type="text" formControlName="plateNumber" placeholder="Ex: AB-123-CD" />
+            @if (isInvalid('plateNumber')) { <small class="hint error">Plaque invalide</small> }
+          </div>
+
+          <div class="field">
+            <label>État</label>
+            <input type="text" formControlName="state" placeholder="Ex: OK / Révision / HS" />
+          </div>
+
+          <div class="field">
+            <label>Marque</label>
+            <input type="text" formControlName="brand" placeholder="Ex: Renault" />
+          </div>
+
+          <div class="field">
+            <label>Modèle</label>
+            <input type="text" formControlName="model" placeholder="Ex: Kangoo" />
+          </div>
+
+          <div class="field">
+            <label>Année</label>
+            <input type="number" formControlName="year" min="1900" />
+          </div>
+        </div>
       </div>
 
-      <div class="field">
-        <label>Modèle</label>
-        <input type="text" formControlName="model" placeholder="Ex: Kangoo" />
-      </div>
-
-      <div class="field">
-        <label>Année</label>
-        <input type="number" formControlName="year" min="1900" />
-      </div>
-
-      <div class="field">
-        <label>État</label>
-        <input type="text" formControlName="state" placeholder="Ex: OK / Révision / HS" />
-      </div>
-
-      <div class="field">
-        <label>Dépôt</label>
-        @if (depotsLoading()) {
-          <div class="hint">Chargement des dépôts…</div>
-        } @else if (depotsError()) {
-          <div class="hint error">{{ depotsError() }}</div>
-        } @else {
-          <select formControlName="idDepot">
-            <option [ngValue]="null">— Aucun dépôt —</option>
-            @for (d of depots(); track d._id) {
-              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+      <div class="form-section">
+        <h3>Rattachement</h3>
+        <div class="grid">
+          <div class="field field-wide">
+            <label>Dépôt</label>
+            @if (depotsLoading()) {
+              <div class="hint">Chargement des dépôts…</div>
+            } @else if (depotsError()) {
+              <div class="hint error">{{ depotsError() }}</div>
+            } @else {
+              <select formControlName="idDepot">
+                <option [ngValue]="null">— Aucun dépôt —</option>
+                @for (d of depots(); track d._id) {
+                  <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+                }
+              </select>
             }
-          </select>
-        }
+          </div>
+        </div>
       </div>
-    </div>
 
-  </form>
+      <div class="form-footer">
+        <button class="btn-outline" type="button" (click)="cancel()">Retour liste</button>
+        <button class="btn-save" type="submit" [disabled]="!canSubmit()">
+          @if (saving()) { Enregistrement… } @else { Enregistrer le véhicule }
+        </button>
+      </div>
+    </form>
+
+    <aside class="side-column">
+      <article class="card side-card">
+        <div class="section-head compact">
+          <div>
+            <h2>Repères</h2>
+            <p>Points utiles avant validation.</p>
+          </div>
+        </div>
+
+        <div class="info-stack">
+          <div class="info-item">
+            <label>Plaque</label>
+            <div>{{ form.controls.plateNumber.value || 'Non renseignée' }}</div>
+          </div>
+          <div class="info-item">
+            <label>Marque / modèle</label>
+            <div>
+              @if (form.controls.brand.value || form.controls.model.value) {
+                {{ (form.controls.brand.value || '') + ' ' + (form.controls.model.value || '') }}
+              } @else {
+                À compléter
+              }
+            </div>
+          </div>
+          <div class="info-item">
+            <label>Dépôt sélectionné</label>
+            <div>{{ selectedDepotLabel() }}</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card side-card">
+        <div class="section-head compact">
+          <div>
+            <h2>Conseils</h2>
+            <p>Pour garder une fiche parc propre.</p>
+          </div>
+        </div>
+
+        <ul class="guidance-list">
+          <li>Utilisez une plaque unique et correctement normalisée.</li>
+          <li>Gardez l’état opérationnel cohérent avec le terrain.</li>
+          <li>Rattachez le véhicule à un dépôt avant affectation.</li>
+          <li>Conservez la marque, le modèle et l’année pour faciliter les recherches.</li>
+        </ul>
+      </article>
+    </aside>
+  </section>
 </section>

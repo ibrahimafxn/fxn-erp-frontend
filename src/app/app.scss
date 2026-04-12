@@ -5,6 +5,52 @@ main.app-content {
   overflow-x: clip;
 }
 
+.app-update-banner {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(32rem, calc(100vw - 2rem));
+  padding: 0.95rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--fxn-primary, #2563eb) 28%, transparent);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--fxn-surface, #101828) 92%, #ffffff 8%), color-mix(in srgb, var(--fxn-primary, #2563eb) 14%, var(--fxn-surface, #101828) 86%));
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
+  backdrop-filter: blur(10px);
+}
+
+.app-update-banner.with-header {
+  top: 5.5rem;
+}
+
+.app-update-banner .update-copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.app-update-banner .update-copy strong {
+  color: var(--fxn-text, #f8fafc);
+  font-size: 0.98rem;
+}
+
+.app-update-banner .update-copy span {
+  color: var(--fxn-text-muted, #cbd5e1);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.app-update-banner .update-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
 body.theme-technicien main.app-content {
   padding-bottom: calc(64px + env(safe-area-inset-bottom));
 }
@@ -25,7 +71,7 @@ body.theme-technicien main.app-content {
 }
 
 .app-footer {
-  margin-top: 2rem;
+  margin-top: 0.35rem;
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--fxn-border);
   background: var(--fxn-surface);
@@ -58,6 +104,21 @@ body.theme-technicien .app-footer {
 }
 
 @media (max-width: 700px) {
+  .app-update-banner,
+  .app-update-banner.with-header {
+    top: auto;
+    right: 0.75rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    left: 0.75rem;
+    width: auto;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .app-update-banner .update-actions {
+    justify-content: flex-end;
+  }
+
   .app-footer {
     grid-template-columns: 1fr;
     align-items: flex-start;

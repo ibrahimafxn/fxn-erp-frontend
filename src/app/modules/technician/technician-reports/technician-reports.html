@@ -2,19 +2,18 @@
   <header class="page-header">
     <div>
       <h1>Rapport quotidien</h1>
-      <p class="subtitle">Saisir le nombre d'interventions et un commentaire de fin de journée.</p>
+      <p class="subtitle">Saisir vos prestations du jour.</p>
     </div>
   </header>
 
-  @if (todayReport()) {
-    <section class="card daily-report-card">
-      <div class="daily-report-card__values">
-        <span class="daily-report-card__label">Raccordement pro complexe</span>
-        <span class="daily-report-card__value">{{ todayComplexProCount() }}</span>
-      </div>
-      <p class="daily-report-card__hint">Donnée extraite du dernier rapport journalier saisi.</p>
-    </section>
-  }
+  @if (bpuLoading()) {
+    <div class="state loading card">Chargement de votre BPU…</div>
+  } @else if (!hasBpu()) {
+    <div class="state empty card">
+      Aucun BPU configuré pour votre compte.<br>
+      Contactez votre administrateur pour accéder à cette fonctionnalité.
+    </div>
+  } @else {
 
   <section class="card form-card">
     <form class="report-form" [formGroup]="form" (ngSubmit)="submit()">
@@ -23,19 +22,41 @@
         <input type="date" formControlName="date" />
       </label>
 
-      <div class="full prestations" formGroupName="prestations">
+      <div class="full prestations">
         <div class="prestations-title">Prestations</div>
-        <div class="prestations-list">
-          @for (item of prestationOptions; track item.key) {
-            <div class="prestation-item">
-              <span class="prestation-pill" [ngClass]="item.className">{{ item.label }}</span>
-              <div class="prestation-stepper">
-                <button type="button" class="stepper-btn" (click)="stepPrestation(item.key, -1)" aria-label="Diminuer">−</button>
-                <input type="number" min="0" [formControlName]="item.key" />
-                <button type="button" class="stepper-btn" (click)="stepPrestation(item.key, 1)" aria-label="Augmenter">+</button>
+        @if (bpuError()) {
+          <div class="state error">{{ bpuError() }}</div>
+        } @else {
+          <div class="prestations-list">
+            @for (item of bpuItems(); track item.code; let i = $index) {
+              <div class="prestation-item">
+                <div [class]="'prestation-pill pill-color-' + codeColorIndex(item.code)">{{ item.prestation || item.code }}</div>
+                <div class="prestation-meta">
+                  <span class="prestation-price">{{ unitPriceFor(item.code) | amountCurrency }}</span>
+                </div>
+                <div class="prestation-stepper">
+                  <button type="button" class="stepper-btn" (click)="stepCode(item.code, -1)" aria-label="Diminuer">−</button>
+                  <input type="number" min="0" [value]="qtyFor(item.code)" (change)="setQty(item.code, $event)" />
+                  <button type="button" class="stepper-btn" (click)="stepCode(item.code, 1)" aria-label="Augmenter">+</button>
+                </div>
+                <div class="prestation-total">
+                  <span>Montant ligne</span>
+                  <strong>{{ lineAmount(item.code) | amountCurrency }}</strong>
+                </div>
               </div>
-            </div>
-          }
+            }
+          </div>
+        }
+      </div>
+
+      <div class="full form-summary">
+        <div class="summary-card">
+          <span class="summary-label">Quantité totale</span>
+          <strong class="summary-value">{{ selectedCount() }}</strong>
+        </div>
+        <div class="summary-card accent">
+          <span class="summary-label">CA estimé</span>
+          <strong class="summary-value">{{ formTotalAmount() | amountCurrency }}</strong>
         </div>
       </div>
 
@@ -45,7 +66,9 @@
       </label>
 
       <div class="actions">
-        <button class="btn-primary" type="submit" [disabled]="loading() || form.invalid || isDefaultForm()">Enregistrer</button>
+        <button class="btn-primary" type="submit" [disabled]="loading() || form.invalid || isDefaultForm()">
+          Enregistrer
+        </button>
       </div>
     </form>
   </section>
@@ -110,33 +133,22 @@
       <div class="table">
         <table>
           <thead>
-          <tr>
-            <th>Date</th>
-            <th>Prestations</th>
-            <th>Montant</th>
-            <th>Commentaire</th>
-            <th></th>
-          </tr>
+            <tr>
+              <th>Date</th>
+              <th>Prestations</th>
+              <th>Montant</th>
+              <th>Commentaire</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
             @for (report of items(); track report._id) {
-              <tr>
+              <tr [class.border-primary]="isToday(report)">
                 <td data-label="Date">{{ report.reportDate | date:'shortDate' }}</td>
                 <td class="prestations-cell" data-label="Prestations">
-                  @if (prestationsSummary(report).length) {
-                    <div class="prestations-summary">
-                      @for (item of prestationsSummary(report); track item.label) {
-                        <div class="prestations-pill" [ngClass]="item.className" [ngStyle]="prestationStyle(item.key)">
-                          <span class="qty">{{ item.value }}</span>
-                          <span>{{ item.label }}</span>
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    —
-                  }
+                  <app-report-prestations-badges [items]="prestationsSummary(report)"></app-report-prestations-badges>
                 </td>
-                <td data-label="Montant">{{ formatAmount(report.amount) }}</td>
+                <td data-label="Montant">{{ computeAmount(report) | amountCurrency }}</td>
                 <td class="note" data-label="Commentaire" [class.is-empty]="!report.comment">
                   @if (report.comment) { {{ report.comment }} }
                 </td>
@@ -144,7 +156,7 @@
                   @if (isToday(report)) {
                     <button class="btn-outline primary-outline" type="button" (click)="editToday(report)" aria-label="Modifier" title="Modifier"><i class="bi bi-pencil"></i></button>
                   }
-                  <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal(report)"><i class="fa-solid fa-trash"></i></button>
+                  <button class="btn-outline delete" type="button" title="Supprimer" (click)="openDeleteModal(report)"><i class="bi bi-trash"></i></button>
                 </td>
               </tr>
             }
@@ -153,6 +165,8 @@
       </div>
     }
   </section>
+
+  } <!-- /hasBpu -->
 </section>
 
 @if (saveSuccess()) {

@@ -14,7 +14,13 @@
   <header class="page-header">
     <div>
       <h1>Prestations</h1>
-      <p class="subtitle">Gérez les codes article et tarifs des prestations.</p>
+      <p class="subtitle">
+        @if (usesCatalogApi()) {
+          Gérez le catalogue maître des prestations, les segments et les tarifs de base.
+        } @else {
+          Gérez les codes article et tarifs des prestations.
+        }
+      </p>
     </div>
     <div class="header-actions">
       <button class="btn-primary" type="button" (click)="createNew()">
@@ -69,7 +75,9 @@
           <tr>
             <th>Code article</th>
             <th>Désignation</th>
+            <th>Segment</th>
             <th>Prix</th>
+            <th>Statut</th>
             <th>Création</th>
             <th class="actions">Actions</th>
           </tr>
@@ -80,8 +88,10 @@
               <td data-label="Code article">
                 <span class="code-badge">{{ p.code }}</span>
               </td>
-              <td data-label="Désignation" class="main">{{ p.designation }}</td>
+              <td data-label="Désignation" class="main">{{ designationLabel(p) }}</td>
+              <td data-label="Segment">{{ segmentLabel(p) }}</td>
               <td data-label="Prix">{{ formatPrix(p) }}</td>
+              <td data-label="Statut">{{ statusLabel(p) }}</td>
               <td data-label="Création">
                 @if (p.createdAt) { {{ p.createdAt | date:'short' }} } @else { — }
               </td>
@@ -97,7 +107,7 @@
                     aria-label="Supprimer"
                     [disabled]="deletingId() === p._id"
                     (click)="openDeleteModal(p)">
-                    <i class="fa-solid fa-trash"></i>
+                    <i class="bi bi-trash"></i>
                   </button>
                 </div>
               </td>

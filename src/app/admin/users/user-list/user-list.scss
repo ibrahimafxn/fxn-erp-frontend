@@ -212,7 +212,6 @@
 
   table {
     width: 100%;
-    min-width: 720px;
     border-collapse: collapse;
   }
 
@@ -389,7 +388,7 @@
   align-items: center;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
   .table {
     overflow: hidden;
 

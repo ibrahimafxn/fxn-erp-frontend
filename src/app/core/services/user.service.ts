@@ -77,6 +77,7 @@ export class UserService {
           return resp.data;
         }),
         tap((result) => {
+          this._users.set(result.items ?? []);
           this._result.set(result);
           this._meta.set({ total: result.total, page: result.page, limit: result.limit });
         }),
@@ -181,6 +182,12 @@ export class UserService {
 
   disableAccess(userId: string) {
     return this.http.put<{ success: boolean; data: AccessResult }>(`${this.baseUrl}/${userId}/disable-access`, {});
+  }
+
+  unlockUser(userId: string) {
+    return this.http.put<{ success: boolean; data: { _id: string; lockUntil: null; failedLoginAttempts: number } }>(
+      `${this.baseUrl}/${userId}/unlock`, {}
+    );
   }
 
   exportCsv(filter?: { q?: string; role?: string; depot?: string; createdFrom?: string; createdTo?: string }): Observable<Blob> {

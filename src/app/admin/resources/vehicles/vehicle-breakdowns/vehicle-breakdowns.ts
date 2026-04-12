@@ -11,13 +11,14 @@ import { Vehicle, VehicleBreakdown, VehicleBreakdownListResult } from '../../../
 import { DetailBack } from '../../../../core/utils/detail-back';
 import { formatPersonName } from '../../../../core/utils/text-format';
 import { formatPageRange } from '../../../../core/utils/pagination';
+import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-breakdowns',
   providers: [DatePipe],
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, TechnicianMobileNav],
   templateUrl: './vehicle-breakdowns.html',
   styleUrls: ['./vehicle-breakdowns.scss']
 })
@@ -203,7 +204,7 @@ export class VehicleBreakdowns extends DetailBack {
       : this.isReadOnly()
         ? '/technician/resources/vehicles'
         : '/admin/resources/vehicles';
-    this.router.navigate([base, this.id, 'detail']).then();
+    this.back(`${base}/${this.id}/detail`);
   }
 
   authorLabel(b: VehicleBreakdown): string {

@@ -195,7 +195,7 @@ export class ConsumablesForm extends DetailBack {
   }
 
   cancel(): void {
-    this.router.navigate(['/admin/resources/consumables']);
+    this.back('/admin/resources/consumables');
   }
 
   openConvertConfirm(): void {

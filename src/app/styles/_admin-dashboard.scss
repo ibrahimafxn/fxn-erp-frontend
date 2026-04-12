@@ -285,10 +285,11 @@
     }
 
     .btn-onboarding.btn-onboarding-hero {
-      border-color: rgba(250, 204, 21, 0.5);
-      background: linear-gradient(135deg, rgba(35, 24, 8, 0.95), rgba(42, 28, 10, 0.95));
-      box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.18), 0 18px 28px rgba(5, 10, 18, 0.28);
+      border-color: rgba(148, 163, 184, 0.4);
+      background: linear-gradient(135deg, rgba(19, 28, 42, 0.96), rgba(24, 34, 52, 0.94));
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16), 0 18px 28px rgba(5, 10, 18, 0.28);
     }
+
 
     .btn-onboarding.btn-depot-hero::after {
       content: 'warehouse';
@@ -1707,36 +1708,73 @@ body.theme-default .admin-dashboard {
 
   /* ── Boutons d'action hero (Dépôt / Onboarding / Rafraîchir) ── */
   .btn-onboarding {
+    --hero-btn-title: var(--fxn-text);
+    --hero-btn-meta: var(--fxn-text-muted);
+    --hero-btn-badge-bg: var(--fxn-primary-soft);
+    --hero-btn-badge-text: var(--fxn-primary);
+    --hero-btn-badge-border: var(--fxn-primary-border);
+
     background: var(--fxn-surface);
     border-color: var(--fxn-border-strong);
     box-shadow: var(--fxn-shadow-sm);
 
-    .title { color: var(--fxn-text); }
-    .meta { color: var(--fxn-text-muted); }
-    .badge { background: var(--fxn-primary-soft); color: var(--fxn-primary); border-color: var(--fxn-primary-border); }
+    .title { color: var(--hero-btn-title); }
+    .meta { color: var(--hero-btn-meta); }
+    .badge {
+      background: var(--hero-btn-badge-bg);
+      color: var(--hero-btn-badge-text);
+      border-color: var(--hero-btn-badge-border);
+    }
 
     &::after { opacity: 0.06; color: var(--fxn-text); }
     &:hover { background: var(--fxn-surface-soft); }
   }
 
   .btn-onboarding.btn-depot-hero {
+    --hero-btn-badge-bg: rgba(22, 163, 74, 0.08);
+    --hero-btn-badge-text: #166534;
+    --hero-btn-badge-border: rgba(22, 163, 74, 0.18);
+
     background: rgba(240, 253, 244, 0.95);
     border-color: rgba(22, 163, 74, 0.3);
     &:hover { border-color: rgba(22, 163, 74, 0.55); }
   }
 
   .btn-onboarding.btn-onboarding-hero {
-    background: rgba(255, 251, 235, 0.95);
-    border-color: rgba(202, 138, 4, 0.3);
-    &:hover { border-color: rgba(202, 138, 4, 0.55); }
+    --hero-btn-title: #1f2937;
+    --hero-btn-meta: #475569;
+    --hero-btn-badge-bg: rgba(59, 130, 246, 0.08);
+    --hero-btn-badge-text: #1d4ed8;
+    --hero-btn-badge-border: rgba(59, 130, 246, 0.2);
+
+    background: linear-gradient(135deg, rgba(255, 252, 245, 0.98), rgba(245, 247, 250, 0.98));
+    border-color: rgba(148, 163, 184, 0.32);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+      0 14px 28px rgba(15, 23, 42, 0.08);
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 1), rgba(241, 245, 249, 1));
+      border-color: rgba(100, 116, 139, 0.5);
+    }
   }
 
   .btn-outline.btn-reload {
+    --hero-btn-title: var(--fxn-text);
+    --hero-btn-meta: var(--fxn-text-muted);
+    --hero-btn-badge-bg: rgba(124, 58, 237, 0.1);
+    --hero-btn-badge-text: #6d28d9;
+    --hero-btn-badge-border: rgba(124, 58, 237, 0.3);
+
     background: rgba(250, 245, 255, 0.95);
     border-color: rgba(124, 58, 237, 0.28);
-    .title { color: var(--fxn-text); }
-    .meta { color: var(--fxn-text-muted); }
-    .badge { background: rgba(124, 58, 237, 0.1); color: #6d28d9; border-color: rgba(124, 58, 237, 0.3); }
+    .title { color: var(--hero-btn-title); }
+    .meta { color: var(--hero-btn-meta); }
+    .badge {
+      background: var(--hero-btn-badge-bg);
+      color: var(--hero-btn-badge-text);
+      border-color: var(--hero-btn-badge-border);
+    }
     &:hover { border-color: rgba(124, 58, 237, 0.5); }
   }
 
@@ -1813,31 +1851,34 @@ body.theme-default .admin-dashboard {
 
   /* ── Bloc Opérations ── */
   .ops-grid .action-card.ops-card {
-    background: var(--fxn-surface);
-    border-color: var(--fxn-border);
+    --ops-card-bg: var(--fxn-surface);
+    --ops-card-border: var(--fxn-border);
+
+    background: var(--ops-card-bg);
+    border-color: var(--ops-card-border);
     &::after { opacity: 0.1; color: var(--fxn-text-muted); }
     &:hover { box-shadow: 0 10px 24px rgba(47, 107, 255, 0.14); }
   }
 
   .ops-grid .action-card.ops-card:nth-of-type(1) {
-    background: rgba(240, 253, 244, 0.9);
-    border-color: rgba(22, 163, 74, 0.25);
+    --ops-card-bg: rgba(240, 253, 244, 0.9);
+    --ops-card-border: rgba(22, 163, 74, 0.25);
   }
   .ops-grid .action-card.ops-card:nth-of-type(2) {
-    background: rgba(238, 242, 255, 0.9);
-    border-color: rgba(99, 102, 241, 0.28);
+    --ops-card-bg: rgba(238, 242, 255, 0.9);
+    --ops-card-border: rgba(99, 102, 241, 0.28);
   }
   .ops-grid .action-card.ops-card:nth-of-type(3) {
-    background: rgba(255, 247, 237, 0.9);
-    border-color: rgba(234, 88, 12, 0.28);
+    --ops-card-bg: rgba(255, 247, 237, 0.9);
+    --ops-card-border: rgba(234, 88, 12, 0.28);
   }
   .ops-grid .action-card.ops-card:nth-of-type(4) {
-    background: rgba(250, 245, 255, 0.9);
-    border-color: rgba(147, 51, 234, 0.28);
+    --ops-card-bg: rgba(250, 245, 255, 0.9);
+    --ops-card-border: rgba(147, 51, 234, 0.28);
   }
   .ops-grid .action-card.ops-card:nth-of-type(5) {
-    background: rgba(236, 254, 255, 0.9);
-    border-color: rgba(6, 182, 212, 0.28);
+    --ops-card-bg: rgba(236, 254, 255, 0.9);
+    --ops-card-border: rgba(6, 182, 212, 0.28);
   }
   .ops-grid .action-card.ops-card.ops-card-import {
     box-shadow: none;
@@ -1871,17 +1912,20 @@ body.theme-default .admin-dashboard {
 
   /* ── KPI grid (utilisateurs, dépôts, matériels…) ── */
   .kpi-grid .kpi-card.kpi-primary {
-    background: var(--fxn-surface);
-    border-color: var(--fxn-border);
+    --kpi-card-bg: var(--fxn-surface);
+    --kpi-card-border: var(--fxn-border);
+
+    background: var(--kpi-card-bg);
+    border-color: var(--kpi-card-border);
     &::after { opacity: 0.1; color: var(--fxn-text-muted); }
     &:hover { box-shadow: 0 10px 24px rgba(47, 107, 255, 0.14); }
   }
 
-  .kpi-grid .kpi-card.kpi-primary:nth-of-type(1) { background: rgba(239, 246, 255, 0.9); border-color: rgba(59, 130, 246, 0.22); }
-  .kpi-grid .kpi-card.kpi-primary:nth-of-type(2) { background: rgba(238, 242, 255, 0.9); border-color: rgba(99, 102, 241, 0.22); }
-  .kpi-grid .kpi-card.kpi-primary:nth-of-type(3) { background: rgba(240, 253, 244, 0.9); border-color: rgba(22, 163, 74, 0.22); }
-  .kpi-grid .kpi-card.kpi-primary:nth-of-type(4) { background: rgba(255, 251, 235, 0.9); border-color: rgba(202, 138, 4, 0.22); }
-  .kpi-grid .kpi-card.kpi-primary:nth-of-type(5) { background: rgba(236, 254, 255, 0.9); border-color: rgba(6, 182, 212, 0.22); }
+  .kpi-grid .kpi-card.kpi-primary:nth-of-type(1) { --kpi-card-bg: rgba(239, 246, 255, 0.9); --kpi-card-border: rgba(59, 130, 246, 0.22); }
+  .kpi-grid .kpi-card.kpi-primary:nth-of-type(2) { --kpi-card-bg: rgba(238, 242, 255, 0.9); --kpi-card-border: rgba(99, 102, 241, 0.22); }
+  .kpi-grid .kpi-card.kpi-primary:nth-of-type(3) { --kpi-card-bg: rgba(240, 253, 244, 0.9); --kpi-card-border: rgba(22, 163, 74, 0.22); }
+  .kpi-grid .kpi-card.kpi-primary:nth-of-type(4) { --kpi-card-bg: rgba(255, 251, 235, 0.9); --kpi-card-border: rgba(202, 138, 4, 0.22); }
+  .kpi-grid .kpi-card.kpi-primary:nth-of-type(5) { --kpi-card-bg: rgba(236, 254, 255, 0.9); --kpi-card-border: rgba(6, 182, 212, 0.22); }
 
   .kpi-label { color: var(--fxn-text-muted); }
   .kpi-value { color: var(--fxn-text); }

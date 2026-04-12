@@ -11,6 +11,20 @@ import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-ac
 
 type ViewMode = 'month' | 'week' | 'day';
 
+const STATUS_LABELS: Record<AbsenceStatus, string> = {
+  EN_ATTENTE: 'En attente',
+  APPROUVE: 'Approuvé',
+  REFUSE: 'Refusé',
+};
+
+const TYPE_LABELS: Record<AbsenceType, string> = {
+  CONGE: 'Congé',
+  MALADIE: 'Maladie',
+  PERMISSION: 'Permission',
+  FORMATION: 'Formation',
+  AUTRE: 'Autre',
+};
+
 @Component({
   standalone: true,
   selector: 'app-agenda-page',
@@ -77,6 +91,16 @@ export class AgendaPage {
   });
 
   readonly weekDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  readonly activeRange = computed(() => {
+    const filters = this.filterForm.getRawValue();
+    if (filters.fromDate && filters.toDate) {
+      return {
+        start: this.dateKeyFromValue(filters.fromDate),
+        end: this.dateKeyFromValue(filters.toDate)
+      };
+    }
+    return { start: undefined, end: undefined };
+  });
 
   readonly rangeLabel = computed(() => {
     const date = this.currentDate();
@@ -109,6 +133,32 @@ export class AgendaPage {
       return true;
     });
   });
+  readonly activeFilterCount = computed(() => {
+    const filters = this.filterForm.getRawValue();
+    return [
+      filters.technicianId,
+      filters.depotId,
+      filters.status,
+      filters.type,
+      filters.fromDate,
+      filters.toDate
+    ].filter(Boolean).length;
+  });
+  readonly approvedAbsenceCount = computed(() =>
+    this.visibleAbsences().filter((absence) => absence.status === 'APPROUVE').length
+  );
+  readonly pendingAbsenceCount = computed(() =>
+    this.visibleAbsences().filter((absence) => absence.status === 'EN_ATTENTE').length
+  );
+  readonly refusedAbsenceCount = computed(() =>
+    this.visibleAbsences().filter((absence) => absence.status === 'REFUSE').length
+  );
+  readonly viewModeLabel = computed(() => {
+    const mode = this.viewMode();
+    if (mode === 'week') return 'Semaine';
+    if (mode === 'day') return 'Jour';
+    return 'Mois';
+  });
 
   constructor() {
     this.loadUsers();
@@ -119,6 +169,7 @@ export class AgendaPage {
 
   setView(mode: ViewMode): void {
     this.viewMode.set(mode);
+    this.refreshForDisplayedRange();
   }
 
   toggleList(): void {
@@ -135,6 +186,7 @@ export class AgendaPage {
       date.setMonth(date.getMonth() - 1);
     }
     this.currentDate.set(date);
+    this.refreshForDisplayedRange();
   }
 
   goNext(): void {
@@ -147,21 +199,13 @@ export class AgendaPage {
       date.setMonth(date.getMonth() + 1);
     }
     this.currentDate.set(date);
+    this.refreshForDisplayedRange();
   }
 
   openModal(): void {
     this.modalOpen.set(true);
     this.editTarget.set(null);
-    this.absenceForm.reset({
-      technicianId: '',
-      type: 'CONGE',
-      status: 'EN_ATTENTE',
-      startDate: '',
-      endDate: '',
-      isHalfDay: false,
-      halfDayPeriod: 'AM',
-      comment: ''
-    });
+    this.resetAbsenceForm();
   }
 
   openEdit(absence: Absence): void {
@@ -190,14 +234,7 @@ export class AgendaPage {
   }
 
   clearFilters(): void {
-    this.filterForm.reset({
-      technicianId: '',
-      depotId: '',
-      status: '',
-      type: '',
-      fromDate: '',
-      toDate: ''
-    });
+    this.resetFilters();
     this.refresh();
   }
 
@@ -341,14 +378,7 @@ export class AgendaPage {
   }
 
   private activeRangeKeys(): { start?: string; end?: string } {
-    const filters = this.filterForm.getRawValue();
-    if (filters.fromDate && filters.toDate) {
-      return {
-        start: this.dateKeyFromValue(filters.fromDate),
-        end: this.dateKeyFromValue(filters.toDate)
-      };
-    }
-    return {};
+    return this.activeRange();
   }
 
   private dateKeyFromDate(date: Date): string {
@@ -378,8 +408,8 @@ export class AgendaPage {
   }
 
   hasFilterRange(): boolean {
-    const filters = this.filterForm.getRawValue();
-    return Boolean(filters.fromDate && filters.toDate);
+    const { start, end } = this.activeRange();
+    return Boolean(start && end);
   }
 
   isInFilterRange(date: Date): boolean {
@@ -524,23 +554,11 @@ export class AgendaPage {
   }
 
   statusLabel(status: AbsenceStatus): string {
-    switch (status) {
-      case 'EN_ATTENTE': return 'En attente';
-      case 'APPROUVE': return 'Approuvé';
-      case 'REFUSE': return 'Refusé';
-      default: return '—';
-    }
+    return STATUS_LABELS[status] ?? '—';
   }
 
   typeLabel(type: AbsenceType): string {
-    switch (type) {
-      case 'CONGE': return 'Congé';
-      case 'MALADIE': return 'Maladie';
-      case 'PERMISSION': return 'Permission';
-      case 'FORMATION': return 'Formation';
-      case 'AUTRE': return 'Autre';
-      default: return '—';
-    }
+    return TYPE_LABELS[type] ?? '—';
   }
 
   statusClass(status: AbsenceStatus): string {
@@ -568,6 +586,36 @@ export class AgendaPage {
   depotLabel(depot?: Depot | null): string {
     if (!depot?.name) return '—';
     return formatDepotName(depot.name);
+  }
+
+  private refreshForDisplayedRange(): void {
+    if (!this.hasFilterRange()) {
+      this.refresh();
+    }
+  }
+
+  private resetFilters(): void {
+    this.filterForm.reset({
+      technicianId: '',
+      depotId: '',
+      status: '',
+      type: '',
+      fromDate: '',
+      toDate: ''
+    });
+  }
+
+  private resetAbsenceForm(): void {
+    this.absenceForm.reset({
+      technicianId: '',
+      type: 'CONGE',
+      status: 'EN_ATTENTE',
+      startDate: '',
+      endDate: '',
+      isHalfDay: false,
+      halfDayPeriod: 'AM',
+      comment: ''
+    });
   }
 
   private resolveRange(from: string, to: string): { fromDate?: string; toDate?: string } {

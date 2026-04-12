@@ -15,6 +15,9 @@ import { Movement, Depot, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
+import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 
 type SortField = 'date' | 'technician' | 'depot' | 'amount';
 
@@ -22,7 +25,7 @@ type SortField = 'date' | 'technician' | 'depot' | 'amount';
   selector: 'app-technician-activity',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ReportPrestationsBadges, AmountCurrencyPipe],
   providers: [DatePipe],
   templateUrl: './technician-activity.html',
   styleUrl: './technician-activity.scss'
@@ -43,6 +46,7 @@ export class TechnicianActivity {
   readonly reservations = signal<Movement[]>([]);
   readonly interventions = signal<TechnicianReport[]>([]);
   readonly summaryTotalAmount = signal(0);
+  readonly summaryTotalCount = signal(0);
   readonly reservationsLoading = signal(false);
   readonly interventionsLoading = signal(false);
   readonly summaryLoading = signal(false);
@@ -82,22 +86,11 @@ export class TechnicianActivity {
     toDate: this.fb.nonNullable.control('')
   });
 
-  readonly prestationOptions = [
-    { key: 'professionnel', label: 'Professionnel', className: 'pill-professionnel' },
-    { key: 'pavillon', label: 'Pavillon', className: 'pill-pavillon' },
-    { key: 'immeuble', label: 'Immeuble', className: 'pill-immeuble' },
-    { key: 'racProC', label: 'Professionnel complexe', className: 'pill-pro-c' },
-    { key: 'prestaComplementaire', label: 'Presta Compl.', className: 'pill-complementaire' },
-    { key: 'reconnexion', label: 'Reconnexion', className: 'pill-reconnexion' },
-    { key: 'sav', label: 'SAV', className: 'pill-sav' },
-    { key: 'prestationF8', label: 'Prestation F8', className: 'pill-f8' }
-  ] as const;
   readonly bpuSelections = signal(new Map<string, Map<string, number>>());
   readonly employeeContracts = signal(new Map<string, string>());
   readonly bpuLoaded = signal(false);
   readonly employeesLoaded = signal(false);
   readonly selectedTechnicianId = signal('');
-  readonly customBpuLoading = signal(false);
   readonly hasCustomBpu = signal(false);
   readonly selectedTechnicianLabel = computed(() => {
     const techId = this.selectedTechnicianId();
@@ -132,6 +125,9 @@ export class TechnicianActivity {
     });
     return items;
   });
+  readonly visiblePageAmount = computed(() =>
+    this.interventions().reduce((sum, report) => sum + Number(this.reportAmount(report) || 0), 0)
+  );
 
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly managerDepotId = computed(() => {
@@ -331,31 +327,12 @@ export class TechnicianActivity {
     this.sortDirection.set(field === 'date' || field === 'amount' ? 'desc' : 'asc');
   }
 
-  prestationsSummary(report: TechnicianReport): Array<{ key: string; label: string; value: number; className: string }> {
-    const p = report.prestations || {};
-    return this.prestationOptions
-      .map((option) => ({
-        key: option.key,
-        label: option.label,
-        value: Number(p[option.key] || 0),
-        className: option.className
-      }))
-      .filter((item) => item.value > 0);
-  }
-
-  formatAmount(value?: number | null): string {
-    const amount = Number(value ?? 0);
-    if (!Number.isFinite(amount)) return '0,00 €';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+  prestationsSummary(report: TechnicianReport): Array<{ code: string; qty: number }> {
+    return normalizeReportPrestations(report).map(({ code, qty }) => ({ code, qty }));
   }
 
   reportAmount(report: TechnicianReport): number {
-    return this.computeBpuAmount(report);
+    return computeReportAmount(report);
   }
 
   reportBpuLabel(report: TechnicianReport): string {
@@ -444,38 +421,20 @@ export class TechnicianActivity {
 
     this.summaryLoading.set(true);
     this.error.set(null);
-    await this.ensureBpuSelections();
-    await this.ensureEmployeeContracts();
-
-    const baseQuery = {
-      fromDate: dates.fromDate,
-      toDate: dates.toDate,
-      technicianId,
-      depotId
-    };
-
-    const limit = 200;
-    let page = 1;
-    let total = 0;
-    let amount = 0;
 
     try {
-      do {
-        const res = await firstValueFrom(this.reportService.list({ ...baseQuery, page, limit }));
-        if (requestId !== this.summaryRequestId) return;
-        if (!res?.success) {
-          throw new Error('Erreur chargement montant');
-        }
-        const items = res.data.items || [];
-        for (const item of items) {
-          amount += this.computeBpuAmount(item);
-        }
-        total = res.data.total ?? (items.length + (page - 1) * limit);
-        page += 1;
-      } while ((page - 1) * limit < total);
-
+      const res = await firstValueFrom(this.reportService.summary({
+        fromDate: dates.fromDate,
+        toDate: dates.toDate,
+        technicianId,
+        depotId
+      }));
       if (requestId !== this.summaryRequestId) return;
-      this.summaryTotalAmount.set(amount);
+      if (!res?.success) {
+        throw new Error('Erreur chargement montant');
+      }
+      this.summaryTotalAmount.set(Number(res.data?.totalAmount || 0));
+      this.summaryTotalCount.set(Number(res.data?.count || 0));
     } catch (err) {
       if (requestId !== this.summaryRequestId) return;
       this.error.set(this.apiError(err, 'Erreur chargement montant'));
@@ -483,32 +442,6 @@ export class TechnicianActivity {
       if (requestId !== this.summaryRequestId) return;
       this.summaryLoading.set(false);
     }
-  }
-
-  private computeBpuAmount(report: TechnicianReport): number {
-    const prices = this.resolveBpuPrices(report.technician?._id);
-    const p = report.prestations || {};
-    const get = (value?: number) => Number(value || 0);
-    return (
-      get(p.professionnel) * this.getBpuUnit(prices, 'RACPRO_S')
-      + get(p.racProC) * this.getBpuUnit(prices, 'RACPRO_C')
-      + get(p.pavillon) * this.getBpuUnit(prices, 'RACPAV')
-      + get(p.immeuble) * this.getBpuUnit(prices, 'RACIH')
-      + get(p.prestaComplementaire) * this.getBpuUnit(prices, 'PRESTA_COMPL')
-      + get(p.reconnexion) * this.getBpuUnit(prices, 'RECOIP')
-      + get(p.sav) * this.getBpuUnit(prices, 'SAV')
-      + get(p.prestationF8) * this.getBpuUnit(prices, 'REPFOU_PRI')
-    );
-  }
-
-  private getBpuUnit(prices: Map<string, number> | null, code: string): number {
-    if (!prices) return 0;
-    return Number(prices.get(code) || 0);
-  }
-
-  private resolveBpuPrices(technicianId?: string | null): Map<string, number> | null {
-    const type = this.resolveBpuSegment(technicianId);
-    return this.bpuSelections().get(type) || null;
   }
 
   private resolveBpuSegment(technicianId?: string | null): string {
@@ -549,15 +482,12 @@ export class TechnicianActivity {
       this.hasCustomBpu.set(false);
       return;
     }
-    this.customBpuLoading.set(true);
     this.bpuSelectionService.list({ owner: techId }).subscribe({
       next: (items) => {
         this.hasCustomBpu.set((items || []).length > 0);
-        this.customBpuLoading.set(false);
       },
       error: () => {
         this.hasCustomBpu.set(false);
-        this.customBpuLoading.set(false);
       }
     });
   }

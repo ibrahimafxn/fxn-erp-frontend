@@ -11,12 +11,14 @@ import {
   InterventionTotals
 } from '../../../core/services/intervention.service';
 import { BpuService } from '../../../core/services/bpu.service';
+import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { InterventionRates, InterventionRatesService } from '../../../core/services/intervention-rates.service';
-import { BpuEntry, User, Role } from '../../../core/models';
+import { BpuEntry, BpuSelection, User, Role } from '../../../core/models';
 import { UserService } from '../../../core/services/user.service';
 import { hasRacpavInArticles, isRacihSuccess, isRacpavSuccess } from '../../../core/utils/intervention-prestations';
 import { formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 
 type TechnicianInterventionStats = {
   total: number;
@@ -260,7 +262,38 @@ const ARTICLE_TYPE_BY_CODE = new Map([
   ['BONUS_MALUS_RACC', 'BONUS MALUS RACC'],
   ['SCORING_TECHNICIEN', 'SCORING TECH'],
 ]);
+const ERT_REFERENCE_LABELS = new Map<string, string[]>([
+  ['RAC_PBO_SOUT', ['RACCORDEMENT PAVILLON SOUTERRAIN', 'RACCORD PAVILLON SOUTERRAIN', 'RAC SOUT']],
+  ['RAC_PBO_AERIEN', ['RACCORDEMENT PAVILLON AERIEN', 'RACCORD PAVILLON AERIEN', 'RAC AERIEN']],
+  ['RAC_PBO_FACADE', ['RACCORDEMENT PAVILLON FACADE', 'RACCORD PAVILLON FACADE', 'RAC FACADE']],
+  ['RACIM', ['RACCORDEMENT IMMEUBLE', 'RACCORD IMMEUBLE', 'RAC IMMEUBLE', 'RACIH', 'RACIM']],
+  ['PLV_PRO_S', ['PLV PRO SIMPLE', 'PLV PRO S', 'RACPRO S', 'PRO SIMPLE']],
+  ['PLV_PRO_C', ['PLV PRO COMPLEXE', 'PLV PRO C', 'RACPRO C', 'PRO COMPLEXE']],
+  ['CLEM', ['MISE EN SERVICE', 'CLEM']],
+  ['RECOIP', ['RECONNEXION', 'RECO']],
+  ['FOURREAU_CASSE_PRIVE', ['FOURREAU CASSE DOMAINE PRIVE', 'FOURREAU CASSE PRIVE', 'PRESTA F8', 'REPFOU PRI']],
+  ['FOURREAU_CASSE_BETON', ['FOURREAU CASSE BETON', 'FOURREAU CASSE VOIRIE BETON']],
+  ['REFRAC', ['REFECTION RACCORDEMENT', 'REFRAC']],
+  ['REFRAC_DEGRADATION', ['REFECTION DEGRADATION CLIENT', 'REFRAC DEGRADATION', 'REFC DGR']],
+  ['DEPLACEMENT_PRISE', ['DEPLACEMENT DE PRISE', 'DEPLPRISE']],
+  ['DEPLACEMENT_OFFERT', ['DEPLACEMENT OFFERT']],
+  ['DEPLACEMENT_A_TORT', ['DEPLACEMENT A TORT']],
+  ['SAV', ['SAV']],
+  ['SAV_EXP', ['SAV EXP']],
+  ['SWAP_EQUIPEMENT', ['SWAP EQUIPEMENT', 'SWAP']],
+  ['CABLE_SL', ['CABLE SL', 'CABLE PAV 1', 'CABLE PAV 2', 'CABLE PAV 3', 'CABLE PAV 4']],
+  ['BIFIBRE', ['BIFIBRE']],
+  ['NACELLE', ['NACELLE']],
+  ['PRESTA_COMPL', ['PRESTA COMPL', 'PRESTATION COMPLEMENTAIRE']],
+  ['DEMO', ['DEMO']],
+]);
 const REQUIRED_TYPE_LABELS = ['RECOIP'];
+const EUR_FORMATTER = new Intl.NumberFormat('fr-FR', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
 
 @Component({
   standalone: true,
@@ -273,6 +306,7 @@ const REQUIRED_TYPE_LABELS = ['RECOIP'];
 export class TechnicianInterventions {
   private svc = inject(InterventionService);
   private bpuService = inject(BpuService);
+  private bpuSelectionService = inject(BpuSelectionService);
   private ratesService = inject(InterventionRatesService);
   private userService = inject(UserService);
   private fb = inject(FormBuilder);
@@ -285,6 +319,8 @@ export class TechnicianInterventions {
   readonly summaryTotals = signal<InterventionTotals | null>(null);
   readonly bpuCodes = signal<Set<string>>(new Set());
   readonly bpuAutoEntries = signal<BpuEntry[]>([]);
+  readonly adminBpuPriceMap = signal<Map<string, number>>(new Map());
+  readonly ertEntries = signal<BpuEntry[]>([]);
   readonly bpuLoading = signal(false);
   readonly bpuError = signal<string | null>(null);
 
@@ -370,44 +406,51 @@ export class TechnicianInterventions {
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly sortedInterventions = computed(() => this.sortedItems());
   readonly typeOptions = computed(() => {
-    const types = this.filters()?.types ?? [];
-    const mapped = types.map((value) => (value === 'RACC' ? 'RACPAV' : value));
-    if (!mapped.includes('RACIH')) {
-      mapped.push('RACIH');
+    const isExcludedType = (value: string) => {
+      const normalized = this.normalizeToken(value);
+      return normalized.startsWith('CABLE')
+        || normalized === 'BIFIBRE'
+        || normalized === 'CLEM'
+        || normalized === 'DEMO'
+        || normalized === 'REFRAC';
+    };
+    const bpuCodes = Array.from(new Set(
+      this.bpuAutoEntries()
+        .map((entry) => String(entry.code || '').trim())
+        .filter((code) => !isExcludedType(code))
+        .filter(Boolean)
+    ));
+    if (bpuCodes.length > 0) {
+      return bpuCodes.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
     }
-    return mapped;
+    const fallbackTypes = (this.filters()?.types ?? [])
+      .map((value) => this.normalizeFilterType(value))
+      .filter((value) => !isExcludedType(value))
+      .filter(Boolean);
+    return Array.from(new Set(fallbackTypes))
+      .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
   });
   constructor() {
     this.loadFilters();
     this.loadTechnicians();
-    this.loadInterventions();
-    this.loadSummary();
+    this.reloadAll();
     this.loadAutoBpu();
+    this.loadErtReference();
+    this.loadAdminBpuSelection();
     this.ratesService.refresh().subscribe();
   }
 
   applyFilters(): void {
     this.page.set(1);
     this.ratesService.refresh().subscribe();
-    this.loadInterventions();
-    this.loadSummary();
+    this.reloadAll();
   }
 
   clearFilters(): void {
-    this.filterForm.reset({
-      technician: '',
-      region: '',
-      client: '',
-      numInter: '',
-      status: '',
-      type: '',
-      fromDate: '',
-      toDate: ''
-    });
+    this.resetFilterForm();
     this.page.set(1);
     this.ratesService.refresh().subscribe();
-    this.loadInterventions();
-    this.loadSummary();
+    this.reloadAll();
   }
 
   prevPage(): void {
@@ -508,6 +551,48 @@ export class TechnicianInterventions {
         this.bpuError.set(this.apiError(err, 'Erreur chargement BPU AUTO'));
       }
     });
+  }
+
+  private loadAdminBpuSelection(): void {
+    this.bpuSelectionService.list({ owner: null }).subscribe({
+      next: (items) => {
+        const selection = this.resolveAdminBpuSelection(items || []);
+        this.adminBpuPriceMap.set(this.buildSelectionPriceMap(selection));
+      },
+      error: () => {
+        this.adminBpuPriceMap.set(new Map());
+      }
+    });
+  }
+
+  private loadErtReference(): void {
+    this.bpuService.list('ERT').subscribe({
+      next: (items) => {
+        this.ertEntries.set(items || []);
+      },
+      error: () => {
+        this.ertEntries.set([]);
+      }
+    });
+  }
+
+  private resolveAdminBpuSelection(items: BpuSelection[]): BpuSelection | null {
+    const sorted = [...items].sort(
+      (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+    );
+    const pick = (type: string) => sorted.find((item) => this.normalizeToken(item?.type) === type) ?? null;
+    return pick('PERSONNALISE') || pick('DEFAULT_RATES') || sorted[0] || null;
+  }
+
+  private buildSelectionPriceMap(selection: BpuSelection | null): Map<string, number> {
+    const prices = new Map<string, number>();
+    for (const item of selection?.prestations || []) {
+      const code = this.normalizeCanonicalCode(item?.code);
+      const unitPrice = Number(item?.unitPrice ?? NaN);
+      if (!code || !Number.isFinite(unitPrice)) continue;
+      prices.set(code, unitPrice);
+    }
+    return prices;
   }
 
   private ensureCablePavTypes(filters: InterventionFilters): InterventionFilters {
@@ -770,10 +855,44 @@ export class TechnicianInterventions {
   private countClosedByType(type: string): number {
     const items = this.statsDataset();
     if (!items.length) return 0;
+    const canonicalType = this.normalizeCanonicalCode(type);
     return items.reduce((acc, item) => {
-      const matches = this.resolveSuccessPrestations(item);
-      return matches.includes(type) ? acc + 1 : acc;
+      if (!this.isSuccessfulClosedItem(item)) return acc;
+      return this.itemMatchesNormalizedType(item, canonicalType) ? acc + 1 : acc;
     }, 0);
+  }
+
+  private isSuccessfulClosedItem(item: InterventionItem): boolean {
+    const statut = this.normalizeToken(item.statut);
+    const isCancelled = statut.includes('ANNULE');
+    const isFailure = statut.includes('ECHEC') || statut.includes('FAIL');
+    return this.isClosedTerminated(item.statut) && !isCancelled && !isFailure;
+  }
+
+  private itemMatchesNormalizedType(item: InterventionItem, canonicalType: string): boolean {
+    const normalizedRawType = this.normalizeFilterType(item.type);
+    if (normalizedRawType && this.normalizeCanonicalCode(normalizedRawType) === canonicalType) {
+      return true;
+    }
+
+    const normalizedCanonicalType = this.normalizeCanonicalCode(this.canonicalType(item.type, item));
+    if (normalizedCanonicalType === canonicalType) {
+      return true;
+    }
+
+    const dominantTypes = this.resolveDominantTypes(item)
+      .map((match) => this.normalizeCanonicalCode(match));
+    if (dominantTypes.includes(canonicalType)) {
+      return true;
+    }
+
+    const successPrestations = this.resolveSuccessPrestations(item)
+      .map((match) => this.normalizeCanonicalCode(match));
+    if (successPrestations.includes(canonicalType)) {
+      return true;
+    }
+
+    return this.hasCode(item.articlesRaw, canonicalType);
   }
 
   private rateForType(type: string, rates: InterventionRates): number {
@@ -825,6 +944,42 @@ export class TechnicianInterventions {
       DEMO: rates.demo.total,
     };
     return map[type] ?? 0;
+  }
+
+  private selectionRateForType(type: string): number | null {
+    const code = this.normalizeCanonicalCode(type);
+    if (!code) return null;
+    const ertPrice = this.ertPriceForCode(code);
+    if (ertPrice !== null) return ertPrice;
+    const unitPrice = this.adminBpuPriceMap().get(code);
+    return Number.isFinite(unitPrice) ? Number(unitPrice) : null;
+  }
+
+  private ertPriceForCode(code: string): number | null {
+    const canonicalCode = this.normalizeCanonicalCode(code);
+    const entries = this.ertEntries();
+    if (!canonicalCode || !entries.length) return null;
+
+    for (const entry of entries) {
+      if (this.normalizeCanonicalCode(entry.code) === canonicalCode) {
+        const price = Number(entry.unitPrice);
+        return Number.isFinite(price) ? price : null;
+      }
+    }
+
+    const references = this.ertReferenceLabelsForCode(canonicalCode);
+    if (!references.length) return null;
+
+    for (const entry of entries) {
+      const prestationKey = this.normalizePrestationKey(entry.prestation);
+      if (!prestationKey) continue;
+      if (references.some((ref) => prestationKey.includes(ref) || ref.includes(prestationKey))) {
+        const price = Number(entry.unitPrice);
+        return Number.isFinite(price) ? price : null;
+      }
+    }
+
+    return null;
   }
 
   private logAmountBreakdown(rates: InterventionRates): void {
@@ -1053,11 +1208,16 @@ export class TechnicianInterventions {
         success: stats.success,
         failure: stats.failure,
         cancelled: stats.cancelled,
-        ratio: (stats.failure + stats.cancelled) === 0
+        ratio: stats.failure === 0
           ? (stats.success === 0 ? 0 : Infinity)
-          : stats.success / (stats.failure + stats.cancelled)
+          : stats.success / stats.failure
       }))
-      .sort((a, b) => b.ratio - a.ratio)
+      .sort((a, b) => {
+        if (b.ratio !== a.ratio) return b.ratio - a.ratio;
+        if (b.success !== a.success) return b.success - a.success;
+        if (a.failure !== b.failure) return a.failure - b.failure;
+        return a.label.localeCompare(b.label, 'fr', { sensitivity: 'base' });
+      })
       .slice(0, 3)
       .map(({ label, success, failure, cancelled }) => ({ label, success, failure, cancelled }));
     const baseTopTypes = Array.from(types.entries())
@@ -1190,8 +1350,12 @@ export class TechnicianInterventions {
     const normalizedType = this.normalizeFilterType(rawType);
     if (normalizedType) {
       const count = this.countClosedByType(normalizedType);
-      const rate = this.rateForType(normalizedType, rates);
+      const rate = this.selectionRateForType(normalizedType) ?? this.rateForType(normalizedType, rates);
       return Math.round(count * rate * 100) / 100;
+    }
+    const amountFromSelection = this.computeTotalAmountFromSelection(this.summaryTotals());
+    if (amountFromSelection !== null) {
+      return amountFromSelection;
     }
     this.logAmountBreakdown(rates);
     return this.computeTotalAmount(this.summaryTotals(), rates);
@@ -1200,12 +1364,25 @@ export class TechnicianInterventions {
   formatAmount(value?: number | null): string {
     const amount = Number(value ?? 0);
     if (!Number.isFinite(amount)) return '0,00 €';
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    return EUR_FORMATTER.format(amount);
+  }
+
+  private reloadAll(): void {
+    this.loadInterventions();
+    this.loadSummary();
+  }
+
+  private resetFilterForm(): void {
+    this.filterForm.reset({
+      technician: '',
+      region: '',
+      client: '',
+      numInter: '',
+      status: '',
+      type: '',
+      fromDate: '',
+      toDate: ''
+    });
   }
 
   private computeTotalAmount(totals: InterventionTotals | null, rates: InterventionRates): number {
@@ -1227,6 +1404,47 @@ export class TechnicianInterventions {
     amount += get(totals.refrac) * rates.refrac.total;
     amount += get(totals.refcDgr) * rates.refcDgr.total;
     return Math.round(amount * 100) / 100;
+  }
+
+  private computeTotalAmountFromSelection(totals: InterventionTotals | null): number | null {
+    if (!totals) return 0;
+    const priceMap = this.adminBpuPriceMap();
+    const hasSelectionPrices = priceMap.size > 0;
+    const hasErtPrices = this.ertEntries().length > 0;
+    if (!hasSelectionPrices && !hasErtPrices) return null;
+    const get = (value?: number) => (Number.isFinite(value as number) ? Number(value) : 0);
+    let amount = 0;
+    amount += get(totals.racPavillon) * this.priceFromSelection(priceMap, 'RAC_PBO_SOUT');
+    amount += get(totals.racAerien) * this.priceFromSelection(priceMap, 'RAC_PBO_AERIEN');
+    amount += get(totals.racFacade) * this.priceFromSelection(priceMap, 'RAC_PBO_FACADE');
+    amount += get(totals.clem) * this.priceFromSelection(priceMap, 'CLEM');
+    amount += get(totals.reconnexion) * this.priceFromSelection(priceMap, 'RECOIP');
+    amount += get(totals.racImmeuble) * this.priceFromSelection(priceMap, 'RACIM');
+    amount += get(totals.racProS) * this.priceFromSelection(priceMap, 'PLV_PRO_S');
+    amount += get(totals.racProC) * this.priceFromSelection(priceMap, 'PLV_PRO_C');
+    amount += get(totals.racF8) * this.priceFromSelection(priceMap, 'FOURREAU_CASSE_PRIVE');
+    amount += get(totals.fourreauBeton) * this.priceFromSelection(priceMap, 'FOURREAU_CASSE_BETON');
+    amount += get(totals.prestaCompl) * this.priceFromSelection(priceMap, 'PRESTA_COMPL');
+    amount += get(totals.deplacementPrise ?? totals.deprise) * this.priceFromSelection(priceMap, 'DEPLACEMENT_PRISE');
+    amount += get(totals.demo) * this.priceFromSelection(priceMap, 'DEMO');
+    amount += get(totals.sav) * this.priceFromSelection(priceMap, 'SAV');
+    amount += get(totals.savExp) * this.priceFromSelection(priceMap, 'SAV_EXP');
+    amount += get(totals.deplacementOffert) * this.priceFromSelection(priceMap, 'DEPLACEMENT_OFFERT');
+    amount += get(totals.deplacementATort) * this.priceFromSelection(priceMap, 'DEPLACEMENT_A_TORT');
+    amount += get(totals.swapEquipement) * this.priceFromSelection(priceMap, 'SWAP_EQUIPEMENT');
+    amount += get(totals.refrac) * this.priceFromSelection(priceMap, 'REFRAC');
+    amount += get(totals.refcDgr) * this.priceFromSelection(priceMap, 'REFRAC_DEGRADATION');
+    amount += get(totals.cableSl ?? totals.cablePav1 ?? totals.cablePav2 ?? totals.cablePav3 ?? totals.cablePav4)
+      * this.priceFromSelection(priceMap, 'CABLE_SL');
+    amount += get(totals.bifibre) * this.priceFromSelection(priceMap, 'BIFIBRE');
+    amount += get(totals.nacelle) * this.priceFromSelection(priceMap, 'NACELLE');
+    return Math.round(amount * 100) / 100;
+  }
+
+  private priceFromSelection(priceMap: Map<string, number>, code: string): number {
+    const ertPrice = this.ertPriceForCode(code);
+    if (ertPrice !== null) return ertPrice;
+    return Number(priceMap.get(this.normalizeCanonicalCode(code)) ?? 0);
   }
 
   private computeDuration(item: InterventionItem): number {
@@ -1639,37 +1857,52 @@ export class TechnicianInterventions {
     const normalized = this.normalizeToken(value).replace(/[^A-Z0-9_]/g, '');
     if (!normalized) return '';
     const aliases = new Map([
-      ['RACPAV', 'RACPAV'],
-      ['RACIH', 'RACIH'],
+      ['RACPBOSOUT', 'RAC_PBO_SOUT'],
+      ['RAC_PBO_SOUT', 'RAC_PBO_SOUT'],
+      ['RACPAV', 'RAC_PBO_SOUT'],
+      ['RACIM', 'RACIM'],
+      ['RACIH', 'RACIM'],
       ['RECOIP', 'RECOIP'],
       ['RECO', 'RECOIP'],
-      ['RACPROS', 'RACPRO_S'],
-      ['RACPRO_S', 'RACPRO_S'],
-      ['RACPROC', 'RACPRO_C'],
-      ['RACPRO_C', 'RACPRO_C'],
+      ['PLVPROS', 'PLV_PRO_S'],
+      ['PLV_PRO_S', 'PLV_PRO_S'],
+      ['RACPROS', 'PLV_PRO_S'],
+      ['RACPRO_S', 'PLV_PRO_S'],
+      ['PLVPROC', 'PLV_PRO_C'],
+      ['PLV_PRO_C', 'PLV_PRO_C'],
+      ['RACPROC', 'PLV_PRO_C'],
+      ['RACPRO_C', 'PLV_PRO_C'],
       ['CLEM', 'CLEM'],
       ['SAV', 'SAV'],
       ['PRESTACOMPL', 'PRESTA_COMPL'],
       ['PRESTA_COMPL', 'PRESTA_COMPL'],
-      ['PRESTAF8', 'REPFOU_PRI'],
-      ['REPFOU_PRI', 'REPFOU_PRI'],
-      ['REFC_DGR', 'REFC_DGR'],
-      ['REFCDGR', 'REFC_DGR'],
-      ['DEPLPRISE', 'DEPLPRISE'],
+      ['FOURREAUCASSEPRIVE', 'FOURREAU_CASSE_PRIVE'],
+      ['FOURREAU_CASSE_PRIVE', 'FOURREAU_CASSE_PRIVE'],
+      ['PRESTAF8', 'FOURREAU_CASSE_PRIVE'],
+      ['REPFOU_PRI', 'FOURREAU_CASSE_PRIVE'],
+      ['REFRACDEGRADATION', 'REFRAC_DEGRADATION'],
+      ['REFRAC_DEGRADATION', 'REFRAC_DEGRADATION'],
+      ['REFC_DGR', 'REFRAC_DEGRADATION'],
+      ['REFCDGR', 'REFRAC_DEGRADATION'],
+      ['DEPLACEMENTPRISE', 'DEPLACEMENT_PRISE'],
+      ['DEPLACEMENT_PRISE', 'DEPLACEMENT_PRISE'],
+      ['DEPLPRISE', 'DEPLACEMENT_PRISE'],
       ['REFRAC', 'REFRAC'],
       ['DEMO', 'DEMO'],
       ['SAVEXP', 'SAV_EXP'],
       ['SAV_EXP', 'SAV_EXP'],
-      ['CABLE_PAV_1', 'CABLE_PAV_1'],
-      ['CABLE_PAV_2', 'CABLE_PAV_2'],
-      ['CABLE_PAV_3', 'CABLE_PAV_3'],
-      ['CABLE_PAV_4', 'CABLE_PAV_4'],
-      ['CABLEPAV1', 'CABLE_PAV_1'],
-      ['CABLEPAV2', 'CABLE_PAV_2'],
-      ['CABLEPAV3', 'CABLE_PAV_3'],
-      ['CABLEPAV4', 'CABLE_PAV_4']
+      ['CABLESL', 'CABLE_SL'],
+      ['CABLE_SL', 'CABLE_SL'],
+      ['CABLE_PAV_1', 'CABLE_SL'],
+      ['CABLE_PAV_2', 'CABLE_SL'],
+      ['CABLE_PAV_3', 'CABLE_SL'],
+      ['CABLE_PAV_4', 'CABLE_SL'],
+      ['CABLEPAV1', 'CABLE_SL'],
+      ['CABLEPAV2', 'CABLE_SL'],
+      ['CABLEPAV3', 'CABLE_SL'],
+      ['CABLEPAV4', 'CABLE_SL']
     ]);
-    return aliases.get(normalized) ?? '';
+    return aliases.get(normalized) ?? String(value ?? '').trim();
   }
 
   private normalizeTypeLabel(label: string): string {
@@ -1895,6 +2128,33 @@ export class TechnicianInterventions {
       .replace(/[\u0300-\u036f]/g, '')
       .toUpperCase()
       .trim();
+  }
+
+  private normalizeCanonicalCode(value?: string | null): string {
+    const normalized = this.normalizeToken(value)
+      .replace(/[^A-Z0-9_]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+    return TYPE_CANONICAL_ALIASES.get(normalized) || normalized;
+  }
+
+  private normalizePrestationKey(value?: string | null): string {
+    return this.normalizeToken(value)
+      .replace(/_/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private ertReferenceLabelsForCode(code: string): string[] {
+    const canonicalCode = this.normalizeCanonicalCode(code);
+    const references = new Set<string>(ERT_REFERENCE_LABELS.get(canonicalCode) || []);
+    const field = INTERVENTION_PRESTATION_FIELDS.find((entry) =>
+      this.normalizeCanonicalCode(entry.code) === canonicalCode
+    );
+    if (field?.label) {
+      references.add(field.label);
+    }
+    return Array.from(references).map((label) => this.normalizePrestationKey(label)).filter(Boolean);
   }
 
   private isSfrB2bMarque(value?: string | null): boolean {

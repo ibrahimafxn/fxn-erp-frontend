@@ -355,6 +355,11 @@ td {
 
 .modal-table {
   margin-top: 0;
+  overflow-x: auto;
+
+  table {
+    min-width: 780px;
+  }
 }
 
 .btn-remove-preview-line {

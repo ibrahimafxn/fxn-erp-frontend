@@ -150,4 +150,8 @@
     (cancel)="closeDeleteModal()"
     (confirm)="confirmDelete()">
   </app-confirm-delete-modal>
+
+  @if (isReadOnly()) {
+    <app-technician-mobile-nav></app-technician-mobile-nav>
+  }
 </section>

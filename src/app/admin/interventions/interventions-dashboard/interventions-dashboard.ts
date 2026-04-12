@@ -8,6 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   InterventionService,
   InterventionSummaryItem,
+  InterventionSummaryQuery,
   InterventionFilters,
   InterventionTotals,
   InterventionItem,
@@ -28,7 +29,21 @@ import { formatPageRange } from '../../../core/utils/pagination';
 import { formatPersonName } from '../../../core/utils/text-format';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { downloadBlob } from '../../../core/utils/download';
-import { isRacihSuccess, isRacpavSuccess } from '../../../core/utils/intervention-prestations';
+import {
+  DETAIL_GROUP_ORDER,
+  DETAIL_SUMMARY_PRESTATIONS,
+  EMPTY_SUMMARY_FILTERS,
+  extractImportedArticleCodes,
+  HIDDEN_PRESTATION_CODES,
+  INTERVENTION_CONTRACT_TYPES,
+  isSfrB2bMarque,
+  hasReconnexionInArticles,
+  normalizeInterventionText,
+  QUICK_SUMMARY_PRESTATIONS,
+  resolveBillingCodes,
+  REVENUE_CODE_ALIASES,
+  REVENUE_KEYS
+} from './interventions-dashboard.constants';
 
 @Component({
   standalone: true,
@@ -39,6 +54,9 @@ import { isRacihSuccess, isRacpavSuccess } from '../../../core/utils/interventio
   styleUrls: ['./interventions-dashboard.scss']
 })
 export class InterventionsDashboard {
+  private readonly emptySummaryFilters = EMPTY_SUMMARY_FILTERS;
+  private readonly hiddenPrestationCodes = new Set<string>(HIDDEN_PRESTATION_CODES);
+
   private readonly RATES_VIS_KEY = 'fxn.interventions.showRates';
   private svc = inject(InterventionService);
   private fb = inject(FormBuilder);
@@ -101,48 +119,15 @@ export class InterventionsDashboard {
   readonly revenueItemsLoading = signal(false);
   readonly revenueError = signal<string | null>(null);
   readonly latestImport = computed(() => this.importBatches()[0] || null);
+  readonly detailSummaryPrestations = DETAIL_SUMMARY_PRESTATIONS;
   readonly detailGroups = computed(() => {
     const items = this.detailItems();
-    const order = [
-      { key: 'racPavillon', label: 'Raccordement pavillon' },
-      { key: 'racImmeuble', label: 'Raccordement immeuble' },
-      { key: 'reconnexion', label: 'Reconnexion' },
-      { key: 'sav', label: 'SAV' },
-      { key: 'b2b', label: 'Raccordement B2B' },
-      { key: 'other', label: 'Autres' }
-    ];
+    const order = DETAIL_GROUP_ORDER;
     const buckets = new Map(order.map((group) => [group.key, [] as InterventionItem[]]));
 
     for (const item of items) {
-      const categories = Array.isArray(item.categories) ? item.categories : [];
-      const type = this.normalizeText(item.type);
-      const status = this.normalizeText(item.statut);
-      const isClosed = status.includes('CLOTURE') && status.includes('TERMINEE');
-      const isReconnexion = type.includes('RECO') || this.hasReconnexionInArticles(item.articlesRaw);
-      const isB2b = categories.includes('racProS')
-        || categories.includes('racProC')
-        || this.hasB2bInArticles(item.articlesRaw);
-      const successMatches = this.resolveSuccessPrestations(item);
-      let key = 'other';
-      if (successMatches.length) {
-        if (successMatches.includes('RACPAV')) key = 'racPavillon';
-        else if (successMatches.includes('RACIH')) key = 'racImmeuble';
-        else if (successMatches.includes('RECOIP')) key = 'reconnexion';
-        else if (successMatches.includes('SAV')) key = 'sav';
-        else if (successMatches.includes('RACPRO_S') || successMatches.includes('RACPRO_C')) key = 'b2b';
-      } else {
-        if (isClosed && isReconnexion) key = 'reconnexion';
-        else if (categories.includes('racPavillon')) key = 'racPavillon';
-        else if (categories.includes('racImmeuble')) key = 'racImmeuble';
-        else if (categories.includes('reconnexion')) key = 'reconnexion';
-        else if (categories.includes('sav')) key = 'sav';
-        else if (isB2b) key = 'b2b';
-        else {
-          if (type.includes('PRESTA') && type.includes('COMPL')) key = 'other';
-          else if (type.includes('SAV')) key = 'sav';
-          else if (isReconnexion) key = 'reconnexion';
-        }
-      }
+      const codes = extractImportedArticleCodes(item);
+      const key = order.find((group) => group.key !== 'other' && codes.includes(group.key))?.key || 'other';
       (buckets.get(key) || buckets.get('other'))?.push(item);
     }
 
@@ -151,146 +136,13 @@ export class InterventionsDashboard {
       .filter((group) => group.items.length > 0);
   });
 
-  private normalizeText(value?: string | null): string {
-    return String(value || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toUpperCase()
-      .trim();
-  }
-
-  private isSfrB2bMarque(value?: string | null): boolean {
-    const normalized = this.normalizeText(value);
-    if (!normalized) return false;
-    if (normalized.includes('SFR B2B')) return true;
-    return normalized.replace(/\s+/g, '').includes('SFRB2B');
-  }
-
-  private hasReconnexionInArticles(raw?: string | null): boolean {
-    const normalized = this.normalizeText(raw);
-    if (!normalized) return false;
-    return normalized.includes('RECOIP');
-  }
-
   private isReconnectionItem(item: InterventionItem): boolean {
-    if (this.isSfrB2bMarque(item.marque)) return false;
-    const statusNormalized = this.normalizeText(item.statut);
+    if (isSfrB2bMarque(item.marque)) return false;
+    const statusNormalized = normalizeInterventionText(item.statut);
     if (!(statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINEE'))) return false;
-    const typeNormalized = this.normalizeText(item.type);
-    return this.hasReconnexionInArticles(item.articlesRaw)
+    const typeNormalized = normalizeInterventionText(item.type);
+    return hasReconnexionInArticles(item.articlesRaw)
       || typeNormalized === 'RECO';
-  }
-
-  private hasB2bInArticles(raw?: string | null): boolean {
-    const normalized = this.normalizeText(raw);
-    if (!normalized) return false;
-    return normalized.includes('RACPRO') || normalized.includes('RAC PRO');
-  }
-
-  private extractCodesFromText(value?: string | null): string[] {
-    if (!value) return [];
-    return String(value)
-      .split(/[,;+]/)
-      .map((entry) => entry.replace(/"/g, '').trim())
-      .filter(Boolean)
-      .map((entry) => entry.replace(/\s+x?\d+$/i, '').trim())
-      .map((entry) => entry.replace(/\s+/g, '_'))
-      .map((entry) => entry.replace(/[^a-zA-Z0-9_]/g, '').toUpperCase())
-      .filter(Boolean);
-  }
-
-  private resolveBillingCodes(item: InterventionItem): string[] {
-    const codes = new Set<string>();
-    for (const code of this.extractCodesFromText(item.articlesRaw)) {
-      codes.add(code);
-    }
-    for (const code of this.extractCodesFromText(item.listePrestationsRaw)) {
-      codes.add(code);
-    }
-    for (const code of this.resolveSuccessPrestations(item)) {
-      codes.add(code);
-    }
-
-    const normalized = this.normalizeText(`${item.articlesRaw || ''} ${item.listePrestationsRaw || ''}`);
-    const isSfrB2b = this.isSfrB2bMarque(item.marque);
-    if (normalized.includes('CABLE PAV 1') || normalized.includes('CABLE_PAV_1')) codes.add('CABLE_PAV_1');
-    if (normalized.includes('CABLE PAV 2') || normalized.includes('CABLE_PAV_2')) codes.add('CABLE_PAV_2');
-    if (normalized.includes('CABLE PAV 3') || normalized.includes('CABLE_PAV_3')) codes.add('CABLE_PAV_3');
-    if (normalized.includes('CABLE PAV 4') || normalized.includes('CABLE_PAV_4')) codes.add('CABLE_PAV_4');
-    if (normalized.includes('RAC PRO S') || normalized.includes('RACPRO S')) codes.add('RACPRO_S');
-    if (normalized.includes('RAC PRO C') || normalized.includes('RACPRO C')) codes.add('RACPRO_C');
-    if (normalized.includes('CLEM')) codes.add('CLEM');
-
-    if (!isRacihSuccess(item.statut, item.articlesRaw)) {
-      codes.delete('RACIH');
-    }
-    if (isSfrB2b) {
-      codes.delete('RECOIP');
-    }
-
-    return [...codes];
-  }
-
-  private resolveSuccessPrestations(item: InterventionItem): string[] {
-    const statusNormalized = this.normalizeText(item.statut);
-    if (!(statusNormalized.includes('CLOTURE') && statusNormalized.includes('TERMINEE'))) {
-      return [];
-    }
-    const typeNormalized = this.normalizeText(item.type).replace(/-/g, ' ').trim();
-    const articlesNormalized = this.normalizeText(item.articlesRaw);
-    const commentsNormalized = this.normalizeText(item.commentairesTechnicien);
-    const prestationsNormalized = this.normalizeText(item.listePrestationsRaw);
-    const isSfrB2b = this.isSfrB2bMarque(item.marque);
-    const matches: string[] = [];
-
-    if (isRacpavSuccess(item.statut, item.articlesRaw)) matches.push('RACPAV');
-    if (isRacihSuccess(item.statut, item.articlesRaw)) matches.push('RACIH');
-    if (
-      !isSfrB2b
-      && (
-        articlesNormalized.includes('RECOIP')
-        || typeNormalized === 'RECO'
-      )
-    ) {
-      matches.push('RECOIP');
-    }
-    if (isSfrB2b) {
-      matches.push('RACPRO_S');
-    }
-    if (articlesNormalized.includes('RACPROS_S') || articlesNormalized.includes('RACPRO_S')) {
-      matches.push('RACPRO_S');
-    }
-    if (articlesNormalized.includes('RACPROC_C') || articlesNormalized.includes('RACPRO_C')) {
-      matches.push('RACPRO_C');
-    }
-    if (articlesNormalized.includes('SAV') || typeNormalized === 'SAV') {
-      matches.push('SAV');
-    }
-    if (
-      (typeNormalized.includes('PRESTA') && typeNormalized.includes('COMPL'))
-      || articlesNormalized.includes('PRESTA_COMPL')
-    ) {
-      matches.push('PRESTA_COMPL');
-    }
-    if (
-      articlesNormalized.includes('REPFOU_PRI')
-      || commentsNormalized.includes('F8')
-      || prestationsNormalized.includes('FOURREAUX')
-      || prestationsNormalized.includes('DOMAINE')
-    ) {
-      matches.push('REPFOU_PRI');
-    }
-    if (typeNormalized === 'REFC_DGR' || statusNormalized.includes('REFC_DGR')) {
-      matches.push('REFC_DGR');
-    }
-    if (typeNormalized === 'DEPLPRISE' || articlesNormalized.includes('DEPLPRISE')) {
-      matches.push('DEPLPRISE');
-    }
-    if (typeNormalized === 'REFRAC' || articlesNormalized.includes('REFRAC')) {
-      matches.push('REFRAC');
-    }
-
-    return matches;
   }
 
   ticketTechLabel(ticket: InterventionImportTicket): string {
@@ -327,20 +179,13 @@ export class InterventionsDashboard {
     technicians: [],
     types: []
   });
-  readonly prestationTypeOptions = [
-    { label: 'PRO C', value: 'RACPRO_C' },
-    { label: 'PRO S', value: 'RACPRO_S' },
-    { label: 'RAC PAV', value: 'RACPAV' },
-    { label: 'RAC IMM', value: 'RACIH' },
-    { label: 'RECO', value: 'RECOIP' },
-    { label: 'PRESTA COMPL', value: 'PRESTA_COMPL' },
-    { label: 'SAV', value: 'SAV' },
-    { label: 'PRESTAT F8', value: 'REPFOU_PRI' },
-    { label: 'DEMO', value: 'DEMO' }
-  ] as const;
+  readonly prestationTypeOptions = INTERVENTION_PRESTATION_FIELDS
+    .filter((field) => !this.hiddenPrestationCodes.has(field.code))
+    .map((field) => ({ label: field.code, value: field.code }));
   readonly depots = signal<Depot[]>([]);
   readonly employees = signal<EmployeeSummary[]>([]);
-  readonly contractTypes = ['CDI', 'CDD', 'STAGE', 'FREELANCE', 'AUTRE'] as const;
+  readonly contractTypes = INTERVENTION_CONTRACT_TYPES;
+  readonly quickSummaryPrestations = QUICK_SUMMARY_PRESTATIONS;
 
   readonly averagePerTech = computed(() => {
     const items = this.summaryItems();
@@ -407,31 +252,7 @@ export class InterventionsDashboard {
 
   readonly rateFields = INTERVENTION_PRESTATION_FIELDS;
 
-  private readonly revenueKeys = new Set([
-    'racPavillon',
-    'racAerien',
-    'racFacade',
-    'clem',
-    'reconnexion',
-    'racImmeuble',
-    'racProS',
-    'racProC',
-    'racF8',
-    'fourreauBeton',
-    'prestaCompl',
-    'deplacementPrise',
-    'deplacementOffert',
-    'deplacementATort',
-    'demo',
-    'sav',
-    'savExp',
-    'swapEquipement',
-    'refrac',
-    'refcDgr',
-    'cableSl',
-    'bifibre',
-    'nacelle'
-  ]);
+  private readonly revenueKeys = new Set(REVENUE_KEYS);
 
   private readonly rateCodeMap = new Map<string, keyof InterventionRates>(
     this.rateFields
@@ -543,7 +364,7 @@ export class InterventionsDashboard {
   }
 
   private readonly rateSync = effect(() => {
-    const rates = this.ratesService.rates();
+    const rates = this.normalizePricingRates(this.ratesService.rates());
     this.rateForm.patchValue(rates, { emitEvent: false });
   });
 
@@ -626,7 +447,7 @@ export class InterventionsDashboard {
     this.loadDepots();
     this.loadEmployees();
     this.loadImports();
-    this.resetInvoicesOnLoad();
+    this.loadInvoices();
     this.ratesService.refresh().subscribe();
     this.refresh();
   }
@@ -640,32 +461,14 @@ export class InterventionsDashboard {
   }
 
   exportSummaryCsv(): void {
-    const f = this.filterForm.getRawValue();
-    this.svc.exportCsv({
-      fromDate: f.fromDate || undefined,
-      toDate: f.toDate || undefined,
-      technician: f.technician || undefined,
-      region: f.region || undefined,
-      client: f.client || undefined,
-      status: f.status || undefined,
-      type: f.type || undefined
-    }).subscribe({
+    this.svc.exportCsv(this.buildSummaryQuery()).subscribe({
       next: (blob) => downloadBlob(blob, `interventions-techniciens-${new Date().toISOString().slice(0, 10)}.csv`),
       error: () => this.error.set('Erreur export CSV')
     });
   }
 
   exportSummaryPdf(): void {
-    const f = this.filterForm.getRawValue();
-    this.svc.exportPdf({
-      fromDate: f.fromDate || undefined,
-      toDate: f.toDate || undefined,
-      technician: f.technician || undefined,
-      region: f.region || undefined,
-      client: f.client || undefined,
-      status: f.status || undefined,
-      type: f.type || undefined
-    }).subscribe({
+    this.svc.exportPdf(this.buildSummaryQuery()).subscribe({
       next: (blob) => downloadBlob(blob, `interventions-techniciens-${new Date().toISOString().slice(0, 10)}.pdf`),
       error: () => this.error.set('Erreur export PDF')
     });
@@ -752,23 +555,11 @@ export class InterventionsDashboard {
   }
 
   onFileClick(): void {
-    const input = this.csvInput?.nativeElement;
-    if (input) {
-      input.value = '';
-    }
-    this.selectedFile = null;
-    this.importError.set(null);
-    this.importResult.set(null);
+    this.resetFileInput();
   }
 
   onInvoiceClick(): void {
-    const input = this.invoiceInput?.nativeElement;
-    if (input) {
-      input.value = '';
-    }
-    this.selectedInvoices = [];
-    this.invoiceError.set(null);
-    this.invoiceResult.set(null);
+    this.resetInvoiceInput();
   }
 
   onInvoiceChange(event: Event): void {
@@ -1013,8 +804,7 @@ export class InterventionsDashboard {
 
   refresh(): void {
     this.viewCleared.set(false);
-    const f = this.filterForm.getRawValue();
-    const resolvedStatus = this.resolveStatusFilter(f.status || '', f.type || '');
+    const summaryQuery = this.buildSummaryQuery();
     this.loading.set(true);
     this.error.set(null);
     this.revenueItems.set([]);
@@ -1023,13 +813,7 @@ export class InterventionsDashboard {
     this.revenueError.set(null);
 
     this.svc.summary({
-      fromDate: f.fromDate || undefined,
-      toDate: f.toDate || undefined,
-      technician: f.technician || undefined,
-      region: f.region || undefined,
-      client: f.client || undefined,
-      status: resolvedStatus,
-      type: f.type || undefined,
+      ...summaryQuery,
       page: 1,
       limit: 1000
     }).subscribe({
@@ -1070,37 +854,15 @@ export class InterventionsDashboard {
     });
   }
 
-  private resetInvoicesOnLoad(): void {
-    this.svc.resetInvoices().subscribe({
-      next: () => {
-        this.invoiceSummary.set(null);
-        this.lastImportedInvoices.set([]);
-        this.compareResult.set(null);
-        this.selectedPeriodKey.set('');
-        this.loadInvoices();
-      },
-      error: () => {
-        this.loadInvoices();
-      }
-    });
-  }
-
   refreshCompare(): void {
-    const f = this.filterForm.getRawValue();
-    const resolvedStatus = this.resolveStatusFilter(f.status || '', f.type || '');
+    const summaryQuery = this.buildSummaryQuery();
     this.compareLoading.set(true);
     this.compareError.set(null);
     const invoiceIds = this.lastImportedInvoices()
       .map((inv) => inv._id)
       .filter((id): id is string => Boolean(id));
     this.svc.compare({
-      fromDate: f.fromDate || undefined,
-      toDate: f.toDate || undefined,
-      technician: f.technician || undefined,
-      region: f.region || undefined,
-      client: f.client || undefined,
-      status: resolvedStatus,
-      type: f.type || undefined,
+      ...summaryQuery,
       periodKey: invoiceIds.length ? undefined : (this.selectedPeriodKey() || undefined),
       invoiceIds: invoiceIds.length ? invoiceIds : undefined
     }).subscribe({
@@ -1127,19 +889,13 @@ export class InterventionsDashboard {
   private loadDetail(): void {
     const tech = this.detailTechnician();
     if (!tech) return;
-    const f = this.filterForm.getRawValue();
-    const resolvedStatus = this.resolveStatusFilter(f.status || '', f.type || '');
+    const summaryQuery = this.buildSummaryQuery();
     this.detailLoading.set(true);
     this.detailError.set(null);
 
     this.svc.list({
-      fromDate: f.fromDate || undefined,
-      toDate: f.toDate || undefined,
+      ...summaryQuery,
       technician: tech,
-      region: f.region || undefined,
-      client: f.client || undefined,
-      status: resolvedStatus,
-      type: f.type || undefined,
       page: this.detailPage(),
       limit: this.detailLimit()
     }).subscribe({
@@ -1161,18 +917,8 @@ export class InterventionsDashboard {
 
   private async loadRevenueItems(): Promise<void> {
     const requestId = ++this.revenueRequestId;
-    const f = this.filterForm.getRawValue();
     const selectedCode = this.selectedRevenueCode();
-    const resolvedStatus = this.resolveStatusFilter(f.status || '', f.type || '');
-    const baseQuery = {
-      fromDate: f.fromDate || undefined,
-      toDate: f.toDate || undefined,
-      technician: f.technician || undefined,
-      region: f.region || undefined,
-      client: f.client || undefined,
-      status: resolvedStatus,
-      type: f.type || undefined
-    };
+    const baseQuery = { ...this.buildSummaryQuery() };
     if (selectedCode === 'RECOIP') {
       baseQuery.type = undefined;
     }
@@ -1230,6 +976,20 @@ export class InterventionsDashboard {
       other: 0
     };
     this.totals.set(totals);
+  }
+
+  private buildSummaryQuery(): InterventionSummaryQuery {
+    const f = this.filterForm.getRawValue();
+    return {
+      ...this.emptySummaryFilters,
+      fromDate: f.fromDate || undefined,
+      toDate: f.toDate || undefined,
+      technician: f.technician || undefined,
+      region: f.region || undefined,
+      client: f.client || undefined,
+      status: this.resolveStatusFilter(f.status || '', f.type || ''),
+      type: f.type || undefined
+    };
   }
 
   private normalizeSummaryItem<T extends InterventionSummaryItem | InterventionTotals>(item: T | null): T | null {
@@ -1316,15 +1076,20 @@ export class InterventionsDashboard {
     const totals: InterventionTotals = {
       total: 0,
       racPavillon: 0,
+      racAerien: 0,
+      racFacade: 0,
       racImmeuble: 0,
       reconnexion: 0,
       racF8: 0,
+      fourreauBeton: 0,
       racProS: 0,
       racProC: 0,
       prestaCompl: 0,
       sav: 0,
       clem: 0,
       deprise: 0,
+      deplacementOffert: 0,
+      deplacementATort: 0,
       demo: 0,
       refrac: 0,
       refcDgr: 0,
@@ -1333,21 +1098,29 @@ export class InterventionsDashboard {
       cablePav2: 0,
       cablePav3: 0,
       cablePav4: 0,
+      swapEquipement: 0,
+      bifibre: 0,
+      nacelle: 0,
       racAutre: 0,
       other: 0
     };
     for (const item of items) {
       totals.total = (totals.total ?? 0) + (item.total || 0);
       totals.racPavillon = (totals.racPavillon ?? 0) + (item.racPavillon || 0);
+      totals.racAerien = (totals.racAerien ?? 0) + (item.racAerien || 0);
+      totals.racFacade = (totals.racFacade ?? 0) + (item.racFacade || 0);
       totals.racImmeuble = (totals.racImmeuble ?? 0) + (item.racImmeuble || 0);
       totals.reconnexion = (totals.reconnexion ?? 0) + (item.reconnexion || 0);
       totals.racF8 = (totals.racF8 ?? 0) + (item.racF8 || 0);
+      totals.fourreauBeton = (totals.fourreauBeton ?? 0) + (item.fourreauBeton || 0);
       totals.racProS = (totals.racProS ?? 0) + (item.racProS || 0);
       totals.racProC = (totals.racProC ?? 0) + (item.racProC || 0);
       totals.prestaCompl = (totals.prestaCompl ?? 0) + (item.prestaCompl || 0);
       totals.sav = (totals.sav ?? 0) + (item.sav || 0);
       totals.clem = (totals.clem ?? 0) + (item.clem || 0);
       totals.deprise = (totals.deprise ?? 0) + (item.deprise || 0);
+      totals.deplacementOffert = (totals.deplacementOffert ?? 0) + (item.deplacementOffert || 0);
+      totals.deplacementATort = (totals.deplacementATort ?? 0) + (item.deplacementATort || 0);
       totals.demo = (totals.demo ?? 0) + (item.demo || 0);
       totals.refrac = (totals.refrac ?? 0) + (item.refrac || 0);
       totals.refcDgr = (totals.refcDgr ?? 0) + (item.refcDgr || 0);
@@ -1356,6 +1129,9 @@ export class InterventionsDashboard {
       totals.cablePav2 = (totals.cablePav2 ?? 0) + (item.cablePav2 || 0);
       totals.cablePav3 = (totals.cablePav3 ?? 0) + (item.cablePav3 || 0);
       totals.cablePav4 = (totals.cablePav4 ?? 0) + (item.cablePav4 || 0);
+      totals.swapEquipement = (totals.swapEquipement ?? 0) + (item.swapEquipement || 0);
+      totals.bifibre = (totals.bifibre ?? 0) + (item.bifibre || 0);
+      totals.nacelle = (totals.nacelle ?? 0) + (item.nacelle || 0);
       totals.racAutre = (totals.racAutre ?? 0) + (item.racAutre || 0);
       totals.other = (totals.other ?? 0) + (item.other || 0);
     }
@@ -1388,17 +1164,10 @@ export class InterventionsDashboard {
   }
 
   saveRates(): void {
-    const raw = this.rateForm.getRawValue() as InterventionRates;
+    const raw = this.normalizePricingRates(this.rateForm.getRawValue() as InterventionRates);
     if (!this.rateForm.valid) {
       this.rateSuccess.set(null);
-      this.rateError.set('Vérifie les tarifs saisis avant d’enregistrer.');
-      this.rateForm.markAllAsTouched();
-      return;
-    }
-    const invalidRates = this.findInvalidRates();
-    if (invalidRates.length) {
-      this.rateSuccess.set(null);
-      this.rateError.set('Le montant FXN ne peut pas dépasser le total.');
+      this.rateError.set('Vérifie les prix saisis avant d’enregistrer.');
       this.rateForm.markAllAsTouched();
       return;
     }
@@ -1408,7 +1177,7 @@ export class InterventionsDashboard {
     this.ratesService.save(raw).subscribe({
       next: () => {
         this.rateSaving.set(false);
-        this.rateSuccess.set('Tarifs enregistrés.');
+        this.rateSuccess.set('Prix enregistrés.');
         this.rateForm.markAsPristine();
         setTimeout(() => {
           if (this.rateSuccess()) this.rateSuccess.set(null);
@@ -1416,7 +1185,7 @@ export class InterventionsDashboard {
       },
       error: (err: HttpErrorResponse) => {
         this.rateSaving.set(false);
-        this.rateError.set(this.apiError(err, 'Erreur enregistrement tarifs'));
+        this.rateError.set(this.apiError(err, 'Erreur enregistrement prix'));
       }
     });
   }
@@ -1424,10 +1193,10 @@ export class InterventionsDashboard {
   resetRates(): void {
     this.rateSuccess.set(null);
     this.rateError.set(null);
-    const rates = this.ratesService.rates();
+    const rates = this.normalizePricingRates(this.ratesService.rates());
     this.rateForm.patchValue(rates, { emitEvent: false });
     this.rateForm.markAsPristine();
-    this.rateSuccess.set('Tarifs réinitialisés.');
+    this.rateSuccess.set('Prix réinitialisés.');
   }
 
   prevPage(): void {
@@ -1468,96 +1237,50 @@ export class InterventionsDashboard {
       + (item.refcDgr || 0);
   }
 
-  fxnRevenue(item: InterventionSummaryItem | InterventionTotals | null): number {
+  estimatedRevenue(item: InterventionSummaryItem | InterventionTotals | null): number {
     if (!item) return 0;
     const rates = this.rates();
-    return this.sumRevenue(item, rates, 'fxn');
-  }
-
-  techRevenue(item: InterventionSummaryItem | InterventionTotals | null): number {
-    if (!item) return 0;
-    const rates = this.rates();
-    return this.sumRevenue(item, rates, 'tech');
+    return this.sumRevenue(item, rates);
   }
 
   totalRevenue = computed(() => {
     const selectedCode = this.selectedRevenueCode();
     if (this.revenueItemsLoaded()) {
       const items = this.revenueItems();
-      if (!items.length) return { fxn: 0, tech: 0 };
+      if (!items.length) return 0;
       const rates = this.rates();
-      const acc = { fxn: 0, tech: 0 };
+      let total = 0;
       for (const item of items) {
-        const codes = this.resolveBillingCodes(item);
+        const codes = resolveBillingCodes(item);
         for (const code of codes) {
           if (selectedCode && code !== selectedCode) continue;
           const key = this.rateCodeMap.get(code);
           if (!key) continue;
           const rate = rates[key];
-          const fxn = Number(rate?.fxn || 0);
-          const total = Number(rate?.total || 0);
-          acc.fxn += fxn;
-          acc.tech += Math.max(0, total - fxn);
+          total += Number(rate?.total || 0);
         }
       }
-      return acc;
+      return total;
     }
 
     const totals = this.totals();
     if (totals) {
-      return {
-        fxn: this.fxnRevenueByCode(totals, selectedCode),
-        tech: this.techRevenueByCode(totals, selectedCode)
-      };
+      return this.estimatedRevenueByCode(totals, selectedCode);
     }
     const summary = this.summaryItems();
-    const acc = { fxn: 0, tech: 0 };
+    let total = 0;
     for (const it of summary) {
-      acc.fxn += this.fxnRevenueByCode(it, selectedCode);
-      acc.tech += this.techRevenueByCode(it, selectedCode);
+      total += this.estimatedRevenueByCode(it, selectedCode);
     }
-    return acc;
+    return total;
   });
 
   private selectedRevenueCode(): string | null {
     const raw = this.filterForm.getRawValue().type || '';
     if (!raw) return null;
-    const normalized = this.normalizeText(raw);
+    const normalized = normalizeInterventionText(raw);
     if (!normalized) return null;
-    const aliasMap = new Map<string, string>([
-      ['RECO', 'RECOIP'],
-      ['RECONNEXION', 'RECOIP'],
-      ['RECOIP', 'RECOIP'],
-      ['RAC PAV', 'RACPAV'],
-      ['RAC PAVILLON', 'RACPAV'],
-      ['RAC_PAV', 'RACPAV'],
-      ['RAC_PAVILLON', 'RACPAV'],
-      ['RACPAV', 'RACPAV'],
-      ['RAC IMM', 'RACIH'],
-      ['RAC IMMEUBLE', 'RACIH'],
-      ['RAC_IMM', 'RACIH'],
-      ['RAC_IMMEUBLE', 'RACIH'],
-      ['RACIH', 'RACIH'],
-      ['PRO S', 'RACPRO_S'],
-      ['PRO C', 'RACPRO_C'],
-      ['RAC PRO S', 'RACPRO_S'],
-      ['RAC PRO C', 'RACPRO_C'],
-      ['RACPRO_S', 'RACPRO_S'],
-      ['RACPRO_C', 'RACPRO_C'],
-      ['PRESTA COMPL', 'PRESTA_COMPL'],
-      ['PRESTATION COMPLEMENTAIRE', 'PRESTA_COMPL'],
-      ['PRESTA_COMPL', 'PRESTA_COMPL'],
-      ['PRESTAT F8', 'REPFOU_PRI'],
-      ['PRESTATION F8', 'REPFOU_PRI'],
-      ['F8', 'REPFOU_PRI'],
-      ['REPFOU_PRI', 'REPFOU_PRI'],
-      ['CLEM', 'CLEM'],
-      ['SAV', 'SAV'],
-      ['SAV EXP', 'SAV_EXP'],
-      ['SAV_EXP', 'SAV_EXP'],
-      ['DEMO', 'DEMO']
-    ]);
-    const mapped = aliasMap.get(normalized);
+    const mapped = REVENUE_CODE_ALIASES.get(normalized);
     if (mapped) return mapped;
     const underscored = normalized.replace(/\s+/g, '_');
     if (this.rateCodeMap.has(underscored)) return underscored;
@@ -1566,33 +1289,21 @@ export class InterventionsDashboard {
   }
 
   private resolveStatusFilter(status: string, type: string): string | undefined {
-    const normalizedType = this.normalizeText(type);
+    const normalizedType = normalizeInterventionText(type);
     if (normalizedType.includes('RECO')) {
       return undefined;
     }
     return status || undefined;
   }
 
-  private fxnRevenueByCode(item: InterventionSummaryItem | InterventionTotals, code: string | null): number {
-    if (!code) return this.fxnRevenue(item);
+  private estimatedRevenueByCode(item: InterventionSummaryItem | InterventionTotals, code: string | null): number {
+    if (!code) return this.estimatedRevenue(item);
     const rates = this.rates();
     const key = this.rateCodeMap.get(code);
     if (!key) return 0;
     const qty = Number((item as any)[key] || 0);
     const rate = rates[key];
-    return qty * Number(rate?.fxn || 0);
-  }
-
-  private techRevenueByCode(item: InterventionSummaryItem | InterventionTotals, code: string | null): number {
-    if (!code) return this.techRevenue(item);
-    const rates = this.rates();
-    const key = this.rateCodeMap.get(code);
-    if (!key) return 0;
-    const qty = Number((item as any)[key] || 0);
-    const rate = rates[key];
-    const fxn = Number(rate?.fxn || 0);
-    const total = Number(rate?.total || 0);
-    return qty * Math.max(0, total - fxn);
+    return qty * Number(rate?.total || 0);
   }
 
   private loadFilters(): void {
@@ -1630,49 +1341,36 @@ export class InterventionsDashboard {
 
   private sumRevenue(
     item: InterventionSummaryItem | InterventionTotals,
-    rates: InterventionRates,
-    target: 'fxn' | 'tech'
+    rates: InterventionRates
   ): number {
     const get = (value?: number) => value ?? 0;
-    const share = (entry: { total: number; fxn: number }) => {
-      const fxn = entry.fxn || 0;
-      const total = entry.total || 0;
-      const tech = Math.max(0, total - fxn);
-      return target === 'fxn' ? fxn : tech;
-    };
+    const amount = (entry: { total: number; fxn: number }) => entry.total || 0;
 
     return (
-      get(item.racPavillon) * share(rates.racPavillon) +
-      get(item.racAerien) * share(rates.racAerien) +
-      get(item.racFacade) * share(rates.racFacade) +
-      get(item.clem) * share(rates.clem) +
-      get(item.reconnexion) * share(rates.reconnexion) +
-      get(item.racImmeuble) * share(rates.racImmeuble) +
-      get(item.racProS) * share(rates.racProS) +
-      get(item.racProC) * share(rates.racProC) +
-      get(item.racF8) * share(rates.racF8) +
-      get(item.fourreauBeton) * share(rates.fourreauBeton) +
-      get(item.prestaCompl) * share(rates.prestaCompl) +
-      get(item.deplacementPrise ?? item.deprise) * share(rates.deplacementPrise) +
-      get(item.deplacementOffert) * share(rates.deplacementOffert) +
-      get(item.deplacementATort) * share(rates.deplacementATort) +
-      get(item.demo) * share(rates.demo) +
-      get(item.sav) * share(rates.sav) +
-      get(item.savExp) * share(rates.savExp) +
-      get(item.swapEquipement) * share(rates.swapEquipement) +
-      get(item.refrac) * share(rates.refrac) +
-      get(item.refcDgr) * share(rates.refcDgr) +
-      get(item.cableSl) * share(rates.cableSl) +
-      get(item.bifibre) * share(rates.bifibre) +
-      get(item.nacelle) * share(rates.nacelle)
+      get(item.racPavillon) * amount(rates.racPavillon) +
+      get(item.racAerien) * amount(rates.racAerien) +
+      get(item.racFacade) * amount(rates.racFacade) +
+      get(item.clem) * amount(rates.clem) +
+      get(item.reconnexion) * amount(rates.reconnexion) +
+      get(item.racImmeuble) * amount(rates.racImmeuble) +
+      get(item.racProS) * amount(rates.racProS) +
+      get(item.racProC) * amount(rates.racProC) +
+      get(item.racF8) * amount(rates.racF8) +
+      get(item.fourreauBeton) * amount(rates.fourreauBeton) +
+      get(item.prestaCompl) * amount(rates.prestaCompl) +
+      get(item.deplacementPrise ?? item.deprise) * amount(rates.deplacementPrise) +
+      get(item.deplacementOffert) * amount(rates.deplacementOffert) +
+      get(item.deplacementATort) * amount(rates.deplacementATort) +
+      get(item.demo) * amount(rates.demo) +
+      get(item.sav) * amount(rates.sav) +
+      get(item.savExp) * amount(rates.savExp) +
+      get(item.swapEquipement) * amount(rates.swapEquipement) +
+      get(item.refrac) * amount(rates.refrac) +
+      get(item.refcDgr) * amount(rates.refcDgr) +
+      get(item.cableSl) * amount(rates.cableSl) +
+      get(item.bifibre) * amount(rates.bifibre) +
+      get(item.nacelle) * amount(rates.nacelle)
     );
-  }
-
-  techShareFor(key: string): number {
-    const entry = (this.rateForm.getRawValue() as Record<string, { total: number; fxn: number }>)[key];
-    const total = Number(entry?.total ?? 0);
-    const fxn = Number(entry?.fxn ?? 0);
-    return Math.max(0, total - fxn);
   }
 
   formatArticleCodes(raw?: string | null): string {
@@ -1690,17 +1388,15 @@ export class InterventionsDashboard {
     return parts.length ? parts.join(', ') : '—';
   }
 
-  isRateInvalid(key: string): boolean {
-    const entry = (this.rateForm.getRawValue() as Record<string, { total: number; fxn: number }>)[key];
-    if (!entry) return false;
-    const total = Number(entry.total);
-    const fxn = Number(entry.fxn);
-    return Number.isFinite(total) && Number.isFinite(fxn) && fxn > total;
-  }
-
-  private findInvalidRates(): string[] {
-    return this.rateFields
-      .map((field) => field.key)
-      .filter((key) => this.isRateInvalid(String(key)));
+  private normalizePricingRates(rates: InterventionRates): InterventionRates {
+    return Object.fromEntries(
+      Object.entries(rates).map(([key, value]) => [
+        key,
+        {
+          total: Number(value?.total ?? 0),
+          fxn: 0
+        }
+      ])
+    ) as InterventionRates;
   }
 }

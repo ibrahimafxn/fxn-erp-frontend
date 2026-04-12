@@ -4,7 +4,9 @@
       <h1>Interventions du technicien</h1>
       <p class="subtitle">{{ technician() || '—' }}</p>
     </div>
-    <button class="btn-outline" type="button" (click)="goBack()"><i class="bi bi-arrow-left"></i> Retour</button>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="goBack()"><i class="bi bi-arrow-left"></i> Retour</button>
+    </div>
   </header>
 
   <section class="card">

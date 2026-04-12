@@ -18,6 +18,7 @@ import { Role } from '../../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../../core/utils/text-format';
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
+import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 
 type SortKey = 'name' | 'available' | 'depot' | 'updatedAt' | 'unit';
 
@@ -26,7 +27,7 @@ type SortKey = 'name' | 'available' | 'depot' | 'updatedAt' | 'unit';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-consumable-list',
   providers: [DatePipe],
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, DatePipe, ConfirmDeleteModal],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, DatePipe, ConfirmDeleteModal, TechnicianMobileNav],
   templateUrl: './consumable-list.html',
   styleUrls: ['./consumable-list.scss'],
 })

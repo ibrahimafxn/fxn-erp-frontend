@@ -15,17 +15,22 @@ import { VehicleHistoryItem, VehicleHistoryResult } from '../../../../core/model
 import {DetailBack} from '../../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
 import { formatPageRange } from '../../../../core/utils/pagination';
+import { ConfirmActionModal } from '../../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
+import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 
 type AssignMode = 'idle' | 'assign' | 'release';
+type PendingVehicleAction = 'assign' | 'release' | null;
+type DepotLike = string | { _id: string; name?: string; city?: string } | null | undefined;
+type UserLike = string | { _id?: string; firstName?: string; lastName?: string; email?: string } | null | undefined;
 
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-vehicle-detail',
   providers: [DatePipe],
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ConfirmActionModal, TechnicianMobileNav],
   templateUrl: './vehicle-detail.html',
-  styleUrls: ['./vehicle-detail.scss'],
+  styleUrl: './vehicle-detail.scss',
 })
 export class VehicleDetail extends DetailBack {
   private svc = inject(VehicleService);
@@ -71,6 +76,8 @@ export class VehicleDetail extends DetailBack {
   readonly selectedDepotId = signal<string>('');
   readonly assignNote = signal<string>('');
   readonly releaseNote = signal<string>('');
+  readonly actionConfirmOpen = signal(false);
+  readonly pendingVehicleAction = signal<PendingVehicleAction>(null);
 
   // -----------------------------
   // History (timeline)
@@ -112,10 +119,30 @@ export class VehicleDetail extends DetailBack {
   readonly statusLabel = computed(() => (this.isAssigned() ? 'Assigné' : 'Disponible'));
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
+  readonly resourceBasePath = computed(() => {
+    if (this.isDepotManager()) return '/depot/resources/vehicles';
+    if (this.isReadOnly()) return '/technician/resources/vehicles';
+    return '/admin/resources/vehicles';
+  });
   readonly canDeclareBreakdown = computed(() => {
     const role = this.auth.getUserRole();
     return role === Role.ADMIN || role === Role.DIRIGEANT || role === Role.GESTION_DEPOT;
   });
+  readonly actionConfirmTitle = computed(() => (
+    this.pendingVehicleAction() === 'release' ? 'Confirmer la reprise' : 'Confirmer l’assignation'
+  ));
+  readonly actionConfirmMessage = computed(() => {
+    if (this.pendingVehicleAction() === 'release') {
+      return 'Confirmer la reprise de ce véhicule vers le dépôt sélectionné ?';
+    }
+    return 'Confirmer l’assignation de ce véhicule au technicien sélectionné ?';
+  });
+  readonly actionConfirmText = computed(() => (
+    this.pendingVehicleAction() === 'release' ? 'Reprendre' : 'Assigner'
+  ));
+  readonly actionConfirmTone = computed<'primary' | 'danger' | 'success'>(() => (
+    this.pendingVehicleAction() === 'release' ? 'danger' : 'success'
+  ));
 
   constructor() {
     super();
@@ -155,37 +182,11 @@ export class VehicleDetail extends DetailBack {
   }
 
   depotPreviewLabel(): string {
-    const v = this.vehicle();
-    if (!v) return '—';
-
-    const d = v.idDepot;
-    if (!d) return '—';
-
-    if (typeof d === 'object' && '_id' in d) {
-      const obj = d as { _id: string; name?: string };
-      return formatDepotName(obj.name) || '—';
-    }
-
-    if (typeof d === 'string') {
-      const match = this.depots().find(item => item._id === d);
-      return match ? (formatDepotName(match.name ?? '') || '—') : '—';
-    }
-
-    return '—';
+    return this.depotLabel(this.vehicle()?.idDepot);
   }
 
   assignedToLabel(): string {
-    const v = this.vehicle();
-    if (!v || !v.assignedTo) return '—';
-
-    const a = v.assignedTo;
-    if (typeof a === 'object' && '_id' in a) {
-      const u = a as { _id: string; firstName?: string; lastName?: string; email?: string };
-      const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
-      return name || u.email || '—';
-    }
-
-    return '—';
+    return this.userLabel(this.vehicle()?.assignedTo);
   }
 
   technicianLabel(t: User): string {
@@ -213,14 +214,7 @@ export class VehicleDetail extends DetailBack {
       next: (v) => {
         this.vehicle.set(v);
         this.loading.set(false);
-
-        // pré-sélection depot si dispo
-        const depotId =
-          typeof v.idDepot === 'string'
-            ? v.idDepot
-            : (v.idDepot && typeof v.idDepot === 'object' && '_id' in v.idDepot ? (v.idDepot as { _id: string })._id : '');
-
-        if (depotId) this.selectedDepotId.set(depotId);
+        this.selectedDepotId.set(this.extractDepotId(v.idDepot));
 
         // charge historique une fois véhicule OK
         this.loadHistory(true);
@@ -360,22 +354,55 @@ export class VehicleDetail extends DetailBack {
   openAssign(): void {
     this.assignMode.set('assign');
     this.actionError.set(null);
-    this.selectedTechId.set('');
-    this.assignNote.set('');
+    this.resetAssignDraft();
   }
 
   openRelease(): void {
     this.assignMode.set('release');
     this.actionError.set(null);
-    this.selectedDepotId.set('');
-    this.releaseNote.set('');
+    this.resetReleaseDraft();
   }
 
   closeActions(): void {
     this.assignMode.set('idle');
     this.actionError.set(null);
-    this.assignNote.set('');
-    this.releaseNote.set('');
+    this.resetActionDrafts();
+    this.closeActionConfirm();
+  }
+
+  openAssignConfirm(): void {
+    if (!this.selectedTechId()) {
+      this.actionError.set('Veuillez sélectionner un technicien.');
+      return;
+    }
+    this.pendingVehicleAction.set('assign');
+    this.actionConfirmOpen.set(true);
+  }
+
+  openReleaseConfirm(): void {
+    if (!this.selectedDepotId()) {
+      this.actionError.set('Veuillez sélectionner un dépôt de retour.');
+      return;
+    }
+    this.pendingVehicleAction.set('release');
+    this.actionConfirmOpen.set(true);
+  }
+
+  closeActionConfirm(): void {
+    if (this.actionSaving()) return;
+    this.actionConfirmOpen.set(false);
+    this.pendingVehicleAction.set(null);
+  }
+
+  confirmVehicleAction(): void {
+    const action = this.pendingVehicleAction();
+    if (action === 'release') {
+      this.releaseToDepot();
+      return;
+    }
+    if (action === 'assign') {
+      this.assignToTech();
+    }
   }
 
   // Si tu as un AuthService, remplace ici par auth.userId()
@@ -405,9 +432,9 @@ export class VehicleDetail extends DetailBack {
     this.svc.assignVehicle(v._id, payload).subscribe({
       next: () => {
         this.actionSaving.set(false);
+        this.closeActionConfirm();
         this.assignMode.set('idle');
-        this.selectedTechId.set('');
-        this.assignNote.set('');
+        this.resetAssignDraft();
         this.load(); // refresh + history refresh
       },
       error: (err: HttpErrorResponse) => {
@@ -439,8 +466,9 @@ export class VehicleDetail extends DetailBack {
     this.svc.releaseVehicle(v._id, payload).subscribe({
       next: () => {
         this.actionSaving.set(false);
+        this.closeActionConfirm();
         this.assignMode.set('idle');
-        this.releaseNote.set('');
+        this.resetReleaseDraft();
         this.load();
       },
       error: (err: HttpErrorResponse) => {
@@ -480,39 +508,15 @@ export class VehicleDetail extends DetailBack {
   }
 
   historyAuthorLabel(it: VehicleHistoryItem): string {
-    const a = it?.attribution?.author;
-    if (!a) return '—';
-
-    if (typeof a === 'object' && '_id' in a) {
-      const u = a as { firstName?: string; lastName?: string; email?: string };
-      const name = formatPersonName(u.firstName ?? '', u.lastName ?? '');
-      return name || u.email || '—';
-    }
-    return '—';
+    return this.userLabel(it?.attribution?.author);
   }
 
   historyToUserLabel(it: VehicleHistoryItem): string {
-    const u = it?.attribution?.toUser;
-    if (!u) return '—';
-
-    if (typeof u === 'object' && '_id' in u) {
-      const x = u as { firstName?: string; lastName?: string; email?: string };
-      const name = formatPersonName(x.firstName ?? '', x.lastName ?? '');
-      return name || x.email || '—';
-    }
-    return '—';
+    return this.userLabel(it?.attribution?.toUser);
   }
 
   historyFromDepotLabel(it: VehicleHistoryItem): string {
-    const d = it?.attribution?.fromDepot;
-    if (!d) return '—';
-
-    if (typeof d === 'object' && '_id' in d) {
-      const x = d as { name?: string; city?: string };
-      const base = formatDepotName(x.name) || '—';
-      return x.city ? `${base} · ${x.city}` : base;
-    }
-    return '—';
+    return this.depotLabel(it?.attribution?.fromDepot);
   }
 
   historyNote(it: VehicleHistoryItem): string {
@@ -557,21 +561,55 @@ export class VehicleDetail extends DetailBack {
 
   openBreakdowns(): void {
     if (!this.id) return;
-    const base = this.isDepotManager()
-      ? '/depot/resources/vehicles'
-      : this.isReadOnly()
-        ? '/technician/resources/vehicles'
-        : '/admin/resources/vehicles';
-    this.router.navigate([base, this.id, 'breakdowns']).then();
+    this.router.navigate([this.resourceBasePath(), this.id, 'breakdowns']).then();
   }
 
   declareBreakdown(): void {
     if (!this.id || !this.canDeclareBreakdown()) return;
-    const base = this.isDepotManager()
-      ? '/depot/resources/vehicles'
-      : this.isReadOnly()
-        ? '/technician/resources/vehicles'
-        : '/admin/resources/vehicles';
-    this.router.navigate([base, this.id, 'breakdown']).then();
+    this.router.navigate([this.resourceBasePath(), this.id, 'breakdown']).then();
+  }
+
+  private extractDepotId(value: Vehicle['idDepot']): string {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object' && '_id' in value) {
+      return (value as { _id: string })._id;
+    }
+    return '';
+  }
+
+  private depotLabel(value: DepotLike): string {
+    if (!value) return '—';
+    if (typeof value === 'object' && '_id' in value) {
+      const depot = value as { _id: string; name?: string; city?: string };
+      const base = formatDepotName(depot.name ?? '') || '—';
+      return depot.city ? `${base} · ${depot.city}` : base;
+    }
+    if (typeof value === 'string') {
+      const match = this.depots().find((item) => item._id === value);
+      return match ? this.depotOptionLabel(match) : '—';
+    }
+    return '—';
+  }
+
+  private userLabel(value: UserLike): string {
+    if (!value || typeof value !== 'object' || !('_id' in value)) return '—';
+    const user = value as { firstName?: string; lastName?: string; email?: string };
+    const name = formatPersonName(user.firstName ?? '', user.lastName ?? '');
+    return name || user.email || '—';
+  }
+
+  private resetAssignDraft(): void {
+    this.selectedTechId.set('');
+    this.assignNote.set('');
+  }
+
+  private resetReleaseDraft(): void {
+    this.selectedDepotId.set(this.extractDepotId(this.vehicle()?.idDepot));
+    this.releaseNote.set('');
+  }
+
+  private resetActionDrafts(): void {
+    this.resetAssignDraft();
+    this.resetReleaseDraft();
   }
 }

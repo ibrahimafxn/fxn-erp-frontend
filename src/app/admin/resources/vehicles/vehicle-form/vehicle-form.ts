@@ -20,7 +20,7 @@ type Mode = 'create' | 'edit';
   selector: 'app-vehicle-form',
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './vehicle-form.html',
-  styleUrls: ['./vehicle-form.scss'],
+  styleUrl: './vehicle-form.scss',
 })
 export class VehicleForm extends DetailBack {
   private fb = inject(FormBuilder);
@@ -41,6 +41,12 @@ export class VehicleForm extends DetailBack {
   readonly depotsError = signal<string | null>(null);
 
   readonly current = signal<Vehicle | null>(null);
+  readonly selectedDepotLabel = computed(() => {
+    const depotId = this.form.controls.idDepot.value;
+    if (!depotId) return 'Non attribué';
+    const depot = this.depots().find((item) => item._id === depotId);
+    return depot ? this.depotOptionLabel(depot) : 'Non attribué';
+  });
 
   depotOptionLabel(d: Depot): string {
     return formatDepotName(d.name ?? '') || '—';
@@ -79,7 +85,10 @@ export class VehicleForm extends DetailBack {
         this.depots.set(res.items ?? []);
         this.depotsLoading.set(false);
       },
-      error: () => this.depotsLoading.set(false),
+      error: (err) => {
+        this.depotsLoading.set(false);
+        this.depotsError.set(err?.error?.message || 'Erreur chargement dépôts');
+      },
     });
   }
 
@@ -90,31 +99,30 @@ export class VehicleForm extends DetailBack {
     this.error.set(null);
 
     this.svc.getById(this.id).subscribe({
-      next: (v) => {
-        this.current.set(v);
-
-        const depotId =
-          typeof v.idDepot === 'string'
-            ? v.idDepot
-            : null;
-
-        this.form.patchValue({
-          plateNumber: v.plateNumber ?? '',
-          brand: v.brand ?? '',
-          model: v.model ?? '',
-          year: typeof v.year === 'number' ? v.year : null,
-          state: v.state ?? '',
-          idDepot: depotId,
-          assignedTo: v.assignedTo ?? null,
-        });
-
-        this.loading.set(false);
-      },
+      next: (v) => this.applyVehicleToForm(v),
       error: (err) => {
         this.loading.set(false);
         this.error.set(err?.error?.message || 'Erreur chargement véhicule');
       },
     });
+  }
+
+  private applyVehicleToForm(vehicle: Vehicle): void {
+    this.current.set(vehicle);
+    this.form.patchValue({
+      plateNumber: vehicle.plateNumber ?? '',
+      brand: vehicle.brand ?? '',
+      model: vehicle.model ?? '',
+      year: typeof vehicle.year === 'number' ? vehicle.year : null,
+      state: vehicle.state ?? '',
+      idDepot: this.resolveDepotId(vehicle),
+      assignedTo: vehicle.assignedTo ?? null,
+    });
+    this.loading.set(false);
+  }
+
+  private resolveDepotId(vehicle: Vehicle): string | null {
+    return typeof vehicle.idDepot === 'string' ? vehicle.idDepot : null;
   }
 
   private buildPayload(): Partial<Vehicle> {
@@ -142,32 +150,30 @@ export class VehicleForm extends DetailBack {
 
     if (this.mode() === 'create') {
       this.svc.create(this.buildPayload()).subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.router.navigate(['/admin/resources/vehicles']).then();
-        },
-        error: (err) => {
-          this.saving.set(false);
-          this.error.set(err?.error?.message || 'Erreur création véhicule');
-        },
+        next: () => this.finishSubmit(),
+        error: (err) => this.failSubmit(err?.error?.message || 'Erreur création véhicule'),
       });
       return;
     }
 
     this.svc.update(this.id, this.buildPayload()).subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.router.navigate(['/admin/resources/vehicles']).then();
-      },
-      error: (err) => {
-        this.saving.set(false);
-        this.error.set(err?.error?.message || 'Erreur mise à jour véhicule');
-      },
+      next: () => this.finishSubmit(),
+      error: (err) => this.failSubmit(err?.error?.message || 'Erreur mise à jour véhicule'),
     });
   }
 
-  cancel(): void {
+  private finishSubmit(): void {
+    this.saving.set(false);
     this.router.navigate(['/admin/resources/vehicles']).then();
+  }
+
+  private failSubmit(message: string): void {
+    this.saving.set(false);
+    this.error.set(message);
+  }
+
+  cancel(): void {
+    this.back('/admin/resources/vehicles');
   }
 
   isInvalid(name: keyof typeof this.form.controls): boolean {

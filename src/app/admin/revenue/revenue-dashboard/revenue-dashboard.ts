@@ -8,6 +8,13 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 
 type SortKey = 'month' | 'amount' | 'penalty' | 'note' | 'attachments' | 'author' | 'updatedAt';
 
+type RevenueSummaryQuery = {
+  from?: string;
+  to?: string;
+  month?: number;
+  year?: number;
+};
+
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -168,23 +175,12 @@ export class RevenueDashboard {
   ];
 
   loadAll(refreshSummary = false): void {
-    const { month, year, period } = this.filterForm.getRawValue();
+    const query = this.buildSummaryQuery(true);
     this.loading.set(true);
     this.error.set(undefined);
 
-    const presetRange = this.buildPresetRange(period);
-    const monthKey = presetRange ? '' : this.buildMonthKey(month, year);
-    const fromMonth = presetRange?.from || monthKey || undefined;
-    const toMonth = presetRange?.to || monthKey || undefined;
-    const monthNumber = presetRange ? 0 : (month ? Number(month) : 0);
-    const yearNumber = presetRange ? 0 : (year ? Number(year) : 0);
-    const monthOnly = !presetRange && monthNumber && !yearNumber;
-
     this.revenue.list({
-      from: monthOnly ? undefined : fromMonth || undefined,
-      to: monthOnly ? undefined : toMonth || undefined,
-      month: monthOnly ? monthNumber : undefined,
-      year: yearNumber || undefined,
+      ...query,
       page: this.page(),
       limit: this.limit()
     }).subscribe({
@@ -211,20 +207,7 @@ export class RevenueDashboard {
   }
 
   loadSummarySeries(): void {
-    const { month, year, period } = this.filterForm.getRawValue();
-    const presetRange = this.buildPresetRange(period);
-    const monthKey = presetRange ? '' : this.buildMonthKey(month, year);
-    const fromMonth = presetRange?.from || monthKey || undefined;
-    const toMonth = presetRange?.to || monthKey || undefined;
-    const monthNumber = presetRange ? 0 : (month ? Number(month) : 0);
-    const yearNumber = presetRange ? 0 : (year ? Number(year) : 0);
-    const monthOnly = !presetRange && monthNumber && !yearNumber;
-    this.revenue.summary({
-      from: monthOnly ? undefined : fromMonth || undefined,
-      to: monthOnly ? undefined : toMonth || undefined,
-      month: monthOnly ? monthNumber : undefined,
-      year: yearNumber || undefined
-    }).subscribe({
+    this.revenue.summary(this.buildSummaryQuery(true)).subscribe({
       next: (res) => {
         if (!res?.success) {
           this.error.set(res?.message || 'Erreur synthèse CA');
@@ -242,20 +225,7 @@ export class RevenueDashboard {
   }
 
   loadSummaryTotal(useFilters: boolean): void {
-    const { month, year, period } = this.filterForm.getRawValue();
-    const presetRange = useFilters ? this.buildPresetRange(period) : null;
-    const monthKey = presetRange ? '' : (useFilters ? this.buildMonthKey(month, year) : '');
-    const fromMonth = presetRange?.from || monthKey || undefined;
-    const toMonth = presetRange?.to || monthKey || undefined;
-    const monthNumber = useFilters && !presetRange ? (month ? Number(month) : 0) : 0;
-    const yearNumber = useFilters && !presetRange ? (year ? Number(year) : 0) : 0;
-    const monthOnly = useFilters && !presetRange && monthNumber && !yearNumber;
-    this.revenue.summary({
-      from: useFilters ? (monthOnly ? undefined : fromMonth || undefined) : undefined,
-      to: useFilters ? (monthOnly ? undefined : toMonth || undefined) : undefined,
-      month: useFilters ? (monthOnly ? monthNumber : undefined) : undefined,
-      year: useFilters ? (yearNumber || undefined) : undefined
-    }).subscribe({
+    this.revenue.summary(this.buildSummaryQuery(useFilters)).subscribe({
       next: (res) => {
         if (!res?.success) return;
         this.summaryTotal.set(res.data.total || 0);
@@ -479,12 +449,7 @@ export class RevenueDashboard {
   }
 
   onAttachmentClick(): void {
-    const input = this.revenueFiles?.nativeElement;
-    if (input) {
-      input.value = '';
-    }
-    this.selectedAttachments.set([]);
-    this.fileError.set(null);
+    this.resetAttachmentInput();
   }
 
   onAttachmentChange(event: Event): void {
@@ -648,6 +613,24 @@ export class RevenueDashboard {
 
   private currentYearValue(): string {
     return String(new Date().getFullYear());
+  }
+
+  private buildSummaryQuery(useFilters: boolean): RevenueSummaryQuery {
+    if (!useFilters) return {};
+    const { month, year, period } = this.filterForm.getRawValue();
+    const presetRange = this.buildPresetRange(period);
+    const monthKey = presetRange ? '' : this.buildMonthKey(month, year);
+    const fromMonth = presetRange?.from || monthKey || undefined;
+    const toMonth = presetRange?.to || monthKey || undefined;
+    const monthNumber = presetRange ? 0 : (month ? Number(month) : 0);
+    const yearNumber = presetRange ? 0 : (year ? Number(year) : 0);
+    const monthOnly = !presetRange && monthNumber && !yearNumber;
+    return {
+      from: monthOnly ? undefined : fromMonth || undefined,
+      to: monthOnly ? undefined : toMonth || undefined,
+      month: monthOnly ? monthNumber : undefined,
+      year: yearNumber || undefined
+    };
   }
 
   private resetCreateForm(): void {

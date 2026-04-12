@@ -191,7 +191,7 @@
                           title="Supprimer"
                           [disabled]="deletingId() === v._id"
                           (click)="openDeleteModal(v)"
-                        ><i class="fa-solid fa-trash"></i> 
+                        ><i class="bi bi-trash"></i> 
                           Supprimer
                           @if (deletingId() === v._id) { Suppression… }
                         </button>
@@ -217,5 +217,7 @@
     (confirm)="confirmDelete()">
   </app-confirm-delete-modal>
 
-
+  @if (isReadOnly()) {
+    <app-technician-mobile-nav></app-technician-mobile-nav>
+  }
 </section>

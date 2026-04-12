@@ -53,8 +53,8 @@ export class TechnicianDocuments {
         window.open(url, '_blank', 'noopener');
         window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       },
-      error: () => {
-        this.error.set('Téléchargement document impossible.');
+      error: async (err) => {
+        this.error.set(await this.readDownloadError(err));
       }
     });
   }
@@ -89,5 +89,19 @@ export class TechnicianDocuments {
     if (this.isDocExpired(doc)) return 'status-expired';
     if (this.isDocExpiringSoon(doc)) return 'status-expiring';
     return 'status-valid';
+  }
+
+  private async readDownloadError(err: any): Promise<string> {
+    const payload = err?.error;
+    if (payload instanceof Blob) {
+      try {
+        const text = await payload.text();
+        const parsed = JSON.parse(text);
+        return parsed?.message || 'Téléchargement document impossible.';
+      } catch {
+        return 'Téléchargement document impossible.';
+      }
+    }
+    return payload?.message || 'Téléchargement document impossible.';
   }
 }

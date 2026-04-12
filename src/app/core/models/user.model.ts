@@ -13,6 +13,9 @@ export interface User {
   authEnabled?: boolean;
   mustChangePassword?: boolean;
   lastLoginAt?: string | Date;
+  /** Verrouillage par tentatives échouées */
+  lockUntil?: string | Date | null;
+  failedLoginAttempts?: number;
 
   /** Contact */
   email: string;

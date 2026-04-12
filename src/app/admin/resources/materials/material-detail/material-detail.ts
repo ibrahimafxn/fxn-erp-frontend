@@ -15,12 +15,13 @@ import {formatDepotName, formatPersonName, formatResourceName} from '../../../..
 import { formatPageRange } from '../../../../core/utils/pagination';
 import {downloadBlob} from '../../../../core/utils/download';
 import {ConfirmDeleteModal} from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   selector: 'app-material-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
-  imports: [CommonModule, DatePipe, ReactiveFormsModule, ConfirmDeleteModal],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, ConfirmDeleteModal, TechnicianMobileNav],
   templateUrl: './material-detail.html',
   styleUrl: './material-detail.scss',
 })

@@ -4,6 +4,11 @@
       <h1>Attribution technicien</h1>
       <p class="subtitle">Attribue plusieurs articles en une seule validation.</p>
     </div>
+    <div class="header-actions">
+      <button class="btn-outline" type="button" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i> Retour
+      </button>
+    </div>
   </header>
 
   <section class="card form-card">
@@ -110,7 +115,7 @@
   entityLabel="technicien"
   [entityName]="selectedTechLabel()"
   confirmText="Valider"
-  confirmIcon="fa-solid fa-check"
+  confirmIcon="bi bi-check2"
   dangerHint="Les articles seront attribués au technicien sélectionné."
   [confirming]="submitting()"
   (cancel)="closeConfirm()"

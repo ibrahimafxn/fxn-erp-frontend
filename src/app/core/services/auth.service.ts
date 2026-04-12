@@ -1,10 +1,10 @@
 // src/app/core/services/auth.service.ts
 
 import {inject, Injectable, signal} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {Observable, of, ReplaySubject, throwError} from 'rxjs';
-import {catchError, filter, map, take, tap} from 'rxjs/operators';
+import {catchError, finalize, map, shareReplay, switchMap, take, tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {Role} from '../models/roles.model';
 import { UserPreferences } from '../models';
@@ -52,7 +52,10 @@ export class AuthService {
   /** Base URL de l'API, sans slash final */
   private apiBase = (environment.apiBaseUrl || '').replace(/\/+$/, '');
   /** Token CSRF en mémoire (fallback quand le cookie n'est pas lisible) */
+  private accessToken: string | null = null;
   private csrfToken: string | null = null;
+  private readonly accessStorageKey = 'fxn_access_token';
+  private readonly userStorageKey = 'fxn_user';
   private readonly csrfStorageKey = 'fxn_csrf_token';
 
   /**
@@ -65,6 +68,7 @@ export class AuthService {
   /** Indique si l'init auth est terminée (refresh tenté) */
   private readonly _ready = signal(false);
   readonly ready$ = this._ready.asReadonly();
+  private bootstrapRequest$: Observable<boolean> | null = null;
 
   /**
    * Gestion mutualisée des refresh token :
@@ -75,6 +79,7 @@ export class AuthService {
   private refreshSubject = new ReplaySubject<boolean | null>(1);
 
   constructor() {
+    this.restoreSession();
     this.restoreCsrfToken();
   }
 
@@ -83,9 +88,63 @@ export class AuthService {
   // ─────────────────────────────────────────────
 
   private persistUser(user: AuthUser | null): void {
-    // maj du signal
     this._user.set(user);
+    try {
+      if (typeof localStorage === 'undefined') return;
+      if (user) {
+        localStorage.setItem(this.userStorageKey, JSON.stringify(user));
+      } else {
+        localStorage.removeItem(this.userStorageKey);
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
+
+  private setAccessToken(token?: string | null): void {
+    this.accessToken = token || null;
+    try {
+      if (typeof localStorage === 'undefined') return;
+      if (this.accessToken) {
+        localStorage.setItem(this.accessStorageKey, this.accessToken);
+      } else {
+        localStorage.removeItem(this.accessStorageKey);
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  private restoreSession(): void {
+    try {
+      if (typeof localStorage === 'undefined') return;
+
+      const storedToken = localStorage.getItem(this.accessStorageKey);
+      if (storedToken) {
+        this.accessToken = storedToken;
+      }
+
+      const rawUser = localStorage.getItem(this.userStorageKey);
+      if (!rawUser) return;
+
+      const parsedUser = JSON.parse(rawUser) as AuthUser | null;
+      if (parsedUser?._id && parsedUser?.email && parsedUser?.role) {
+        this._user.set(parsedUser);
+      } else {
+        localStorage.removeItem(this.userStorageKey);
+      }
+    } catch {
+      try {
+        localStorage.removeItem(this.userStorageKey);
+        localStorage.removeItem(this.accessStorageKey);
+      } catch {
+        // ignore storage errors
+      }
+      this._user.set(null);
+      this.accessToken = null;
+    }
+  }
+
   private setCsrfToken(token?: string | null): void {
     this.csrfToken = token || null;
     try {
@@ -118,6 +177,10 @@ export class AuthService {
   /**
    * Retourne le token d'accès courant (utilisé par l'interceptor).
    */
+  getAccessToken(): string | null {
+    return this.accessToken;
+  }
+
   /**
    * Retourne le user courant (ou null si non connecté).
    * Utilise le signal interne.
@@ -160,10 +223,54 @@ export class AuthService {
   }
 
   bootstrapSession(): void {
-    this.refreshToken().subscribe({
-      next: () => this._ready.set(true),
-      error: () => this._ready.set(true)
-    });
+    this.ensureSessionReady().subscribe();
+  }
+
+  hasSessionHint(): boolean {
+    return !!this.accessToken || !!this._user() || !!this.csrfToken;
+  }
+
+  markReady(): void {
+    this._ready.set(true);
+  }
+
+  clearSession(): void {
+    this.setAccessToken(null);
+    this.persistUser(null);
+    this.setCsrfToken(null);
+    this.refreshInProgress = false;
+    this.refreshSubject = new ReplaySubject<boolean | null>(1);
+  }
+
+  ensureSessionReady(): Observable<boolean> {
+    if (this._ready()) {
+      return of(this.isAuthenticated());
+    }
+
+    if (this.bootstrapRequest$) {
+      return this.bootstrapRequest$;
+    }
+
+    this.bootstrapRequest$ = this.refreshToken().pipe(
+      map(() => this.isAuthenticated()),
+      catchError((err: unknown) => {
+        if (err instanceof HttpErrorResponse && (err.status === 401 || err.status === 403)) {
+          this.setAccessToken(null);
+          this.persistUser(null);
+          this.setCsrfToken(null);
+          this.refreshInProgress = false;
+          this.refreshSubject = new ReplaySubject<boolean | null>(1);
+        }
+        return of(this.isAuthenticated());
+      }),
+      finalize(() => {
+        this._ready.set(true);
+        this.bootstrapRequest$ = null;
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
+    );
+
+    return this.bootstrapRequest$;
   }
 
   // ─────────────────────────────────────────────
@@ -189,6 +296,9 @@ export class AuthService {
       })
       .pipe(
         tap(resp => {
+          if (resp?.accessToken) {
+            this.setAccessToken(resp.accessToken);
+          }
           if (resp?.user) {
             this.persistUser(resp.user);
           }
@@ -211,22 +321,27 @@ export class AuthService {
    * - redirige vers /login si redirect = true
    */
   logout(redirect = true): Observable<any> {
+    // Capture the CSRF token BEFORE clearing it so the HTTP request can use it.
+    // In a cross-site prod setup (Vercel ↔ Render), document.cookie won't expose
+    // the backend's XSRF-TOKEN, so we must pass it explicitly via header.
+    const savedCsrf = this.csrfToken;
+
+    const headers: Record<string, string> = {};
+    if (savedCsrf) {
+      headers['X-XSRF-TOKEN'] = savedCsrf;
+    }
+
     const logout$ = this.http
       .post(`${this.apiBase}/auth/refresh/logout`, {}, {
-        withCredentials: true
+        withCredentials: true,
+        headers
       })
       .pipe(
-        catchError(() => {
-          // même si le backend renvoie une erreur, on force le logout côté front
-          return of(null);
-        })
+        catchError(() => of(null))
       );
 
-    // Nettoyage côté front immédiat
-    this.persistUser(null);
-    this.setCsrfToken(null);
-    this.refreshInProgress = false;
-    this.refreshSubject = new ReplaySubject<boolean | null>(1);
+    // Clear local state immediately so the UI reflects the logout at once
+    this.clearSession();
 
     if (redirect) {
       logout$.subscribe(() => this.router.navigate(['/login']));
@@ -257,12 +372,18 @@ export class AuthService {
    * Si le refresh échoue, l'interceptor appellera logout() puis relancera l'erreur.
    */
   refreshToken(): Observable<void> {
-    // Si un refresh est déjà en cours, on s'abonne au résultat
+    // Si un refresh est déjà en cours, on s'abonne au résultat.
+    // IMPORTANT : take(1) d'abord pour que null (échec) soit bien reçu,
+    // puis switchMap convertit null → throwError pour que tous les appelants
+    // concurrents échouent proprement (sans rester bloqués indéfiniment).
     if (this.refreshInProgress) {
       return this.refreshSubject.asObservable().pipe(
-        filter((ok): ok is boolean => ok === true),
         take(1),
-        map(() => undefined)
+        switchMap(ok =>
+          ok === true
+            ? of(undefined as void)
+            : throwError(() => new Error('Refresh token invalide'))
+        )
       );
     }
 
@@ -276,6 +397,9 @@ export class AuthService {
         tap(resp => {
           if (!resp) {
             throw new Error('Réponse refresh invalide');
+          }
+          if (resp.accessToken) {
+            this.setAccessToken(resp.accessToken);
           }
           if (resp.user) {
             this.persistUser(resp.user);

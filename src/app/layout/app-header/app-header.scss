@@ -9,17 +9,21 @@
   align-items: center;
   overflow: visible;
 
-  background: transparent;
-  backdrop-filter: none;
-  border-bottom: none;
+  background: color-mix(in srgb, var(--fxn-bg) 72%, var(--fxn-surface) 28%);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--fxn-border);
   isolation: isolate;
+  box-shadow: 0 10px 24px rgba(4, 8, 16, 0.18);
 }
 
 .app-header::before {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: 0;
+  opacity: 1;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--fxn-surface) 84%, transparent), color-mix(in srgb, var(--fxn-bg) 88%, transparent)),
+    radial-gradient(420px 180px at 12% 0%, var(--fxn-bg-glow-1), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }

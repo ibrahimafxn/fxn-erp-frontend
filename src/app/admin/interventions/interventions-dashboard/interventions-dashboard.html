@@ -142,16 +142,16 @@
     <section class="rates card">
       <div class="rates-head">
         <div>
-          <h2><span class="material-icons notranslate">tune</span>Tarifs prestations</h2>
-          <p>Définis la part FXN et la part technicien pour chaque prestation.</p>
+          <h2><span class="material-icons notranslate">tune</span>Prix prestations facture</h2>
+          <p>Définis le prix de référence de chaque prestation tel qu’il apparaît sur les PDF.</p>
         </div>
 
         <div class="rates-actions">
           <button class="btn-outline" type="button" (click)="toggleRates()">
-            @if (showRates()) { Masquer tarifs } @else { Afficher tarifs }
+            @if (showRates()) { Masquer prix } @else { Afficher prix }
           </button>
           <button class="btn-outline" type="button" (click)="resetRates()" [disabled]="rateSaving() || rateForm.pristine"><i class="bi bi-x"></i> Annuler les modifications</button>
-          <button class="btn-save" type="button" (click)="saveRates()" [disabled]="rateSaving() || rateForm.pristine || rateForm.invalid"><i class="fa-solid fa-check"></i> 
+          <button class="btn-save" type="button" (click)="saveRates()" [disabled]="rateSaving() || rateForm.pristine || rateForm.invalid"><i class="bi bi-check2"></i> 
             @if (rateSaving()) { Sauvegarde… } @else { Enregistrer }
           </button>
         </div>
@@ -160,7 +160,7 @@
       @if (showRates()) {
         <form class="rates-grid" [formGroup]="rateForm">
           @for (r of rateFields; track r.key) {
-            <div class="rate-row" [class.invalid]="isRateInvalid(r.key)" [formGroupName]="r.key">
+            <div class="rate-row" [formGroupName]="r.key">
               <div class="rate-label">
                 <span class="rate-title">{{ r.label }}</span>
                 <span class="rate-code">{{ r.code }}</span>
@@ -168,25 +168,14 @@
 
               <div class="rate-inputs">
                 <label>
-                  Total
+                  Prix facture PDF
                   <input type="number" min="0" step="1" formControlName="total" />
                 </label>
-                <label>
-                  FXN
-                  <input type="number" min="0" step="1" formControlName="fxn" />
-                </label>
-                <div class="tech-readonly">
-                  <span class="label">Technicien</span>
-                  <span class="value">{{ techShareFor(r.key) }}</span>
-                </div>
               </div>
-              @if (isRateInvalid(r.key)) {
-                <p class="rate-error">Le montant FXN ne peut pas dépasser le total.</p>
-              }
             </div>
           }
         </form>
-        <p class="rates-hint">Les tarifs sont enregistrés côté serveur.</p>
+        <p class="rates-hint">Les prix de référence sont enregistrés côté serveur.</p>
         @if (rateError()) {
           <p class="rates-status error">{{ rateError() }}</p>
         } @else if (rateSuccess()) {
@@ -195,7 +184,7 @@
       } @else {
         <div class="rates-collapsed">
           <span class="material-icons notranslate" aria-hidden="true">visibility_off</span>
-          Tarifs masqués.
+          Prix masqués.
         </div>
       }
     </section>
@@ -253,30 +242,30 @@
     <div class="revenue-head">
       <h2>
         <span class="material-icons notranslate">attach_money</span>
-        Chiffre d’affaires
+        Montants de référence
         <span
           class="info-tooltip"
           tabindex="0"
           role="button"
-          aria-label="Estimation basée sur les tarifs et les interventions filtrées."
+          aria-label="Estimation basée sur les prix de référence et les interventions filtrées."
         >
           <span class="material-icons notranslate" aria-hidden="true">info</span>
-          <span class="tooltip-text">Estimation basée sur les tarifs et les interventions filtrées.</span>
+          <span class="tooltip-text">Estimation basée sur les prix de référence et les interventions filtrées.</span>
         </span>
       </h2>
-      <p>Calculé à partir des tarifs et des interventions filtrées.</p>
+      <p>Calculé à partir des prix de référence par prestation et des interventions filtrées.</p>
     </div>
     <div class="revenue-item">
-      <span class="label">Chiffre d’affaires FXN</span>
-      <span class="value">{{ totalRevenue().fxn | number:'1.0-0' }} €</span>
+      <span class="label">Montant estimé OSIRIS</span>
+      <span class="value">{{ totalRevenue() | number:'1.0-0' }} €</span>
     </div>
     <div class="revenue-item">
-      <span class="label">Chiffre d’affaires Techniciens</span>
-      <span class="value">{{ totalRevenue().tech | number:'1.0-0' }} €</span>
+      <span class="label">Montant facture PDF</span>
+      <span class="value">{{ (compareTotals()?.invoice || 0) | number:'1.0-0' }} €</span>
     </div>
     <div class="revenue-item total">
-      <span class="label">Total chiffre d’affaires</span>
-      <span class="value">{{ (totalRevenue().fxn + totalRevenue().tech) | number:'1.0-0' }} €</span>
+      <span class="label">Écart estimation / facture</span>
+      <span class="value">{{ (compareTotals()?.delta || 0) | number:'1.0-0' }} €</span>
     </div>
   </div>
 
@@ -297,42 +286,12 @@
           <span class="label">Total</span>
           <span class="value">{{ totals()?.total ?? 0 }}</span>
         </div>
-        <div class="summary-pill">
-          <span class="label">Presta compl</span>
-          <span class="value">{{ totals()?.prestaCompl ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Rac pavillon</span>
-          <span class="value">{{ totals()?.racPavillon ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Rac immeuble</span>
-          <span class="value">{{ totals()?.racImmeuble ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Reconnexion</span>
-          <span class="value">{{ totals()?.reconnexion ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Prestation F8</span>
-          <span class="value">{{ totals()?.racF8 ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Rac PRO S</span>
-          <span class="value">{{ totals()?.racProS ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">Rac PRO C</span>
-          <span class="value">{{ totals()?.racProC ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">SAV</span>
-          <span class="value">{{ totals()?.sav ?? 0 }}</span>
-        </div>
-        <div class="summary-pill">
-          <span class="label">CLEM</span>
-          <span class="value">{{ totals()?.clem ?? 0 }}</span>
-        </div>
+        @for (item of quickSummaryPrestations; track item.key) {
+          <div class="summary-pill">
+            <span class="label">{{ item.label }}</span>
+            <span class="value">{{ totals()?.[item.key] ?? 0 }}</span>
+          </div>
+        }
       </div>
 
       <div class="summary-filters">
@@ -438,17 +397,11 @@
         <tr>
           <th><span class="th-label" title="Technicien">Technicien</span></th>
           <th><span class="th-label" title="Total">Tot.</span></th>
-          <th><span class="th-label" title="Rac pavillon">Rac pav.</span></th>
-          <th><span class="th-label" title="Rac immeuble">Rac imm.</span></th>
-          <th><span class="th-label" title="Reconnexion">Reconn.</span></th>
-          <th><span class="th-label" title="Rac F8">Rac F8</span></th>
-          <th><span class="th-label" title="Rac PRO S">PRO S</span></th>
-          <th><span class="th-label" title="Rac PRO C">PRO C</span></th>
-          <th><span class="th-label" title="SAV">SAV</span></th>
-          <th><span class="th-label" title="CLEM">CLEM</span></th>
+          @for (col of detailSummaryPrestations; track col.key) {
+            <th><span class="th-label" [title]="col.label">{{ col.label }}</span></th>
+          }
           <th><span class="th-label" title="Autres">Autres</span></th>
-          <th><span class="th-label" title="CA FXN">CA FXN</span></th>
-          <th><span class="th-label" title="CA Tech">CA Tech</span></th>
+          <th><span class="th-label" title="Montant estimé">Montant estimé</span></th>
         </tr>
         </thead>
         <tbody>
@@ -471,17 +424,11 @@
                 </button>
               </td>
               <td data-label="Total">{{ it.total }}</td>
-              <td data-label="Rac pavillon">{{ it.racPavillon }}</td>
-              <td data-label="Rac immeuble">{{ it.racImmeuble }}</td>
-              <td data-label="Reconnexion">{{ it.reconnexion }}</td>
-              <td data-label="Rac F8">{{ it.racF8 }}</td>
-              <td data-label="Rac PRO S">{{ it.racProS }}</td>
-              <td data-label="Rac PRO C">{{ it.racProC }}</td>
-              <td data-label="SAV">{{ it.sav }}</td>
-              <td data-label="CLEM">{{ it.clem }}</td>
+              @for (col of detailSummaryPrestations; track col.key) {
+                <td [attr.data-label]="col.label">{{ it[col.key] ?? 0 }}</td>
+              }
               <td data-label="Autres">{{ it.other + it.racAutre }}</td>
-              <td data-label="CA FXN">{{ fxnRevenue(it) | number:'1.0-0' }} €</td>
-              <td data-label="CA Tech">{{ techRevenue(it) | number:'1.0-0' }} €</td>
+              <td data-label="Montant estimé">{{ estimatedRevenue(it) | number:'1.0-0' }} €</td>
             </tr>
           }
         </tbody>
