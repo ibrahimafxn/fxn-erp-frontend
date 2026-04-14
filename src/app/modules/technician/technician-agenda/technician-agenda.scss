@@ -170,6 +170,59 @@
   margin-top: 0.75rem;
 }
 
+.technician-agenda .pager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--fxn-border);
+}
+
+.technician-agenda .pager-left,
+.technician-agenda .pager-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.technician-agenda .page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.technician-agenda .page-size button {
+  min-width: 42px;
+  min-height: 36px;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface);
+  color: var(--fxn-text);
+}
+
+.technician-agenda .page-size button.active {
+  border-color: var(--fxn-primary-border);
+  background: var(--fxn-primary-soft);
+  color: var(--fxn-primary);
+}
+
+.technician-agenda .pager-label,
+.technician-agenda .pager-range {
+  font-size: 0.82rem;
+  color: var(--fxn-text-muted);
+}
+
+.technician-agenda .pager-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .technician-agenda .absence-item {
   border: 1px solid var(--fxn-border);
   border-radius: 14px;
@@ -267,19 +320,25 @@ body.theme-default .technician-agenda thead th {
 
 /* ── Button styles ───────────────────────────────────────── */
 .technician-agenda .btn-success {
-  background: rgba(42, 164, 122, 0.2);
-  border: 1px solid rgba(42, 164, 122, 0.6);
-  color: #bff7dc;
+  background: color-mix(in srgb, var(--fxn-success) 18%, var(--fxn-surface));
+  border: 1px solid color-mix(in srgb, var(--fxn-success) 52%, transparent);
+  color: var(--fxn-pill-text-success);
 }
 
 .technician-agenda .btn-success:hover {
-  background: rgba(42, 164, 122, 0.3);
-  border-color: rgba(42, 164, 122, 0.85);
+  background: color-mix(in srgb, var(--fxn-success) 26%, var(--fxn-surface));
+  border-color: color-mix(in srgb, var(--fxn-success) 68%, transparent);
 }
 
 .technician-agenda .btn-success-outline {
-  border-color: rgba(42, 164, 122, 0.6);
-  color: #bff7dc;
+  background: color-mix(in srgb, var(--fxn-success) 8%, transparent);
+  border-color: color-mix(in srgb, var(--fxn-success) 52%, transparent);
+  color: var(--fxn-pill-text-success);
+}
+
+.technician-agenda .btn-success:disabled,
+.technician-agenda .btn-success-outline:disabled {
+  color: var(--fxn-pill-text-success);
 }
 
 .technician-agenda .btn-info-outline {
@@ -314,6 +373,12 @@ body.theme-default .technician-agenda thead th {
   }
 
   .technician-agenda .list-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .technician-agenda .pager {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;

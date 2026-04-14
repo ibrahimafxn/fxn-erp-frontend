@@ -137,9 +137,9 @@
 }
 
 .technician-history .badge-assign {
-  border-color: rgba(59, 130, 246, 0.8);
-  background: color-mix(in srgb, #3b82f6 14%, var(--fxn-surface-soft));
-  color: #bfdbfe;
+  border-color: color-mix(in srgb, var(--fxn-primary) 52%, transparent);
+  background: color-mix(in srgb, var(--fxn-primary) 14%, var(--fxn-surface-soft));
+  color: var(--fxn-pill-text-primary);
 }
 
 .technician-history .badge-release {

@@ -199,6 +199,12 @@ export const ADMIN_ROUTES: Routes = [
       import('./resources/materials/material-form/material-form').then(m => m.MaterialForm)
   },
 
+  // /admin/resources/osiris-equipment
+  {
+    path: 'resources/osiris-equipment',
+    loadComponent: () =>
+      import('./resources/osiris-equipment/osiris-import').then(m => m.OsirisImport)
+  },
 
   // -----------------------------
   // CONSUMABLES

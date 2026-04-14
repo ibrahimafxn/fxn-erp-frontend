@@ -213,6 +213,10 @@ export class AppHeader {
     this.router.navigate([this.materialReservationsLink()]).then();
   }
 
+  goOsirisEquipment(): void {
+    this.router.navigate(['/admin/resources/osiris-equipment']).then();
+  }
+
   goReceipts(): void {
     this.router.navigate([this.receiptsLink()]).then();
   }
@@ -386,6 +390,7 @@ export class AppHeader {
       if (url.includes('/history')) return 'Historique';
       if (url.includes('/documents')) return 'Documents';
       if (url.includes('/absences')) return 'Mes absences';
+      if (url.includes('/resources/osiris-equipment')) return 'Stock Osiris';
       return 'Technicien';
     }
     if (url.includes('/unauthorized')) return 'Accès refusé';

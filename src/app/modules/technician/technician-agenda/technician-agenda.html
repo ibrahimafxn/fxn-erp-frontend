@@ -101,8 +101,30 @@
     } @else if (absences().length === 0) {
       <div class="state empty">Aucune demande.</div>
     } @else {
+      <footer class="pager">
+        <div class="pager-left">
+          <div class="page-size">
+            @for (size of pageSizeChoices; track size) {
+              <button type="button" [class.active]="limit() === size" (click)="setPageSize(size)">{{ size }}</button>
+            }
+          </div>
+          <span class="pager-label">Éléments par page</span>
+        </div>
+        <div class="pager-right">
+          <span class="pager-range">{{ pageRange(page(), limit(), sortedAbsences().length) }}</span>
+          <div class="pager-nav">
+            <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="page() <= 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="page() >= pageCount()">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </footer>
+
       <div class="absence-list">
-        @for (a of absences(); track a._id || a.startDate) {
+        @for (a of paginatedAbsences(); track a._id || a.startDate) {
           <div class="absence-item">
             <div class="absence-row-main">
               <div class="absence-left">

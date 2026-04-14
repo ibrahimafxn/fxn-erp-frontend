@@ -120,5 +120,11 @@ export const TECHNICIAN_ROUTES: Routes = [
     loadComponent: () =>
       import('./technician-absences/technician-absences').then(m => m.TechnicianAbsences),
     canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
+  },
+  {
+    path: 'resources/osiris-equipment',
+    loadComponent: () =>
+      import('./technician-osiris-equipment/technician-osiris-equipment').then(m => m.TechnicianOsirisEquipment),
+    canActivate: [AuthGuard, RoleGuard(TECHNICIAN_ACCESS)]
   }
 ];

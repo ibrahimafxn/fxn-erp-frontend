@@ -267,6 +267,12 @@
                           <span i18n="@@header.menu.stockReceipts">Réceptions</span>
                         </button>
                         @if (canManageAccess()) {
+                          <button mat-button (click)="goOsirisEquipment()">
+                            <span class="material-icons notranslate">devices</span>
+                            <span>Stock Osiris</span>
+                          </button>
+                        }
+                        @if (canManageAccess()) {
                           <button mat-button (click)="goOrders()">
                             <span class="material-icons notranslate">receipt_long</span>
                             <span i18n="@@header.menu.orders">Commandes</span>

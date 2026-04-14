@@ -23,7 +23,18 @@
           <div class="kpi-title">Journalier</div>
           <div class="kpi-sub">Aujourd'hui</div>
         </div>
-        <div class="kpi-value">{{ dailyAmount() | amountCurrency }}</div>
+        <div class="kpi-value-row">
+          <div class="kpi-value">{{ dailyAmount() | amountCurrency }}</div>
+          @if (dailyTrend() !== null) {
+            <span class="trend-badge" [class.trend-up]="dailyTrend()! > 0" [class.trend-down]="dailyTrend()! < 0">
+              {{ dailyTrend()! > 0 ? '▲' : dailyTrend()! < 0 ? '▼' : '→' }}
+              {{ (dailyTrend()! | number:'1.0-0') }}%
+            </span>
+          }
+        </div>
+        @if (prevDailyAmount() > 0) {
+          <div class="kpi-prev">J-1 : {{ prevDailyAmount() | amountCurrency }}</div>
+        }
       </article>
       <article class="kpi-card kpi-weekly">
         <div class="kpi-info">
@@ -87,22 +98,57 @@
       @if (prestationCards().length) {
         <div class="import-subtitle">Prestations du jour</div>
         <div class="import-grid">
-          @for (item of prestationCards(); track item.label) {
+          @for (item of prestationCardsVisible(); track item.label) {
             <article class="import-card">
               <div class="label">{{ item.label }}</div>
               <div class="value">{{ item.value }}</div>
             </article>
           }
         </div>
+        @if (prestationCards().length > 5) {
+          <button class="show-more-btn" type="button" (click)="showAllPrestations.set(!showAllPrestations())">
+            {{ showAllPrestations() ? 'Voir moins ▲' : 'Voir plus (' + (prestationCards().length - 5) + ') ▼' }}
+          </button>
+        }
       }
     }
   </section>
 
+  <!-- Stock équipements Osiris -->
+  @if (myEquipmentLoading() || (myEquipment() && myEquipment()!.total > 0)) {
+    <section class="equipment-section">
+      <div class="equipment-head">
+        <h2>Mon stock équipements</h2>
+        @if (!myEquipmentLoading()) {
+          <span class="equip-total-badge">{{ myEquipment()?.total ?? 0 }} au total</span>
+        }
+      </div>
+      @if (myEquipmentLoading()) {
+        <div class="state loading">Chargement…</div>
+      } @else if (myEquipment()?.equipment?.length) {
+        <div class="equip-grid">
+          @for (e of myEquipment()!.equipment; track e.type) {
+            <article class="equip-card">
+              <div class="equip-count">{{ e.count }}</div>
+              <div class="equip-type">{{ e.type }}</div>
+              @if (e.codeProcable) {
+                <div class="equip-code">{{ e.codeProcable }}</div>
+              }
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+
   <div class="action-grid">
-    <article class="action-card" (click)="goReports()">
+    <article class="action-card" [class.action-card--alert]="reportExists() === false" (click)="goReports()">
       <div class="action-head">
         <span class="material-icons notranslate action-icon">event_note</span>
         <span class="action-tag">Rapport</span>
+        @if (reportExists() === false) {
+          <span class="report-badge">Non saisi</span>
+        }
       </div>
       <div class="action-title">Saisir le rapport du jour</div>
       <div class="action-subtitle">Nombre d'interventions + commentaire.</div>
@@ -115,6 +161,15 @@
       </div>
       <div class="action-title">Suivre vos charges</div>
       <div class="action-subtitle">Saisir et suivre le bénéfice mensuel.</div>
+    </article>
+
+    <article class="action-card" (click)="goAgenda()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">calendar_month</span>
+        <span class="action-tag">Agenda</span>
+      </div>
+      <div class="action-title">Agenda & absences</div>
+      <div class="action-subtitle">Demandes de congé, maladie ou permission.</div>
     </article>
 
     <article class="action-card" (click)="goStock()">
@@ -142,6 +197,15 @@
       </div>
       <div class="action-title">Véhicules et incidents</div>
       <div class="action-subtitle">Détails des véhicules et pannes en cours.</div>
+    </article>
+
+    <article class="action-card" (click)="goOsirisEquipment()">
+      <div class="action-head">
+        <span class="material-icons notranslate action-icon">devices</span>
+        <span class="action-tag">Stock Osiris</span>
+      </div>
+      <div class="action-title">Stock équipements Osiris</div>
+      <div class="action-subtitle">Matériels FTTH dans votre stock.</div>
     </article>
 
     <article class="action-card" (click)="goHistory()">
