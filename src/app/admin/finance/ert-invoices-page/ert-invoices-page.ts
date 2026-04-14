@@ -1,7 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { InterventionInvoiceSummary, InterventionService } from '../../../core/services/intervention.service';
+import {
+  InterventionInvoiceDetail,
+  InterventionInvoiceDoc,
+  InterventionInvoiceSummary,
+  InterventionService
+} from '../../../core/services/intervention.service';
 
 @Component({
   standalone: true,
@@ -24,6 +29,10 @@ export class ErtInvoicesPage {
   readonly invoiceSummary = signal<InterventionInvoiceSummary | null>(null);
   readonly lastImportedInvoices = signal<InterventionInvoiceSummary['invoices']>([]);
   readonly selectedPeriodKey = signal('');
+  readonly selectedInvoiceRef = signal('');
+  readonly selectedInvoice = signal<InterventionInvoiceDetail | null>(null);
+  readonly detailLoading = signal(false);
+  readonly detailError = signal<string | null>(null);
 
   selectedInvoices: File[] = [];
 
@@ -71,6 +80,46 @@ export class ErtInvoicesPage {
     if (!el) return;
     this.selectedPeriodKey.set(el.value);
     this.lastImportedInvoices.set([]);
+    this.clearSelection();
+  }
+
+  selectInvoice(inv: InterventionInvoiceDoc): void {
+    const ref = inv.attachmentRef || inv.filename || inv._id;
+    if (!ref || !inv.attachmentRef) {
+      this.clearSelection();
+      this.detailError.set('Cette facture ne contient pas de référence d’attachement exploitable.');
+      return;
+    }
+    if (this.selectedInvoiceRef() === ref) {
+      this.clearSelection();
+      return;
+    }
+    this.selectedInvoiceRef.set(ref);
+    this.detailLoading.set(true);
+    this.detailError.set(null);
+    this.selectedInvoice.set(null);
+    this.svc.invoiceList({ attachmentRef: inv.attachmentRef }).subscribe({
+      next: (res) => {
+        this.detailLoading.set(false);
+        const match = (res.data || [])[0] || null;
+        if (!match) {
+          this.detailError.set('Détail de facture introuvable.');
+          return;
+        }
+        this.selectedInvoice.set(match);
+        queueMicrotask(() => {
+          document.getElementById('invoice-detail-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.detailLoading.set(false);
+        this.detailError.set(this.apiError(err, 'Erreur chargement détail facture'));
+      }
+    });
+  }
+
+  closeInvoiceDetail(): void {
+    this.clearSelection();
   }
 
   importInvoices(): void {
@@ -104,6 +153,7 @@ export class ErtInvoicesPage {
         if (importedInvoices.length) {
           const firstPeriod = importedInvoices.find((inv) => inv.periodKey)?.periodKey || '';
           if (firstPeriod) this.selectedPeriodKey.set(firstPeriod);
+          this.selectInvoice(importedInvoices[0]);
         }
         this.resetInvoiceInput();
         this.loadInvoices();
@@ -141,6 +191,13 @@ export class ErtInvoicesPage {
     this.selectedInvoices = [];
     const input = this.invoiceInput?.nativeElement;
     if (input) input.value = '';
+  }
+
+  private clearSelection(): void {
+    this.selectedInvoiceRef.set('');
+    this.selectedInvoice.set(null);
+    this.detailLoading.set(false);
+    this.detailError.set(null);
   }
 
   private apiError(err: unknown, fallback: string): string {

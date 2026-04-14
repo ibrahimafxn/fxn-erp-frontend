@@ -15,7 +15,8 @@ export const EMPTY_SUMMARY_FILTERS: InterventionSummaryQuery = {
 export const HIDDEN_PRESTATION_CODES = ['CABLE_SL', 'BIFIBRE', 'CLEM', 'DEMO', 'REFRAC'] as const;
 
 export const DETAIL_SUMMARY_PRESTATIONS = [
-  { label: 'RAC_PBO_SOUT', key: 'racPavillon' },
+  { label: 'RACPAV', key: 'racPavillon' },
+  { label: 'RAC_PBO_SOUT', key: 'racSouterrain' },
   { label: 'RAC_PBO_AERIEN', key: 'racAerien' },
   { label: 'RAC_PBO_FACADE', key: 'racFacade' },
   { label: 'RACIH', key: 'racImmeuble' },
@@ -66,6 +67,7 @@ export const QUICK_SUMMARY_PRESTATIONS = [
 
 export const REVENUE_KEYS = [
   'racPavillon',
+  'racSouterrain',
   'racAerien',
   'racFacade',
   'clem',

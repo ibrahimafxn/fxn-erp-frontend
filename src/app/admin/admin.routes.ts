@@ -119,6 +119,11 @@ export const ADMIN_ROUTES: Routes = [
         .then(m => m.InterventionsTechnicianDetail)
   },
   {
+    path: 'interventions/audit',
+    loadComponent: () =>
+      import('./interventions/interventions-audit/interventions-audit').then(m => m.InterventionsAudit)
+  },
+  {
     path: 'bpu',
     loadComponent: () => import('./bpu/bpu-list/bpu-list').then(m => m.BpuList)
   },

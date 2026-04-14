@@ -161,9 +161,10 @@ export class TechnicianInterventionsHistory {
   }
 
   detailRows(item: InterventionItem): { label: string; value: string }[] {
-    return [
+    const baseRows = [
       { label: 'Numéro', value: this.textValue(item.numInter) },
       { label: 'Client', value: this.textValue(item.client) },
+      { label: 'Technicien', value: this.textValue(item.techFull || [item.techFirstName, item.techLastName].filter(Boolean).join(' ')) },
       { label: 'Date RDV', value: this.formatDateTime(item.dateRdv, 'short') },
       { label: 'Type', value: this.textValue(item.type) },
       { label: 'Type opération', value: this.textValue(item.typeOperation) },
@@ -189,10 +190,22 @@ export class TechnicianInterventionsHistory {
       { label: 'Recommandation', value: this.textValue(item.recoRacc) },
       { label: 'Prestations', value: this.textValue(item.listePrestationsRaw) },
       { label: 'Articles', value: this.textValue(item.articlesRaw) },
+      { label: 'Catégories', value: this.listValue(item.categories) },
+      { label: 'Succès', value: this.booleanValue(item.isSuccess) },
+      { label: 'Échec', value: this.booleanValue(item.isFailure) },
+      { label: 'Version', value: this.numberValue(item.versionIndex) },
+      { label: 'Dernière version ID', value: this.textValue(item.latestVersionId) },
       { label: 'Commentaire technicien', value: this.textValue(item.commentairesTechnicien) },
       { label: 'Commentaire clôture', value: this.textValue(item.commentairesCloture) },
       { label: 'Importé le', value: this.formatDateTime(item.importedAt, 'short') }
     ];
+    const rawRows = Object.entries(item.osirisRaw || {})
+      .filter(([, value]) => this.normalizeText(value))
+      .map(([key, value]) => ({
+        label: `OSIRIS · ${key}`,
+        value: this.textValue(value)
+      }));
+    return [...baseRows, ...rawRows];
   }
 
   private sortItems(
@@ -237,6 +250,22 @@ export class TechnicianInterventionsHistory {
 
   private textValue(value?: string | null): string {
     return this.normalizeText(value) || '—';
+  }
+
+  private listValue(values?: string[] | null): string {
+    if (!values?.length) return '—';
+    const items = values.map((value) => this.normalizeText(value)).filter(Boolean);
+    return items.length ? items.join(', ') : '—';
+  }
+
+  private booleanValue(value?: boolean | null): string {
+    if (value == null) return '—';
+    return value ? 'Oui' : 'Non';
+  }
+
+  private numberValue(value?: number | null): string {
+    if (value == null || !Number.isFinite(value)) return '—';
+    return String(value);
   }
 
   private formatDateTime(value?: string | null, format: 'short' | 'shortDate' | 'shortTime' = 'short'): string {

@@ -27,9 +27,7 @@
 
   <!-- RIGHT -->
   <div class="right">
-    <!-- Lang switch hidden -->
     @if (user()) {
-      <!-- USER MENU -->
       <div class="user-menu">
         <button class="user-trigger" (click)="toggleMenu()">
           <div class="avatar">
@@ -40,26 +38,54 @@
             }
           </div>
           <span class="user-name">{{ displayName() }}</span>
-          <span class="chevron">▾</span>
+          <i class="bi bi-chevron-down chevron"></i>
         </button>
 
         @if (menuOpen()) {
           <div class="dropdown">
             <div class="user-meta">
-              <div class="name">{{ displayName() }}</div>
-              <div class="role">{{ roleLabel() }}</div>
+              <div class="meta-avatar">
+                @if (avatarUrl()) {
+                  <img class="avatar-img" [src]="avatarUrl()" [alt]="displayName()" />
+                } @else {
+                  {{ initials() }}
+                }
+              </div>
+              <div class="meta-info">
+                <div class="name">{{ displayName() }}</div>
+                <div class="role">{{ roleLabel() }}</div>
+              </div>
             </div>
 
             <div class="divider"></div>
 
             <div class="menu-grid">
-              <div class="menu-col">
-                @if (isTechnician()) {
-                  <div class="menu-group admin-group">
-                    <div class="section-label" i18n="@@header.section.technician">Technicien</div>
+
+              <!-- ═══════════════════════════════════
+                   TECHNICIEN
+              ═══════════════════════════════════ -->
+              @if (isTechnician()) {
+
+                <!-- Col 1 : Ressources + Activité -->
+                <div class="menu-col">
+                  <div class="menu-group resources-group">
+                    <div class="section-label">
+                      <span class="material-icons notranslate">inventory_2</span>
+                      Ressources
+                    </div>
                     <div class="section-items">
-                      <button mat-button (click)="goTechMaterials()"><span class="material-icons notranslate">handyman</span><span i18n="@@header.menu.techMaterials">Matériels</span></button>
-                      <button mat-button (click)="goTechConsumables()"><span class="material-icons notranslate">inventory_2</span><span i18n="@@header.menu.techConsumables">Consommables</span></button>
+                      <button mat-button (click)="goTechMaterials()">
+                        <span class="material-icons notranslate">handyman</span>
+                        <span i18n="@@header.menu.techMaterials">Matériels</span>
+                      </button>
+                      <button mat-button (click)="goTechConsumables()">
+                        <span class="material-icons notranslate">inventory_2</span>
+                        <span i18n="@@header.menu.techConsumables">Consommables</span>
+                      </button>
+                      <button mat-button (click)="goTechVehicles()">
+                        <span class="material-icons notranslate">directions_car</span>
+                        <span i18n="@@header.menu.techVehicles">Véhicules</span>
+                      </button>
                       <button mat-button (click)="goTechSupplyRequests()">
                         <span class="material-icons notranslate">assignment</span>
                         <span>Approvisionnements</span>
@@ -67,14 +93,55 @@
                           <span class="badge">{{ supplyBadgeCount() }}</span>
                         }
                       </button>
-                      <button mat-button (click)="goTechVehicles()"><span class="material-icons notranslate">directions_car</span><span i18n="@@header.menu.techVehicles">Véhicules</span></button>
-                      <button mat-button (click)="goTechAgenda()"><span class="material-icons notranslate">event</span><span i18n="@@header.menu.techAgenda">Agenda</span></button>
-                      <button mat-button (click)="goTechReports()"><span class="material-icons notranslate">event_note</span><span i18n="@@header.menu.techReports">Rapport quotidien</span></button>
-                      <button mat-button (click)="goTechRevenue()"><span class="material-icons notranslate">insights</span><span i18n="@@header.menu.techRevenue">Chiffre d'affaires</span></button>
-                      <button mat-button (click)="goTechCharges()"><span class="material-icons notranslate">receipt_long</span><span>Charges</span></button>
-                      <button mat-button (click)="goTechBpu()"><span class="material-icons notranslate">price_check</span><span i18n="@@header.menu.bpu">BPU prestations</span></button>
-                      <button mat-button (click)="goTechHistory()"><span class="material-icons notranslate">history</span><span i18n="@@header.menu.techHistory">Historique</span></button>
-                      <button mat-button (click)="goTechDocuments()"><span class="material-icons notranslate">description</span><span>Documents</span></button>
+                    </div>
+                  </div>
+
+                  <div class="menu-group activity-group">
+                    <div class="section-label">
+                      <span class="material-icons notranslate">insights</span>
+                      <span i18n="@@header.section.technician">Activité</span>
+                    </div>
+                    <div class="section-items">
+                      <button mat-button (click)="goTechAgenda()">
+                        <span class="material-icons notranslate">event</span>
+                        <span i18n="@@header.menu.techAgenda">Agenda</span>
+                      </button>
+                      <button mat-button (click)="goTechReports()">
+                        <span class="material-icons notranslate">event_note</span>
+                        <span i18n="@@header.menu.techReports">Rapport quotidien</span>
+                      </button>
+                      <button mat-button (click)="goTechRevenue()">
+                        <span class="material-icons notranslate">insights</span>
+                        <span i18n="@@header.menu.techRevenue">Chiffre d'affaires</span>
+                      </button>
+                      <button mat-button (click)="goTechCharges()">
+                        <span class="material-icons notranslate">receipt_long</span>
+                        <span>Charges</span>
+                      </button>
+                      <button mat-button (click)="goTechBpu()">
+                        <span class="material-icons notranslate">price_check</span>
+                        <span i18n="@@header.menu.bpu">BPU prestations</span>
+                      </button>
+                      <button mat-button (click)="goTechHistory()">
+                        <span class="material-icons notranslate">history</span>
+                        <span i18n="@@header.menu.techHistory">Historique interventions</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Col 2 : Personnel + Compte -->
+                <div class="menu-col">
+                  <div class="menu-group personnel-group">
+                    <div class="section-label">
+                      <span class="material-icons notranslate">badge</span>
+                      Personnel
+                    </div>
+                    <div class="section-items">
+                      <button mat-button (click)="goTechDocuments()">
+                        <span class="material-icons notranslate">description</span>
+                        <span>Documents</span>
+                      </button>
                       <button mat-button (click)="goTechAbsences()">
                         <span class="material-icons notranslate">event_busy</span>
                         <span>Congés / Absences</span>
@@ -82,12 +149,15 @@
                           <span class="badge">{{ absenceBadgeCount() }}</span>
                         }
                       </button>
-                  </div>
+                    </div>
                   </div>
 
                   @if (canManageAccess() || canViewHr()) {
                     <div class="menu-group admin-group">
-                      <div class="section-label">Administration</div>
+                      <div class="section-label">
+                        <span class="material-icons notranslate">admin_panel_settings</span>
+                        Administration
+                      </div>
                       <div class="section-items">
                         @if (canManageAccess()) {
                           <button mat-button (click)="goUserAccess()">
@@ -106,24 +176,189 @@
                   }
 
                   <div class="menu-group account-group">
-                    <div class="section-label" i18n="@@header.section.account">Compte</div>
+                    <div class="section-label">
+                      <span class="material-icons notranslate">person</span>
+                      <span i18n="@@header.section.account">Compte</span>
+                    </div>
                     <div class="section-items">
-                      <button mat-button (click)="goPreferences()"><span class="material-icons notranslate">tune</span><span i18n="@@header.menu.preferences">Préférences</span></button>
-                      <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span><span i18n="@@header.menu.profile">Mon profil</span></button>
-                      <button mat-button class="btn-danger" (click)="logout()"><i class="bi bi-box-arrow-right"></i> <span i18n="@@header.menu.logout">Déconnexion</span></button>
+                      <button mat-button (click)="goPreferences()">
+                        <span class="material-icons notranslate">tune</span>
+                        <span i18n="@@header.menu.preferences">Préférences</span>
+                      </button>
+                      <button mat-button (click)="goProfile()">
+                        <span class="material-icons notranslate">person</span>
+                        <span i18n="@@header.menu.profile">Mon profil</span>
+                      </button>
+                      <button mat-button class="btn-danger" (click)="logout()">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span i18n="@@header.menu.logout">Déconnexion</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              <!-- ═══════════════════════════════════
+                   ADMIN / DIRIGEANT / DÉPÔT
+              ═══════════════════════════════════ -->
+              } @else {
+
+                <!-- Col 1 : Interventions + Techniciens (admin uniquement) -->
+                @if (canManageAccess()) {
+                  <div class="menu-col">
+                    <div class="menu-group operations-group">
+                      <div class="section-label">
+                        <span class="material-icons notranslate">build_circle</span>
+                        Interventions
+                      </div>
+                      <div class="section-items">
+                        <button mat-button (click)="goInterventions()">
+                          <span class="material-icons notranslate">format_list_bulleted</span>
+                          <span>Liste</span>
+                        </button>
+                        <button mat-button (click)="goInterventionsImport()">
+                          <span class="material-icons notranslate">upload_file</span>
+                          <span>Import</span>
+                        </button>
+                        <button mat-button (click)="goInterventionsAudit()">
+                          <span class="material-icons notranslate">policy</span>
+                          <span>Audit échecs</span>
+                        </button>
+                        <button mat-button (click)="goAgenda()">
+                          <span class="material-icons notranslate">event</span>
+                          <span i18n="@@header.menu.agenda">Agenda</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="menu-group tech-group">
+                      <div class="section-label">
+                        <span class="material-icons notranslate">engineering</span>
+                        Techniciens
+                      </div>
+                      <div class="section-items">
+                        <button mat-button (click)="goTechnicianActivity()">
+                          <span class="material-icons notranslate">bar_chart</span>
+                          <span>Activité prestations</span>
+                        </button>
+                        <button mat-button (click)="goTechnicianInterventions()">
+                          <span class="material-icons notranslate">history</span>
+                          <span>Interventions</span>
+                        </button>
+                        <button mat-button (click)="goBpu()">
+                          <span class="material-icons notranslate">price_check</span>
+                          <span i18n="@@header.menu.bpu">BPU prestations</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 }
 
-              </div>
+                <!-- Col 2 : Stock -->
+                @if (canViewMovements()) {
+                  <div class="menu-col">
+                    <div class="menu-group stock-group">
+                      <div class="section-label">
+                        <span class="material-icons notranslate">warehouse</span>
+                        <span i18n="@@header.section.stock">Stock</span>
+                      </div>
+                      <div class="section-items">
+                        <button mat-button (click)="goReceipts()">
+                          <span class="material-icons notranslate">inventory_2</span>
+                          <span i18n="@@header.menu.stockReceipts">Réceptions</span>
+                        </button>
+                        @if (canManageAccess()) {
+                          <button mat-button (click)="goOrders()">
+                            <span class="material-icons notranslate">receipt_long</span>
+                            <span i18n="@@header.menu.orders">Commandes</span>
+                          </button>
+                          <button mat-button (click)="goSuppliers()">
+                            <span class="material-icons notranslate">storefront</span>
+                            <span>Fournisseurs</span>
+                          </button>
+                        }
+                        <button mat-button (click)="goStockAlerts()">
+                          <span class="material-icons notranslate">report</span>
+                          <span i18n="@@header.menu.alerts">Alertes</span>
+                          @if (alertsCount() > 0) {
+                            <span class="badge">{{ alertsCount() }}</span>
+                          }
+                        </button>
+                        <button mat-button (click)="goSupplyRequests()">
+                          <span class="material-icons notranslate">assignment</span>
+                          <span>Approvisionnements</span>
+                          @if (depotSupplyPendingCount() > 0) {
+                            <span class="badge">{{ depotSupplyPendingCount() }}</span>
+                          }
+                        </button>
+                        <div class="menu-section">
+                          <div class="section-label">
+                            <span class="material-icons notranslate">widgets</span>
+                            <span i18n="@@header.section.assignments">Attributions</span>
+                          </div>
+                          <div class="section-items">
+                            <button mat-button class="submenu" (click)="goReservations()">
+                              <span class="material-icons notranslate">widgets</span>
+                              <span i18n="@@header.menu.assignmentsConsumables">Consommables</span>
+                            </button>
+                            @if (canViewMaterialReservations()) {
+                              <button mat-button class="submenu" (click)="goMaterialReservations()">
+                                <span class="material-icons notranslate">handyman</span>
+                                <span i18n="@@header.menu.assignmentsMaterials">Matériels</span>
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
 
-              <div class="menu-col">
-                @if (!isTechnician()) {
+                <!-- Col 3 : Finance + Administration + Compte -->
+                <div class="menu-col">
+                  @if (canManageAccess()) {
+                    <div class="menu-group finance-group">
+                      <div class="section-label">
+                        <span class="material-icons notranslate">account_balance</span>
+                        <span i18n="@@header.section.finance">Finance</span>
+                      </div>
+                      <div class="section-items">
+                        <button mat-button (click)="goRevenue()">
+                          <span class="material-icons notranslate">insights</span>
+                          <span i18n="@@header.menu.revenue">Chiffre d'affaires</span>
+                        </button>
+                        <button mat-button (click)="goErtInvoices()">
+                          <span class="material-icons notranslate">receipt_long</span>
+                          <span>Factures ERT</span>
+                        </button>
+                        <button mat-button (click)="goDirigeantDashboard()">
+                          <span class="material-icons notranslate">bar_chart</span>
+                          <span>Tableau dirigeant</span>
+                        </button>
+                      </div>
+                    </div>
+                  }
+
                   @if (canManageAccess() || canViewHr()) {
                     <div class="menu-group admin-group">
-                      <div class="section-label">Administration</div>
+                      <div class="section-label">
+                        <span class="material-icons notranslate">admin_panel_settings</span>
+                        Administration
+                      </div>
                       <div class="section-items">
+                        @if (canViewHr()) {
+                          <button mat-button (click)="goHr()">
+                            <span class="material-icons notranslate">badge</span>
+                            <span>Ressources humaines</span>
+                          </button>
+                        }
                         @if (canManageAccess()) {
+                          <button mat-button (click)="goAbsences()">
+                            <span class="material-icons notranslate">event_busy</span>
+                            <span>Gestion absences</span>
+                            @if (absencePendingCount() > 0) {
+                              <span class="badge">{{ absencePendingCount() }}</span>
+                            }
+                          </button>
                           <button mat-button (click)="goUserAccess()">
                             <span class="material-icons notranslate">vpn_key</span>
                             <span>Accès connexion</span>
@@ -133,96 +368,33 @@
                             <span>Historique connexions</span>
                           </button>
                         }
-                        @if (canViewHr()) {
-                          <button mat-button (click)="goHr()">
-                            <span class="material-icons notranslate">badge</span>
-                            <span>Ressources humaines</span>
-                          </button>
-                        }
                       </div>
                     </div>
                   }
 
-                  <div class="menu-row">
-                    <div class="menu-group stock-group">
-                      <div class="section-label" i18n="@@header.section.stock">Stock</div>
-                      <div class="section-items">
-                        @if (canViewMovements()) {
-                          <button mat-button (click)="goReceipts()"><span class="material-icons notranslate">inventory_2</span><span i18n="@@header.menu.stockReceipts">Réceptions stock</span></button>
-                        }
-                        @if (canManageAccess()) {
-                          <button mat-button (click)="goOrders()"><span class="material-icons notranslate">receipt_long</span><span i18n="@@header.menu.orders">Commandes</span></button>
-                          <button mat-button (click)="goSuppliers()"><span class="material-icons notranslate">storefront</span><span>Fournisseurs</span></button>
-                        }
-                        @if (canViewMovements()) {
-                          <button mat-button (click)="goStockAlerts()">
-                            <span class="material-icons notranslate">report</span>
-                            <span i18n="@@header.menu.alerts">Alertes</span>
-                            @if (alertsCount() > 0) {
-                              <span class="badge">{{ alertsCount() }}</span>
-                            }
-                          </button>
-                        }
-                        @if (canViewMovements()) {
-                          <button mat-button (click)="goSupplyRequests()">
-                            <span class="material-icons notranslate">assignment</span>
-                            <span>Approvisionnements</span>
-                            @if (depotSupplyPendingCount() > 0) {
-                              <span class="badge">{{ depotSupplyPendingCount() }}</span>
-                            }
-                          </button>
-                        }
-                        @if (canViewMovements()) {
-                          <div class="menu-section">
-                            <div class="section-label" i18n="@@header.section.assignments">Attributions</div>
-                            <div class="section-items">
-                              <button mat-button class="submenu" (click)="goReservations()"><span class="material-icons notranslate">widgets</span><span i18n="@@header.menu.assignmentsConsumables">Consommables</span></button>
-                              @if (canViewMaterialReservations()) {
-                                <button mat-button class="submenu" (click)="goMaterialReservations()"><span class="material-icons notranslate">handyman</span><span i18n="@@header.menu.assignmentsMaterials">Matériels</span></button>
-                              }
-                            </div>
-                          </div>
-                        }
-                      </div>
-                    </div>
-
-                    <div class="menu-group finance-group">
-                      <div class="section-label" i18n="@@header.section.finance">Finance</div>
-                      <div class="section-items">
-                        @if (canManageAccess()) {
-                          <button mat-button (click)="goRevenue()"><span class="material-icons notranslate">insights</span><span i18n="@@header.menu.revenue">Chiffre d'affaires</span></button>
-                          <button mat-button (click)="goErtInvoices()"><span class="material-icons notranslate">receipt_long</span><span>Factures ERT</span></button>
-                          <button mat-button (click)="goAgenda()"><span class="material-icons notranslate">event</span><span i18n="@@header.menu.agenda">Agenda</span></button>
-                          <button mat-button (click)="goBpu()"><span class="material-icons notranslate">price_check</span><span i18n="@@header.menu.bpu">BPU prestations</span></button>
-                          <button mat-button (click)="goAbsences()">
-                            <span class="material-icons notranslate">event_busy</span>
-                            <span>Gestion absences</span>
-                            @if (absencePendingCount() > 0) {
-                              <span class="badge">{{ absencePendingCount() }}</span>
-                            }
-                          </button>
-                          <button mat-button (click)="goDirigeantDashboard()">
-                            <span class="material-icons notranslate">bar_chart</span>
-                            <span>Tableau dirigeant</span>
-                            @if (absencePendingCount() > 0) {
-                              <span class="badge">{{ absencePendingCount() }}</span>
-                            }
-                          </button>
-                        }
-                      </div>
-                    </div>
-                  </div>
-
                   <div class="menu-group account-group">
-                    <div class="section-label" i18n="@@header.section.account">Compte</div>
+                    <div class="section-label">
+                      <span class="material-icons notranslate">person</span>
+                      <span i18n="@@header.section.account">Compte</span>
+                    </div>
                     <div class="section-items">
-                      <button mat-button (click)="goPreferences()"><span class="material-icons notranslate">tune</span><span i18n="@@header.menu.preferences">Préférences</span></button>
-                      <button mat-button (click)="goProfile()"><span class="material-icons notranslate">person</span><span i18n="@@header.menu.profile">Mon profil</span></button>
-                      <button mat-button class="btn-danger" (click)="logout()"><i class="bi bi-box-arrow-right"></i> <span i18n="@@header.menu.logout">Déconnexion</span></button>
+                      <button mat-button (click)="goPreferences()">
+                        <span class="material-icons notranslate">tune</span>
+                        <span i18n="@@header.menu.preferences">Préférences</span>
+                      </button>
+                      <button mat-button (click)="goProfile()">
+                        <span class="material-icons notranslate">person</span>
+                        <span i18n="@@header.menu.profile">Mon profil</span>
+                      </button>
+                      <button mat-button class="btn-danger" (click)="logout()">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span i18n="@@header.menu.logout">Déconnexion</span>
+                      </button>
                     </div>
                   </div>
-                }
-              </div>
+                </div>
+
+              }
             </div>
           </div>
         }

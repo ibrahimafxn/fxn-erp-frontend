@@ -50,11 +50,13 @@ export class TechnicianBpuResolverService {
             if (!effectiveItems.length) {
               throw new Error('EMPTY_EFFECTIVE_BPU');
             }
+            // usesPersonalizedBpu = true uniquement si une sélection personnelle existe (source OVERRIDE)
+            const usesPersonalizedBpu = effectiveItems.some(item => item.source === 'OVERRIDE');
             return {
               items: this.effectiveItems(effectiveItems),
               prices: this.effectivePrices(effectiveItems),
               selections: allSelections,
-              usesPersonalizedBpu: true
+              usesPersonalizedBpu
             };
           }),
           catchError(() => this.resolveLegacy(allSelections))

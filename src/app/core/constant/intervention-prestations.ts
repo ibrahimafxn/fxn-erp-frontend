@@ -8,12 +8,18 @@ export type InterventionPrestationField = {
 };
 
 export const INTERVENTION_PRESTATION_FIELDS: InterventionPrestationField[] = [
-  // ── Raccordements pavillon (scindés en 3 codes) ──────────────────────────────
+  // ── Raccordements pavillon (scindés en codes distincts) ──────────────────────
   {
     key: 'racPavillon',
+    label: 'Raccordement pavillon (RACPAV)',
+    code: 'RACPAV',
+    description: 'Forfait raccordement pavillon standard (RACPAV).'
+  },
+  {
+    key: 'racSouterrain',
     label: 'Raccordement pavillon (souterrain)',
     code: 'RAC_PBO_SOUT',
-    description: 'Forfait pavillon souterrain.'
+    description: 'Forfait pavillon souterrain (RAC_PBO_SOUT).'
   },
   {
     key: 'racAerien',

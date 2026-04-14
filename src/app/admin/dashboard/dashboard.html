@@ -1,4 +1,5 @@
 <section class="admin-dashboard">
+
   @if (loading()) {
     <div class="page-loading" aria-live="polite" aria-busy="true">
       <div class="page-loading-card">
@@ -10,185 +11,129 @@
       </div>
     </div>
   }
-  <header class="hero">
-    <div class="hero-text">
-      <span class="hero-badge">ERP FXN · ERT Technologies</span>
-      <h1>Poste de commandement</h1>
-      <p class="subtitle">
-        Vue stratégique des matériels, consommables et véhicules pour piloter le terrain en temps réel.
-      </p>
 
-      <div class="hero-foot">
-        <div class="hero-kpis" *ngIf="stats() as s">
-          <div class="hero-kpi alert" (click)="goToStockAlerts()" role="button" tabindex="0">
-            <div class="kpi-icon-wrap"><span class="material-icons notranslate">warning_amber</span></div>
-            <div class="kpi-body">
-              <div class="value">{{ s.totalAlerts ?? s.totalLowStock ?? 0 }}</div>
-              <div class="label">Alertes totales</div>
-            </div>
-          </div>
-          <div class="hero-kpi alert" (click)="goToResources('materials')" role="button" tabindex="0">
-            <div class="kpi-icon-wrap"><span class="material-icons notranslate">build_circle</span></div>
-            <div class="kpi-body">
-              <div class="value">{{ s.totalLowStockMaterials ?? 0 }}</div>
-              <div class="label">Stock bas matériels</div>
-            </div>
-          </div>
-          <div class="hero-kpi alert" (click)="goToResources('consumables')" role="button" tabindex="0">
-            <div class="kpi-icon-wrap"><span class="material-icons notranslate">inventory</span></div>
-            <div class="kpi-body">
-              <div class="value">{{ s.totalLowStockConsumables ?? 0 }}</div>
-              <div class="label">Stock bas consommables</div>
-            </div>
-          </div>
-          <div class="hero-kpi alert" (click)="goToResources('vehicles')" role="button" tabindex="0">
-            <div class="kpi-icon-wrap"><span class="material-icons notranslate">directions_car</span></div>
-            <div class="kpi-body">
-              <div class="value">{{ s.totalVehicleAlerts ?? 0 }}</div>
-              <div class="label">Alertes véhicules</div>
-            </div>
-          </div>
-        </div>
-        <div class="hero-bottom-row">
-          <div class="hero-actions">
-            <button class="btn-outline btn-onboarding btn-depot-hero" type="button" (click)="goToDepotDashboard()">
-              <span class="btn-text">
-                <span class="title">Dépôt</span>
-                <span class="meta">Tableau dépôt</span>
-              </span>
-              <span class="badge">Stock</span>
-            </button>
-            <button class="btn-outline btn-onboarding btn-dirigeant-hero" type="button" (click)="goToDirigeant()">
-              <span class="btn-text">
-                <span class="title">Dirigeant</span>
-                <span class="meta">Pilotage CA et RH</span>
-              </span>
-              <span class="badge">Décision</span>
-            </button>
-            <button class="btn-outline btn-onboarding btn-agenda-hero" type="button" (click)="goToAgenda()">
-              <span class="btn-text">
-                <span class="title">Agenda</span>
-                <span class="meta">Planning des absences</span>
-              </span>
-              <span class="badge">Planning</span>
-            </button>
-            <button class="btn-outline btn-onboarding btn-onboarding-hero" type="button" (click)="goToOnboarding()">
-              <span class="btn-text">
-                <span class="title">Onboarding</span>
-                <span class="meta">Importer fichiers CSV</span>
-              </span>
-              <span class="badge">CSV</span>
-            </button>
-            <button class="btn-outline btn-reload btn-reload-hero" type="button" (click)="adminService.loadDashboardStats()">
-              <span class="btn-text">
-                <span class="title">Rafraîchir</span>
-                <span class="meta">Actualiser les indicateurs</span>
-              </span>
-              <span class="badge">Live</span>
-            </button>
-          </div>
-        </div>
+  <!-- ═══════════════════════════════════════════
+       1. PULSE — KPIs du jour (premier coup d'œil)
+  ═══════════════════════════════════════════ -->
+  <section class="pulse-section">
+    <div class="pulse-head">
+      <div class="pulse-title-wrap">
+        <span class="hero-badge">ERP FXN · ERT Technologies</span>
+        <h1>Tableau de bord dirigeant</h1>
+      </div>
+      <div class="pulse-controls">
+        <button class="ctrl-btn ctrl-dirigeant" type="button" (click)="goToDirigeant()">
+          <span class="material-icons notranslate">bar_chart</span>
+          <span>Pilotage</span>
+        </button>
+        <button class="ctrl-btn ctrl-agenda" type="button" (click)="goToAgenda()">
+          <span class="material-icons notranslate">event</span>
+          <span>Agenda</span>
+        </button>
+        <button class="ctrl-btn ctrl-reload" type="button" (click)="adminService.loadDashboardStats()">
+          <span class="material-icons notranslate">refresh</span>
+        </button>
       </div>
     </div>
-  </header>
 
-  <section class="command-widgets" *ngIf="stats() as s">
-    <article class="command-widget decisions">
-      <div class="widget-head">
-        <div>
-          <h2>Décisions à prendre</h2>
-          <p>Les priorités qui demandent un arbitrage immédiat.</p>
-        </div>
-        <button class="widget-link" type="button" (click)="goToDirigeant()">Ouvrir</button>
-      </div>
-      <div class="widget-metrics">
-        <button class="metric-chip danger" type="button" (click)="goToAbsences()">
-          <span class="metric-label">Absences en attente</span>
-          <span class="metric-value">{{ pendingAbsenceCount() }}</span>
-        </button>
-        <button class="metric-chip warning" type="button" (click)="goToStockAlerts()">
-          <span class="metric-label">Alertes critiques</span>
-          <span class="metric-value">{{ formatCount(s.totalAlerts ?? s.totalLowStock ?? 0) }}</span>
-        </button>
-        <button class="metric-chip info" type="button" (click)="goToResources('vehicles')">
-          <span class="metric-label">Pannes véhicules</span>
-          <span class="metric-value">{{ formatCount(s.totalVehicleAlerts ?? 0) }}</span>
-        </button>
-      </div>
-    </article>
+    @if (stats(); as s) {
+      <div class="pulse-kpis">
 
-    <article class="command-widget today">
-      <div class="widget-head">
-        <div>
-          <h2>Aujourd’hui</h2>
-          <p>Lecture rapide de la charge terrain et des indisponibilités.</p>
-        </div>
-        <button class="widget-link" type="button" (click)="goToAgenda()">Agenda</button>
-      </div>
-      <div class="widget-metrics">
-        <button class="metric-chip accent today-activity" type="button" (click)="goToInterventions()">
-          <span class="metric-label">Interventions du jour</span>
-          <span class="metric-value">{{ formatCount(todayInterventionsCount()) }}</span>
-        </button>
-        <button class="metric-chip neutral neutral-absent" type="button" (click)="goToAgenda()">
-          <span class="metric-label">Techniciens absents</span>
-          <span class="metric-value">{{ formatCount(todayAbsentTechniciansCount()) }}</span>
-        </button>
-        <button class="metric-chip neutral neutral-history" type="button" (click)="goToHistory()">
-          <span class="metric-label">Mouvements récents</span>
-          <span class="metric-value">{{ formatCount(recentHistory().length) }}</span>
-        </button>
-      </div>
-    </article>
+        <article class="pkpi pkpi-perf" (click)="goToDirigeant()" role="button" tabindex="0">
+          <div class="pkpi-icon-wrap">
+            <span class="material-icons notranslate">insights</span>
+          </div>
+          <div class="pkpi-body">
+            <div class="pkpi-value">{{ formatCount(prestationsTypesWeekTotal()) }}</div>
+            <div class="pkpi-label">Prestations cette semaine</div>
+            <div class="pkpi-sub">{{ formatCount(s.prestationsMonth ?? 0) }} ce mois</div>
+          </div>
+          <div class="pkpi-arrow">→</div>
+        </article>
 
-    <article class="command-widget executive">
-      <div class="widget-head">
-        <div>
-          <h2>Vue dirigeant express</h2>
-          <p>Les repères de pilotage les plus utiles sur une seule ligne.</p>
-        </div>
-        <button class="widget-link" type="button" (click)="goToDirigeant()">Dirigeant</button>
+        <article class="pkpi pkpi-today" (click)="goToInterventions()" role="button" tabindex="0">
+          <div class="pkpi-icon-wrap">
+            <span class="material-icons notranslate">build_circle</span>
+          </div>
+          <div class="pkpi-body">
+            <div class="pkpi-value">{{ formatCount(todayInterventionsCount()) }}</div>
+            <div class="pkpi-label">Interventions aujourd'hui</div>
+            <div class="pkpi-sub">{{ formatCount(todayAbsentTechniciansCount()) }} technicien(s) absent(s)</div>
+          </div>
+          <div class="pkpi-arrow">→</div>
+        </article>
+
+        <article
+          class="pkpi"
+          [class.pkpi-urgent]="pendingAbsenceCount() > 0"
+          [class.pkpi-ok]="pendingAbsenceCount() === 0"
+          (click)="goToAbsences()"
+          role="button"
+          tabindex="0"
+        >
+          <div class="pkpi-icon-wrap">
+            <span class="material-icons notranslate">event_busy</span>
+          </div>
+          <div class="pkpi-body">
+            <div class="pkpi-value">{{ pendingAbsenceCount() }}</div>
+            <div class="pkpi-label">Absences en attente</div>
+            <div class="pkpi-sub">Demandes à traiter</div>
+          </div>
+          @if (pendingAbsenceCount() > 0) {
+            <div class="pkpi-badge-dot"></div>
+          }
+        </article>
+
+        <article
+          class="pkpi"
+          [class.pkpi-danger]="(s.totalAlerts ?? s.totalLowStock ?? 0) > 0"
+          [class.pkpi-ok]="(s.totalAlerts ?? s.totalLowStock ?? 0) === 0"
+          (click)="goToStockAlerts()"
+          role="button"
+          tabindex="0"
+        >
+          <div class="pkpi-icon-wrap">
+            <span class="material-icons notranslate">warning_amber</span>
+          </div>
+          <div class="pkpi-body">
+            <div class="pkpi-value">{{ formatCount(s.totalAlerts ?? s.totalLowStock ?? 0) }}</div>
+            <div class="pkpi-label">Alertes stock</div>
+            <div class="pkpi-sub">{{ formatCount(s.totalVehicleAlerts ?? 0) }} véhicule(s)</div>
+          </div>
+          @if ((s.totalAlerts ?? s.totalLowStock ?? 0) > 0) {
+            <div class="pkpi-badge-dot"></div>
+          }
+        </article>
+
       </div>
-      <div class="widget-metrics">
-        <button class="metric-chip success" type="button" (click)="goToDirigeant()">
-          <span class="metric-label">Prestations semaine</span>
-          <span class="metric-value">{{ formatCount(s.prestationsWeek ?? 0) }}</span>
-        </button>
-        <button class="metric-chip success" type="button" (click)="goToDirigeant()">
-          <span class="metric-label">Prestations mois</span>
-          <span class="metric-value">{{ formatCount(s.prestationsMonth ?? 0) }}</span>
-        </button>
-        <button class="metric-chip info" type="button" (click)="goToStockAlerts()">
-          <span class="metric-label">Alertes globales</span>
-          <span class="metric-value">{{ formatCount(s.totalAlerts ?? 0) }}</span>
-        </button>
-      </div>
-    </article>
+    }
   </section>
 
-  <section class="prestations-block" *ngIf="stats() as s">
-    <div class="section-header">
-      <h2>Prestations</h2>
-      <p>Visualisation claire des volumes hebdomadaire et mensuel.</p>
-    </div>
+  <!-- ═══════════════════════════════════════════
+       2. CONTENU PRINCIPAL — Prestations + Décisions
+  ═══════════════════════════════════════════ -->
+  @if (stats(); as s) {
+    <div class="main-grid">
 
-    <div class="prestations-grid">
-      <article class="prestations-chart">
-        <div class="prestations-head">
+      <!-- LEFT : graphique prestations -->
+      <section class="prestations-panel card">
+        <div class="panel-head">
           <div>
-            <div class="prestations-title">Répartition des prestations</div>
-            <div class="prestations-subtitle">
+            <h2>Répartition des prestations</h2>
+            <p>
               @if (prestationsTypesRange(); as r) {
                 Du {{ r.from }} au {{ r.to }}
               } @else {
                 Derniers 30 jours
               }
-            </div>
+              @if (prestationsTypes().length) {
+                · <strong>{{ formatCount(prestationsTypesTotal()) }}</strong> au total
+              }
+            </p>
           </div>
-          @if (prestationsTypes().length) {
-            <div class="prestations-pill">Total {{ formatCount(prestationsTypesTotal()) }}</div>
-          }
+          <button class="panel-link" type="button" (click)="goToDirigeant()">Voir détails →</button>
         </div>
+
         @if (prestationsTypes().length) {
           <div class="prestations-donut">
             <div class="donut-chart" role="img" aria-label="Répartition des prestations par type">
@@ -197,9 +142,7 @@
                 @for (item of prestationsDonut().segments; track item.key) {
                   <circle
                     class="donut-segment"
-                    cx="110"
-                    cy="110"
-                    r="90"
+                    cx="110" cy="110" r="90"
                     [attr.stroke]="item.color"
                     [attr.stroke-dasharray]="item.dashArray"
                     [attr.stroke-dashoffset]="item.dashOffset"
@@ -215,11 +158,7 @@
             </div>
             <div class="donut-legend">
               @for (item of prestationsDonut().segments; track item.key) {
-                <div
-                  class="legend-item"
-                  [style.--legend-color]="item.color"
-                  [attr.title]="item.label + ' : ' + formatCount(item.value)"
-                >
+                <div class="legend-item" [style.--legend-color]="item.color" [attr.title]="item.label + ' : ' + formatCount(item.value)">
                   <span class="legend-swatch" [style.background]="item.color"></span>
                   <span class="legend-label">{{ item.label }}</span>
                   <span class="legend-value">{{ formatCount(item.value) }}</span>
@@ -229,50 +168,17 @@
             </div>
           </div>
         } @else {
-          <div class="types-empty">Aucune prestation pour la période.</div>
+          <div class="types-empty">Aucune prestation sur la période.</div>
         }
-      </article>
 
-      <div class="prestations-side">
-        <article class="prestations-summary">
-          <div class="summary-item">
-            <span class="label">Cette semaine</span>
-            <span class="value">{{ formatCount(s.prestationsWeek ?? 0) }}</span>
-            <span class="hint">Prestations réalisées</span>
-            @if (prestationsTypesMini().length) {
-              <div class="mini-kpis">
-                @for (item of prestationsTypesMini(); track item.key) {
-                  <div
-                    class="mini-kpi"
-                    [style.--mini-color]="item.color"
-                    [attr.title]="item.label + ' : ' + formatCount(item.value)"
-                  >
-                    <span class="mini-dot" [style.background]="item.color"></span>
-                    <span class="mini-label">{{ item.label }}</span>
-                    <span class="mini-value">{{ formatCount(item.value) }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-          <div class="summary-item accent">
-            <span class="label">Ce mois-ci</span>
-            <span class="value">{{ formatCount(s.prestationsMonth ?? 0) }}</span>
-            <span class="hint">Total mensuel</span>
-          </div>
-        </article>
-
-        <article class="prestations-trend">
-          <div class="trend-head">
-            <div>
-              <div class="trend-title">Tendance 7 jours</div>
-              <div class="trend-subtitle">Derniers jours</div>
-            </div>
+        <!-- Tendance 7 jours intégrée -->
+        <div class="trend-strip">
+          <div class="trend-strip-head">
+            <span class="trend-strip-title">Tendance 7 jours</span>
             @if (prestationsTrend().length) {
-              <div class="trend-total">Total {{ formatCount(prestationsTrendTotal()) }}</div>
+              <span class="trend-total-pill">{{ formatCount(prestationsTrendTotal()) }} prestations</span>
             }
           </div>
-
           @if (prestationsTrend().length) {
             <div class="trend-canvas">
               @for (item of prestationsTrend(); track item.key) {
@@ -302,11 +208,7 @@
                   @if (item.types?.length) {
                     <div class="trend-types-row">
                       @for (type of (item.types?.slice(0, 4) ?? []); track type.key) {
-                        <span
-                          class="trend-type-dot"
-                          [style.background]="type.color"
-                          [attr.title]="type.label + ' : ' + formatCount(type.count)"
-                        ></span>
+                        <span class="trend-type-dot" [style.background]="type.color" [attr.title]="type.label + ' : ' + formatCount(type.count)"></span>
                       }
                     </div>
                   } @else {
@@ -319,191 +221,244 @@
           } @else {
             <div class="trend-empty">Données à connecter</div>
           }
+        </div>
+      </section>
+
+      <!-- RIGHT : décisions + accès rapide -->
+      <aside class="side-col">
+
+        <!-- Volume prestations semaine / mois -->
+        <article class="summary-card card">
+          <div class="summary-header">
+            <span class="summary-title">Volume prestations</span>
+            <button class="summary-link" type="button" (click)="goToDirigeant()">Détails →</button>
+          </div>
+
+          <div class="summary-counters">
+            <div class="summary-counter">
+              <span class="sc-val">{{ formatCount(prestationsTypesWeekTotal()) }}</span>
+              <span class="sc-lbl">Cette semaine</span>
+            </div>
+            <div class="summary-counter sc-month">
+              <span class="sc-val">{{ formatCount(s.prestationsMonth ?? 0) }}</span>
+              <span class="sc-lbl">Ce mois</span>
+            </div>
+          </div>
+
+          @if ((s.prestationsMonth ?? 0) > 0) {
+            <div class="week-ratio">
+              <div class="week-ratio-track">
+                <div
+                  class="week-ratio-fill"
+                  [style.width.%]="(prestationsTypesWeekTotal() / (s.prestationsMonth ?? 1)) * 100"
+                ></div>
+              </div>
+              <span class="week-ratio-lbl">
+                {{ (prestationsTypesWeekTotal() / (s.prestationsMonth ?? 1) * 100).toFixed(0) }}% du mois
+              </span>
+            </div>
+          }
+
+          @if (prestationsTypesMini().length) {
+            <div class="type-bars">
+              @for (item of prestationsTypesMini(); track item.key) {
+                <div class="type-bar-row" [attr.title]="item.label + ' : ' + formatCount(item.value)">
+                  <div class="type-bar-meta">
+                    <span class="type-bar-dot" [style.background]="item.color"></span>
+                    <span class="type-bar-label">{{ item.label }}</span>
+                    <span class="type-bar-count">{{ formatCount(item.value) }}</span>
+                  </div>
+                  <div class="type-bar-track">
+                    <div
+                      class="type-bar-fill"
+                      [style.width.%]="item.percent"
+                      [style.background]="item.color"
+                    ></div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </article>
+
+        <!-- Alertes & décisions -->
+        <article class="decisions-card card">
+          <div class="decisions-head">
+            <h3>Décisions à prendre</h3>
+          </div>
+          <div class="decisions-list">
+            <button class="decision-item" [class.d-danger]="pendingAbsenceCount() > 0" type="button" (click)="goToAbsences()">
+              <span class="material-icons notranslate">event_busy</span>
+              <div class="d-text">
+                <span class="d-label">Absences à valider</span>
+                <span class="d-hint">Demandes en attente de réponse</span>
+              </div>
+              <span class="d-count" [class.urgent]="pendingAbsenceCount() > 0">{{ pendingAbsenceCount() }}</span>
+            </button>
+            <button class="decision-item" [class.d-warning]="(s.totalAlerts ?? 0) > 0" type="button" (click)="goToStockAlerts()">
+              <span class="material-icons notranslate">warning_amber</span>
+              <div class="d-text">
+                <span class="d-label">Alertes stock critiques</span>
+                <span class="d-hint">Matériels et consommables bas</span>
+              </div>
+              <span class="d-count" [class.urgent]="(s.totalAlerts ?? 0) > 0">{{ formatCount(s.totalAlerts ?? s.totalLowStock ?? 0) }}</span>
+            </button>
+            <button class="decision-item" [class.d-warning]="(s.totalVehicleAlerts ?? 0) > 0" type="button" (click)="goToResources('vehicles')">
+              <span class="material-icons notranslate">directions_car</span>
+              <div class="d-text">
+                <span class="d-label">Alertes véhicules</span>
+                <span class="d-hint">Pannes ou maintenances à prévoir</span>
+              </div>
+              <span class="d-count" [class.urgent]="(s.totalVehicleAlerts ?? 0) > 0">{{ formatCount(s.totalVehicleAlerts ?? 0) }}</span>
+            </button>
+          </div>
+        </article>
+
+        <!-- Accès rapide opérations -->
+        <article class="quick-ops card">
+          <div class="qops-head">
+            <h3>Accès rapide</h3>
+          </div>
+          <div class="qops-grid">
+            <button class="qop" type="button" (click)="goToInterventions()">
+              <span class="material-icons notranslate">attach_money</span>
+              <span>Attachement</span>
+            </button>
+            <button class="qop" type="button" (click)="goToInterventionsImport()">
+              <span class="material-icons notranslate">upload_file</span>
+              <span>Import CSV</span>
+            </button>
+            <button class="qop" type="button" (click)="goToTechnicianActivity()">
+              <span class="material-icons notranslate">bar_chart</span>
+              <span>Activité tech.</span>
+            </button>
+            <button class="qop" type="button" (click)="goToTechnicianInterventions()">
+              <span class="material-icons notranslate">history</span>
+              <span>Interventions</span>
+            </button>
+            <button class="qop" type="button" (click)="goToMovements()">
+              <span class="material-icons notranslate">swap_horiz</span>
+              <span>Mouvements</span>
+            </button>
+            <button class="qop" type="button" (click)="goToHr()">
+              <span class="material-icons notranslate">badge</span>
+              <span>RH</span>
+            </button>
+          </div>
+        </article>
+
+      </aside>
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════
+       3. RESSOURCES — KPIs infrastructure
+  ═══════════════════════════════════════════ -->
+  @if (stats(); as s) {
+    <section class="resources-strip">
+      <div class="rs-header">
+        <h2>Infrastructure</h2>
+        <p>Vue d'ensemble des ressources actives</p>
+      </div>
+      <div class="rs-chips">
+        <button class="rs-chip" type="button" (click)="goToUsers()">
+          <span class="material-icons notranslate">groups</span>
+          <span class="rsc-val">{{ s.totalUsers }}</span>
+          <span class="rsc-lbl">Utilisateurs</span>
+        </button>
+        <button class="rs-chip" type="button" (click)="goToDepots()">
+          <span class="material-icons notranslate">home_work</span>
+          <span class="rsc-val">{{ s.totalDepots }}</span>
+          <span class="rsc-lbl">Dépôts</span>
+        </button>
+        <button class="rs-chip" type="button" (click)="goToResources('materials')">
+          <span class="material-icons notranslate">build_circle</span>
+          <span class="rsc-val">{{ s.totalMaterials }}</span>
+          <span class="rsc-lbl">Matériels</span>
+          @if ((s.totalLowStockMaterials ?? 0) > 0) {
+            <span class="rsc-alert">{{ s.totalLowStockMaterials }} bas</span>
+          }
+        </button>
+        <button class="rs-chip" type="button" (click)="goToResources('consumables')">
+          <span class="material-icons notranslate">inventory</span>
+          <span class="rsc-val">{{ s.totalConsumables }}</span>
+          <span class="rsc-lbl">Consommables</span>
+          @if ((s.totalLowStockConsumables ?? 0) > 0) {
+            <span class="rsc-alert">{{ s.totalLowStockConsumables }} bas</span>
+          }
+        </button>
+        <button class="rs-chip" type="button" (click)="goToResources('vehicles')">
+          <span class="material-icons notranslate">directions_car</span>
+          <span class="rsc-val">{{ s.totalVehicles }}</span>
+          <span class="rsc-lbl">Véhicules</span>
+          @if ((s.totalVehicleAlerts ?? 0) > 0) {
+            <span class="rsc-alert">{{ s.totalVehicleAlerts }} alerte(s)</span>
+          }
+        </button>
+        <button class="rs-chip rs-chip-secondary" type="button" (click)="goToNewUser()">
+          <span class="material-icons notranslate">person_add</span>
+          <span class="rsc-lbl">Nouveau collaborateur</span>
+        </button>
+        <button class="rs-chip rs-chip-secondary" type="button" (click)="goToNewOrder()">
+          <span class="material-icons notranslate">receipt_long</span>
+          <span class="rsc-lbl">Nouvelle commande</span>
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- ═══════════════════════════════════════════
+       4. HISTORIQUE — Derniers mouvements
+  ═══════════════════════════════════════════ -->
+  @if (recentHistory().length) {
+    <section class="history-section card">
+      <div class="history-header">
+        <h2>Derniers mouvements de stock</h2>
+        <button class="btn-outline" type="button" (click)="goToHistory()">
+          <i class="bi bi-eye"></i> Voir tout
+        </button>
+      </div>
+      <div class="history-table-wrapper">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Action</th>
+              <th>Ressource</th>
+              <th>Dépôt / Utilisateur</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of recentHistory(); track trackHistory($index, h)) {
+              <tr>
+                <td>{{ h.timestamp | date: 'short' }}</td>
+                <td>{{ h.resourceType || '—' }}</td>
+                <td>{{ h.action || '—' }}</td>
+                <td>{{ h.resourceName || h.resourceId || '—' }}</td>
+                <td>
+                  @if (h.depotName) { <span>{{ h.depotName }}</span> }
+                  @if (h.userName) { <span> · {{ h.userName }}</span> }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+
+  @if (!stats() && !loading() && !error()) {
+    <div class="empty-state"><p>Aucune donnée pour le moment.</p></div>
+  }
+
+  @if (!loading() && error(); as err) {
+    <div class="status-bar">
+      <div class="status error">
+        <span>Erreur :</span>
+        <code>{{ err.message || err }}</code>
       </div>
     </div>
+  }
 
-  </section>
-
-  <section class="ops-block">
-    <div class="section-header">
-      <h2>Opérations</h2>
-      <p>Accès rapide aux interventions et au suivi terrain.</p>
-    </div>
-
-    <div class="action-grid ops-grid">
-      <article class="action-card ops-card" (click)="goToMovements()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">swap_horiz</span>
-          <span class="action-tag">Suivi</span>
-        </div>
-        <div class="action-title">Journal des mouvements</div>
-        <div class="action-subtitle">Historique des entrées et sorties</div>
-      </article>
-
-      <article class="action-card ops-card" (click)="goToInterventions()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">attach_money</span>
-          <span class="action-tag">Interventions</span>
-        </div>
-        <div class="action-title">Calcul d'attachement</div>
-        <div class="action-subtitle">Synthèse des prestations</div>
-      </article>
-
-      <article class="action-card ops-card ops-card-import" (click)="goToInterventionsImport()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">upload_file</span>
-          <span class="action-tag">Import</span>
-        </div>
-        <div class="action-title">Import interventions du jour</div>
-        <div class="action-subtitle">Charger le CSV quotidien</div>
-      </article>
-
-      <article class="action-card ops-card" (click)="goToTechnicianActivity()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">history</span>
-          <span class="action-tag">Techniciens</span>
-        </div>
-        <div class="action-title">Prestations techniciens</div>
-        <div class="action-subtitle">Suivi des actions terrain</div>
-      </article>
-
-      <article class="action-card ops-card" (click)="goToTechnicianInterventions()">
-        <div class="action-head">
-          <span class="material-icons notranslate action-icon">insights</span>
-          <span class="action-tag">Techniciens</span>
-        </div>
-        <div class="action-title">Interventions techniciens</div>
-        <div class="action-subtitle">Comparatif par technicien</div>
-      </article>
-    </div>
-  </section>
-
-  <!-- Messages de statut global -->
-  <div class="status-bar">
-    @if (loading()) {
-      <div class="status loading">
-        Chargement des données...
-      </div>
-    }
-
-    <div class="status error" *ngIf="!loading() && error() as err">
-      <span>Une erreur est survenue :</span>
-      <code>{{ error().message || err }}</code>
-    </div>
-  </div>
-
-  <!-- KPIs principaux -->
-  <section class="kpi-grid" *ngIf="stats() as s">
-    <article class="kpi-card kpi-primary clickable" (click)="goToUsers()">
-      <div class="kpi-icon kpi-users"><span class="material-icons notranslate" aria-hidden="true">groups</span></div>
-      <div class="kpi-text">
-        <div class="kpi-label">Utilisateurs</div>
-        <div class="kpi-value">{{ s.totalUsers }}</div>
-        <div class="kpi-footer">Tous rôles confondus</div>
-      </div>
-    </article>
-
-    <article class="kpi-card kpi-primary clickable" (click)="goToDepots()">
-      <div class="kpi-icon kpi-depots"><span class="material-icons notranslate" aria-hidden="true">home_work</span></div>
-      <div class="kpi-text">
-        <div class="kpi-label">Dépôts</div>
-        <div class="kpi-value">{{ s.totalDepots }}</div>
-        <div class="kpi-footer">Points logistiques actifs</div>
-      </div>
-    </article>
-
-    <article class="kpi-card kpi-primary clickable" (click)="goToResources('materials')">
-      <div class="kpi-icon kpi-materials"><span class="material-icons notranslate" aria-hidden="true">build_circle</span></div>
-      <div class="kpi-text">
-        <div class="kpi-label">Matériels</div>
-        <div class="kpi-value">{{ s.totalMaterials }}</div>
-        <div class="kpi-footer">Références disponibles</div>
-      </div>
-    </article>
-
-    <article class="kpi-card kpi-primary clickable" (click)="goToResources('consumables')">
-      <div class="kpi-icon kpi-consumables"><span class="material-icons notranslate" aria-hidden="true">inventory</span></div>
-      <div class="kpi-text">
-        <div class="kpi-label">Consommables</div>
-        <div class="kpi-value">{{ s.totalConsumables }}</div>
-        <div class="kpi-footer">Articles suivis</div>
-      </div>
-    </article>
-
-    <article class="kpi-card kpi-primary clickable" (click)="goToResources('vehicles')">
-      <div class="kpi-icon kpi-vehicles"><span class="material-icons notranslate" aria-hidden="true">directions_car</span></div>
-      <div class="kpi-text">
-        <div class="kpi-label">Véhicules</div>
-        <div class="kpi-value">{{ s.totalVehicles }}</div>
-        <div class="kpi-footer">Flotte opérationnelle</div>
-      </div>
-    </article>
-
-  </section>
-
-  <section class="action-grid">
-    <article class="action-card action-card-next" (click)="goToNewUser()">
-      <div class="action-head">
-        <span class="material-icons notranslate action-icon">person_add</span>
-        <span class="action-tag">Accès rapide</span>
-      </div>
-      <div class="action-title">Nouveau collaborateur</div>
-      <div class="action-subtitle">Créer un utilisateur et activer l'accès</div>
-    </article>
-    <article class="action-card action-card-next" (click)="goToNewDepot()">
-      <div class="action-head">
-        <span class="material-icons notranslate action-icon">warehouse</span>
-        <span class="action-tag">Logistique</span>
-      </div>
-      <div class="action-title">Nouveau dépôt</div>
-      <div class="action-subtitle">Ajouter un point logistique</div>
-    </article>
-    <article class="action-card action-card-next" (click)="goToNewOrder()">
-      <div class="action-head">
-        <span class="material-icons notranslate action-icon">receipt_long</span>
-        <span class="action-tag">Achats</span>
-      </div>
-      <div class="action-title">Nouvelle commande</div>
-      <div class="action-subtitle">Créer un bon de commande</div>
-    </article>
-  </section>
-
-  <section class="empty-state" *ngIf="!stats() && !loading() && !error()">
-    <p>Aucune donnée de dashboard pour le moment.</p>
-  </section>
-
-  <!-- Derniers mouvements -->
-  <section class="history-section" *ngIf="recentHistory().length">
-    <div class="history-header">
-      <h2>Derniers mouvements de stock</h2>
-      <button class="btn-outline" type="button" (click)="goToHistory()"><i class="bi bi-eye"></i> Voir tout</button>
-    </div>
-
-    <div class="history-table-wrapper">
-      <table class="history-table">
-        <thead>
-        <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Action</th>
-          <th>Ressource</th>
-          <th>Dépot / Utilisateur</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr *ngFor="let h of recentHistory(); trackBy: trackHistory">
-          <td>{{ h.timestamp | date: 'short' }}</td>
-          <td>{{ h.resourceType || '—' }}</td>
-          <td>{{ h.action || '—' }}</td>
-          <td>{{ h.resourceName || h.resourceId || '—' }}</td>
-          <td>
-            <span *ngIf="h.depotName">{{ h.depotName }}</span>
-            <span *ngIf="h.userName"> · {{ h.userName }}</span>
-          </td>
-        </tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
 </section>

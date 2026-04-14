@@ -88,7 +88,17 @@
     } @else {
       <div class="invoice-grid">
         @for (inv of displayedInvoices(); track inv.attachmentRef || inv.filename) {
-          <article class="invoice-card">
+          <article
+            class="invoice-card"
+            [class.active]="selectedInvoiceRef() === (inv.attachmentRef || inv.filename || inv._id)"
+            [class.disabled]="!inv.attachmentRef"
+            (click)="selectInvoice(inv)"
+            (keydown.enter)="selectInvoice(inv)"
+            (keydown.space)="selectInvoice(inv); $event.preventDefault()"
+            [attr.tabindex]="inv.attachmentRef ? 0 : -1"
+            [attr.role]="inv.attachmentRef ? 'button' : null"
+            [attr.aria-pressed]="selectedInvoiceRef() === (inv.attachmentRef || inv.filename || inv._id)"
+          >
             <div class="invoice-card-head">
               <span class="material-icons notranslate">receipt_long</span>
               <span class="invoice-period-pill">{{ inv.periodLabel || inv.periodKey || 'Sans période' }}</span>
@@ -100,9 +110,86 @@
               <span class="label">Montant HT</span>
               <strong>{{ inv.totalHt | number:'1.0-0' }} €</strong>
             </div>
+            @if (!inv.attachmentRef) {
+              <div class="invoice-hint">Référence d’attachement absente.</div>
+            } @else {
+              <div class="invoice-hint">Cliquer pour ouvrir le détail en bas.</div>
+            }
           </article>
         }
       </div>
     }
   </section>
+
+  @if (detailLoading() || detailError() || selectedInvoice()) {
+    <section class="invoice-detail card" id="invoice-detail-panel">
+      <div class="section-head invoice-detail-head">
+        <div>
+          <h2>Détail facture</h2>
+          <p>Ouverture en bas de page de la facture sélectionnée.</p>
+        </div>
+        @if (selectedInvoice() || detailError()) {
+          <button class="btn-outline" type="button" (click)="closeInvoiceDetail()">Fermer</button>
+        }
+      </div>
+
+      @if (detailLoading()) {
+        <div class="state">Chargement du détail…</div>
+      } @else if (detailError()) {
+        <div class="state error">{{ detailError() }}</div>
+      } @else if (selectedInvoice(); as invoice) {
+        <div class="invoice-detail-summary">
+          <article class="overview-card">
+            <span class="overview-label">Facture</span>
+            <strong>{{ invoice.filename || invoice.attachmentRef || 'Facture ERT' }}</strong>
+            <span>{{ invoice.periodLabel || invoice.periodKey || 'Sans période' }}</span>
+          </article>
+          <article class="overview-card">
+            <span class="overview-label">Référence</span>
+            <strong>{{ invoice.attachmentRef || '—' }}</strong>
+            <span>Référence d’attachement</span>
+          </article>
+          <article class="overview-card accent">
+            <span class="overview-label">Montant HT</span>
+            <strong>{{ invoice.totalHt | number:'1.0-0' }} €</strong>
+            <span>{{ invoice.items.length }} ligne(s)</span>
+          </article>
+        </div>
+
+        <div class="invoice-detail-meta">
+          <div><span class="label">Contrat</span><strong>{{ invoice.contractNo || '—' }}</strong></div>
+          <div><span class="label">Commande</span><strong>{{ invoice.orderNo || '—' }}</strong></div>
+          <div><span class="label">Agence / Région</span><strong>{{ invoice.agencyRegion || '—' }}</strong></div>
+          <div><span class="label">Plaque / Type</span><strong>{{ invoice.plaqueType || '—' }}</strong></div>
+        </div>
+
+        <div class="invoice-lines">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Libellé</th>
+                  <th>Qté</th>
+                  <th>PU</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of invoice.items; track item.code + '-' + item.label) {
+                  <tr>
+                    <td data-label="Code">{{ item.code || '—' }}</td>
+                    <td data-label="Libellé">{{ item.label || '—' }}</td>
+                    <td data-label="Qté">{{ item.quantity }}</td>
+                    <td data-label="PU">{{ item.unitPrice | number:'1.0-2' }} €</td>
+                    <td data-label="Total">{{ item.total | number:'1.0-2' }} €</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </section>
+  }
 </section>

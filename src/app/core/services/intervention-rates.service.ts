@@ -10,7 +10,8 @@ export type InterventionRate = {
 };
 
 export type InterventionRates = {
-  racPavillon: InterventionRate;    // RAC_PBO_SOUT
+  racPavillon: InterventionRate;    // RACPAV
+  racSouterrain: InterventionRate;  // RAC_PBO_SOUT
   racAerien: InterventionRate;      // RAC_PBO_AERIEN
   racFacade: InterventionRate;      // RAC_PBO_FACADE
   clem: InterventionRate;           // CLEM
@@ -37,6 +38,7 @@ export type InterventionRates = {
 
 const DEFAULT_RATES: InterventionRates = {
   racPavillon: { total: 140, fxn: 10 },
+  racSouterrain: { total: 140, fxn: 10 },
   racAerien: { total: 215, fxn: 10 },
   racFacade: { total: 160, fxn: 10 },
   clem: { total: 5, fxn: 5 },
@@ -93,7 +95,8 @@ export class InterventionRatesService {
 
   private toApiPayload(rates: InterventionRates) {
     return {
-      RAC_PBO_SOUT: rates.racPavillon,
+      RACPAV: rates.racPavillon,
+      RAC_PBO_SOUT: rates.racSouterrain,
       RAC_PBO_AERIEN: rates.racAerien,
       RAC_PBO_FACADE: rates.racFacade,
       CLEM: rates.clem,
@@ -122,7 +125,8 @@ export class InterventionRatesService {
   private fromApiPayload(data?: Record<string, InterventionRate>): InterventionRates {
     if (!data) return DEFAULT_RATES;
     return {
-      racPavillon: data['RAC_PBO_SOUT'] ?? DEFAULT_RATES.racPavillon,
+      racPavillon: data['RACPAV'] ?? data['RAC_PBO_SOUT'] ?? DEFAULT_RATES.racPavillon,
+      racSouterrain: data['RAC_PBO_SOUT'] ?? DEFAULT_RATES.racSouterrain,
       racAerien: data['RAC_PBO_AERIEN'] ?? DEFAULT_RATES.racAerien,
       racFacade: data['RAC_PBO_FACADE'] ?? DEFAULT_RATES.racFacade,
       clem: data['CLEM'] ?? DEFAULT_RATES.clem,

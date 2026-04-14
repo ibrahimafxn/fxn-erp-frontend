@@ -1,0 +1,281 @@
+<div class="audit-page">
+
+  <!-- ── Onglets de mode ──────────────────────────────────────────────────── -->
+  <div class="mode-tabs">
+    <button class="mode-tab" [class.active]="mode() === 'db'" (click)="switchMode('db')">
+      <span class="material-icons notranslate">storage</span>
+      Depuis la base
+    </button>
+    <button class="mode-tab" [class.active]="mode() === 'csv'" (click)="switchMode('csv')">
+      <span class="material-icons notranslate">upload_file</span>
+      Depuis un fichier CSV
+    </button>
+  </div>
+
+  <!-- ── En-tête ──────────────────────────────────────────────────────────── -->
+  <div class="audit-header">
+    <h1 class="audit-title">Audit des interventions en échec</h1>
+    @if (totals(); as t) {
+      <div class="audit-kpis">
+        <div class="kpi">
+          <span class="kpi-value">{{ t.nbTotal }}</span>
+          <span class="kpi-label">interventions</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-value kpi-danger">{{ t.nbEchecs }}</span>
+          <span class="kpi-label">échecs</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-value" [class]="txClass(t.txEchecGlobal)">{{ t.txEchecGlobal }} %</span>
+          <span class="kpi-label">taux global</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Filtres (mode DB) ─────────────────────────────────────────────────── -->
+  @if (mode() === 'db') {
+    <div class="audit-filters card">
+      <div class="filters-row">
+        <div class="filter-group">
+          <label>Année</label>
+          <select [ngModel]="filterYear()" (ngModelChange)="filterYear.set($event)">
+            @for (y of years; track y) {
+              <option [value]="y">{{ y }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Mois</label>
+          <select [ngModel]="filterMonth()" (ngModelChange)="filterMonth.set($event)">
+            @for (m of months; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Région</label>
+          <input type="text" placeholder="Toutes" [ngModel]="filterRegion()" (ngModelChange)="filterRegion.set($event)" />
+        </div>
+        <div class="filter-group">
+          <label>Société / Prestataire</label>
+          <input type="text" placeholder="Toutes" [ngModel]="filterSociete()" (ngModelChange)="filterSociete.set($event)" />
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary" (click)="load()" [disabled]="loading()">
+            <span class="material-icons notranslate">search</span>
+            Rechercher
+          </button>
+          @if (hasData()) {
+            <button class="btn btn-secondary" (click)="exportCsv()">
+              <span class="material-icons notranslate">download</span>
+              Exporter CSV
+            </button>
+          }
+        </div>
+      </div>
+      <div class="period-label">
+        Période : <strong>{{ periodLabel() }}</strong>
+      </div>
+    </div>
+  }
+
+  <!-- ── Sélection fichier (mode CSV) ──────────────────────────────────────── -->
+  @if (mode() === 'csv') {
+    <div class="csv-upload-card card">
+      <div class="csv-upload-row">
+        <span class="material-icons notranslate csv-upload-icon">upload_file</span>
+        <div class="csv-upload-info">
+          <div class="csv-upload-title">Import fichier Osiris</div>
+          <div class="csv-upload-sub">Sélectionne l'export CSV Osiris — l'ERP analyse les échecs sans importer les données en base.</div>
+        </div>
+        <label class="btn btn-primary csv-file-label" [class.disabled]="loading()">
+          <input
+            #csvInput
+            type="file"
+            accept=".csv"
+            [disabled]="loading()"
+            (click)="onFileClick()"
+            (change)="onFileChange($event)"
+            class="csv-file-input"
+          />
+          <span class="material-icons notranslate">folder_open</span>
+          Choisir un fichier
+        </label>
+      </div>
+
+      @if (selectedFile(); as f) {
+        <div class="csv-file-selected">
+          <span class="material-icons notranslate">description</span>
+          <span class="csv-filename">{{ f.name }}</span>
+          <div class="csv-file-actions">
+            <button class="btn btn-primary" (click)="analyzeFile()" [disabled]="loading()">
+              <span class="material-icons notranslate">analytics</span>
+              @if (loading()) { Analyse… } @else { Analyser }
+            </button>
+            @if (hasData()) {
+              <button class="btn btn-secondary" (click)="exportCsv()">
+                <span class="material-icons notranslate">download</span>
+                Exporter résultats
+              </button>
+            }
+            <button class="btn btn-secondary" (click)="clearFile()" [disabled]="loading()">
+              <span class="material-icons notranslate">close</span>
+            </button>
+          </div>
+        </div>
+        @if (csvMeta(); as meta) {
+          <div class="period-label">
+            Fichier : <strong>{{ meta.filename }}</strong> — {{ meta.rowsRead }} lignes analysées
+          </div>
+        }
+      } @else {
+        <div class="csv-empty-hint">
+          <span class="material-icons notranslate">info</span>
+          Aucun fichier sélectionné
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── Légende ──────────────────────────────────────────────────────────── -->
+  <div class="legend">
+    <span class="legend-item tx-zero">0 % (aucun échec)</span>
+    <span class="legend-item tx-good">&lt; 10 % (bon)</span>
+    <span class="legend-item tx-warn">10–20 % (à surveiller)</span>
+    <span class="legend-item tx-danger">&gt; 20 % (critique)</span>
+  </div>
+
+  <!-- ── Chargement / Erreur ───────────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="state-msg">
+      <span class="material-icons notranslate spin">refresh</span>
+      @if (mode() === 'csv') { Analyse du fichier… } @else { Chargement… }
+    </div>
+  } @else if (error()) {
+    <div class="state-msg state-error">
+      <span class="material-icons notranslate">error_outline</span>
+      {{ error() }}
+    </div>
+  } @else if (mode() === 'csv' && !selectedFile()) {
+    <!-- état vide CSV : pas encore de fichier -->
+  } @else if (!hasData()) {
+    <div class="state-msg">
+      <span class="material-icons notranslate">check_circle_outline</span>
+      @if (mode() === 'csv') { Aucun échec détecté dans ce fichier. } @else { Aucune intervention sur cette période. }
+    </div>
+  } @else {
+
+    <!-- ── Tableau par technicien ─────────────────────────────────────────── -->
+    <div class="table-wrap card">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>Technicien</th>
+            <th class="num">Nb Inter</th>
+            <th class="num">Nb RACC</th>
+            <th class="num">Échec RACC</th>
+            <th class="num">Tx RACC</th>
+            <th class="num">Nb SAV</th>
+            <th class="num">Échec SAV</th>
+            <th class="num">Tx SAV</th>
+            <th class="num">Tx global</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of items(); track row.technician) {
+            <tr class="row-summary" [class.row-expanded]="isExpanded(row.technician)"
+                (click)="toggleRow(row.technician)" [class.clickable]="row.echecs.length > 0">
+              <td class="tech-name">
+                <span class="material-icons notranslate expand-icon">
+                  {{ isExpanded(row.technician) ? 'expand_less' : 'expand_more' }}
+                </span>
+                {{ row.technician }}
+                @if (row.region) { <span class="tech-region">{{ row.region }}</span> }
+              </td>
+              <td class="num">{{ row.nbTotal }}</td>
+              <td class="num">{{ row.nbRacc }}</td>
+              <td class="num">{{ row.nbRaccEchec }}</td>
+              <td class="num">
+                <span class="tx-badge" [class]="txClass(row.txEchecRacc)">{{ row.txEchecRacc }} %</span>
+              </td>
+              <td class="num">{{ row.nbSav }}</td>
+              <td class="num">{{ row.nbSavEchec }}</td>
+              <td class="num">
+                <span class="tx-badge" [class]="txClass(row.txEchecSav)">{{ row.txEchecSav }} %</span>
+              </td>
+              <td class="num">
+                <span class="tx-badge tx-badge--lg" [class]="txClass(row.txEchecGlobal)">{{ row.txEchecGlobal }} %</span>
+              </td>
+              <td class="num">
+                @if (row.echecs.length > 0) {
+                  <span class="echecs-count">{{ row.echecs.length }} échec{{ row.echecs.length > 1 ? 's' : '' }}</span>
+                }
+              </td>
+            </tr>
+
+            <!-- Détail des échecs (ligne expandée) -->
+            @if (isExpanded(row.technician) && row.echecs.length > 0) {
+              <tr class="row-detail">
+                <td colspan="10">
+                  <div class="detail-panel">
+                    <h4 class="detail-title">Détail des {{ row.echecs.length }} échec{{ row.echecs.length > 1 ? 's' : '' }}</h4>
+                    <table class="detail-table">
+                      <thead>
+                        <tr>
+                          <th>N° Inter</th>
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Statut</th>
+                          <th>Motif échec</th>
+                          <th>Client</th>
+                          <th>Commentaire technicien</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (e of echecsOf(row); track e.numInter) {
+                          <tr>
+                            <td class="mono">{{ e.numInter }}</td>
+                            <td>{{ formatDate(e.dateRdv) }}</td>
+                            <td>{{ e.type || '—' }}</td>
+                            <td><span class="statut-badge">{{ e.statut }}</span></td>
+                            <td class="motif">{{ e.motifEchec || '—' }}</td>
+                            <td>{{ e.client || '—' }}</td>
+                            <td class="comment">{{ e.commentairesTechnicien || '—' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Top motifs d'échec ─────────────────────────────────────────────── -->
+    @if (topMotifs().length > 0) {
+      <div class="motifs-section card">
+        <h3 class="section-title">
+          <span class="material-icons notranslate">bar_chart</span>
+          Top motifs d'échec
+        </h3>
+        <div class="motifs-list">
+          @for (m of topMotifs(); track m.motif) {
+            <div class="motif-row">
+              <span class="motif-label">{{ m.motif }}</span>
+              <div class="motif-bar-wrap">
+                <div class="motif-bar" [style.width.%]="motifBarWidth(m.count)"></div>
+              </div>
+              <span class="motif-count">{{ m.count }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+  }
+</div>

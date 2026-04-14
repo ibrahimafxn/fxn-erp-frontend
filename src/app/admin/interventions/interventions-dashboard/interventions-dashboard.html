@@ -67,6 +67,10 @@
             <span class="material-icons notranslate" aria-hidden="true">compare</span>
             @if (compareLoading()) { Analyse… } @else { Comparer }
           </button>
+          <button class="btn-outline btn-reset-invoices" type="button" (click)="resetInvoices()" [disabled]="invoiceResetLoading()">
+            <span class="material-icons notranslate" aria-hidden="true">delete_sweep</span>
+            @if (invoiceResetLoading()) { Reset… } @else { Reset factures }
+          </button>
         </div>
         @if (invoiceError()) {
           <p class="state error">{{ invoiceError() }}</p>
@@ -226,6 +230,20 @@
   } @else {
     <div class="state hint card">Affichage réinitialisé. Utilise les filtres ou un import pour recharger.</div>
   }
+
+  <app-confirm-delete-modal
+    [open]="invoiceResetModalOpen()"
+    entityLabel="factures ERT"
+    entityName="les factures importées"
+    title="Confirmer le reset des factures"
+    question="Voulez-vous vraiment vider toutes les factures ERT importées ?"
+    dangerHint="Cette action supprime les factures ERT enregistrées et remet la comparaison à zéro."
+    confirmText="Reset factures"
+    confirmLoadingText="Reset…"
+    [confirming]="invoiceResetLoading()"
+    (cancel)="closeInvoiceResetModal()"
+    (confirm)="confirmResetInvoices()">
+  </app-confirm-delete-modal>
 
   <app-confirm-delete-modal
     [open]="resetModalOpen()"

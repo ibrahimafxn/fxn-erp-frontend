@@ -5,6 +5,7 @@ import { forkJoin } from 'rxjs';
 import { RevenueService, RevenueSummaryPoint } from '../../../core/services/revenue.service';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { Absence, AbsenceStatus } from '../../../core/models';
+import { InterventionService } from '../../../core/services/intervention.service';
 
 @Component({
   standalone: true,
@@ -17,6 +18,7 @@ import { Absence, AbsenceStatus } from '../../../core/models';
 export class DirigeantDashboard {
   private revenueService = inject(RevenueService);
   private absenceService = inject(AbsenceService);
+  private interventionService = inject(InterventionService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -42,15 +44,15 @@ export class DirigeantDashboard {
     forkJoin({
       revenue: this.revenueService.summary({ year: this.currentYear }),
       absences: this.absenceService.list({ status: 'EN_ATTENTE' }),
+      interventionsMonth: this.interventionService.importSummaryTechnician({
+        fromDate: this.firstDayOfCurrentMonth(),
+        toDate: this.lastDayOfCurrentMonth(),
+      }),
     }).subscribe({
-      next: ({ revenue, absences }) => {
+      next: ({ revenue, absences, interventionsMonth }) => {
         if (revenue?.success) {
           const series = revenue.data.series || [];
 
-          const thisMonthPoint = series.find(
-            (p) => p.year === this.currentYear && p.month === this.currentMonth,
-          );
-          this.caThisMonth.set(thisMonthPoint?.amountHt ?? 0);
           this.caYtd.set(revenue.data.total ?? series.reduce((sum, p) => sum + (p.amountHt || 0), 0));
           this.penaltyYtd.set(series.reduce((sum, p) => sum + (p.penalty || 0), 0));
 
@@ -61,6 +63,12 @@ export class DirigeantDashboard {
           this.revenueMonths.set(last6);
           const maxAmt = Math.max(...last6.map((p) => p.amountHt || 0), 1);
           this.maxMonthAmount.set(maxAmt);
+        }
+
+        if (interventionsMonth?.success) {
+          this.caThisMonth.set(interventionsMonth.data.totalAmount ?? 0);
+        } else {
+          this.caThisMonth.set(0);
         }
 
         if (absences?.success) {
@@ -172,5 +180,14 @@ export class DirigeantDashboard {
     const el = document.getElementById('absences-section');
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  private firstDayOfCurrentMonth(): string {
+    return `${this.currentYear}-${String(this.currentMonth).padStart(2, '0')}-01`;
+  }
+
+  private lastDayOfCurrentMonth(): string {
+    const lastDay = new Date(this.currentYear, this.currentMonth, 0).getDate();
+    return `${this.currentYear}-${String(this.currentMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
   }
 }

@@ -92,6 +92,8 @@ export class InterventionsDashboard {
   readonly rateError = signal<string | null>(null);
   readonly showRates = signal(true);
   readonly invoiceLoading = signal(false);
+  readonly invoiceResetLoading = signal(false);
+  readonly invoiceResetModalOpen = signal(false);
   readonly invoiceResult = signal<string | null>(null);
   readonly invoiceError = signal<string | null>(null);
   readonly compareLoading = signal(false);
@@ -292,6 +294,10 @@ export class InterventionsDashboard {
 
   readonly rateForm = this.fb.nonNullable.group({
     racPavillon: this.fb.nonNullable.group({
+      total: [140, [Validators.required, Validators.min(0)]],
+      fxn: [10, [Validators.required, Validators.min(0)]]
+    }),
+    racSouterrain: this.fb.nonNullable.group({
       total: [140, [Validators.required, Validators.min(0)]],
       fxn: [10, [Validators.required, Validators.min(0)]]
     }),
@@ -783,6 +789,45 @@ export class InterventionsDashboard {
     });
   }
 
+  resetInvoices(): void {
+    if (!this.invoiceSummary()?.invoices?.length && !this.selectedInvoices.length) {
+      this.invoiceResult.set('Aucune facture à vider.');
+      this.invoiceError.set(null);
+      return;
+    }
+    this.invoiceResetModalOpen.set(true);
+  }
+
+  closeInvoiceResetModal(): void {
+    if (this.invoiceResetLoading()) return;
+    this.invoiceResetModalOpen.set(false);
+  }
+
+  confirmResetInvoices(): void {
+    this.invoiceResetModalOpen.set(false);
+    this.invoiceResetLoading.set(true);
+    this.invoiceError.set(null);
+    this.invoiceResult.set(null);
+    this.svc.resetInvoices().subscribe({
+      next: (res) => {
+        this.invoiceResetLoading.set(false);
+        const deleted = Number(res.data?.deleted || 0);
+        this.invoiceSummary.set({ totalHt: 0, byCode: {}, invoices: [] });
+        this.lastImportedInvoices.set([]);
+        this.selectedPeriodKey.set('');
+        this.compareResult.set(null);
+        this.compareError.set(null);
+        this.resetInvoiceInput();
+        this.refreshCompare();
+        this.invoiceResult.set(`Factures supprimées : ${deleted}.`);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.invoiceResetLoading.set(false);
+        this.invoiceError.set(this.apiError(err, 'Erreur suppression factures'));
+      }
+    });
+  }
+
   runFormatVersions(): void {
     this.formatVersionsLoading.set(true);
     this.formatVersionsResult.set(null);
@@ -1115,6 +1160,7 @@ export class InterventionsDashboard {
     const totals: InterventionTotals = {
       total: 0,
       racPavillon: 0,
+      racSouterrain: 0,
       racAerien: 0,
       racFacade: 0,
       racImmeuble: 0,
@@ -1146,6 +1192,7 @@ export class InterventionsDashboard {
     for (const item of items) {
       totals.total = (totals.total ?? 0) + (item.total || 0);
       totals.racPavillon = (totals.racPavillon ?? 0) + (item.racPavillon || 0);
+      totals.racSouterrain = (totals.racSouterrain ?? 0) + (item.racSouterrain || 0);
       totals.racAerien = (totals.racAerien ?? 0) + (item.racAerien || 0);
       totals.racFacade = (totals.racFacade ?? 0) + (item.racFacade || 0);
       totals.racImmeuble = (totals.racImmeuble ?? 0) + (item.racImmeuble || 0);
@@ -1388,7 +1435,8 @@ export class InterventionsDashboard {
   private selectedRevenueKey(): keyof InterventionRates | null {
     const code = this.selectedRevenueCode();
     if (!code) return null;
-    if (code === 'RACPAV' || code === 'RAC_PBO_SOUT') return 'racPavillon';
+    if (code === 'RACPAV') return 'racPavillon';
+    if (code === 'RAC_PBO_SOUT') return 'racSouterrain';
     return this.rateCodeMap.get(code) ?? null;
   }
 
@@ -1452,6 +1500,7 @@ export class InterventionsDashboard {
 
     return (
       get(item.racPavillon) * amount(rates.racPavillon) +
+      get(item.racSouterrain) * amount(rates.racSouterrain) +
       get(item.racAerien) * amount(rates.racAerien) +
       get(item.racFacade) * amount(rates.racFacade) +
       get(item.clem) * amount(rates.clem) +
