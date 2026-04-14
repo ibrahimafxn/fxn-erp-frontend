@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConsumableService } from '../../../core/services/consumable.service';
@@ -8,7 +9,8 @@ import { SupplyRequestService } from '../../../core/services/supply-request.serv
 import { AppNotificationService } from '../../../core/services/app-notification.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { SupplyRequest, SupplyRequestStatus, SupplyRequestType } from '../../../core/models';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { apiError } from '../../../core/utils/http-error';
+import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 import { preferredPageSize } from '../../../core/utils/page-size';
 
@@ -30,16 +32,18 @@ export class TechnicianSupplyRequests {
   private materialService = inject(MaterialService);
   private datePipe = inject(DatePipe);
 
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+
   readonly loading = signal(false);
   readonly resourcesLoading = signal(false);
   readonly error = signal<string | null>(null);
   readonly resourcesError = signal<string | null>(null);
 
   readonly items = signal<SupplyRequest[]>([]);
-  readonly total = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
   readonly editing = signal<SupplyRequest | null>(null);
   readonly deleteModalOpen = signal(false);
   readonly pendingDelete = signal<SupplyRequest | null>(null);
@@ -61,14 +65,9 @@ export class TechnicianSupplyRequests {
     note: this.fb.nonNullable.control('')
   });
 
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
   readonly filteredItems = computed(() => {
     const items = [...this.items()];
     const selected = this.dateFilter();
@@ -120,7 +119,7 @@ export class TechnicianSupplyRequests {
   constructor() {
     this.loadRequests();
     this.loadResources(true);
-    this.form.controls.resourceType.valueChanges.subscribe((value) => {
+    this.form.controls.resourceType.valueChanges.pipe(takeUntilDestroyed()).subscribe((value) => {
       this.form.controls.resourceId.setValue('');
       this.resourceQuery.set('');
       this.loadResources(true, value);
@@ -128,7 +127,7 @@ export class TechnicianSupplyRequests {
   }
 
   submit(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.resourcesLoading()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -164,7 +163,7 @@ export class TechnicianSupplyRequests {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur envoi demande'));
+        this.error.set(apiError(err, 'Erreur envoi demande'));
       }
     });
   }
@@ -197,24 +196,9 @@ export class TechnicianSupplyRequests {
     this.dateFilter.set(value);
   }
 
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.update((v) => v - 1);
-    this.loadRequests(true);
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.update((v) => v + 1);
-    this.loadRequests(true);
-  }
-
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.loadRequests(true);
-  }
+  prevPage(): void { this.pag.prevPage(() => this.loadRequests(true)); }
+  nextPage(): void { this.pag.nextPage(() => this.loadRequests(true)); }
+  setLimitValue(v: number): void { this.pag.setLimitValue(v, () => this.loadRequests(true)); }
 
   loadRequests(force = false): void {
     this.loading.set(true);
@@ -236,7 +220,7 @@ export class TechnicianSupplyRequests {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement demandes'));
+        this.error.set(apiError(err, 'Erreur chargement demandes'));
       }
     });
   }
@@ -275,7 +259,7 @@ export class TechnicianSupplyRequests {
 
     const onError = (err: unknown) => {
       this.resourcesLoading.set(false);
-      this.resourcesError.set(this.apiError(err, 'Erreur chargement ressources'));
+      this.resourcesError.set(apiError(err, 'Erreur chargement ressources'));
     };
 
     if (resourceType === 'MATERIAL') {
@@ -347,7 +331,7 @@ export class TechnicianSupplyRequests {
       },
       error: (err) => {
         this.deletingId.set(null);
-        this.error.set(this.apiError(err, 'Erreur suppression'));
+        this.error.set(apiError(err, 'Erreur suppression'));
       }
     });
   }
@@ -373,7 +357,4 @@ export class TechnicianSupplyRequests {
     return this.datePipe.transform(value, 'short') || '—';
   }
 
-  private apiError(err: any, fallback: string): string {
-    return err?.error?.message || err?.message || fallback;
-  }
 }

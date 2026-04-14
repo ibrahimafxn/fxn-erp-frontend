@@ -1,5 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Absence, AbsenceStatus, AbsenceType } from '../../../core/models';
 import { AbsenceService } from '../../../core/services/absence.service';
@@ -75,10 +76,10 @@ export class TechnicianAgenda {
 
   constructor() {
     this.formValid.set(this.form.valid);
-    this.form.statusChanges.subscribe(() => {
+    this.form.statusChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.formValid.set(this.form.valid);
     });
-    this.form.controls.isHalfDay.valueChanges.subscribe((isHalfDay) => {
+    this.form.controls.isHalfDay.valueChanges.pipe(takeUntilDestroyed()).subscribe((isHalfDay) => {
       const endControl = this.form.controls.endDate;
       if (isHalfDay) {
         endControl.disable({ emitEvent: false });

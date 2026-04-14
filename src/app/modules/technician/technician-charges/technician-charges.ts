@@ -7,7 +7,8 @@ import { TechnicianReportService } from '../../../core/services/technician-repor
 import { Charge, ChargeType } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { apiError } from '../../../core/utils/http-error';
+import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 import { preferredPageSize } from '../../../core/utils/page-size';
 
@@ -34,13 +35,18 @@ export class TechnicianCharges {
   private reports = inject(TechnicianReportService);
   private datePipe = inject(DatePipe);
 
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<Charge[]>([]);
-  readonly total = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
   readonly editing = signal<Charge | null>(null);
 
   readonly deleteModalOpen = signal(false);
@@ -74,14 +80,6 @@ export class TechnicianCharges {
     amount: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     note: this.fb.nonNullable.control('')
   });
-
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
 
   readonly monthlySummary = computed(() => {
     const month = this.selectedMonth();
@@ -169,7 +167,7 @@ export class TechnicianCharges {
       },
       error: (err) => {
         this.deletingId.set(null);
-        this.error.set(this.apiError(err, 'Erreur suppression charge'));
+        this.error.set(apiError(err, 'Erreur suppression charge'));
       }
     });
   }
@@ -188,7 +186,7 @@ export class TechnicianCharges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur sauvegarde charge'));
+        this.error.set(apiError(err, 'Erreur sauvegarde charge'));
       }
     });
   }
@@ -205,24 +203,9 @@ export class TechnicianCharges {
     this.loadCharges(true);
   }
 
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.loadCharges(true);
-  }
-
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.update(v => v - 1);
-    this.loadCharges(true);
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.update(v => v + 1);
-    this.loadCharges(true);
-  }
+  prevPage(): void { this.pag.prevPage(() => this.loadCharges(true)); }
+  nextPage(): void { this.pag.nextPage(() => this.loadCharges(true)); }
+  setLimitValue(v: number): void { this.pag.setLimitValue(v, () => this.loadCharges(true)); }
 
   setMonthSelection(value: string): void {
     const raw = String(value || '').trim();
@@ -256,7 +239,7 @@ export class TechnicianCharges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement charges'));
+        this.error.set(apiError(err, 'Erreur chargement charges'));
       }
     });
   }
@@ -297,7 +280,7 @@ export class TechnicianCharges {
       },
       error: (err) => {
         this.benefitLoading.set(false);
-        this.benefitError.set(this.apiError(err, 'Erreur chargement bénéfice'));
+        this.benefitError.set(apiError(err, 'Erreur chargement bénéfice'));
       }
     });
   }
@@ -330,7 +313,4 @@ export class TechnicianCharges {
     return this.datePipe.transform(new Date(y, m - 1, 1), 'MMM yyyy') || month;
   }
 
-  private apiError(err: any, fallback: string): string {
-    return err?.error?.message || err?.message || fallback;
-  }
 }

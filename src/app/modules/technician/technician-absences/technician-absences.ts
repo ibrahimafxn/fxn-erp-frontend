@@ -42,6 +42,7 @@ export class TechnicianAbsences {
   readonly deleteModalOpen = signal(false);
   readonly pendingDeleteId = signal<string | null>(null);
   readonly deleting = signal(false);
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
   readonly total = computed(() => this.items().length);
   readonly pageCount = computed(() => {
     const t = this.total();
@@ -110,8 +111,9 @@ export class TechnicianAbsences {
       next: () => {
         this.formSubmitting.set(false);
         this.resetForm();
+        if (this.successTimer !== null) clearTimeout(this.successTimer);
         this.formSuccess.set(true);
-        setTimeout(() => this.formSuccess.set(false), 3000);
+        this.successTimer = setTimeout(() => { this.formSuccess.set(false); this.successTimer = null; }, 3000);
         this.notif.notifyAction(
           'Demande envoyée',
           `Votre demande de ${this.typeLabel(payload.type)} a bien été transmise.`,
