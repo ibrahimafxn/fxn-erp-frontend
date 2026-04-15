@@ -96,6 +96,7 @@ export class TechnicianActivity {
   readonly bpuSegmentPrices = signal(new Map<string, Map<string, number>>());
   /** Sélections personnalisées par technicien : Map<technicianId, Map<code, price>> */
   readonly technicianPersonalPrices = signal(new Map<string, Map<string, number>>());
+  readonly technicianPriceHistories = signal(new Map<string, BpuPriceHistory[]>());
   readonly employeeContracts = signal(new Map<string, string>());
   readonly bpuLoaded = signal(false);
   readonly employeesLoaded = signal(false);
@@ -244,9 +245,11 @@ export class TechnicianActivity {
           this.interventionsLoading.set(false);
           return;
         }
-        this.interventions.set(res.data.items || []);
+        const items = res.data.items || [];
+        this.interventions.set(items);
         this.interventionTotal.set(res.data.total || 0);
         this.interventionsLoading.set(false);
+        void this.ensureTechnicianPriceHistories(items);
       },
       error: (err) => {
         this.interventionsLoading.set(false);
@@ -355,7 +358,9 @@ export class TechnicianActivity {
     // 1. Sélection personnalisée du technicien (OVERRIDE)
     const personalPrices = techId ? this.technicianPersonalPrices().get(techId) : undefined;
     if (personalPrices?.size) {
-      return applyPricesToReport(report, personalPrices);
+      const history = this.technicianPriceHistories().get(techId) || [];
+      const prices = pricesForDate(history, report.reportDate, personalPrices);
+      return applyPricesToReport(report, prices);
     }
     // 2. Prix du segment BPU admin (AUTO/SALARIE/AUTRE)
     const segment = this.resolveBpuSegment(techId || null);
@@ -460,7 +465,7 @@ export class TechnicianActivity {
       const count = Number(res.data?.count || 0);
       let totalAmount = Number(res.data?.totalAmount || 0);
 
-      if (technicianId) {
+      if (technicianId || this.technicianPersonalPrices().size) {
         totalAmount = await this.loadSummaryAmountFromReports({
           technicianId,
           depotId,
@@ -579,17 +584,42 @@ export class TechnicianActivity {
     return !reportTechId || reportTechId === techId;
   }
 
+  private async ensureTechnicianPriceHistories(reports: TechnicianReport[]): Promise<void> {
+    const technicianIds = Array.from(
+      new Set(
+        reports
+          .map((report) => String(report.technician?._id || '').trim())
+          .filter((id) => !!id && !this.technicianPriceHistories().has(id))
+      )
+    );
+    if (!technicianIds.length) return;
+
+    const entries = await Promise.all(
+      technicianIds.map(async (technicianId) => {
+        try {
+          const history = await firstValueFrom(this.bpuSelectionService.listHistory({ owner: technicianId }));
+          return { technicianId, history: history || [] };
+        } catch {
+          return { technicianId, history: [] as BpuPriceHistory[] };
+        }
+      })
+    );
+
+    const next = new Map(this.technicianPriceHistories());
+    for (const entry of entries) {
+      next.set(entry.technicianId, entry.history);
+    }
+    this.technicianPriceHistories.set(next);
+  }
+
   private async loadSummaryAmountFromReports(params: {
-    technicianId: string;
+    technicianId?: string;
     depotId?: string;
     fromDate?: string;
     toDate?: string;
     fallback: number;
     totalCount: number;
   }): Promise<number> {
-    const basePrices = this.selectedTechnicianBpuPrices();
-    if (!basePrices.size) return params.fallback;
-
     const res = await firstValueFrom(this.reportService.list({
       technicianId: params.technicianId,
       depotId: params.depotId,
@@ -603,11 +633,37 @@ export class TechnicianActivity {
     const items = Array.isArray(res.data?.items) ? res.data.items : [];
     if (!items.length) return 0;
 
-    const history = this.selectedTechnicianPriceHistory();
+    if (params.technicianId) {
+      const basePrices = this.selectedTechnicianBpuPrices();
+      if (!basePrices.size) return params.fallback;
+      const history = this.selectedTechnicianPriceHistory();
+      return Number(
+        items.reduce((sum, report) => {
+          const prices = pricesForDate(history, report.reportDate, basePrices);
+          return sum + applyPricesToReport(report, prices);
+        }, 0).toFixed(2)
+      );
+    }
+
+    await this.ensureTechnicianPriceHistories(items);
+
     return Number(
       items.reduce((sum, report) => {
-        const prices = pricesForDate(history, report.reportDate, basePrices);
-        return sum + applyPricesToReport(report, prices);
+        const techId = String(report.technician?._id || '').trim();
+        const personalPrices = techId ? this.technicianPersonalPrices().get(techId) : undefined;
+        if (personalPrices?.size) {
+          const history = this.technicianPriceHistories().get(techId) || [];
+          const prices = pricesForDate(history, report.reportDate, personalPrices);
+          return sum + applyPricesToReport(report, prices);
+        }
+
+        const segment = this.resolveBpuSegment(techId || null);
+        const segmentPrices = this.bpuSegmentPrices().get(segment);
+        if (segmentPrices?.size) {
+          return sum + applyPricesToReport(report, segmentPrices);
+        }
+
+        return sum + computeReportAmount(report);
       }, 0).toFixed(2)
     );
   }
