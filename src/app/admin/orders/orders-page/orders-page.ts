@@ -13,6 +13,7 @@ import { Role } from '../../../core/models/roles.model';
 import { environment } from '../../../environments/environment';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   standalone: true,
@@ -37,7 +38,7 @@ export class OrdersPage {
   readonly items = signal<Order[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly deleteModalOpen = signal(false);
   readonly deletingId = signal<string | null>(null);
   readonly pendingDeleteId = signal<string | null>(null);

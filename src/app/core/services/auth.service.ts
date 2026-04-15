@@ -1,6 +1,6 @@
 // src/app/core/services/auth.service.ts
 
-import {inject, Injectable, signal} from '@angular/core';
+import {computed, inject, Injectable, signal} from '@angular/core';
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {Observable, of, ReplaySubject, throwError} from 'rxjs';
@@ -65,6 +65,8 @@ export class AuthService {
   private readonly _user = signal<AuthUser | null>(null);
   /** Signal readonly exposé au reste de l'app */
   readonly user$ = this._user.asReadonly();
+  /** Taille de page préférée (lue depuis les préférences utilisateur) */
+  readonly defaultPageSize = computed(() => this.user$()?.preferences?.tablePageSize ?? 20);
   /** Indique si l'init auth est terminée (refresh tenté) */
   private readonly _ready = signal(false);
   readonly ready$ = this._ready.asReadonly();

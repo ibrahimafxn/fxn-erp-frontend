@@ -7,6 +7,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Supplier, SupplierService } from '../../../core/services/supplier.service';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   standalone: true,
@@ -26,7 +27,7 @@ export class SupplierList {
   readonly items = signal<Supplier[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly createName = signal('');

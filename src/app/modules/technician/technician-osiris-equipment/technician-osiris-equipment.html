@@ -1,0 +1,47 @@
+<section class="tech-osiris-equip">
+  <header class="page-header">
+    <div>
+      <h1>Stock équipements Osiris</h1>
+      <p class="subtitle">Matériels abonnés FTTH actuellement dans votre stock.</p>
+    </div>
+    @if (!loading() && data()) {
+      <span class="total-badge">{{ data()!.total }} au total</span>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="state loading">
+      <span class="material-icons notranslate spin">sync</span>
+      Chargement…
+    </div>
+  } @else if (error()) {
+    <div class="state error">
+      <span class="material-icons notranslate">error_outline</span>
+      {{ error() }}
+      <button class="btn-retry" type="button" (click)="load()">Réessayer</button>
+    </div>
+  } @else if (!data() || data()!.total === 0) {
+    <div class="state empty">
+      <span class="material-icons notranslate">inventory_2</span>
+      <p>Aucun équipement Osiris enregistré dans votre stock.</p>
+      <span class="empty-hint">L'administrateur doit importer le fichier CSV depuis Osiris pour que votre stock apparaisse ici.</span>
+    </div>
+  } @else {
+    <div class="equip-grid">
+      @for (e of data()!.equipment; track e.type) {
+        <article class="equip-card">
+          <div class="equip-count">{{ e.count }}</div>
+          <div class="equip-type">{{ e.type }}</div>
+          @if (e.codeProcable) {
+            <div class="equip-code">{{ e.codeProcable }}</div>
+          }
+          @if (e.categorie) {
+            <div class="equip-cat">{{ e.categorie }}</div>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>
+
+<app-technician-mobile-nav></app-technician-mobile-nav>

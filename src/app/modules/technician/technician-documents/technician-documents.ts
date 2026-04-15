@@ -53,8 +53,10 @@ export class TechnicianDocuments {
         window.open(url, '_blank', 'noopener');
         window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       },
-      error: async (err) => {
-        this.error.set(await this.readDownloadError(err));
+      error: (err) => {
+        this.readDownloadError(err)
+          .then((msg) => this.error.set(msg))
+          .catch(() => this.error.set('Téléchargement document impossible.'));
       }
     });
   }

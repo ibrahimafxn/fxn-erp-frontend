@@ -119,6 +119,11 @@ export const ADMIN_ROUTES: Routes = [
         .then(m => m.InterventionsTechnicianDetail)
   },
   {
+    path: 'interventions/audit',
+    loadComponent: () =>
+      import('./interventions/interventions-audit/interventions-audit').then(m => m.InterventionsAudit)
+  },
+  {
     path: 'bpu',
     loadComponent: () => import('./bpu/bpu-list/bpu-list').then(m => m.BpuList)
   },
@@ -151,6 +156,11 @@ export const ADMIN_ROUTES: Routes = [
     path: 'revenue',
     loadComponent: () =>
       import('./revenue/revenue-dashboard/revenue-dashboard').then(m => m.RevenueDashboard)
+  },
+  {
+    path: 'finance/ert-invoices',
+    loadComponent: () =>
+      import('./finance/ert-invoices-page/ert-invoices-page').then(m => m.ErtInvoicesPage)
   },
 
   // /admin/dirigeant
@@ -189,6 +199,12 @@ export const ADMIN_ROUTES: Routes = [
       import('./resources/materials/material-form/material-form').then(m => m.MaterialForm)
   },
 
+  // /admin/resources/osiris-equipment
+  {
+    path: 'resources/osiris-equipment',
+    loadComponent: () =>
+      import('./resources/osiris-equipment/osiris-import').then(m => m.OsirisImport)
+  },
 
   // -----------------------------
   // CONSUMABLES

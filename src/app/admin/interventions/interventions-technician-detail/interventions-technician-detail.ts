@@ -7,6 +7,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { InterventionItem, InterventionService } from '../../../core/services/intervention.service';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { isRacihSuccess, isRacpavSuccess } from '../../../core/utils/intervention-prestations';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 type DetailFilters = {
   fromDate: string;
@@ -36,7 +37,7 @@ export class InterventionsTechnicianDetail {
   readonly items = signal<InterventionItem[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly technician = signal('');
   readonly pageRange = formatPageRange;
 

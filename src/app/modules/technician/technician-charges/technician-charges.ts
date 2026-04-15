@@ -7,7 +7,8 @@ import { TechnicianReportService } from '../../../core/services/technician-repor
 import { Charge, ChargeType } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { apiError } from '../../../core/utils/http-error';
+import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 type BenefitRow = {
@@ -33,13 +34,18 @@ export class TechnicianCharges {
   private reports = inject(TechnicianReportService);
   private datePipe = inject(DatePipe);
 
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<Charge[]>([]);
-  readonly total = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(10);
-  readonly pageRange = formatPageRange;
   readonly editing = signal<Charge | null>(null);
 
   readonly deleteModalOpen = signal(false);
@@ -52,7 +58,8 @@ export class TechnicianCharges {
   readonly benefitError = signal<string | null>(null);
   readonly benefitRows = signal<BenefitRow[]>([]);
 
-  readonly monthFilter = signal('');
+  readonly periodStart = signal('');
+  readonly periodEnd = signal('');
   readonly typeFilter = signal<ChargeType | ''>('');
   readonly selectedYear = signal(new Date().getFullYear());
   readonly selectedMonth = signal(this.currentMonth());
@@ -69,18 +76,10 @@ export class TechnicianCharges {
 
   readonly form = this.fb.nonNullable.group({
     type: this.fb.nonNullable.control<ChargeType>('VEHICULE', [Validators.required]),
-    month: this.fb.nonNullable.control(this.currentMonth(), [Validators.required]),
+    month: this.fb.nonNullable.control(this.currentDateInput(), [Validators.required]),
     amount: this.fb.nonNullable.control(0, [Validators.required, Validators.min(0)]),
     note: this.fb.nonNullable.control('')
   });
-
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
 
   readonly monthlySummary = computed(() => {
     const month = this.selectedMonth();
@@ -105,7 +104,16 @@ export class TechnicianCharges {
       return;
     }
     const current = this.editing();
-    const payload = this.form.getRawValue();
+    const raw = this.form.getRawValue();
+    const payload = {
+      ...raw,
+      month: this.dateInputToMonth(raw.month)
+    };
+    if (!payload.month) {
+      this.form.controls.month.setErrors({ required: true });
+      this.form.controls.month.markAsTouched();
+      return;
+    }
     if (current?._id) {
       this.pendingUpdatePayload.set(payload);
       this.confirmUpdateOpen.set(true);
@@ -115,7 +123,7 @@ export class TechnicianCharges {
   }
 
   resetForm(): void {
-    this.form.reset({ type: 'VEHICULE', month: this.currentMonth(), amount: 0, note: '' });
+    this.form.reset({ type: 'VEHICULE', month: this.currentDateInput(), amount: 0, note: '' });
     this.editing.set(null);
   }
 
@@ -123,7 +131,7 @@ export class TechnicianCharges {
     this.editing.set(item);
     this.form.patchValue({
       type: item.type,
-      month: item.month,
+      month: this.monthToDateInput(item.month),
       amount: item.amount,
       note: item.note || ''
     });
@@ -168,7 +176,7 @@ export class TechnicianCharges {
       },
       error: (err) => {
         this.deletingId.set(null);
-        this.error.set(this.apiError(err, 'Erreur suppression charge'));
+        this.error.set(apiError(err, 'Erreur suppression charge'));
       }
     });
   }
@@ -187,13 +195,19 @@ export class TechnicianCharges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur sauvegarde charge'));
+        this.error.set(apiError(err, 'Erreur sauvegarde charge'));
       }
     });
   }
 
-  setMonthFilter(value: string): void {
-    this.monthFilter.set(value);
+  setPeriodStart(value: string): void {
+    this.periodStart.set(this.dateInputToMonth(value));
+    this.page.set(1);
+    this.loadCharges(true);
+  }
+
+  setPeriodEnd(value: string): void {
+    this.periodEnd.set(this.dateInputToMonth(value));
     this.page.set(1);
     this.loadCharges(true);
   }
@@ -204,27 +218,12 @@ export class TechnicianCharges {
     this.loadCharges(true);
   }
 
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.loadCharges(true);
-  }
-
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.update(v => v - 1);
-    this.loadCharges(true);
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.update(v => v + 1);
-    this.loadCharges(true);
-  }
+  prevPage(): void { this.pag.prevPage(() => this.loadCharges(true)); }
+  nextPage(): void { this.pag.nextPage(() => this.loadCharges(true)); }
+  setLimitValue(v: number): void { this.pag.setLimitValue(v, () => this.loadCharges(true)); }
 
   setMonthSelection(value: string): void {
-    const raw = String(value || '').trim();
+    const raw = this.dateInputToMonth(value);
     if (!raw) return;
     this.selectedMonth.set(raw);
     const parts = raw.split('-').map(Number);
@@ -241,12 +240,14 @@ export class TechnicianCharges {
     if (!force && this.loading()) return;
     this.loading.set(true);
     this.error.set(null);
-    this.charges.listMine({
-      page: this.page(),
-      limit: this.limit(),
-      month: this.monthFilter() || undefined,
-      type: this.typeFilter() || undefined
-    }).subscribe({
+    const start = this.normalizePeriod(this.periodStart());
+    const end = this.normalizePeriod(this.periodEnd());
+    const type = this.typeFilter() || undefined;
+    if (start || end) {
+      this.loadChargesByPeriod({ type, start, end });
+      return;
+    }
+    this.charges.listMine({ page: this.page(), limit: this.limit(), type }).subscribe({
       next: (res) => {
         const data = res?.data;
         this.items.set(data?.items || []);
@@ -255,7 +256,7 @@ export class TechnicianCharges {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement charges'));
+        this.error.set(apiError(err, 'Erreur chargement charges'));
       }
     });
   }
@@ -296,7 +297,7 @@ export class TechnicianCharges {
       },
       error: (err) => {
         this.benefitLoading.set(false);
-        this.benefitError.set(this.apiError(err, 'Erreur chargement bénéfice'));
+        this.benefitError.set(apiError(err, 'Erreur chargement bénéfice'));
       }
     });
   }
@@ -318,9 +319,98 @@ export class TechnicianCharges {
     return match?.label || (key ? key : '—');
   }
 
+  hasActivePeriodFilter(): boolean {
+    return !!(this.periodStart() || this.periodEnd());
+  }
+
   private currentMonth(): string {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private currentDateInput(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  }
+
+  private monthToDateInput(month: string): string {
+    const normalized = this.normalizePeriod(month);
+    return normalized ? `${normalized}-01` : '';
+  }
+
+  private dateInputToMonth(value: string): string {
+    const raw = String(value || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+      return raw.slice(0, 7);
+    }
+    return this.normalizePeriod(raw);
+  }
+
+  private loadChargesByPeriod(params: { type?: ChargeType; start?: string; end?: string }): void {
+    const pageSize = 100;
+    this.charges.listMine({ page: 1, limit: pageSize, type: params.type }).subscribe({
+      next: (res) => {
+        const firstPage = res?.data;
+        const firstItems = firstPage?.items || [];
+        const total = firstPage?.total || 0;
+        const pageCount = Math.ceil(total / pageSize);
+        if (pageCount <= 1) {
+          this.applyPeriodPagination(firstItems, params.start, params.end);
+          return;
+        }
+        const remainingRequests = Array.from({ length: pageCount - 1 }, (_, index) =>
+          this.charges.listMine({ page: index + 2, limit: pageSize, type: params.type })
+        );
+        forkJoin(remainingRequests).subscribe({
+          next: (responses) => {
+            const allItems = [
+              ...firstItems,
+              ...responses.flatMap((response) => response?.data?.items || [])
+            ];
+            this.applyPeriodPagination(allItems, params.start, params.end);
+          },
+          error: (err) => {
+            this.loading.set(false);
+            this.error.set(apiError(err, 'Erreur chargement charges'));
+          }
+        });
+      },
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(apiError(err, 'Erreur chargement charges'));
+      }
+    });
+  }
+
+  private applyPeriodPagination(items: Charge[], start?: string, end?: string): void {
+    const filtered = items.filter((item) => this.isMonthWithinPeriod(item.month, start, end));
+    const total = filtered.length;
+    const currentPage = this.page();
+    const limit = this.limit();
+    const lastPage = Math.max(1, Math.ceil(total / limit));
+    const safePage = Math.min(currentPage, lastPage);
+    if (safePage !== currentPage) {
+      this.page.set(safePage);
+    }
+    const startIndex = (safePage - 1) * limit;
+    this.items.set(filtered.slice(startIndex, startIndex + limit));
+    this.total.set(total);
+    this.loading.set(false);
+  }
+
+  private isMonthWithinPeriod(month: string, start?: string, end?: string): boolean {
+    const value = this.normalizePeriod(month);
+    if (!value) return false;
+    const safeStart = start && end && start > end ? end : start;
+    const safeEnd = start && end && start > end ? start : end;
+    if (safeStart && value < safeStart) return false;
+    if (safeEnd && value > safeEnd) return false;
+    return true;
+  }
+
+  private normalizePeriod(value: string): string {
+    const raw = String(value || '').trim();
+    return /^\d{4}-\d{2}$/.test(raw) ? raw : '';
   }
 
   private monthLabel(month: string): string {
@@ -329,7 +419,4 @@ export class TechnicianCharges {
     return this.datePipe.transform(new Date(y, m - 1, 1), 'MMM yyyy') || month;
   }
 
-  private apiError(err: any, fallback: string): string {
-    return err?.error?.message || err?.message || fallback;
-  }
 }

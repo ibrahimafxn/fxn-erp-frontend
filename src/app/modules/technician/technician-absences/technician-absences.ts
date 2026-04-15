@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { AppNotificationService } from '../../../core/services/app-notification.service';
 import { Absence, AbsenceStatus, AbsenceType } from '../../../core/models/absence.model';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { formatPageRange } from '../../../core/utils/pagination';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-absences',
@@ -18,9 +21,13 @@ import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-
 export class TechnicianAbsences {
   private absenceService = inject(AbsenceService);
   private auth = inject(AuthService);
+  private notif = inject(AppNotificationService);
 
   readonly loading = signal(false);
   readonly items = signal<Absence[]>([]);
+  readonly page = signal(1);
+  readonly limit = signal(preferredPageSize());
+  readonly pageRange = formatPageRange;
 
   // Form signals
   readonly formType = signal<AbsenceType>('CONGE');
@@ -35,6 +42,22 @@ export class TechnicianAbsences {
   readonly deleteModalOpen = signal(false);
   readonly pendingDeleteId = signal<string | null>(null);
   readonly deleting = signal(false);
+  private successTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly total = computed(() => this.items().length);
+  readonly pageCount = computed(() => {
+    const t = this.total();
+    const l = this.limit();
+    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
+  });
+  readonly canPrev = computed(() => this.page() > 1);
+  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pagedItems = computed(() => {
+    const items = this.items();
+    const limit = this.limit();
+    if (limit <= 0) return items;
+    const start = (this.page() - 1) * limit;
+    return items.slice(start, start + limit);
+  });
 
   constructor() {
     this.loadAbsences();
@@ -42,9 +65,14 @@ export class TechnicianAbsences {
 
   loadAbsences(): void {
     this.loading.set(true);
+    const previous = this.items();
     this.absenceService.list().subscribe({
       next: (res) => {
-        this.items.set(res?.data || []);
+        const current = res?.data || [];
+        this.notifyStatusChanges(previous, current);
+        this.items.set(current);
+        const pageCount = this.pageCount();
+        if (this.page() > pageCount) this.page.set(pageCount);
         this.loading.set(false);
       },
       error: () => {
@@ -83,8 +111,15 @@ export class TechnicianAbsences {
       next: () => {
         this.formSubmitting.set(false);
         this.resetForm();
+        if (this.successTimer !== null) clearTimeout(this.successTimer);
         this.formSuccess.set(true);
-        setTimeout(() => this.formSuccess.set(false), 3000);
+        this.successTimer = setTimeout(() => { this.formSuccess.set(false); this.successTimer = null; }, 3000);
+        this.notif.notifyAction(
+          'Demande envoyée',
+          `Votre demande de ${this.typeLabel(payload.type)} a bien été transmise.`,
+          `absence-submit-${Date.now()}`
+        );
+        this.notif.beep('success');
         this.loadAbsences();
       },
       error: (err) => {
@@ -119,6 +154,22 @@ export class TechnicianAbsences {
         this.closeCancelModal();
       },
     });
+  }
+
+  prevPage(): void {
+    if (!this.canPrev()) return;
+    this.page.update((p) => p - 1);
+  }
+
+  nextPage(): void {
+    if (!this.canNext()) return;
+    this.page.update((p) => p + 1);
+  }
+
+  setLimitValue(value: number): void {
+    if (!Number.isFinite(value) || value <= 0) return;
+    this.limit.set(value);
+    this.page.set(1);
   }
 
   resetForm(): void {
@@ -167,6 +218,30 @@ export class TechnicianAbsences {
     if (!id) return '';
     const item = this.items().find((a) => a._id === id);
     return item ? this.typeLabel(item.type) : '';
+  }
+
+  private notifyStatusChanges(prev: Absence[], next: Absence[]): void {
+    if (!prev.length) return;
+    const prevMap = new Map(prev.map(a => [a._id, a.status]));
+    next.forEach(a => {
+      const prevStatus = prevMap.get(a._id);
+      if (!prevStatus || prevStatus === a.status || prevStatus !== 'EN_ATTENTE') return;
+      if (a.status === 'APPROUVE') {
+        this.notif.notifyAction(
+          'Demande approuvée',
+          `Votre demande de ${this.typeLabel(a.type)} a été approuvée.`,
+          `absence-approved-${a._id}`
+        );
+        this.notif.beep('success');
+      } else if (a.status === 'REFUSE') {
+        this.notif.notifyAction(
+          'Demande refusée',
+          `Votre demande de ${this.typeLabel(a.type)} a été refusée.`,
+          `absence-refused-${a._id}`
+        );
+        this.notif.beep('alert');
+      }
+    });
   }
 
   private todayStr(): string {

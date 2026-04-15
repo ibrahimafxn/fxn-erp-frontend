@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -45,6 +45,7 @@ export type InterventionSummaryItem = {
   technician: string;
   total: number;
   racPavillon: number;
+  racSouterrain?: number;
   racAerien?: number;
   racFacade?: number;
   racImmeuble: number;
@@ -84,6 +85,7 @@ export type InterventionSummaryItem = {
 export type InterventionTotals = {
   total: number;
   racPavillon: number;
+  racSouterrain?: number;
   racAerien?: number;
   racFacade?: number;
   racImmeuble: number;
@@ -304,6 +306,17 @@ export type InterventionInvoiceDoc = {
   filename?: string;
 };
 
+export type InterventionInvoiceDetail = InterventionInvoiceDoc & {
+  contractNo?: string;
+  orderNo?: string;
+  agencyRegion?: string;
+  plaqueType?: string;
+  importedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  items: Array<InterventionInvoiceItem & { unit?: string }>;
+};
+
 export type InterventionInvoiceSummary = {
   totalHt: number;
   byCode: Record<string, InterventionInvoiceItem>;
@@ -325,6 +338,49 @@ export type InterventionCompare = {
   osiris: { totalAmount: number; byCode: Record<string, { code: string; quantity: number }> };
   invoice: { totalAmount: number; byCode: Record<string, InterventionInvoiceItem> };
   rows: InterventionCompareRow[];
+};
+
+export type AuditEchecItem = {
+  technician: string;
+  technicienId: string | null;
+  region: string;
+  societe: string;
+  nbTotal: number;
+  nbRacc: number;
+  nbSav: number;
+  nbRaccEchec: number;
+  nbSavEchec: number;
+  txEchecRacc: number;
+  txEchecSav: number;
+  txEchecGlobal: number;
+  echecs: AuditEchecDetail[];
+};
+
+export type AuditEchecDetail = {
+  numInter: string;
+  dateRdv?: string | null;
+  type: string;
+  statut: string;
+  motifEchec: string;
+  client: string;
+  region: string;
+  commentairesTechnicien: string;
+};
+
+export type AuditTopMotif = { motif: string; count: number };
+
+export type AuditEchecResponse = {
+  items: AuditEchecItem[];
+  topMotifs: AuditTopMotif[];
+  totals: { nbTotal: number; nbEchecs: number; txEchecGlobal: number };
+};
+
+export type AuditEchecQuery = {
+  fromDate?: string;
+  toDate?: string;
+  region?: string;
+  societe?: string;
+  technician?: string;
 };
 
 export type InterventionSummaryQuery = {
@@ -531,6 +587,26 @@ export class InterventionService {
     );
   }
 
+  auditEchecs(query: AuditEchecQuery = {}): Observable<{ success: boolean; data: AuditEchecResponse }> {
+    let params = new HttpParams();
+    if (query.fromDate)   params = params.set('fromDate', query.fromDate);
+    if (query.toDate)     params = params.set('toDate', query.toDate);
+    if (query.region)     params = params.set('region', query.region);
+    if (query.societe)    params = params.set('societe', query.societe);
+    if (query.technician) params = params.set('technician', query.technician);
+    return this.http.get<{ success: boolean; data: AuditEchecResponse }>(
+      `${this.baseUrl}/audit`, { params }
+    );
+  }
+
+  auditEchecsCsv(file: File): Observable<{ success: boolean; data: AuditEchecResponse & { meta?: { filename: string; rowsRead: number } } }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ success: boolean; data: AuditEchecResponse & { meta?: { filename: string; rowsRead: number } } }>(
+      `${this.baseUrl}/audit-csv`, formData
+    );
+  }
+
   resetAll(): Observable<{ success: boolean; data: { deleted: number } }> {
     return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/reset`);
   }
@@ -562,8 +638,22 @@ export class InterventionService {
     );
   }
 
+  invoiceList(query: { periodKey?: string; attachmentRef?: string } = {}): Observable<{ success: boolean; data: InterventionInvoiceDetail[] }> {
+    let params = new HttpParams();
+    if (query.periodKey) params = params.set('periodKey', query.periodKey);
+    if (query.attachmentRef) params = params.set('attachmentRef', query.attachmentRef);
+    return this.http.get<{ success: boolean; data: InterventionInvoiceDetail[] }>(
+      `${this.baseUrl}/invoices`,
+      { params }
+    );
+  }
+
   resetInvoices(): Observable<{ success: boolean; data: { deleted: number } }> {
-    return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/invoices/reset`);
+    return this.http.delete<{ success: boolean; data: { deleted: number } }>(`${this.baseUrl}/invoices/reset`, {
+      headers: new HttpHeaders({
+        'X-Confirm-Destructive': 'yes'
+      })
+    });
   }
 
   compare(

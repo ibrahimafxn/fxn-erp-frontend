@@ -1,9 +1,12 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Absence, AbsenceStatus, AbsenceType } from '../../../core/models';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { preferredPageSize } from '../../../core/utils/page-size';
+import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
@@ -17,6 +20,7 @@ import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-
   styleUrls: ['./technician-agenda.scss'],
 })
 export class TechnicianAgenda {
+  readonly pageSizeChoices = [10, 20, 50, 100] as const;
   private fb = inject(FormBuilder);
   private absencesService = inject(AbsenceService);
   private authService = inject(AuthService);
@@ -33,6 +37,8 @@ export class TechnicianAgenda {
   readonly confirmUpdateOpen = signal(false);
   readonly confirmDeleteOpen = signal(false);
   readonly confirmDeleteTarget = signal<Absence | null>(null);
+  readonly page = signal(1);
+  readonly limit = signal(this.resolveInitialPageSize());
 
   readonly filterForm = this.fb.nonNullable.group({
     fromDate: this.fb.nonNullable.control(''),
@@ -52,13 +58,28 @@ export class TechnicianAgenda {
 
   readonly canSubmit = computed(() => this.formValid() && !this.saving());
   readonly isEditing = computed(() => !!this.editTarget());
+  readonly pageCount = computed(() => {
+    const total = this.sortedAbsences().length;
+    const limit = this.limit();
+    return limit > 0 ? Math.max(1, Math.ceil(total / limit)) : 1;
+  });
+  readonly sortedAbsences = computed(() =>
+    [...this.absences()].sort((a, b) => this.sortDateValue(b) - this.sortDateValue(a))
+  );
+  readonly paginatedAbsences = computed(() => {
+    const page = this.page();
+    const limit = this.limit();
+    const start = (page - 1) * limit;
+    return this.sortedAbsences().slice(start, start + limit);
+  });
+  readonly pageRange = formatPageRange;
 
   constructor() {
     this.formValid.set(this.form.valid);
-    this.form.statusChanges.subscribe(() => {
+    this.form.statusChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.formValid.set(this.form.valid);
     });
-    this.form.controls.isHalfDay.valueChanges.subscribe((isHalfDay) => {
+    this.form.controls.isHalfDay.valueChanges.pipe(takeUntilDestroyed()).subscribe((isHalfDay) => {
       const endControl = this.form.controls.endDate;
       if (isHalfDay) {
         endControl.disable({ emitEvent: false });
@@ -86,6 +107,7 @@ export class TechnicianAgenda {
     }).subscribe({
       next: (res) => {
         this.absences.set(res.data || []);
+        this.page.set(1);
         this.loading.set(false);
       },
       error: () => {
@@ -164,6 +186,22 @@ export class TechnicianAgenda {
   clearFilters(): void {
     this.filterForm.reset({ fromDate: '', toDate: '', type: '', status: '' });
     this.loadAbsences();
+  }
+
+  setPageSize(limit: number): void {
+    if (!this.pageSizeChoices.includes(limit as (typeof this.pageSizeChoices)[number])) return;
+    this.limit.set(limit);
+    this.page.set(1);
+  }
+
+  prevPage(): void {
+    if (this.page() <= 1) return;
+    this.page.update((page) => page - 1);
+  }
+
+  nextPage(): void {
+    if (this.page() >= this.pageCount()) return;
+    this.page.update((page) => page + 1);
   }
 
   startEdit(absence: Absence): void {
@@ -251,5 +289,16 @@ export class TechnicianAgenda {
     if (status === 'APPROUVE') return 'status-ok';
     if (status === 'REFUSE') return 'status-refused';
     return 'status-pending';
+  }
+
+  private resolveInitialPageSize(): number {
+    const preferred = preferredPageSize();
+    return this.pageSizeChoices.includes(preferred as (typeof this.pageSizeChoices)[number]) ? preferred : 10;
+  }
+
+  private sortDateValue(absence: Absence): number {
+    const candidate = absence.createdAt || absence.startDate || absence.endDate;
+    const time = candidate ? new Date(candidate).getTime() : 0;
+    return Number.isFinite(time) ? time : 0;
   }
 }

@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { TechnicianReport, TechnicianReportService } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { PaginationState } from '../../../core/utils/pagination-state';
 import { BpuSelection } from '../../../core/models';
 import { formatFrDate } from '../../../core/utils/date-format';
 import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
@@ -14,6 +14,7 @@ import { ReportPrestationsBadges } from '../../../shared/components/report-prest
 import { AmountCurrencyPipe, formatAmountCurrency } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-revenue',
@@ -44,6 +45,15 @@ export class TechnicianRevenue {
   readonly hasPersonalizedBpu = computed(() => this.usesPersonalizedBpu());
   readonly bpuPrices = signal<Map<string, number>>(new Map());
 
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly deleteError = signal<string | null>(null);
@@ -51,10 +61,6 @@ export class TechnicianRevenue {
   readonly deleteModalOpen = signal(false);
   readonly deleteTarget = signal<TechnicianReport | null>(null);
   readonly items = signal<TechnicianReport[]>([]);
-  readonly page = signal(1);
-  readonly limit = signal(10);
-  readonly total = signal(0);
-  readonly pageRange = formatPageRange;
   readonly listTotalAmount = computed(() =>
     this.items().reduce((sum, item) => sum + this.computeAmount(item), 0)
   );
@@ -74,14 +80,6 @@ export class TechnicianRevenue {
     }
     return Array.from(counts.values()).sort((a, b) => b.qty - a.qty || a.code.localeCompare(b.code));
   });
-
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
 
   readonly filterForm = this.fb.nonNullable.group({
     fromDate: this.fb.nonNullable.control(''),
@@ -105,24 +103,9 @@ export class TechnicianRevenue {
     this.refresh(true);
   }
 
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
-  }
-
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh(true);
-  }
+  prevPage(): void { this.pag.prevPage(() => this.refresh(true)); }
+  nextPage(): void { this.pag.nextPage(() => this.refresh(true)); }
+  setLimitValue(v: number): void { this.pag.setLimitValue(v, () => this.refresh(true)); }
 
   refresh(force = false): void {
     if (!force && this.loading()) return;

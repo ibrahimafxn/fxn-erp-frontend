@@ -12,6 +12,7 @@ import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   standalone: true,
@@ -36,7 +37,7 @@ export class DepotList extends DetailBack {
 
   // Pagination state
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   // Filters

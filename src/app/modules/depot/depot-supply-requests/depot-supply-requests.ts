@@ -2,7 +2,9 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { SupplyRequest, SupplyRequestStatus, SupplyRequestType } from '../../../core/models';
 import { SupplyRequestService } from '../../../core/services/supply-request.service';
+import { AppNotificationService } from '../../../core/services/app-notification.service';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-depot-supply-requests',
@@ -15,6 +17,7 @@ import { formatPageRange } from '../../../core/utils/pagination';
 })
 export class DepotSupplyRequests {
   private supplyService = inject(SupplyRequestService);
+  private notif = inject(AppNotificationService);
   private datePipe = inject(DatePipe);
 
   readonly loading = signal(false);
@@ -23,7 +26,7 @@ export class DepotSupplyRequests {
   readonly items = signal<SupplyRequest[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly limit = signal(10);
+  readonly limit = signal(preferredPageSize());
   readonly limitOptions = [10, 20, 50, 100];
   readonly pageRange = formatPageRange;
 
@@ -128,6 +131,14 @@ export class DepotSupplyRequests {
     this.supplyService.decide(id, { status: this.decisionStatus(), comment }).subscribe({
       next: () => {
         this.decidingId.set(null);
+        const status = this.decisionStatus();
+        const label = status === 'APPROVED' ? 'approuvée' : status === 'CANCELED' ? 'annulée' : 'mise à jour';
+        this.notif.notifyAction(
+          `Demande ${label}`,
+          `La décision a été enregistrée avec succès.`,
+          `decide-${id}`
+        );
+        this.notif.beep(status === 'APPROVED' ? 'success' : 'alert');
         this.cancelDecision();
         this.loadRequests(true);
       },

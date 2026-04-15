@@ -5,7 +5,8 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import {AppHeader} from './layout/app-header/app-header';
 import {AuthService} from './core/services/auth.service';
 import { UserPreferencesService } from './core/services/user-preferences.service';
-import { ThemeOverride, UserPreferences } from './core/models';
+import { AppNotificationService } from './core/services/app-notification.service';
+import { THEME_OVERRIDES, ThemeOverride, UserPreferences, AutoLogoutChoice } from './core/models';
 import {Role} from './core/models/roles.model';
 import { environment } from './environments/environment';
 import packageJson from '../../package.json';
@@ -23,6 +24,7 @@ export class App implements AfterViewInit, OnDestroy {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly preferencesApi = inject(UserPreferencesService);
+  private readonly notif = inject(AppNotificationService);
   private readonly document = inject(DOCUMENT);
   private readonly swUpdate = inject(SwUpdate, { optional: true });
   private toneObserver: MutationObserver | null = null;
@@ -30,8 +32,13 @@ export class App implements AfterViewInit, OnDestroy {
   private routeSub: Subscription | null = null;
   private updateSub: Subscription | null = null;
   private updatePollId: ReturnType<typeof setInterval> | null = null;
+  private stockPollId: ReturnType<typeof setInterval> | null = null;
+  private idleTimer: ReturnType<typeof setTimeout> | null = null;
+  private idleListeners: Array<() => void> = [];
   /** Intervalle entre deux vérifications de mise à jour du Service Worker (10 min) */
   private readonly UPDATE_POLL_MS = 10 * 60 * 1000;
+  /** Intervalle entre deux vérifications stock (10 min) */
+  private readonly STOCK_POLL_MS  = 10 * 60 * 1000;
 
   protected readonly title = signal('fxn-erp-frontend');
   private readonly routeUrl = signal(this.router.url);
@@ -103,7 +110,7 @@ export class App implements AfterViewInit, OnDestroy {
     const override = this.normalizeTheme(prefs?.themeOverride ?? null);
     const role = user?.role ?? null;
     const body = this.document.body;
-    const classes = ['theme-default', 'theme-admin', 'theme-dirigeant', 'theme-gestion-depot', 'theme-technicien'];
+    const classes = THEME_OVERRIDES.map(v => `theme-${v}`);
 
     classes.forEach(c => body.classList.remove(c));
 
@@ -121,6 +128,41 @@ export class App implements AfterViewInit, OnDestroy {
     const body = this.document.body;
     const prefs = this.normalizePreferences(this.auth.user$()?.preferences);
     body.classList.toggle('ui-reduced-motion', prefs?.motion === 'reduced');
+  });
+
+  private readonly fontSizeEffect = effect(() => {
+    const body = this.document.body;
+    const prefs = this.normalizePreferences(this.auth.user$()?.preferences);
+    body.classList.toggle('ui-font-sm', prefs.fontSize === 'small');
+    body.classList.toggle('ui-font-lg', prefs.fontSize === 'large');
+  });
+
+  private readonly contrastEffect = effect(() => {
+    const body = this.document.body;
+    const prefs = this.normalizePreferences(this.auth.user$()?.preferences);
+    body.classList.toggle('ui-high-contrast', prefs.highContrast === true);
+  });
+
+  private readonly autoLogoutEffect = effect(() => {
+    const prefs = this.normalizePreferences(this.auth.user$()?.preferences);
+    this.setupIdleLogout(prefs.autoLogout);
+  });
+
+  /**
+   * Lance ou arrête le polling stock selon le seuil d'alerte défini dans les préférences.
+   * - Quand `stockAlertThreshold` est défini → démarre le polling toutes les 10 min.
+   * - Quand il est supprimé → arrête le polling.
+   */
+  private readonly stockAlertEffect = effect(() => {
+    const threshold = this.notif.stockThreshold();
+    if (this.stockPollId !== null) {
+      clearInterval(this.stockPollId);
+      this.stockPollId = null;
+    }
+    if (threshold === null || threshold === undefined) return;
+    // Première vérification immédiate (différée de 3 s pour laisser l'app charger)
+    setTimeout(() => this.notif.pollStockAlerts(), 3000);
+    this.stockPollId = setInterval(() => this.notif.pollStockAlerts(), this.STOCK_POLL_MS);
   });
 
   ngAfterViewInit(): void {
@@ -147,11 +189,11 @@ export class App implements AfterViewInit, OnDestroy {
     this.routeSub?.unsubscribe();
     this.routeSub = null;
     this.updateSub?.unsubscribe();
+    if (this.stockPollId !== null) { clearInterval(this.stockPollId); this.stockPollId = null; }
     this.updateSub = null;
-    if (this.updatePollId !== null) {
-      clearInterval(this.updatePollId);
-      this.updatePollId = null;
-    }
+    if (this.updatePollId !== null) { clearInterval(this.updatePollId); this.updatePollId = null; }
+    this.idleListeners.forEach(remove => remove());
+    if (this.idleTimer) { clearTimeout(this.idleTimer); this.idleTimer = null; }
   }
 
   dismissUpdateBanner(): void {
@@ -173,19 +215,51 @@ export class App implements AfterViewInit, OnDestroy {
   }
 
   private normalizeTheme(value: string | ThemeOverride | null): ThemeOverride {
-    if (value === 'default' || value === 'admin' || value === 'dirigeant' || value === 'gestion-depot' || value === 'technicien') {
-      return value;
+    if ((THEME_OVERRIDES as ReadonlyArray<string>).includes(value ?? '')) {
+      return value as ThemeOverride;
     }
     return null;
   }
 
   private normalizePreferences(prefs?: UserPreferences | null): UserPreferences {
     return {
-      themeOverride: this.normalizeTheme(prefs?.themeOverride ?? null),
-      density: prefs?.density === 'compact' ? 'compact' : 'comfortable',
-      motion: prefs?.motion === 'reduced' ? 'reduced' : 'full',
-      avatar: prefs?.avatar ?? null
+      themeOverride:       this.normalizeTheme(prefs?.themeOverride ?? null),
+      density:             prefs?.density === 'compact' ? 'compact' : 'comfortable',
+      motion:              prefs?.motion === 'reduced' ? 'reduced' : 'full',
+      avatar:              prefs?.avatar ?? null,
+      fontSize:            prefs?.fontSize === 'small' || prefs?.fontSize === 'large' ? prefs.fontSize : 'normal',
+      dateFormat:          prefs?.dateFormat === 'mdy' || prefs?.dateFormat === 'relative' ? prefs.dateFormat : 'dmy',
+      decimalSeparator:    prefs?.decimalSeparator === 'dot' ? 'dot' : 'comma',
+      defaultPage:         prefs?.defaultPage ?? null,
+      tablePageSize:       [10, 20, 50, 100].includes(prefs?.tablePageSize as number) ? prefs!.tablePageSize : 20,
+      pushNotifications:   prefs?.pushNotifications ?? false,
+      soundAlerts:         prefs?.soundAlerts ?? false,
+      stockAlertThreshold: prefs?.stockAlertThreshold ?? null,
+      highContrast:        prefs?.highContrast ?? false,
+      keyboardShortcuts:   prefs?.keyboardShortcuts ?? true,
+      autoLogout:          ['15', '30', '60'].includes(prefs?.autoLogout as string) ? prefs!.autoLogout : 'never',
+      confirmDelete:       prefs?.confirmDelete ?? true
     };
+  }
+
+  private setupIdleLogout(autoLogout: AutoLogoutChoice): void {
+    this.idleListeners.forEach(remove => remove());
+    this.idleListeners = [];
+    if (this.idleTimer) { clearTimeout(this.idleTimer); this.idleTimer = null; }
+    if (autoLogout === 'never') return;
+
+    const ms = parseInt(autoLogout, 10) * 60 * 1000;
+    const reset = () => {
+      if (this.idleTimer) clearTimeout(this.idleTimer);
+      this.idleTimer = setTimeout(() => { this.notif.clearSession(); this.auth.logout(); }, ms);
+    };
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    events.forEach(eventName => {
+      const handler = () => reset();
+      this.document.addEventListener(eventName, handler, { passive: true });
+      this.idleListeners.push(() => this.document.removeEventListener(eventName, handler));
+    });
+    reset();
   }
 
   private resolveThemeClass(override: ThemeOverride, role: Role | null): string {

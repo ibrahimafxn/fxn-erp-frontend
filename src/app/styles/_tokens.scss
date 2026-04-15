@@ -235,6 +235,422 @@ body.theme-technicien {
   --fxn-bg-glow-2: rgba(32, 36, 48, 0.55);
 }
 
+body.theme-onyx {
+  /* ── Onyx — ultra-noir luxe, accents or ambré ── */
+  --fxn-bg: #080808;
+  --fxn-bg-2: #0f0f0f;
+  --fxn-surface: #161616;
+  --fxn-surface-soft: #1e1e1e;
+  --fxn-surface-glass: rgba(14, 14, 14, 0.90);
+  --fxn-text: #f5f0e8;
+  --fxn-text-muted: #888070;
+  --fxn-text-soft: #b0a890;
+  --fxn-primary: #f59e0b;
+  --fxn-primary-strong: #d97706;
+  --fxn-primary-soft: rgba(245, 158, 11, 0.14);
+  --fxn-primary-border: rgba(245, 158, 11, 0.44);
+  --fxn-accent: #fcd34d;
+  --fxn-accent-soft: rgba(252, 211, 77, 0.14);
+  --fxn-danger: #f0546c;
+  --fxn-danger-soft: rgba(240, 84, 108, 0.16);
+  --fxn-success: #10d48a;
+  --fxn-success-soft: rgba(16, 212, 138, 0.14);
+  --fxn-warning: #f59e0b;
+  --fxn-warning-soft: rgba(245, 158, 11, 0.14);
+  --fxn-info: #60a5fa;
+  --fxn-info-soft: rgba(96, 165, 250, 0.14);
+  --fxn-border: rgba(245, 158, 11, 0.14);
+  --fxn-border-strong: rgba(245, 158, 11, 0.26);
+  --fxn-button-outline-bg: rgba(10, 10, 10, 0.80);
+  --fxn-button-outline-border: rgba(245, 158, 11, 0.22);
+  --fxn-shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.52);
+  --fxn-shadow-md: 0 20px 44px rgba(0, 0, 0, 0.62);
+  --fxn-button-shadow: 0 12px 24px rgba(60, 40, 0, 0.30);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(245, 158, 11, 0.28);
+  --fxn-ring: 0 0 0 3px rgba(245, 158, 11, 0.28);
+  --fxn-bg-glow-1: rgba(245, 158, 11, 0.10);
+  --fxn-bg-glow-2: rgba(30, 24, 14, 0.85);
+  --fxn-surface-elevated: rgba(255, 255, 255, 0.03);
+  --fxn-badge-bg: #f59e0b;
+  --fxn-badge-border: #d97706;
+  --fxn-badge-text: #080808;
+  --fxn-pill-text-primary: #fde68a;
+  --fxn-pill-text-success: #9ef5d3;
+  --fxn-pill-text-danger:  #ffc4c8;
+  --fxn-pill-text-warning: #fde68a;
+  --fxn-pill-text-neutral: #e5dfc8;
+  --fxn-pill-text-amount:  #d7ffe7;
+  --fxn-pill-text-tva:     #fef3c7;
+}
+
+body.theme-rubis {
+  /* ── Rubis — bordeaux profond, rouge rubis chaleureux ── */
+  --fxn-bg: #0c0408;
+  --fxn-bg-2: #140609;
+  --fxn-surface: #1e0810;
+  --fxn-surface-soft: #280a16;
+  --fxn-surface-glass: rgba(20, 6, 12, 0.88);
+  --fxn-text: #ffe8ef;
+  --fxn-text-muted: #b06070;
+  --fxn-text-soft: #d09098;
+  --fxn-primary: #e11d48;
+  --fxn-primary-strong: #be123c;
+  --fxn-primary-soft: rgba(225, 29, 72, 0.18);
+  --fxn-primary-border: rgba(225, 29, 72, 0.52);
+  --fxn-accent: #fb7185;
+  --fxn-accent-soft: rgba(251, 113, 133, 0.18);
+  --fxn-danger: #f0546c;
+  --fxn-danger-soft: rgba(240, 84, 108, 0.16);
+  --fxn-success: #10d48a;
+  --fxn-success-soft: rgba(16, 212, 138, 0.14);
+  --fxn-warning: #f59e0b;
+  --fxn-warning-soft: rgba(245, 158, 11, 0.14);
+  --fxn-info: #60a5fa;
+  --fxn-info-soft: rgba(96, 165, 250, 0.14);
+  --fxn-border: rgba(225, 29, 72, 0.16);
+  --fxn-border-strong: rgba(225, 29, 72, 0.30);
+  --fxn-button-outline-bg: rgba(14, 4, 8, 0.75);
+  --fxn-button-outline-border: rgba(225, 29, 72, 0.26);
+  --fxn-shadow-sm: 0 8px 20px rgba(8, 2, 4, 0.42);
+  --fxn-shadow-md: 0 20px 44px rgba(8, 2, 4, 0.52);
+  --fxn-button-shadow: 0 12px 24px rgba(80, 10, 25, 0.28);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(225, 29, 72, 0.32);
+  --fxn-ring: 0 0 0 3px rgba(225, 29, 72, 0.30);
+  --fxn-bg-glow-1: rgba(225, 29, 72, 0.22);
+  --fxn-bg-glow-2: rgba(80, 10, 20, 0.60);
+  --fxn-surface-elevated: rgba(255, 255, 255, 0.03);
+  --fxn-badge-bg: #e11d48;
+  --fxn-badge-border: #be123c;
+  --fxn-badge-text: #fff0f4;
+  --fxn-pill-text-primary: #ffc4d0;
+  --fxn-pill-text-success: #9ef5d3;
+  --fxn-pill-text-danger:  #ffc4c8;
+  --fxn-pill-text-warning: #ffe9a0;
+  --fxn-pill-text-neutral: #f0d0d8;
+  --fxn-pill-text-amount:  #d7ffe7;
+  --fxn-pill-text-tva:     #ffe8ef;
+}
+
+body.theme-nuit {
+  /* ── Nuit — bleu marine absolu, cyan pâle sobre ── */
+  --fxn-bg: #04080f;
+  --fxn-bg-2: #070d1a;
+  --fxn-surface: #0c1525;
+  --fxn-surface-soft: #121e32;
+  --fxn-surface-glass: rgba(8, 16, 32, 0.88);
+  --fxn-text: #e8f4ff;
+  --fxn-text-muted: #6a8eb0;
+  --fxn-text-soft: #a0bcd8;
+  --fxn-primary: #38bdf8;
+  --fxn-primary-strong: #0ea5e9;
+  --fxn-primary-soft: rgba(56, 189, 248, 0.16);
+  --fxn-primary-border: rgba(56, 189, 248, 0.46);
+  --fxn-accent: #7dd3fc;
+  --fxn-accent-soft: rgba(125, 211, 252, 0.18);
+  --fxn-danger: #f0546c;
+  --fxn-danger-soft: rgba(240, 84, 108, 0.16);
+  --fxn-success: #10d48a;
+  --fxn-success-soft: rgba(16, 212, 138, 0.14);
+  --fxn-warning: #f59e0b;
+  --fxn-warning-soft: rgba(245, 158, 11, 0.14);
+  --fxn-info: #38bdf8;
+  --fxn-info-soft: rgba(56, 189, 248, 0.14);
+  --fxn-border: rgba(56, 189, 248, 0.14);
+  --fxn-border-strong: rgba(56, 189, 248, 0.26);
+  --fxn-button-outline-bg: rgba(4, 10, 22, 0.75);
+  --fxn-button-outline-border: rgba(56, 189, 248, 0.22);
+  --fxn-shadow-sm: 0 8px 20px rgba(0, 4, 12, 0.42);
+  --fxn-shadow-md: 0 20px 44px rgba(0, 4, 12, 0.52);
+  --fxn-button-shadow: 0 12px 24px rgba(0, 30, 70, 0.26);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(56, 189, 248, 0.28);
+  --fxn-ring: 0 0 0 3px rgba(56, 189, 248, 0.28);
+  --fxn-bg-glow-1: rgba(56, 189, 248, 0.12);
+  --fxn-bg-glow-2: rgba(7, 20, 50, 0.80);
+  --fxn-surface-elevated: rgba(255, 255, 255, 0.03);
+  --fxn-badge-bg: #0ea5e9;
+  --fxn-badge-border: #0284c7;
+  --fxn-badge-text: #f0f9ff;
+  --fxn-pill-text-primary: #bae6fd;
+  --fxn-pill-text-success: #9ef5d3;
+  --fxn-pill-text-danger:  #ffc4c8;
+  --fxn-pill-text-warning: #ffe9a0;
+  --fxn-pill-text-neutral: #c8daf0;
+  --fxn-pill-text-amount:  #d7ffe7;
+  --fxn-pill-text-tva:     #e0f4ff;
+}
+
+body.theme-glacier {
+  /* ── Glacier — blanc nacré + bleu givré, thème clair premium ── */
+  --fxn-bg: #eef4fd;
+  --fxn-bg-2: #e2eeff;
+  --fxn-surface: #ffffff;
+  --fxn-surface-soft: #f4f8ff;
+  --fxn-surface-glass: rgba(255, 255, 255, 0.88);
+  --fxn-text: #0f1d3a;
+  --fxn-text-muted: #4a6080;
+  --fxn-text-soft: #6680a0;
+
+  /* Primary — bleu électrique */
+  --fxn-primary: #2563eb;
+  --fxn-primary-strong: #1d4ed8;
+  --fxn-primary-soft: rgba(37, 99, 235, 0.12);
+  --fxn-primary-border: rgba(37, 99, 235, 0.35);
+
+  /* Accent — bleu ciel */
+  --fxn-accent: #60a5fa;
+  --fxn-accent-soft: rgba(96, 165, 250, 0.18);
+
+  /* Sémantique */
+  --fxn-danger: #dc2626;
+  --fxn-danger-soft: rgba(220, 38, 38, 0.10);
+  --fxn-success: #059669;
+  --fxn-success-soft: rgba(5, 150, 105, 0.10);
+  --fxn-warning: #d97706;
+  --fxn-warning-soft: rgba(217, 119, 6, 0.12);
+  --fxn-info: #0284c7;
+  --fxn-info-soft: rgba(2, 132, 199, 0.12);
+
+  /* Borders */
+  --fxn-border: rgba(37, 99, 235, 0.12);
+  --fxn-border-strong: rgba(37, 99, 235, 0.22);
+  --fxn-button-outline-bg: rgba(255, 255, 255, 0.80);
+  --fxn-button-outline-border: rgba(37, 99, 235, 0.28);
+
+  /* Shadows */
+  --fxn-shadow-sm: 0 8px 20px rgba(37, 99, 235, 0.10);
+  --fxn-shadow-md: 0 20px 44px rgba(37, 99, 235, 0.14);
+  --fxn-button-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(37, 99, 235, 0.26);
+
+  /* Focus */
+  --fxn-ring: 0 0 0 3px rgba(37, 99, 235, 0.22);
+
+  /* Background glows — blanc lumineux (gauche) + bleu givré (droite) */
+  --fxn-bg-glow-1: rgba(255, 255, 255, 0.95);
+  --fxn-bg-glow-2: rgba(37, 99, 235, 0.16);
+
+  /* Elevated surface */
+  --fxn-surface-elevated: rgba(37, 99, 235, 0.04);
+
+  /* Badge */
+  --fxn-badge-bg: #dbeafe;
+  --fxn-badge-border: #93c5fd;
+  --fxn-badge-text: #1e3a8a;
+
+  /* Pills — texte foncé sur fonds clairs */
+  --fxn-pill-text-primary: #1e3a8a;
+  --fxn-pill-text-success: #065f46;
+  --fxn-pill-text-danger:  #9b1c1c;
+  --fxn-pill-text-warning: #78350f;
+  --fxn-pill-text-neutral: #1f2d3d;
+  --fxn-pill-text-amount:  #1e3a8a;
+  --fxn-pill-text-tva:     #78350f;
+}
+
+body.theme-crepuscule {
+  /* ── Crépuscule — dégradé orange brûlé → rose fumée sur noir nuit ── */
+  --fxn-bg: #0d0710;
+  --fxn-bg-2: #140b1c;
+  --fxn-surface: #1c1028;
+  --fxn-surface-soft: #231630;
+  --fxn-surface-glass: rgba(20, 11, 30, 0.88);
+  --fxn-text: #fff0f8;
+  --fxn-text-muted: #b890a8;
+  --fxn-text-soft: #d8b8cc;
+
+  /* Primary — rose coucher de soleil */
+  --fxn-primary: #f472b6;
+  --fxn-primary-strong: #ec4899;
+  --fxn-primary-soft: rgba(244, 114, 182, 0.18);
+  --fxn-primary-border: rgba(244, 114, 182, 0.50);
+
+  /* Accent — orange brûlé */
+  --fxn-accent: #fb923c;
+  --fxn-accent-soft: rgba(251, 146, 60, 0.18);
+
+  /* Sémantique */
+  --fxn-danger: #f0546c;
+  --fxn-danger-soft: rgba(240, 84, 108, 0.16);
+  --fxn-success: #10d48a;
+  --fxn-success-soft: rgba(16, 212, 138, 0.14);
+  --fxn-warning: #fbbf24;
+  --fxn-warning-soft: rgba(251, 191, 36, 0.14);
+  --fxn-info: #c084fc;
+  --fxn-info-soft: rgba(192, 132, 252, 0.16);
+
+  /* Borders */
+  --fxn-border: rgba(244, 114, 182, 0.14);
+  --fxn-border-strong: rgba(244, 114, 182, 0.28);
+  --fxn-button-outline-bg: rgba(14, 8, 20, 0.72);
+  --fxn-button-outline-border: rgba(244, 114, 182, 0.24);
+
+  /* Shadows */
+  --fxn-shadow-sm: 0 8px 20px rgba(10, 4, 16, 0.42);
+  --fxn-shadow-md: 0 20px 44px rgba(10, 4, 16, 0.52);
+  --fxn-button-shadow: 0 12px 24px rgba(120, 30, 80, 0.28);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(244, 114, 182, 0.32);
+
+  /* Focus */
+  --fxn-ring: 0 0 0 3px rgba(244, 114, 182, 0.32);
+
+  /* Background glows — orange fort (gauche) + rose (droite) */
+  --fxn-bg-glow-1: rgba(249, 115, 22, 0.30);
+  --fxn-bg-glow-2: rgba(244, 114, 182, 0.22);
+
+  /* Elevated surface */
+  --fxn-surface-elevated: rgba(255, 255, 255, 0.03);
+
+  /* Badge */
+  --fxn-badge-bg: #f472b6;
+  --fxn-badge-border: #ec4899;
+  --fxn-badge-text: #0d0710;
+
+  /* Pills */
+  --fxn-pill-text-primary: #ffd6ec;
+  --fxn-pill-text-success: #9ef5d3;
+  --fxn-pill-text-danger:  #ffc4c8;
+  --fxn-pill-text-warning: #ffe9a0;
+  --fxn-pill-text-neutral: #f0d8e8;
+  --fxn-pill-text-amount:  #d7ffe7;
+  --fxn-pill-text-tva:     #ffe0f5;
+}
+
+body.theme-aurore {
+  /* ── Aurora Borealis — émeraude arctique sur noir forêt ── */
+  --fxn-bg: #040e09;
+  --fxn-bg-2: #071410;
+  --fxn-surface: #0a1f15;
+  --fxn-surface-soft: #0f2a1c;
+  --fxn-surface-glass: rgba(8, 20, 14, 0.88);
+  --fxn-text: #e8fff4;
+  --fxn-text-muted: #6db890;
+  --fxn-text-soft: #a8d8bc;
+
+  /* Primary — émeraude électrique */
+  --fxn-primary: #00d68f;
+  --fxn-primary-strong: #00b377;
+  --fxn-primary-soft: rgba(0, 214, 143, 0.16);
+  --fxn-primary-border: rgba(0, 214, 143, 0.50);
+
+  /* Accent — menthe arctique */
+  --fxn-accent: #34eca0;
+  --fxn-accent-soft: rgba(52, 236, 160, 0.18);
+
+  /* Sémantique */
+  --fxn-danger: #f0546c;
+  --fxn-danger-soft: rgba(240, 84, 108, 0.16);
+  --fxn-success: #00d68f;
+  --fxn-success-soft: rgba(0, 214, 143, 0.14);
+  --fxn-warning: #f0c030;
+  --fxn-warning-soft: rgba(240, 192, 48, 0.14);
+  --fxn-info: #00cccc;
+  --fxn-info-soft: rgba(0, 204, 204, 0.16);
+
+  /* Borders */
+  --fxn-border: rgba(0, 200, 140, 0.15);
+  --fxn-border-strong: rgba(0, 200, 140, 0.28);
+  --fxn-button-outline-bg: rgba(4, 14, 9, 0.72);
+  --fxn-button-outline-border: rgba(0, 200, 140, 0.24);
+
+  /* Shadows */
+  --fxn-shadow-sm: 0 8px 20px rgba(0, 6, 3, 0.38);
+  --fxn-shadow-md: 0 20px 44px rgba(0, 6, 3, 0.46);
+  --fxn-button-shadow: 0 12px 24px rgba(0, 80, 50, 0.26);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(0, 214, 143, 0.32);
+
+  /* Focus */
+  --fxn-ring: 0 0 0 3px rgba(0, 214, 143, 0.32);
+
+  /* Background glows — émeraude + cyan arctique */
+  --fxn-bg-glow-1: rgba(0, 214, 143, 0.18);
+  --fxn-bg-glow-2: rgba(0, 200, 200, 0.11);
+
+  /* Elevated surface */
+  --fxn-surface-elevated: rgba(255, 255, 255, 0.03);
+
+  /* Badge */
+  --fxn-badge-bg: #00d68f;
+  --fxn-badge-border: #009966;
+  --fxn-badge-text: #030e08;
+
+  /* Pills */
+  --fxn-pill-text-primary: #9effd8;
+  --fxn-pill-text-success: #9effd8;
+  --fxn-pill-text-danger:  #ffc4c8;
+  --fxn-pill-text-warning: #ffe9a0;
+  --fxn-pill-text-neutral: #c0e8d0;
+  --fxn-pill-text-amount:  #d7ffe7;
+  --fxn-pill-text-tva:     #e8fff4;
+}
+
+body.theme-moderne {
+  /* ── Midnight Indigo — palette moderne inspirée des meilleurs outils SaaS ── */
+  --fxn-bg: #09090f;
+  --fxn-bg-2: #0e0e1c;
+  --fxn-surface: #13132b;
+  --fxn-surface-soft: #1a1a38;
+  --fxn-surface-glass: rgba(16, 16, 38, 0.88);
+  --fxn-text: #f0f0ff;
+  --fxn-text-muted: #8888bb;
+  --fxn-text-soft: #bcbce0;
+
+  /* Primary — indigo électrique */
+  --fxn-primary: #6366f1;
+  --fxn-primary-strong: #4f46e5;
+  --fxn-primary-soft: rgba(99, 102, 241, 0.18);
+  --fxn-primary-border: rgba(99, 102, 241, 0.52);
+
+  /* Accent — violet doux */
+  --fxn-accent: #a78bfa;
+  --fxn-accent-soft: rgba(167, 139, 250, 0.2);
+
+  /* Sémantique */
+  --fxn-danger: #f0546c;
+  --fxn-danger-soft: rgba(240, 84, 108, 0.16);
+  --fxn-success: #10d48a;
+  --fxn-success-soft: rgba(16, 212, 138, 0.14);
+  --fxn-warning: #f0b630;
+  --fxn-warning-soft: rgba(240, 182, 48, 0.14);
+  --fxn-info: #60a5fa;
+  --fxn-info-soft: rgba(96, 165, 250, 0.16);
+
+  /* Borders */
+  --fxn-border: rgba(150, 130, 255, 0.15);
+  --fxn-border-strong: rgba(150, 130, 255, 0.28);
+  --fxn-button-outline-bg: rgba(12, 12, 28, 0.72);
+  --fxn-button-outline-border: rgba(150, 130, 255, 0.24);
+
+  /* Shadows */
+  --fxn-shadow-sm: 0 8px 20px rgba(0, 0, 10, 0.36);
+  --fxn-shadow-md: 0 20px 44px rgba(0, 0, 10, 0.44);
+  --fxn-button-shadow: 0 12px 24px rgba(60, 30, 150, 0.24);
+  --fxn-button-shadow-hover: 0 18px 34px rgba(99, 102, 241, 0.32);
+
+  /* Focus */
+  --fxn-ring: 0 0 0 3px rgba(99, 102, 241, 0.32);
+
+  /* Background glows */
+  --fxn-bg-glow-1: rgba(99, 102, 241, 0.20);
+  --fxn-bg-glow-2: rgba(167, 139, 250, 0.13);
+
+  /* Elevated surface */
+  --fxn-surface-elevated: rgba(255, 255, 255, 0.04);
+
+  /* Badge */
+  --fxn-badge-bg: #a78bfa;
+  --fxn-badge-border: #7c3aed;
+  --fxn-badge-text: #0d0d20;
+
+  /* Pills */
+  --fxn-pill-text-primary: #c4c6ff;
+  --fxn-pill-text-success: #9ef5d3;
+  --fxn-pill-text-danger:  #ffc4c8;
+  --fxn-pill-text-warning: #ffe9a0;
+  --fxn-pill-text-neutral: #d0d0f0;
+  --fxn-pill-text-amount:  #d7ffe7;
+  --fxn-pill-text-tva:     #f3e8ff;
+}
+
 body.ui-compact {
   --fxn-space-md: 0.75rem;
   --fxn-space-lg: 1.1rem;
@@ -242,4 +658,28 @@ body.ui-compact {
   --fxn-radius-lg: 16px;
   --fxn-radius-xl: 22px;
   --fxn-pager-fixed-height: 48px;
+}
+
+body.ui-font-sm {
+  font-size: 13px;
+  --fxn-font-scale: 0.875;
+}
+
+body.ui-font-lg {
+  font-size: 17px;
+  --fxn-font-scale: 1.125;
+}
+
+body.ui-high-contrast {
+  --fxn-border: rgba(255, 255, 255, 0.36);
+  --fxn-border-strong: rgba(255, 255, 255, 0.58);
+  --fxn-text-muted: var(--fxn-text-soft);
+  --fxn-shadow-sm: 0 0 0 1px var(--fxn-border-strong);
+  --fxn-shadow-md: 0 0 0 2px var(--fxn-primary-border);
+}
+
+body.theme-glacier.ui-high-contrast,
+body.theme-default.ui-high-contrast {
+  --fxn-border: rgba(0, 0, 0, 0.30);
+  --fxn-border-strong: rgba(0, 0, 0, 0.50);
 }

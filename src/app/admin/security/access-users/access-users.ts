@@ -13,6 +13,7 @@ import { formatPageRange } from '../../../core/utils/pagination';
 
 import { AccessCredentialsModal } from '../../../shared/ui/access-credentials-modal/access-credentials-modal';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 /**
  * ✅ Gestion des accès de connexion :
@@ -51,7 +52,7 @@ export class AccessUsers {
 
   // pagination
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly items = computed<User[]>(() => this.result()?.items ?? []);

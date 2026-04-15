@@ -10,11 +10,13 @@ import { MaterialService } from '../../../core/services/material.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { AppNotificationService } from '../../../core/services/app-notification.service';
 import { Consumable, ConsumableListResult, Depot, Material, Vehicle } from '../../../core/models';
 import { downloadBlob } from '../../../core/utils/download';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-stock-alerts',
@@ -30,6 +32,7 @@ export class StockAlerts {
   private vehicleService = inject(VehicleService);
   private depotService = inject(DepotService);
   private auth = inject(AuthService);
+  private notif = inject(AppNotificationService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
 
@@ -40,7 +43,7 @@ export class StockAlerts {
   readonly vehicleResult = signal<{ total: number; page: number; limit: number; items: Vehicle[] } | null>(null);
 
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly depots = signal<Depot[]>([]);
@@ -140,6 +143,11 @@ export class StockAlerts {
           this.materialResult.set(res.materials);
           this.vehicleResult.set(res.vehicles);
           this.loading.set(false);
+          this.notif.checkStockAlerts(
+            res.consumables?.items ?? [],
+            res.materials?.items  ?? [],
+            `stock-page-${this.page()}`
+          );
         },
         error: (err: HttpErrorResponse) => {
           this.loading.set(false);

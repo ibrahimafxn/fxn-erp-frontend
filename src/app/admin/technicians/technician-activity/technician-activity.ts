@@ -9,15 +9,17 @@ import { TechnicianReportService, TechnicianReport } from '../../../core/service
 import { UserService } from '../../../core/services/user.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { BpuService } from '../../../core/services/bpu.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { HrService } from '../../../core/services/hr.service';
 import { Movement, Depot, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
-import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { REPORT_CODE_ALIASES, computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
+import { TechnicianBpuResolverService } from '../../../core/services/technician-bpu-resolver.service';
 
 type SortField = 'date' | 'technician' | 'depot' | 'amount';
 
@@ -36,7 +38,9 @@ export class TechnicianActivity {
   private userService = inject(UserService);
   private depotService = inject(DepotService);
   private auth = inject(AuthService);
+  private bpuService = inject(BpuService);
   private bpuSelectionService = inject(BpuSelectionService);
+  private bpuResolver = inject(TechnicianBpuResolverService);
   private hrService = inject(HrService);
   private datePipe = inject(DatePipe);
   private fb = inject(FormBuilder);
@@ -87,9 +91,13 @@ export class TechnicianActivity {
   });
 
   readonly bpuSelections = signal(new Map<string, Map<string, number>>());
+  readonly bpuSegmentPrices = signal(new Map<string, Map<string, number>>());
+  /** Sélections personnalisées par technicien : Map<technicianId, Map<code, price>> */
+  readonly technicianPersonalPrices = signal(new Map<string, Map<string, number>>());
   readonly employeeContracts = signal(new Map<string, string>());
   readonly bpuLoaded = signal(false);
   readonly employeesLoaded = signal(false);
+  readonly selectedTechnicianBpuPrices = signal<Map<string, number>>(new Map());
   readonly selectedTechnicianId = signal('');
   readonly hasCustomBpu = signal(false);
   readonly selectedTechnicianLabel = computed(() => {
@@ -146,12 +154,12 @@ export class TechnicianActivity {
     this.refreshAll();
 
     this.selectedTechnicianId.set(this.filterForm.controls.technicianId.value || '');
-    this.loadSelectedTechnicianBpu();
+    void this.loadSelectedTechnicianBpu();
     this.filterForm.controls.technicianId.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe((value) => {
         this.selectedTechnicianId.set(value || '');
-        this.loadSelectedTechnicianBpu();
+        void this.loadSelectedTechnicianBpu();
       });
   }
 
@@ -332,6 +340,21 @@ export class TechnicianActivity {
   }
 
   reportAmount(report: TechnicianReport): number {
+    if (this.shouldUseSelectedTechnicianPrices(report)) {
+      return this.computeAmountWithPrices(report, this.selectedTechnicianBpuPrices());
+    }
+    const techId = String(report.technician?._id || '').trim();
+    // 1. Sélection personnalisée du technicien (OVERRIDE)
+    const personalPrices = techId ? this.technicianPersonalPrices().get(techId) : undefined;
+    if (personalPrices?.size) {
+      return this.computeAmountWithPrices(report, personalPrices);
+    }
+    // 2. Prix du segment BPU admin (AUTO/SALARIE/AUTRE)
+    const segment = this.resolveBpuSegment(techId || null);
+    const segmentPrices = this.bpuSegmentPrices().get(segment);
+    if (segmentPrices?.size) {
+      return this.computeAmountWithPrices(report, segmentPrices);
+    }
     return computeReportAmount(report);
   }
 
@@ -411,6 +434,7 @@ export class TechnicianActivity {
   }
 
   private summaryRequestId = 0;
+  private selectedBpuRequestId = 0;
 
   private async refreshSummary(): Promise<void> {
     const requestId = ++this.summaryRequestId;
@@ -433,8 +457,22 @@ export class TechnicianActivity {
       if (!res?.success) {
         throw new Error('Erreur chargement montant');
       }
-      this.summaryTotalAmount.set(Number(res.data?.totalAmount || 0));
-      this.summaryTotalCount.set(Number(res.data?.count || 0));
+      const count = Number(res.data?.count || 0);
+      let totalAmount = Number(res.data?.totalAmount || 0);
+
+      if (technicianId) {
+        totalAmount = await this.loadSummaryAmountFromReports({
+          technicianId,
+          depotId,
+          fromDate: dates.fromDate,
+          toDate: dates.toDate,
+          fallback: totalAmount,
+          totalCount: count
+        });
+      }
+
+      this.summaryTotalAmount.set(totalAmount);
+      this.summaryTotalCount.set(count);
     } catch (err) {
       if (requestId !== this.summaryRequestId) return;
       this.error.set(this.apiError(err, 'Erreur chargement montant'));
@@ -456,9 +494,15 @@ export class TechnicianActivity {
     if (this.bpuLoaded() || this.loadingBpu()) return;
     this.loadingBpu.set(true);
     try {
-      const items = await firstValueFrom(this.bpuSelectionService.list());
-      const map = new Map<string, Map<string, number>>();
-      for (const selection of items || []) {
+      const [globalSelections, personalSelections, bpuItems] = await Promise.all([
+        firstValueFrom(this.bpuSelectionService.list()),
+        firstValueFrom(this.bpuSelectionService.list({ owner: 'all' })),
+        firstValueFrom(this.bpuService.list())
+      ]);
+
+      // Sélections globales par type (AUTO/SALARIE/AUTRE…)
+      const selectionMap = new Map<string, Map<string, number>>();
+      for (const selection of globalSelections || []) {
         const type = String(selection.type || '').trim().toUpperCase();
         if (!type) continue;
         const priceMap = new Map<string, number>();
@@ -467,29 +511,128 @@ export class TechnicianActivity {
           if (!code) continue;
           priceMap.set(code, Number(entry.unitPrice || 0));
         }
-        map.set(type, priceMap);
+        selectionMap.set(type, priceMap);
       }
-      this.bpuSelections.set(map);
+      this.bpuSelections.set(selectionMap);
+
+      // Sélections personnalisées par technicien (owner != null)
+      const personalMap = new Map<string, Map<string, number>>();
+      for (const selection of personalSelections || []) {
+        const ownerId = String((selection as any).owner || '').trim();
+        if (!ownerId) continue;
+        const priceMap = new Map<string, number>();
+        for (const entry of selection.prestations || []) {
+          const code = String(entry.code || '').trim().toUpperCase();
+          if (!code) continue;
+          priceMap.set(code, Number(entry.unitPrice || 0));
+        }
+        if (priceMap.size) personalMap.set(ownerId, priceMap);
+      }
+      this.technicianPersonalPrices.set(personalMap);
+
+      // Catalogue BPU admin (source de vérité pour les prix par segment)
+      const segmentMap = new Map<string, Map<string, number>>();
+      for (const item of bpuItems || []) {
+        const seg = String(item.segment || '').trim().toUpperCase();
+        const code = String(item.code || '').trim().toUpperCase();
+        if (!seg || !code) continue;
+        if (!segmentMap.has(seg)) segmentMap.set(seg, new Map());
+        segmentMap.get(seg)!.set(code, Number(item.unitPrice || 0));
+      }
+      this.bpuSegmentPrices.set(segmentMap);
+
       this.bpuLoaded.set(true);
     } finally {
       this.loadingBpu.set(false);
     }
   }
 
-  private loadSelectedTechnicianBpu(): void {
+  private async loadSelectedTechnicianBpu(): Promise<void> {
+    const requestId = ++this.selectedBpuRequestId;
     const techId = this.selectedTechnicianId();
     if (!techId) {
+      this.selectedTechnicianBpuPrices.set(new Map());
       this.hasCustomBpu.set(false);
       return;
     }
-    this.bpuSelectionService.list({ owner: techId }).subscribe({
-      next: (items) => {
-        this.hasCustomBpu.set((items || []).length > 0);
-      },
-      error: () => {
-        this.hasCustomBpu.set(false);
-      }
-    });
+    try {
+      const state = await firstValueFrom(this.bpuResolver.resolve(techId));
+      if (requestId !== this.selectedBpuRequestId) return;
+      this.selectedTechnicianBpuPrices.set(state.prices);
+      this.hasCustomBpu.set(state.usesPersonalizedBpu);
+    } catch {
+      if (requestId !== this.selectedBpuRequestId) return;
+      this.selectedTechnicianBpuPrices.set(new Map());
+      this.hasCustomBpu.set(false);
+    } finally {
+      if (requestId !== this.selectedBpuRequestId) return;
+      void this.refreshSummary();
+    }
+  }
+
+  private shouldUseSelectedTechnicianPrices(report: TechnicianReport): boolean {
+    const techId = this.selectedTechnicianId();
+    if (!techId || !this.selectedTechnicianBpuPrices().size) return false;
+    const reportTechId = String(report.technician?._id || '').trim();
+    return !reportTechId || reportTechId === techId;
+  }
+
+  private computeAmountWithPrices(report: TechnicianReport, prices: Map<string, number>): number {
+    const prestations = normalizeReportPrestations(report);
+    if (!prestations.length || !prices.size) {
+      return computeReportAmount(report);
+    }
+
+    let total = 0;
+    let matchedPrice = false;
+    for (const { code, qty } of prestations) {
+      if (!qty) continue;
+      const unitPrice = this.priceForCode(prices, code);
+      if (!Number.isFinite(unitPrice)) continue;
+      matchedPrice = true;
+      total += qty * Number(unitPrice);
+    }
+
+    return matchedPrice ? Number(total.toFixed(2)) : computeReportAmount(report);
+  }
+
+  private priceForCode(prices: Map<string, number>, code: string): number | undefined {
+    const key = String(code || '').trim().toUpperCase();
+    let unitPrice = prices.get(key);
+    if (!Number.isFinite(unitPrice)) {
+      const aliasKey = REPORT_CODE_ALIASES[key];
+      if (aliasKey) unitPrice = prices.get(aliasKey);
+    }
+    return Number.isFinite(unitPrice) ? Number(unitPrice) : undefined;
+  }
+
+  private async loadSummaryAmountFromReports(params: {
+    technicianId: string;
+    depotId?: string;
+    fromDate?: string;
+    toDate?: string;
+    fallback: number;
+    totalCount: number;
+  }): Promise<number> {
+    const prices = this.selectedTechnicianBpuPrices();
+    if (!prices.size) return params.fallback;
+
+    const res = await firstValueFrom(this.reportService.list({
+      technicianId: params.technicianId,
+      depotId: params.depotId,
+      fromDate: params.fromDate,
+      toDate: params.toDate,
+      page: 1,
+      limit: Math.max(1, params.totalCount)
+    }));
+
+    if (!res?.success) return params.fallback;
+    const items = Array.isArray(res.data?.items) ? res.data.items : [];
+    if (!items.length) return 0;
+
+    return Number(
+      items.reduce((sum, report) => sum + this.computeAmountWithPrices(report, prices), 0).toFixed(2)
+    );
   }
 
   private async ensureEmployeeContracts(): Promise<void> {

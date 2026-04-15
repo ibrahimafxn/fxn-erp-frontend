@@ -12,6 +12,7 @@ import { DetailBack } from '../../../../core/utils/detail-back';
 import { formatPersonName } from '../../../../core/utils/text-format';
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../../core/utils/page-size';
 
 @Component({
   standalone: true,
@@ -47,7 +48,7 @@ export class VehicleBreakdowns extends DetailBack {
   });
 
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly items = computed<VehicleBreakdown[]>(() => this.result()?.items ?? []);

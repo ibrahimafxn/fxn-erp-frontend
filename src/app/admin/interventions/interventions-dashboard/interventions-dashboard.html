@@ -67,6 +67,10 @@
             <span class="material-icons notranslate" aria-hidden="true">compare</span>
             @if (compareLoading()) { Analyse… } @else { Comparer }
           </button>
+          <button class="btn-outline btn-reset-invoices" type="button" (click)="resetInvoices()" [disabled]="invoiceResetLoading()">
+            <span class="material-icons notranslate" aria-hidden="true">delete_sweep</span>
+            @if (invoiceResetLoading()) { Reset… } @else { Reset factures }
+          </button>
         </div>
         @if (invoiceError()) {
           <p class="state error">{{ invoiceError() }}</p>
@@ -228,6 +232,20 @@
   }
 
   <app-confirm-delete-modal
+    [open]="invoiceResetModalOpen()"
+    entityLabel="factures ERT"
+    entityName="les factures importées"
+    title="Confirmer le reset des factures"
+    question="Voulez-vous vraiment vider toutes les factures ERT importées ?"
+    dangerHint="Cette action supprime les factures ERT enregistrées et remet la comparaison à zéro."
+    confirmText="Reset factures"
+    confirmLoadingText="Reset…"
+    [confirming]="invoiceResetLoading()"
+    (cancel)="closeInvoiceResetModal()"
+    (confirm)="confirmResetInvoices()">
+  </app-confirm-delete-modal>
+
+  <app-confirm-delete-modal
     [open]="resetModalOpen()"
     entityLabel="affichage interventions"
     entityName="la vue actuelle"
@@ -284,12 +302,12 @@
       <div class="summary-grid">
         <div class="summary-pill">
           <span class="label">Total</span>
-          <span class="value">{{ totals()?.total ?? 0 }}</span>
+          <span class="value">{{ quickSummaryTotal() }}</span>
         </div>
-        @for (item of quickSummaryPrestations; track item.key) {
+        @for (item of quickSummaryPrestations(); track item.id) {
           <div class="summary-pill">
             <span class="label">{{ item.label }}</span>
-            <span class="value">{{ totals()?.[item.key] ?? 0 }}</span>
+            <span class="value">{{ item.value }}</span>
           </div>
         }
       </div>

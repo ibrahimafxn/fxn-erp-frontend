@@ -3,8 +3,9 @@ import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@a
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { AttributionService } from '../../../core/services/attribution.service';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 type AttributionHistoryItem = {
   _id: string;
@@ -42,13 +43,18 @@ export class TechnicianHistory {
   private attributionService = inject(AttributionService);
   private fb = inject(FormBuilder);
 
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<AttributionHistoryItem[]>([]);
-  readonly page = signal(1);
-  readonly limit = signal(20);
-  readonly total = signal(0);
-  readonly pageRange = formatPageRange;
 
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control(''),
@@ -58,14 +64,6 @@ export class TechnicianHistory {
     from: this.fb.nonNullable.control(''),
     to: this.fb.nonNullable.control('')
   });
-
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
 
   constructor() {
     this.refresh();
@@ -137,32 +135,16 @@ export class TechnicianHistory {
     this.refresh();
   }
 
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh();
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh();
-  }
+  prevPage(): void { this.pag.prevPage(() => this.refresh()); }
+  nextPage(): void { this.pag.nextPage(() => this.refresh()); }
 
   onLimitChange(event: Event): void {
     const el = event.target instanceof HTMLSelectElement ? event.target : null;
     if (!el) return;
-    const v = Number(el.value);
-    if (!Number.isFinite(v) || v <= 0) return;
-    this.setLimitValue(v);
+    this.pag.setLimitValue(Number(el.value), () => this.refresh());
   }
 
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh();
-  }
+  setLimitValue(value: number): void { this.pag.setLimitValue(value, () => this.refresh()); }
 
   actionLabel(item: AttributionHistoryItem): string {
     const action = item.snapshot?.attribution?.action;

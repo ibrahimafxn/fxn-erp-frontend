@@ -263,10 +263,12 @@
   border-color: rgba(59, 130, 246, 0.35);
   background: transparent;
   box-shadow: none;
+  color: inherit;
 }
 
 .stat-breakdown article.dominant-types .section-label {
-  color: #000;
+  color: inherit;
+  opacity: 0.8;
 }
 
 .stat-breakdown article.dominant-types .stat-line {
@@ -276,7 +278,7 @@
 
 .stat-breakdown article.dominant-types .stat-line span:first-child {
   font-weight: 600;
-  color: #000;
+  color: inherit;
 }
 
 .stat-breakdown article.dominant-types .stat-line .count {
@@ -284,11 +286,12 @@
   border-radius: 999px;
   background: rgba(59, 130, 246, 0.16);
   border: 1px solid rgba(59, 130, 246, 0.32);
-  color: #000;
+  color: inherit;
 }
 
 .stat-breakdown article.dominant-types .helper {
-  color: #000;
+  color: inherit;
+  opacity: 0.8;
 }
 .success-rate-card {
   color: var(--fxn-text);

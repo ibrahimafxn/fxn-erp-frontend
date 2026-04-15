@@ -25,9 +25,19 @@
       <span class="material-icons notranslate">folder</span>
       <span>Documents</span>
     </a>
-    <a class="sheet-item" routerLink="/technician/absences" (click)="closeMenu()">
+    <a class="sheet-item sheet-item--badge" routerLink="/technician/supply-requests" (click)="closeMenu()">
+      <span class="material-icons notranslate">local_shipping</span>
+      <span>Approvision.</span>
+      @if (supplyBadgeCount() > 0) {
+        <span class="sheet-badge">{{ supplyBadgeCount() }}</span>
+      }
+    </a>
+    <a class="sheet-item sheet-item--badge" routerLink="/technician/absences" (click)="closeMenu()">
       <span class="material-icons notranslate">event_busy</span>
-      <span>Congés / Absences</span>
+      <span>Congés</span>
+      @if (absenceBadgeCount() > 0) {
+        <span class="sheet-badge">{{ absenceBadgeCount() }}</span>
+      }
     </a>
   </div>
 }
@@ -54,7 +64,12 @@
     <span class="nav-label">Agenda</span>
   </a>
   <button type="button" class="nav-item nav-more" [class.active]="menuOpen()" (click)="toggleMenu()" aria-label="Plus de pages">
-    <span class="material-icons notranslate">{{ menuOpen() ? 'close' : 'more_horiz' }}</span>
+    <span class="nav-icon-wrap">
+      <span class="material-icons notranslate">{{ menuOpen() ? 'close' : 'more_horiz' }}</span>
+      @if (!menuOpen() && totalSheetBadge() > 0) {
+        <span class="nav-dot"></span>
+      }
+    </span>
     <span class="nav-label">Plus</span>
   </button>
 </nav>

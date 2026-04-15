@@ -18,8 +18,8 @@
         </select>
       </label>
       <label>
-        Mois
-        <input type="month" formControlName="month" />
+        Date
+        <input type="date" formControlName="month" />
       </label>
       <label>
         Montant
@@ -45,8 +45,8 @@
     <div class="benefit-head">
       <h2>Bénéfice mensuel</h2>
       <div class="year-select">
-        <label>Mois</label>
-        <input type="month" [value]="selectedMonth()" (change)="setMonthSelection($any($event.target).value)" />
+        <label>Date</label>
+        <input type="date" [value]="selectedMonth() + '-01'" (change)="setMonthSelection($any($event.target).value)" />
       </div>
     </div>
 
@@ -74,7 +74,7 @@
         <table>
           <thead>
             <tr>
-              <th>Mois</th>
+              <th>Date</th>
               <th>CA</th>
               <th>Charges</th>
               <th>Bénéfice</th>
@@ -83,7 +83,7 @@
           <tbody>
             @for (row of benefitRows(); track row.month) {
               <tr>
-                <td data-label="Mois">{{ row.label }}</td>
+                <td data-label="Date">{{ row.label }}</td>
                 <td data-label="CA">{{ formatAmount(row.ca) }}</td>
                 <td data-label="Charges">{{ formatAmount(row.charges) }}</td>
                 <td data-label="Bénéfice" [class.is-negative]="row.benefit < 0" [class.is-positive]="row.benefit >= 0">
@@ -101,20 +101,36 @@
     <div class="list-head">
       <h2>Mes charges</h2>
       <div class="filters">
-        <select #typeSelect [value]="typeFilter()" (change)="setTypeFilter(typeSelect.value)">
-          <option value="">Tous les types</option>
-          @for (t of chargeTypes; track t.value) {
-            <option [value]="t.value">{{ t.label }}</option>
-          }
-        </select>
-        <input type="month" [value]="monthFilter()" (change)="setMonthFilter($any($event.target).value)" />
+        <label class="filter-field">
+          <span>Date du</span>
+          <input type="date" [value]="periodStart() ? periodStart() + '-01' : ''" (change)="setPeriodStart($any($event.target).value)" />
+        </label>
+        <label class="filter-field">
+          <span>au</span>
+          <input type="date" [value]="periodEnd() ? periodEnd() + '-01' : ''" (change)="setPeriodEnd($any($event.target).value)" />
+        </label>
+        <label class="filter-field">
+          <span>Type</span>
+          <select #typeSelect [value]="typeFilter()" (change)="setTypeFilter(typeSelect.value)">
+            <option value="">Tous les types</option>
+            @for (t of chargeTypes; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </label>
       </div>
     </div>
 
     @if (loading()) {
       <div class="state loading">Chargement…</div>
     } @else if (items().length === 0) {
-      <div class="state empty">Aucune charge.</div>
+      <div class="state empty">
+        @if (hasActivePeriodFilter()) {
+          Aucune charge sur cette période.
+        } @else {
+          Aucune charge.
+        }
+      </div>
     } @else {
       @if (total() > limit()) {
         <div class="pager">

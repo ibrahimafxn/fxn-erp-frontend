@@ -58,6 +58,10 @@ export class OrderDetail {
   }
 
   backToList(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+      return;
+    }
     this.router.navigate(['/admin/orders']).then();
   }
 

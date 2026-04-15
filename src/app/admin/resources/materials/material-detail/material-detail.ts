@@ -16,6 +16,7 @@ import { formatPageRange } from '../../../../core/utils/pagination';
 import {downloadBlob} from '../../../../core/utils/download';
 import {ConfirmDeleteModal} from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../../core/utils/page-size';
 
 @Component({
   selector: 'app-material-detail',
@@ -46,7 +47,7 @@ export class MaterialDetail extends DetailBack {
   readonly history = signal<AttributionHistoryResult | null>(null);
 
   readonly historyPage = signal(1);
-  readonly historyLimit = signal(10);
+  readonly historyLimit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
   readonly historyItems = computed<AttributionHistoryItem[]>(() => this.history()?.items ?? []);
   readonly historySort = signal<'DATE_DESC' | 'DATE_ASC' | 'ACTION_ASC' | 'QTY_ASC' | 'AUTHOR_ASC' | 'TECH_ASC' | 'DEPOT_ASC' | 'NOTE_ASC'>('DATE_DESC');

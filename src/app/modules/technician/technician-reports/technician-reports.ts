@@ -6,13 +6,15 @@ import { map } from 'rxjs/operators';
 
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { apiError } from '../../../core/utils/http-error';
+import { PaginationState } from '../../../core/utils/pagination-state';
 import { computeReportAmount, normalizeReportPrestations, REPORT_CODE_ALIASES } from '../../../core/utils/technician-report-utils';
 import { TechnicianBpuResolverService } from '../../../core/services/technician-bpu-resolver.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 type BpuItem = {
   prestationId?: string;
@@ -55,16 +57,22 @@ export class TechnicianReports {
   readonly qtys = signal<Map<string, number>>(new Map());
 
   // ── Liste / pagination ─────────────────────────────────────────────────────
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly saveSuccess = signal(false);
   readonly filtersOpen = signal(false);
+  private saveSuccessTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly items = signal<TechnicianReport[]>([]);
-  readonly page = signal(1);
-  readonly limit = signal(10);
-  readonly total = signal(0);
-  readonly pageRange = formatPageRange;
   readonly editing = signal<TechnicianReport | null>(null);
   readonly deleteModalOpen = signal(false);
   readonly pendingDelete = signal<TechnicianReport | null>(null);
@@ -81,13 +89,6 @@ export class TechnicianReports {
     comment: this.fb.nonNullable.control('')
   });
 
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
   readonly selectedCount = computed(() =>
     Array.from(this.qtys().values()).reduce((sum, qty) => sum + (qty > 0 ? qty : 0), 0)
   );
@@ -119,7 +120,7 @@ export class TechnicianReports {
         this.hasBpu.set(false);
         this.bpuItems.set([]);
         this.bpuPrices.set(new Map());
-        this.bpuError.set(this.apiError(err, 'Erreur chargement BPU'));
+        this.bpuError.set(apiError(err, 'Erreur chargement BPU'));
         this.bpuLoading.set(false);
       }
     });
@@ -175,12 +176,13 @@ export class TechnicianReports {
         this.editing.set(null);
         this.resetForm();
         this.refresh(true);
+        if (this.saveSuccessTimer !== null) clearTimeout(this.saveSuccessTimer);
         this.saveSuccess.set(true);
-        setTimeout(() => this.saveSuccess.set(false), 2500);
+        this.saveSuccessTimer = setTimeout(() => { this.saveSuccess.set(false); this.saveSuccessTimer = null; }, 2500);
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, "Erreur d'enregistrement"));
+        this.error.set(apiError(err, "Erreur d'enregistrement"));
       }
     });
   }
@@ -214,7 +216,7 @@ export class TechnicianReports {
       },
       error: (err) => {
         this.deletingId.set(null);
-        this.error.set(this.apiError(err, 'Erreur suppression'));
+        this.error.set(apiError(err, 'Erreur suppression'));
       }
     });
   }
@@ -271,27 +273,17 @@ export class TechnicianReports {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement'));
+        this.error.set(apiError(err, 'Erreur chargement'));
       }
     });
   }
 
-  applyFilters(): void { this.page.set(1); this.refresh(true); }
-  clearFilters(): void {
-    this.resetFilters();
-    this.page.set(1);
-    this.refresh(true);
-  }
+  applyFilters(): void { this.pag.resetPage(); this.refresh(true); }
+  clearFilters(): void { this.resetFilters(); this.pag.resetPage(); this.refresh(true); }
   toggleFilters(): void { this.filtersOpen.update((v) => !v); }
-  prevPage(): void { if (this.canPrev()) { this.page.update((p) => p - 1); this.refresh(true); } }
-  nextPage(): void { if (this.canNext()) { this.page.update((p) => p + 1); this.refresh(true); } }
-
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh(true);
-  }
+  prevPage(): void { this.pag.prevPage(() => this.refresh(true)); }
+  nextPage(): void { this.pag.nextPage(() => this.refresh(true)); }
+  setLimitValue(v: number): void { this.pag.setLimitValue(v, () => this.refresh(true)); }
 
   // ── Privés ─────────────────────────────────────────────────────────────────
 
@@ -368,13 +360,6 @@ export class TechnicianReports {
       return { fromDate: fromInput || `${year}-01-01`, toDate: toInput || `${year}-12-31` };
     }
     return { fromDate: fromInput || '', toDate: toInput || '' };
-  }
-
-  private apiError(err: any, fallback: string): string {
-    const apiMsg = typeof err?.error === 'object' && err.error !== null && 'message' in err.error
-      ? String(err.error.message ?? '')
-      : '';
-    return apiMsg || err?.message || fallback;
   }
 
   private currentUserId(): string | null {

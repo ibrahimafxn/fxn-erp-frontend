@@ -4,8 +4,9 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
 import { InterventionItem, InterventionService } from '../../../core/services/intervention.service';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-interventions-history',
@@ -19,14 +20,19 @@ export class TechnicianInterventionsHistory {
   private interventions = inject(InterventionService);
   private fb = inject(FormBuilder);
 
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
+
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<InterventionItem[]>([]);
   readonly expandedId = signal<string | null>(null);
-  readonly page = signal(1);
-  readonly limit = signal(20);
-  readonly total = signal(0);
-  readonly pageRange = formatPageRange;
   readonly sortField = signal<'date' | 'numInter' | 'client' | 'type' | 'typeOperation' | 'typeLogement' | 'statut'>('date');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
 
@@ -52,13 +58,6 @@ export class TechnicianInterventionsHistory {
     { value: 'EN COURS', label: 'En cours' }
   ];
 
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
   readonly sortedItems = computed(() => {
     const field = this.sortField();
     const dir = this.sortDirection() === 'asc' ? 1 : -1;
@@ -113,24 +112,9 @@ export class TechnicianInterventionsHistory {
     this.refresh();
   }
 
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh();
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh();
-  }
-
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh();
-  }
+  prevPage(): void { this.pag.prevPage(() => this.refresh()); }
+  nextPage(): void { this.pag.nextPage(() => this.refresh()); }
+  setLimitValue(v: number): void { this.pag.setLimitValue(v, () => this.refresh()); }
 
   dateLabel(value?: string | null): string {
     if (!value) return '—';
@@ -160,9 +144,10 @@ export class TechnicianInterventionsHistory {
   }
 
   detailRows(item: InterventionItem): { label: string; value: string }[] {
-    return [
+    const baseRows = [
       { label: 'Numéro', value: this.textValue(item.numInter) },
       { label: 'Client', value: this.textValue(item.client) },
+      { label: 'Technicien', value: this.textValue(item.techFull || [item.techFirstName, item.techLastName].filter(Boolean).join(' ')) },
       { label: 'Date RDV', value: this.formatDateTime(item.dateRdv, 'short') },
       { label: 'Type', value: this.textValue(item.type) },
       { label: 'Type opération', value: this.textValue(item.typeOperation) },
@@ -188,10 +173,22 @@ export class TechnicianInterventionsHistory {
       { label: 'Recommandation', value: this.textValue(item.recoRacc) },
       { label: 'Prestations', value: this.textValue(item.listePrestationsRaw) },
       { label: 'Articles', value: this.textValue(item.articlesRaw) },
+      { label: 'Catégories', value: this.listValue(item.categories) },
+      { label: 'Succès', value: this.booleanValue(item.isSuccess) },
+      { label: 'Échec', value: this.booleanValue(item.isFailure) },
+      { label: 'Version', value: this.numberValue(item.versionIndex) },
+      { label: 'Dernière version ID', value: this.textValue(item.latestVersionId) },
       { label: 'Commentaire technicien', value: this.textValue(item.commentairesTechnicien) },
       { label: 'Commentaire clôture', value: this.textValue(item.commentairesCloture) },
       { label: 'Importé le', value: this.formatDateTime(item.importedAt, 'short') }
     ];
+    const rawRows = Object.entries(item.osirisRaw || {})
+      .filter(([, value]) => this.normalizeText(value))
+      .map(([key, value]) => ({
+        label: `OSIRIS · ${key}`,
+        value: this.textValue(value)
+      }));
+    return [...baseRows, ...rawRows];
   }
 
   private sortItems(
@@ -236,6 +233,22 @@ export class TechnicianInterventionsHistory {
 
   private textValue(value?: string | null): string {
     return this.normalizeText(value) || '—';
+  }
+
+  private listValue(values?: string[] | null): string {
+    if (!values?.length) return '—';
+    const items = values.map((value) => this.normalizeText(value)).filter(Boolean);
+    return items.length ? items.join(', ') : '—';
+  }
+
+  private booleanValue(value?: boolean | null): string {
+    if (value == null) return '—';
+    return value ? 'Oui' : 'Non';
+  }
+
+  private numberValue(value?: number | null): string {
+    if (value == null || !Number.isFinite(value)) return '—';
+    return String(value);
   }
 
   private formatDateTime(value?: string | null, format: 'short' | 'shortDate' | 'shortTime' = 'short'): string {

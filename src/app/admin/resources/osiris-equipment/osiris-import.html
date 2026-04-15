@@ -1,0 +1,170 @@
+<section class="osiris-import">
+  <header class="page-header">
+    <div>
+      <h1>Stock matériel Osiris</h1>
+      <p class="subtitle">Importez le fichier MATERIEL_EXPORT_*.csv extrait d'Osiris pour mettre à jour le stock des techniciens.</p>
+    </div>
+    <div class="header-actions">
+      <button
+        class="btn-outline"
+        type="button"
+        [disabled]="reResolving() || summary().length === 0"
+        (click)="reResolve()"
+        title="Re-mappe les techniciens sans re-importer le CSV">
+        @if (reResolving()) { Résolution… } @else { Re-résoudre techniciens }
+      </button>
+      <button
+        class="btn-outline btn-danger-outline"
+        type="button"
+        [disabled]="clearingAll() || summary().length === 0"
+        (click)="confirmClearAll()">
+        @if (clearingAll()) { Suppression… } @else { Vider le stock }
+      </button>
+    </div>
+  </header>
+
+  @if (reResolveResult(); as r) {
+    <div class="result-box result-success">
+      <span class="material-icons notranslate">sync</span>
+      <div class="result-stats">
+        <span><strong>{{ r.total }}</strong> enregistrements traités</span>
+        <span class="stat-chip stat-new">{{ r.resolved }} résolus</span>
+        @if (r.unresolved > 0) {
+          <span class="stat-chip stat-err">{{ r.unresolved }} non résolus</span>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Confirm vider -->
+  @if (showClearConfirm()) {
+    <div class="confirm-banner">
+      <span>Supprimer tous les équipements Osiris du stock ?</span>
+      <div class="confirm-actions">
+        <button class="btn-danger" type="button" (click)="clearAll()">Confirmer</button>
+        <button class="btn-outline" type="button" (click)="cancelClearAll()">Annuler</button>
+      </div>
+    </div>
+  }
+
+  <!-- Zone d'import -->
+  <section class="import-card">
+    <h2>Importer un fichier CSV</h2>
+
+    @if (!hasFile()) {
+      <label class="file-drop">
+        <input type="file" accept=".csv,text/csv" (change)="onFileChange($event)" hidden />
+        <span class="material-icons notranslate drop-icon">upload_file</span>
+        <span class="drop-label">Glisser ou cliquer pour sélectionner</span>
+        <span class="drop-hint">Format : MATERIEL_EXPORT_*.csv — séparateur ;</span>
+      </label>
+    } @else {
+      <div class="file-selected">
+        <span class="material-icons notranslate">description</span>
+        <span class="file-name">{{ fileName() }}</span>
+        <span class="file-rows">{{ totalRows() }} ligne(s) détectée(s)</span>
+        <button class="btn-icon" type="button" title="Retirer le fichier" (click)="clearFile()">
+          <span class="material-icons notranslate">close</span>
+        </button>
+      </div>
+
+      <!-- Preview -->
+      @if (previewRows().length) {
+        <div class="preview-wrap">
+          <p class="preview-label">Aperçu (8 premières lignes)</p>
+          <div class="table-scroll">
+            <table class="preview-table">
+              <thead>
+                <tr>
+                  <th>Technicien (STOCK)</th>
+                  <th>N° Série</th>
+                  <th>Type</th>
+                  <th>Code Procable</th>
+                  <th>Date entrée</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of previewRows(); track row.serialNumber) {
+                  <tr>
+                    <td>{{ row.stock }}</td>
+                    <td class="mono">{{ row.serialNumber }}</td>
+                    <td>{{ row.type }}</td>
+                    <td>{{ row.codeProcable }}</td>
+                    <td>{{ row.dateEntree }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      <div class="import-actions">
+        <button class="btn-primary" type="button" [disabled]="!canImport()" (click)="import()">
+          @if (importing()) { Importation… } @else { Importer {{ totalRows() }} ligne(s) }
+        </button>
+        <button class="btn-outline" type="button" (click)="clearFile()">Annuler</button>
+      </div>
+    }
+
+    <!-- Résultat import -->
+    @if (importError()) {
+      <div class="result-box result-error">
+        <span class="material-icons notranslate">error</span>
+        {{ importError() }}
+      </div>
+    }
+    @if (importResult(); as r) {
+      <div class="result-box result-success">
+        <span class="material-icons notranslate">check_circle</span>
+        <div class="result-stats">
+          <span><strong>{{ r.total }}</strong> lignes traitées</span>
+          <span class="stat-chip stat-new">+{{ r.imported }} nouveau(x)</span>
+          <span class="stat-chip stat-upd">{{ r.updated }} mis à jour</span>
+          <span class="stat-chip stat-same">{{ r.unchanged }} inchangé(s)</span>
+          @if (r.errors.length) {
+            <span class="stat-chip stat-err">{{ r.errors.length }} erreur(s)</span>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- Résumé par technicien -->
+  <section class="summary-section">
+    <h2>Stock actuel par technicien</h2>
+
+    @if (summaryLoading()) {
+      <div class="state loading">Chargement…</div>
+    } @else if (summaryError()) {
+      <div class="state error">{{ summaryError() }}</div>
+    } @else if (summary().length === 0) {
+      <div class="state empty">Aucun équipement enregistré. Importez un fichier CSV pour commencer.</div>
+    } @else {
+      <div class="tech-grid">
+        @for (tech of summary(); track tech.technicianRaw) {
+          <article class="tech-card">
+            <div class="tech-header">
+              <span class="material-icons notranslate">person</span>
+              <div class="tech-info">
+                <div class="tech-name">{{ techName(tech) }}</div>
+                @if (!tech.technicianId) {
+                  <span class="unmatched-badge">Non résolu</span>
+                }
+              </div>
+              <span class="tech-total">{{ tech.total }}</span>
+            </div>
+            <div class="equip-list">
+              @for (e of tech.equipment; track e.type) {
+                <div class="equip-row">
+                  <span class="equip-type">{{ e.type }}</span>
+                  <span class="equip-count">{{ e.count }}</span>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</section>

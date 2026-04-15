@@ -14,6 +14,7 @@ import { formatDepotName, formatPersonName } from '../../../core/utils/text-form
 import { formatPageRange } from '../../../core/utils/pagination';
 import { downloadBlob } from '../../../core/utils/download';
 import { ConfirmCancelModal } from '../../../shared/components/dialog/confirm-cancel-modal/confirm-cancel-modal';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-material-reservations-list',
@@ -38,7 +39,7 @@ export class MaterialReservationsList {
   readonly result: Signal<MovementListResult | null> = this.movementService.result;
 
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly users = signal<User[]>([]);

@@ -17,6 +17,7 @@ import { formatDepotName, formatPersonName } from '../../../../core/utils/text-f
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { ConfirmActionModal } from '../../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../../core/utils/page-size';
 
 type AssignMode = 'idle' | 'assign' | 'release';
 type PendingVehicleAction = 'assign' | 'release' | null;
@@ -87,7 +88,7 @@ export class VehicleDetail extends DetailBack {
   readonly history = signal<VehicleHistoryResult | null>(null);
 
   readonly historyPage = signal(1);
-  readonly historyLimit = signal(10);
+  readonly historyLimit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly historyItems = computed<VehicleHistoryItem[]>(() => this.history()?.items ?? []);

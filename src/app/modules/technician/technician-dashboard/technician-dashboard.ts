@@ -8,6 +8,7 @@ import {
 } from '../../../core/services/intervention.service';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { TechnicianReportService } from '../../../core/services/technician-report.service';
+import { OsirisEquipmentService, OsirisMyEquipment } from '../../../core/services/osiris-equipment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { formatDateInput, formatFrDate, formatFrDateTime, startOfToday } from '../../../core/utils/date-format';
 import { parseFiniteNumber } from '../../../core/utils/number';
@@ -26,6 +27,7 @@ export class TechnicianDashboard {
   private router = inject(Router);
   private interventions = inject(InterventionService);
   private reports = inject(TechnicianReportService);
+  private osirisEquipment = inject(OsirisEquipmentService);
   private auth = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
 
@@ -34,12 +36,20 @@ export class TechnicianDashboard {
   readonly dailyAmount = signal(0);
   readonly weeklyAmount = signal(0);
   readonly monthlyAmount = signal(0);
+  readonly prevDailyAmount = signal(0);
   readonly todayLabel = computed(() => formatFrDate(new Date()));
+
+  readonly reportExists = signal<boolean | null>(null);
 
   readonly importLoading = signal(false);
   readonly importError = signal<string | null>(null);
   readonly importBatch = signal<InterventionImportBatch | null>(null);
   readonly importSummary = signal<InterventionImportTechnicianSummary | null>(null);
+
+  readonly showAllPrestations = signal(false);
+
+  readonly myEquipment = signal<OsirisMyEquipment | null>(null);
+  readonly myEquipmentLoading = signal(false);
 
   readonly importLabel = computed(() => {
     const summaryDate = this.importSummary()?.referenceDate;
@@ -55,11 +65,13 @@ export class TechnicianDashboard {
     if (!totals) return 0;
     return (
       Number(totals.racPavillon || 0) +
+      Number(totals.racSouterrain || 0) +
       Number(totals.racImmeuble || 0) +
       Number(totals.racProS || 0) +
       Number(totals.racProC || 0)
     );
   });
+
   readonly prestationCards = computed(() => {
     const totals = this.importSummary()?.totals;
     if (!totals) return [];
@@ -73,9 +85,25 @@ export class TechnicianDashboard {
       .filter((item) => item.value > 0);
   });
 
+  readonly prestationCardsVisible = computed(() => {
+    const cards = this.prestationCards();
+    return this.showAllPrestations() ? cards : cards.slice(0, 5);
+  });
+
+  /** Variation journalière en % par rapport à J-1. null si pas de données J-1. */
+  readonly dailyTrend = computed((): number | null => {
+    const prev = this.prevDailyAmount();
+    const curr = this.dailyAmount();
+    if (prev === 0) return null;
+    return ((curr - prev) / prev) * 100;
+  });
+
   constructor() {
     this.loadCa();
+    this.loadPrevCa();
     this.loadImport();
+    this.loadTodayReport();
+    this.loadMyEquipment();
   }
 
   goStock(): void {
@@ -106,6 +134,14 @@ export class TechnicianDashboard {
     this.router.navigate(['/technician/interventions']).then();
   }
 
+  goAgenda(): void {
+    this.router.navigate(['/technician/agenda']).then();
+  }
+
+  goOsirisEquipment(): void {
+    this.router.navigate(['/technician/resources/osiris-equipment']).then();
+  }
+
   private loadCa(): void {
     this.caLoading.set(true);
     this.caError.set(null);
@@ -124,6 +160,37 @@ export class TechnicianDashboard {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private loadPrevCa(): void {
+    const userId = this.currentUserId();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    this.reports.summaryPeriods(userId || undefined, yesterday).subscribe({
+      next: (res) => {
+        this.prevDailyAmount.set(parseFiniteNumber(res.daily.data.totalAmount));
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Silence — la tendance est optionnelle
+      }
+    });
+  }
+
+  private loadTodayReport(): void {
+    const todayStr = formatDateInput(startOfToday());
+    const userId = this.currentUserId();
+    this.reports
+      .list({ fromDate: todayStr, toDate: todayStr, technicianId: userId || undefined, limit: 1 })
+      .subscribe({
+        next: (res) => {
+          this.reportExists.set((res.data.items?.length || 0) > 0);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.reportExists.set(null);
+        }
+      });
   }
 
   private loadImport(): void {
@@ -151,6 +218,20 @@ export class TechnicianDashboard {
       error: (err) => {
         this.importLoading.set(false);
         this.importError.set(err?.message || 'Erreur chargement import');
+      }
+    });
+  }
+
+  private loadMyEquipment(): void {
+    this.myEquipmentLoading.set(true);
+    this.osirisEquipment.myEquipment().subscribe({
+      next: (res) => {
+        this.myEquipment.set(res.data);
+        this.myEquipmentLoading.set(false);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.myEquipmentLoading.set(false);
       }
     });
   }

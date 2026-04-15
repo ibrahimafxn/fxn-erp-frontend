@@ -7,6 +7,8 @@ import {AdminService} from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Role } from '../../core/models/roles.model';
 import {HistoryItem} from '../../core/models/historyItem.model';
+import { AbsenceService } from '../../core/services/absence.service';
+import { InterventionService } from '../../core/services/intervention.service';
 
 @Component({
   standalone: true,
@@ -20,23 +22,29 @@ export class Dashboard implements OnInit {
   readonly adminService = inject(AdminService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private absenceService = inject(AbsenceService);
+  private interventions = inject(InterventionService);
   private readonly numberFormat = new Intl.NumberFormat('fr-FR');
   private readonly donutRadius = 90;
   private readonly donutCircumference = 2 * Math.PI * this.donutRadius;
   private readonly donutPalette = [
-    '#6BA4FF',
-    '#2BD4A8',
-    '#8B5CF6',
-    '#F59E0B',
-    '#38BDF8',
-    '#F97316',
-    '#22C55E',
-    '#E879F9',
-    '#94A3B8',
-    '#34D399',
-    '#60A5FA',
-    '#F43F5E'
+    '#6BA4FF', '#2BD4A8', '#8B5CF6', '#F59E0B', '#38BDF8',
+    '#F97316', '#22C55E', '#E879F9', '#94A3B8', '#34D399',
+    '#60A5FA', '#F43F5E'
   ];
+
+  /** Palette étendue pour les types non listés — 24 couleurs bien réparties dans la roue chromatique */
+  private readonly _fallbackPalette = [
+    '#EF4444', '#FB923C', '#EAB308', '#84CC16', '#10B981',
+    '#14B8A6', '#06B6D4', '#3B82F6', '#6366F1', '#A855F7',
+    '#EC4899', '#F472B6', '#FCA5A5', '#FDBA74', '#FDE68A',
+    '#BBF7D0', '#99F6E4', '#BAE6FD', '#BFDBFE', '#DDD6FE',
+    '#FBCFE8', '#D1FAE5', '#FEF3C7', '#E0E7FF',
+  ];
+
+  /** Cache d'assignation séquentielle pour les types non listés */
+  private readonly _dynamicColorCache = new Map<string, string>();
+  private _dynamicColorIndex = 0;
 
   readonly prestationsTrend = signal<{
     key: string;
@@ -50,12 +58,15 @@ export class Dashboard implements OnInit {
   readonly prestationsTypes = signal<{ key: string; label: string; value: number; percent: number; color: string }[]>([]);
   readonly prestationsTypesWeek = signal<{ key: string; label: string; value: number; percent: number; color: string }[]>([]);
   readonly prestationsTypesRange = signal<{ from: string; to: string } | null>(null);
+  readonly todayInterventionsCount = signal(0);
+  readonly todayAbsentTechniciansCount = signal(0);
 
   // On réexpose les signals du service pour les templates
   readonly stats = this.adminService.stats;       // Signal<DashboardStats | null>
   readonly loading = this.adminService.loading;   // Signal<boolean>
   readonly error = this.adminService.error;       // Signal<any | null>
   readonly historySignal = this.adminService.history; // Signal<HistoryItem[]>
+  readonly pendingAbsenceCount = this.absenceService.pendingCount;
 
   // Derniers mouvements (ex : 10 derniers)
   readonly recentHistory = computed(() => {
@@ -98,6 +109,11 @@ export class Dashboard implements OnInit {
 
   readonly prestationsTypesTotal = computed(() =>
     this.prestationsTypes().reduce((sum, item) => sum + item.value, 0)
+  );
+
+  /** Total semaine calculé depuis le détail par type (même source que les barres) */
+  readonly prestationsTypesWeekTotal = computed(() =>
+    this.prestationsTypesWeek().reduce((sum, item) => sum + item.value, 0)
   );
   readonly prestationsTypesMini = computed(() => {
     const items = this.prestationsTypesWeek();
@@ -170,6 +186,7 @@ export class Dashboard implements OnInit {
   ngOnInit(): void {
     // Charge les stats du dashboard au chargement de la page
     this.adminService.loadDashboardStats();
+    this.absenceService.refreshPendingCount();
 
     this.adminService.getWeeklyPrestationsTrend(7).subscribe({
       next: (res) => {
@@ -210,6 +227,27 @@ export class Dashboard implements OnInit {
         // l'erreur est déjà stockée dans le signal error(), rien à faire ici
       }
     });
+
+    const today = this.todayInput();
+
+    this.interventions.importSummaryTechnician({ fromDate: today, toDate: today }).subscribe({
+      next: (res) => {
+        this.todayInterventionsCount.set(Number(res?.data?.totals?.total ?? res?.data?.total ?? 0));
+      },
+      error: () => {
+        this.todayInterventionsCount.set(0);
+      }
+    });
+
+    this.absenceService.list({ fromDate: today, toDate: today }).subscribe({
+      next: (res) => {
+        const active = (res?.data ?? []).filter(item => item.status !== 'REFUSE');
+        this.todayAbsentTechniciansCount.set(active.length);
+      },
+      error: () => {
+        this.todayAbsentTechniciansCount.set(0);
+      }
+    });
   }
 
   // Navigation rapide depuis les cartes du dashboard
@@ -237,12 +275,24 @@ export class Dashboard implements OnInit {
     this.router.navigate(['/admin/onboarding']);
   }
 
+  goToDirigeant(): void {
+    this.router.navigate(['/admin/dirigeant']);
+  }
+
+  goToAgenda(): void {
+    this.router.navigate(['/admin/agenda']);
+  }
+
   goToDepotDashboard(): void {
     this.router.navigate(['/depot']);
   }
 
   goToStockAlerts(): void {
     this.router.navigate(['/admin/alerts/stock']);
+  }
+
+  goToAbsences(): void {
+    this.router.navigate(['/admin/hr']);
   }
 
   goToNewUser(): void {
@@ -339,6 +389,14 @@ export class Dashboard implements OnInit {
     return types.slice(0, 3).map(type => type.label).join(' · ');
   }
 
+  private todayInput(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = `${now.getMonth() + 1}`.padStart(2, '0');
+    const day = `${now.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
   private mapTrendDays(
     days: { date: string; count: number; types?: { key: string; count: number }[] }[],
     span = 7,
@@ -365,14 +423,11 @@ export class Dashboard implements OnInit {
       dates.push(this.toLocalDateKey(date));
     }
 
-    const values = dates.map(dateKey => countsByDate.get(dateKey) ?? 0);
-    const max = Math.max(...values, 1);
-
-    return dates.map((dateKey, index) => {
+    const mapped = dates.map((dateKey) => {
       const date = new Date(dateKey);
       const label = date.toLocaleDateString('fr-FR', { weekday: 'short' });
       const tooltip = date.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'short' });
-      let value = values[index] ?? 0;
+      let value = countsByDate.get(dateKey) ?? 0;
       const rawTypesAll = typesByDate.get(dateKey) || [];
       const totalTypesAll = rawTypesAll.reduce((sum, type) => sum + Number(type.count || 0), 0);
       const rawTypes = rawTypesAll
@@ -413,7 +468,9 @@ export class Dashboard implements OnInit {
         }));
       const totalTypes = types.reduce((sum, type) => sum + Number(type.count || 0), 0) || 0;
       const hasCount = hasCountByDate.get(dateKey) ?? false;
-      if (!hasCount && totalTypesAll > 0) {
+      if (types.length) {
+        value = totalTypes;
+      } else if (!hasCount && totalTypesAll > 0) {
         value = totalTypesAll;
       }
       let percentSum = 0;
@@ -435,11 +492,16 @@ export class Dashboard implements OnInit {
         label,
         tooltip: `${tooltip}${typesLabel}`,
         value,
-        percent: Math.round((value / max) * 100),
         primaryTypeLabel,
         types
       };
     });
+
+    const max = Math.max(...mapped.map(item => item.value), 1);
+    return mapped.map(item => ({
+      ...item,
+      percent: Math.round((item.value / max) * 100)
+    }));
   }
 
   private normalizeKey(value: string | undefined | null): string {
@@ -467,12 +529,12 @@ export class Dashboard implements OnInit {
       })
       .sort((a, b) => b.count - a.count);
     const max = Math.max(...ordered.map(item => item.count), 1);
-    return ordered.map((item, index) => ({
+    return ordered.map((item) => ({
       key: item.key,
       label: this.formatTypeLabel(item.key),
       value: item.count,
       percent: Math.round((item.count / max) * 100),
-      color: this.donutPalette[index % this.donutPalette.length]
+      color: this.pickTypeColor(item.key)
     }));
   }
 
@@ -531,12 +593,61 @@ export class Dashboard implements OnInit {
   }
 
   private pickTypeColor(key: string): string {
-    if (!key) return this.donutPalette[0];
-    let hash = 0;
-    for (let i = 0; i < key.length; i += 1) {
-      hash = (hash * 31 + key.charCodeAt(i)) % 2147483647;
+    const normalized = this.normalizeKey(key);
+    if (!normalized) return this.donutPalette[0];
+    const colorOverrides: Record<string, string> = {
+      // RAC fibre aérien / souterrain
+      racpboaerien:   '#F97316', // orange
+      racpbosout:     '#34D399', // emerald
+      // RAC Pro / Pavillon / Immeuble
+      racpros:        '#6BA4FF', // blue
+      racproc:        '#2BD4A8', // teal
+      racpavillon:    '#F59E0B', // amber
+      racimmeuble:    '#8B5CF6', // violet
+      racf8:          '#38BDF8', // sky
+      racautre:       '#94A3B8', // slate
+      // Reconnexion / RECO
+      reconnexion:    '#22C55E', // green
+      recoip:         '#16A34A', // dark green
+      // PLV
+      plvpros:        '#A855F7', // purple
+      plvproc:        '#C084FC', // light purple
+      // SAV
+      sav:            '#60A5FA', // light blue
+      savexp:         '#FB7185', // rose
+      // Autres types courants
+      prestacompl:    '#E879F9', // fuchsia
+      deprise:        '#64748B', // slate-blue
+      demo:           '#A78BFA', // lavender
+      refrac:         '#F43F5E', // red
+      refcdgr:        '#EF4444', // crimson
+      deplacementof:  '#0EA5E9', // sky blue
+      deplacementoffice: '#0EA5E9',
+      // Câbles Pav (normalement filtrés mais au cas où)
+      cablepav1:      '#CBD5E1',
+      cablepav2:      '#B0BEC5',
+      cablepav3:      '#90A4AE',
+      cablepav4:      '#78909C',
+    };
+    if (colorOverrides[normalized]) return colorOverrides[normalized];
+    // Fallback : assignation séquentielle — chaque type inconnu reçoit une couleur unique
+    if (this._dynamicColorCache.has(normalized)) {
+      return this._dynamicColorCache.get(normalized)!;
     }
-    return this.donutPalette[Math.abs(hash) % this.donutPalette.length];
+    const usedColors = new Set([
+      ...Object.values(colorOverrides),
+      ...this._dynamicColorCache.values()
+    ]);
+    let color = this._fallbackPalette[this._dynamicColorIndex % this._fallbackPalette.length];
+    let attempts = 0;
+    while (usedColors.has(color) && attempts < this._fallbackPalette.length) {
+      this._dynamicColorIndex++;
+      attempts++;
+      color = this._fallbackPalette[this._dynamicColorIndex % this._fallbackPalette.length];
+    }
+    this._dynamicColorIndex++;
+    this._dynamicColorCache.set(normalized, color);
+    return color;
   }
 
   private parseLocalDate(value: string | undefined): Date {

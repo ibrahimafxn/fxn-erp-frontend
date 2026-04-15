@@ -39,8 +39,9 @@ export class AppHeader {
   readonly currentUrl = signal(this.router.url);
   readonly alertsCount = this.alertsService.count;
   readonly absencePendingCount = this.absenceService.pendingCount;
-  readonly supplyBadgeCount = signal(0);
-  readonly supplyLatestDecidedAt = signal<string | null>(null);
+  readonly supplyBadgeCount = this.supplyRequestService.supplyBadgeCount;
+  readonly absenceBadgeCount = this.absenceService.absenceBadgeCount;
+  readonly depotSupplyPendingCount = this.supplyRequestService.depotSupplyPendingCount;
   readonly showBackButton = computed(() => {
     const url = this.currentUrl();
     if (this.isDashboardUrl(url)) return false;
@@ -62,7 +63,10 @@ export class AppHeader {
         this.refreshSupplyBadge();
         this.refreshAbsenceBadge();
         if (this.router.url.includes('/technician/supply-requests')) {
-          this.markSupplyBadgeSeen();
+          this.supplyRequestService.markSupplyBadgeSeen();
+        }
+        if (this.router.url.includes('/technician/absences')) {
+          this.absenceService.markAbsenceBadgeSeen();
         }
       });
     this.alertsService.refresh();
@@ -181,6 +185,10 @@ export class AppHeader {
   goInterventionsImport(): void {
     this.router.navigate(['/admin/interventions/import']).then();
   }
+
+  goInterventionsAudit(): void {
+    this.router.navigate(['/admin/interventions/audit']).then();
+  }
   goTechnicianActivity(): void {
     this.router.navigate(['/admin/technicians/activity']).then();
   }
@@ -205,6 +213,10 @@ export class AppHeader {
     this.router.navigate([this.materialReservationsLink()]).then();
   }
 
+  goOsirisEquipment(): void {
+    this.router.navigate(['/admin/resources/osiris-equipment']).then();
+  }
+
   goReceipts(): void {
     this.router.navigate([this.receiptsLink()]).then();
   }
@@ -223,6 +235,10 @@ export class AppHeader {
 
   goRevenue(): void {
     this.router.navigate(['/admin/revenue']).then();
+  }
+
+  goErtInvoices(): void {
+    this.router.navigate(['/admin/finance/ert-invoices']).then();
   }
 
   goTechMaterials(): void {
@@ -293,55 +309,17 @@ export class AppHeader {
     if (this.canManageAccess()) {
       this.absenceService.refreshPendingCount();
     }
+    if (this.isTechnician()) {
+      this.absenceService.refreshAbsenceBadgeMine();
+    }
   }
 
   private refreshSupplyBadge(): void {
-    if (!this.isTechnician()) {
-      this.supplyBadgeCount.set(0);
-      this.supplyLatestDecidedAt.set(null);
-      return;
+    if (this.isTechnician()) {
+      this.supplyRequestService.refreshSupplyBadgeMine();
     }
-    this.supplyRequestService.summaryMine().subscribe({
-      next: (res) => {
-        const decided = res?.data?.decided ?? 0;
-        const latest = res?.data?.latestDecidedAt ?? null;
-        this.supplyLatestDecidedAt.set(latest);
-        const seenAt = this.loadSupplySeenAt();
-        const latestTs = latest ? new Date(latest).getTime() : 0;
-        const seenTs = seenAt ? new Date(seenAt).getTime() : 0;
-        const shouldShow = latestTs > seenTs;
-        this.supplyBadgeCount.set(shouldShow ? decided : 0);
-      },
-      error: () => {
-        this.supplyBadgeCount.set(0);
-        this.supplyLatestDecidedAt.set(null);
-      }
-    });
-  }
-
-  private markSupplyBadgeSeen(): void {
-    if (!this.isTechnician()) return;
-    const latest = this.supplyLatestDecidedAt();
-    const value = latest || new Date().toISOString();
-    this.persistSupplySeenAt(value);
-    this.supplyBadgeCount.set(0);
-  }
-
-  private loadSupplySeenAt(): string | null {
-    if (typeof localStorage === 'undefined') return null;
-    try {
-      return localStorage.getItem('fxn_supply_seen_at');
-    } catch {
-      return null;
-    }
-  }
-
-  private persistSupplySeenAt(value: string): void {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      localStorage.setItem('fxn_supply_seen_at', value);
-    } catch {
-      // ignore storage errors
+    if (this.isDepotManager()) {
+      this.supplyRequestService.refreshDepotPendingCount();
     }
   }
 
@@ -412,6 +390,7 @@ export class AppHeader {
       if (url.includes('/history')) return 'Historique';
       if (url.includes('/documents')) return 'Documents';
       if (url.includes('/absences')) return 'Mes absences';
+      if (url.includes('/resources/osiris-equipment')) return 'Stock Osiris';
       return 'Technicien';
     }
     if (url.includes('/unauthorized')) return 'Accès refusé';
@@ -430,11 +409,13 @@ export class AppHeader {
     if (url.includes('/suppliers')) return 'Fournisseurs';
     if (url.includes('/alerts/stock')) return 'Alertes';
     if (url.includes('/interventions/import')) return 'Import interventions';
+    if (url.includes('/interventions/audit')) return 'Audit échecs';
     if (url.includes('/interventions')) return 'Interventions';
     if (url.includes('/technicians/interventions')) return 'Interventions techniciens';
     if (url.includes('/technicians/activity')) return 'Prestations techniciens';
     if (url.includes('/bpu')) return 'BPU prestations';
     if (url.includes('/revenue')) return "Chiffre d'affaires";
+    if (url.includes('/finance/ert-invoices')) return 'Factures ERT';
     if (url.includes('/consumables')) return 'Consommables';
     if (url.includes('/materials')) return 'Matériels';
     return 'Dashboard';

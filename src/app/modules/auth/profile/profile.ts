@@ -166,8 +166,20 @@ export class Profile {
                 themeOverride: null,
                 density: 'comfortable',
                 motion: 'full',
-                avatar: null
-              };
+                avatar: null,
+                fontSize: 'normal',
+                dateFormat: 'dmy',
+                decimalSeparator: 'comma',
+                defaultPage: null,
+                tablePageSize: 20,
+                pushNotifications: false,
+                soundAlerts: false,
+                stockAlertThreshold: null,
+                highContrast: false,
+                keyboardShortcuts: true,
+                autoLogout: 'never',
+                confirmDelete: true
+              } as const;
               this.auth.updateCurrentUser({ photoUrl: url, avatarUrl: url, preferences: { ...basePrefs, avatar: null } });
               this.preferencesApi.updateMyPreferences({ avatar: null }).subscribe({ error: () => {} });
             }

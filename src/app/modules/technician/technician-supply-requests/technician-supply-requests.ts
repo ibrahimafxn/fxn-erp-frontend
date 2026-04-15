@@ -1,14 +1,18 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConsumableService } from '../../../core/services/consumable.service';
 import { MaterialService } from '../../../core/services/material.service';
 import { SupplyRequestService } from '../../../core/services/supply-request.service';
+import { AppNotificationService } from '../../../core/services/app-notification.service';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { SupplyRequest, SupplyRequestStatus, SupplyRequestType } from '../../../core/models';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { apiError } from '../../../core/utils/http-error';
+import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-supply-requests',
@@ -23,9 +27,16 @@ export class TechnicianSupplyRequests {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private supplyService = inject(SupplyRequestService);
+  private notif = inject(AppNotificationService);
   private consumableService = inject(ConsumableService);
   private materialService = inject(MaterialService);
   private datePipe = inject(DatePipe);
+
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
 
   readonly loading = signal(false);
   readonly resourcesLoading = signal(false);
@@ -33,10 +44,6 @@ export class TechnicianSupplyRequests {
   readonly resourcesError = signal<string | null>(null);
 
   readonly items = signal<SupplyRequest[]>([]);
-  readonly total = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(10);
-  readonly pageRange = formatPageRange;
   readonly editing = signal<SupplyRequest | null>(null);
   readonly deleteModalOpen = signal(false);
   readonly pendingDelete = signal<SupplyRequest | null>(null);
@@ -58,14 +65,9 @@ export class TechnicianSupplyRequests {
     note: this.fb.nonNullable.control('')
   });
 
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
   readonly filteredItems = computed(() => {
     const items = [...this.items()];
     const selected = this.dateFilter();
@@ -117,7 +119,7 @@ export class TechnicianSupplyRequests {
   constructor() {
     this.loadRequests();
     this.loadResources(true);
-    this.form.controls.resourceType.valueChanges.subscribe((value) => {
+    this.form.controls.resourceType.valueChanges.pipe(takeUntilDestroyed()).subscribe((value) => {
       this.form.controls.resourceId.setValue('');
       this.resourceQuery.set('');
       this.loadResources(true, value);
@@ -125,7 +127,7 @@ export class TechnicianSupplyRequests {
   }
 
   submit(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.resourcesLoading()) {
       this.form.markAllAsTouched();
       return;
     }
@@ -150,12 +152,18 @@ export class TechnicianSupplyRequests {
       next: () => {
         this.loading.set(false);
         this.editing.set(null);
+        this.notif.notifyAction(
+          'Demande envoyée',
+          'Votre demande de stock a bien été transmise au dépôt.',
+          `supply-req-${Date.now()}`
+        );
+        this.notif.beep('success');
         this.resetForm();
         this.loadRequests(true);
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur envoi demande'));
+        this.error.set(apiError(err, 'Erreur envoi demande'));
       }
     });
   }
@@ -188,28 +196,14 @@ export class TechnicianSupplyRequests {
     this.dateFilter.set(value);
   }
 
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.update((v) => v - 1);
-    this.loadRequests(true);
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.update((v) => v + 1);
-    this.loadRequests(true);
-  }
-
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.loadRequests(true);
-  }
+  prevPage(): void { this.pag.prevPage(() => this.loadRequests(true)); }
+  nextPage(): void { this.pag.nextPage(() => this.loadRequests(true)); }
+  setLimitValue(v: number): void { this.pag.setLimitValue(v, () => this.loadRequests(true)); }
 
   loadRequests(force = false): void {
     this.loading.set(true);
     this.error.set(null);
+    const previous = this.items();
     this.supplyService.listMine({
       page: this.page(),
       limit: this.limit(),
@@ -218,13 +212,40 @@ export class TechnicianSupplyRequests {
     }).subscribe({
       next: (res) => {
         const data = res?.data;
-        this.items.set(data?.items || []);
+        const current = data?.items || [];
+        this.notifySupplyStatusChanges(previous, current);
+        this.items.set(current);
         this.total.set(data?.total || 0);
         this.loading.set(false);
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement demandes'));
+        this.error.set(apiError(err, 'Erreur chargement demandes'));
+      }
+    });
+  }
+
+  private notifySupplyStatusChanges(prev: SupplyRequest[], next: SupplyRequest[]): void {
+    if (!prev.length) return;
+    const prevMap = new Map(prev.map(r => [r._id, r.status]));
+    next.forEach(r => {
+      const prevStatus = prevMap.get(r._id);
+      if (!prevStatus || prevStatus === r.status || prevStatus !== 'PENDING') return;
+      const label = this.resourceLabel(r);
+      if (r.status === 'APPROVED') {
+        this.notif.notifyAction(
+          'Demande approuvée',
+          `Votre demande de ${label} a été approuvée par le dépôt.`,
+          `supply-approved-${r._id}`
+        );
+        this.notif.beep('success');
+      } else if (r.status === 'CANCELED') {
+        this.notif.notifyAction(
+          'Demande annulée',
+          `Votre demande de ${label} a été annulée par le dépôt.`,
+          `supply-canceled-${r._id}`
+        );
+        this.notif.beep('alert');
       }
     });
   }
@@ -238,7 +259,7 @@ export class TechnicianSupplyRequests {
 
     const onError = (err: unknown) => {
       this.resourcesLoading.set(false);
-      this.resourcesError.set(this.apiError(err, 'Erreur chargement ressources'));
+      this.resourcesError.set(apiError(err, 'Erreur chargement ressources'));
     };
 
     if (resourceType === 'MATERIAL') {
@@ -310,7 +331,7 @@ export class TechnicianSupplyRequests {
       },
       error: (err) => {
         this.deletingId.set(null);
-        this.error.set(this.apiError(err, 'Erreur suppression'));
+        this.error.set(apiError(err, 'Erreur suppression'));
       }
     });
   }
@@ -336,7 +357,4 @@ export class TechnicianSupplyRequests {
     return this.datePipe.transform(value, 'short') || '—';
   }
 
-  private apiError(err: any, fallback: string): string {
-    return err?.error?.message || err?.message || fallback;
-  }
 }

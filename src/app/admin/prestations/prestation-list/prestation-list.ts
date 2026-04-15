@@ -11,6 +11,7 @@ import { Prestation, PrestationCatalog, PrestationListResult } from '../../../co
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { DetailBack } from '../../../core/utils/detail-back';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   standalone: true,
@@ -33,7 +34,7 @@ export class PrestationList extends DetailBack {
 
   readonly deletingId = signal<string | null>(null);
   readonly page = signal(1);
-  readonly limit = signal(25);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly filterForm = this.fb.nonNullable.group({

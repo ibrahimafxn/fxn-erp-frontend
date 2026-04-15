@@ -16,6 +16,7 @@ import { formatDepotName, formatPersonName } from '../../../../core/utils/text-f
 import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
+import { preferredPageSize } from '../../../../core/utils/page-size';
 
 type SortKey = 'title' | 'plate' | 'state' | 'assigned' | 'createdAt';
 
@@ -53,7 +54,7 @@ export class VehicleList extends DetailBack {
 
   // Pagination
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   // Depots (select)

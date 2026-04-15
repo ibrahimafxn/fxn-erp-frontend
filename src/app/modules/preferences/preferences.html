@@ -5,7 +5,7 @@
       <div>
         <div class="hero-label">Préférences</div>
         <h1>Apparence & style</h1>
-        <p>Personnalisez le thème et la densité de l'interface.</p>
+        <p>Personnalisez entièrement votre expérience.</p>
       </div>
     </div>
     <div class="hero-actions">
@@ -16,17 +16,14 @@
     </div>
   </header>
 
+  <!-- ── THÈME ─────────────────────────────────────────────────────────── -->
   <section class="preferences-grid">
     <article class="card">
       <div class="card-title"><span class="material-icons notranslate">palette</span>Thème</div>
       <div class="card-subtitle">Choisissez un thème d'interface.</div>
       <div class="option-grid">
         @for (option of themeOptions(); track option.value) {
-          <button
-            type="button"
-            class="option-btn"
-            [class.active]="theme() === option.value"
-            (click)="selectTheme(option.value)">
+          <button type="button" class="option-btn" [class.active]="theme() === option.value" (click)="selectTheme(option.value)">
             <div class="option-title">{{ option.label }}</div>
             <div class="option-desc">{{ option.desc }}</div>
           </button>
@@ -40,17 +37,12 @@
       <div class="card-subtitle">Ajustez l'espacement et la compacité.</div>
       <div class="option-grid">
         @for (option of densityOptions; track option.value) {
-          <button
-            type="button"
-            class="option-btn"
-            [class.active]="density() === option.value"
-            (click)="selectDensity(option.value)">
+          <button type="button" class="option-btn" [class.active]="density() === option.value" (click)="selectDensity(option.value)">
             <div class="option-title">{{ option.label }}</div>
             <div class="option-desc">{{ option.desc }}</div>
           </button>
         }
       </div>
-      <div class="option-hint">La densité compacte réduit les espacements globaux.</div>
     </article>
 
     <article class="card">
@@ -58,37 +50,193 @@
       <div class="card-subtitle">Activez ou réduisez les animations.</div>
       <div class="option-grid">
         @for (option of motionOptions; track option.value) {
-          <button
-            type="button"
-            class="option-btn"
-            [class.active]="motion() === option.value"
-            (click)="selectMotion(option.value)">
+          <button type="button" class="option-btn" [class.active]="motion() === option.value" (click)="selectMotion(option.value)">
             <div class="option-title">{{ option.label }}</div>
             <div class="option-desc">{{ option.desc }}</div>
           </button>
         }
       </div>
-      <div class="option-hint">La réduction des animations améliore le confort visuel.</div>
     </article>
 
+    <!-- ── AFFICHAGE ───────────────────────────────────────────────────── -->
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">text_fields</span>Taille de police</div>
+      <div class="card-subtitle">Ajustez la taille du texte globalement.</div>
+      <div class="option-grid option-grid-3">
+        @for (option of fontSizeOptions; track option.value) {
+          <button type="button" class="option-btn" [class.active]="fontSize() === option.value" (click)="selectFontSize(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+            <div class="option-desc">{{ option.desc }}</div>
+          </button>
+        }
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">calendar_today</span>Format des dates</div>
+      <div class="card-subtitle">Comment les dates sont affichées.</div>
+      <div class="option-grid option-grid-3">
+        @for (option of dateFormatOptions; track option.value) {
+          <button type="button" class="option-btn" [class.active]="dateFormat() === option.value" (click)="selectDateFormat(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+            <div class="option-desc">{{ option.desc }}</div>
+          </button>
+        }
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">pin</span>Séparateur décimal</div>
+      <div class="card-subtitle">Format d'affichage des montants.</div>
+      <div class="option-grid">
+        @for (option of decimalOptions; track option.value) {
+          <button type="button" class="option-btn" [class.active]="decimalSeparator() === option.value" (click)="selectDecimalSeparator(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+            <div class="option-desc">{{ option.desc }}</div>
+          </button>
+        }
+      </div>
+    </article>
+
+    <!-- ── NAVIGATION ─────────────────────────────────────────────────── -->
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">home</span>Page d'accueil</div>
+      <div class="card-subtitle">Vue ouverte à la connexion.</div>
+      <div class="option-grid">
+        @for (option of defaultPageOptions(); track option.value) {
+          <button type="button" class="option-btn" [class.active]="(defaultPage() ?? '') === option.value" (click)="selectDefaultPage(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+          </button>
+        }
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">table_rows</span>Lignes par tableau</div>
+      <div class="card-subtitle">Nombre de lignes affichées par défaut.</div>
+      <div class="option-grid option-grid-4">
+        @for (option of pageSizeOptions; track option.value) {
+          <button type="button" class="option-btn" [class.active]="tablePageSize() === option.value" (click)="selectTablePageSize(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+          </button>
+        }
+      </div>
+    </article>
+
+    <!-- ── NOTIFICATIONS ──────────────────────────────────────────────── -->
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">notifications</span>Notifications</div>
+      <div class="card-subtitle">Alertes et sons de l'application.</div>
+      <div class="toggle-list">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Notifications push</div>
+            <div class="toggle-desc">
+              @if (pushPermission() === 'denied') {
+                Bloquées par le navigateur — autorisez-les dans les paramètres du site.
+              } @else {
+                Recevoir des alertes même quand l'onglet est en arrière-plan.
+              }
+            </div>
+          </div>
+          <button type="button" class="toggle-switch" [class.on]="pushNotifications()" [disabled]="pushPermission() === 'denied'" (click)="togglePushNotifications()">
+            <span class="toggle-thumb"></span>
+          </button>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Sons d'alerte</div>
+            <div class="toggle-desc">Signal sonore pour les événements importants.</div>
+          </div>
+          <button type="button" class="toggle-switch" [class.on]="soundAlerts()" (click)="toggleSoundAlerts()">
+            <span class="toggle-thumb"></span>
+          </button>
+        </div>
+      </div>
+      <div class="threshold-row">
+        <label class="threshold-label" for="stock-threshold">
+          <span class="material-icons notranslate">inventory_2</span>
+          Seuil d'alerte stock
+        </label>
+        <div class="threshold-input-wrap">
+          <input
+            id="stock-threshold"
+            type="number"
+            min="0"
+            step="1"
+            class="threshold-input"
+            [value]="stockAlertThreshold() ?? ''"
+            placeholder="Non défini"
+            (change)="updateStockThreshold($any($event.target).value)"
+          />
+          <span class="threshold-unit">unités</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- ── ACCESSIBILITÉ ──────────────────────────────────────────────── -->
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">accessibility_new</span>Accessibilité</div>
+      <div class="card-subtitle">Améliorez le confort visuel et l'ergonomie.</div>
+      <div class="toggle-list">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Contraste élevé</div>
+            <div class="toggle-desc">Renforce les bordures et le texte pour un meilleur confort visuel.</div>
+          </div>
+          <button type="button" class="toggle-switch" [class.on]="highContrast()" (click)="toggleHighContrast()">
+            <span class="toggle-thumb"></span>
+          </button>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Raccourcis clavier</div>
+            <div class="toggle-desc">Activer les raccourcis de navigation globaux.</div>
+          </div>
+          <button type="button" class="toggle-switch" [class.on]="keyboardShortcuts()" (click)="toggleKeyboardShortcuts()">
+            <span class="toggle-thumb"></span>
+          </button>
+        </div>
+      </div>
+    </article>
+
+    <!-- ── SÉCURITÉ ───────────────────────────────────────────────────── -->
+    <article class="card">
+      <div class="card-title"><span class="material-icons notranslate">lock</span>Sécurité</div>
+      <div class="card-subtitle">Déconnexion et confirmations.</div>
+      <div class="option-grid option-grid-4">
+        @for (option of autoLogoutOptions; track option.value) {
+          <button type="button" class="option-btn" [class.active]="autoLogout() === option.value" (click)="selectAutoLogout(option.value)">
+            <div class="option-title">{{ option.label }}</div>
+            <div class="option-desc">{{ option.desc }}</div>
+          </button>
+        }
+      </div>
+      <div class="toggle-list" style="margin-top: 1rem;">
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Confirmation avant suppression</div>
+            <div class="toggle-desc">Demander une confirmation avant toute suppression définitive.</div>
+          </div>
+          <button type="button" class="toggle-switch" [class.on]="confirmDelete()" (click)="toggleConfirmDelete()">
+            <span class="toggle-thumb"></span>
+          </button>
+        </div>
+      </div>
+      <div class="option-hint">La déconnexion automatique se déclenche après la durée d'inactivité choisie.</div>
+    </article>
+
+    <!-- ── AVATAR ─────────────────────────────────────────────────────── -->
     <article class="card">
       <div class="card-title"><span class="material-icons notranslate">face</span>Avatar</div>
       <div class="card-subtitle">Choisissez un avatar par défaut.</div>
       <div class="avatar-grid">
-        <button
-          type="button"
-          class="avatar-btn"
-          [class.active]="avatar() === null"
-          (click)="selectAvatar(null)">
+        <button type="button" class="avatar-btn" [class.active]="avatar() === null" (click)="selectAvatar(null)">
           <span class="material-icons notranslate">person</span>
           <span>Aucun</span>
         </button>
         @for (option of avatarOptions; track option.value) {
-          <button
-            type="button"
-            class="avatar-btn"
-            [class.active]="avatar() === option.value"
-            (click)="selectAvatar(option.value)">
+          <button type="button" class="avatar-btn" [class.active]="avatar() === option.value" (click)="selectAvatar(option.value)">
             <img [src]="option.src" [alt]="option.label" />
             <span>{{ option.label }}</span>
           </button>
@@ -98,11 +246,7 @@
         <div class="admin-avatar-label">Avatars admin</div>
         <div class="avatar-grid">
           @for (option of adminAvatarOptions; track option.value) {
-            <button
-              type="button"
-              class="avatar-btn admin"
-              [class.active]="avatar() === option.value"
-              (click)="selectAvatar(option.value)">
+            <button type="button" class="avatar-btn admin" [class.active]="avatar() === option.value" (click)="selectAvatar(option.value)">
               <img [src]="option.src" [alt]="option.label" />
               <span>{{ option.label }}</span>
             </button>

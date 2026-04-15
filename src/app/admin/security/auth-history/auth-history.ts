@@ -9,6 +9,7 @@ import { UserService } from '../../../core/services/user.service';
 import { AuthHistoryItem, AuthHistoryResult, User } from '../../../core/models';
 import { formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
+import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   standalone: true,
@@ -31,7 +32,7 @@ export class AuthHistory {
   readonly result = signal<AuthHistoryResult | null>(null);
 
   readonly page = signal(1);
-  readonly limit = signal(20);
+  readonly limit = signal(preferredPageSize());
   readonly pageRange = formatPageRange;
 
   readonly usersResult: Signal<any | null> = this.usersSvc.result;

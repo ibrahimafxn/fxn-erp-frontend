@@ -220,6 +220,16 @@
   flex-wrap: wrap;
 }
 
+.invoice-actions .btn-reset-invoices {
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fecaca;
+}
+
+.invoice-actions .btn-reset-invoices:hover:not(:disabled) {
+  background: rgba(127, 29, 29, 0.18);
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
 .invoice-summary {
   display: grid;
   gap: 0.75rem;
