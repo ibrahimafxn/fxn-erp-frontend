@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
@@ -9,7 +9,7 @@ import { BpuSelectionService } from '../../../core/services/bpu-selection.servic
 import { AuthService } from '../../../core/services/auth.service';
 import { UserService } from '../../../core/services/user.service';
 import { HrService } from '../../../core/services/hr.service';
-import { BpuEntry, BpuSelection, User } from '../../../core/models';
+import { BpuEntry, BpuSelection, BpuPriceHistory, User } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { downloadBlob } from '../../../core/utils/download';
 import { environment } from '../../../environments/environment';
@@ -18,9 +18,10 @@ import {
   INTERVENTION_PRESTATION_FIELDS,
   InterventionPrestationField
 } from '../../../core/constant/intervention-prestations';
+import { apiError } from '../../../core/utils/http-error';
 
 type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE' | 'ERT';
-type ConfirmAction = 'saveSelection' | 'updateCode' | 'addPrestation' | 'deletePersonalized';
+type ConfirmAction = 'saveSelection' | 'updateCode' | 'addPrestation' | 'deletePersonalized' | 'updatePeriod';
 
 const SEGMENT_LABELS: Record<Segment, string> = {
   AUTO: 'Freelance',
@@ -70,6 +71,30 @@ export class BpuList {
   readonly newPrestation = signal({ prestation: '', code: '', unitPrice: 0 });
   readonly adding = signal(false);
   readonly showStitRef = signal(false);
+  /** Date de début de validité saisie par l'admin avant d'enregistrer un BPU (format YYYY-MM-DD) */
+  readonly selectionValidFrom = signal('');
+  /** Historique des snapshots de prix pour le contexte courant */
+  readonly priceHistory = signal<BpuPriceHistory[]>([]);
+  readonly historyLoading = signal(false);
+  readonly historyExpanded = signal<string | null>(null);
+  readonly historyDeleting = signal<Set<string>>(new Set());
+  /** Prix édités pour la période active (initialisé depuis le snapshot, modifiable) */
+  readonly editedPeriodPrices = signal<Map<string, number>>(new Map());
+  /** Map<code, unitPrice> du snapshot actuellement développé (null = prix courants) */
+  readonly activePeriodMap = computed<Map<string, number> | null>(() => {
+    const id = this.historyExpanded();
+    if (!id) return null;
+    // Utilise les prix édités s'ils existent, sinon revient au snapshot
+    const edited = this.editedPeriodPrices();
+    if (edited.size) return edited;
+    const entry = this.priceHistory().find(e => e._id === id);
+    if (!entry) return null;
+    const map = new Map<string, number>();
+    for (const p of entry.prestations) {
+      map.set(String(p.code || '').trim().toUpperCase(), Number(p.unitPrice ?? 0));
+    }
+    return map;
+  });
   readonly stitFields: InterventionPrestationField[] = INTERVENTION_PRESTATION_FIELDS;
   readonly BPU_STIT_PDF = 'assets/docs/bpu_list.pdf';
   readonly isTechnician = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
@@ -117,11 +142,21 @@ export class BpuList {
   readonly confirmAction = signal<ConfirmAction | null>(null);
   readonly confirmContext = signal<
     | { action: 'saveSelection'; technicianLabel?: string | null }
+    | { action: 'updatePeriod' }
     | { action: 'addPrestation'; prestation: string; code: string; unitPrice: number }
     | { action: 'updateCode'; id: string; prestation: string; currentCode: string; nextCode: string }
     | { action: 'deletePersonalized'; ownerId: string; technicianLabel: string; selectionId: string }
     | null
   >(null);
+  techInitials(tech: User): string {
+    const first = String(tech.firstName || '').trim();
+    const last = String(tech.lastName || '').trim();
+    if (first && last) return (first[0] + last[0]).toUpperCase();
+    if (first) return first.slice(0, 2).toUpperCase();
+    if (last) return last.slice(0, 2).toUpperCase();
+    return '?';
+  }
+
   readonly selectedTechnicianLabel = computed(() => {
     const id = this.selectedTechnicianId();
     if (!id) return null;
@@ -211,7 +246,7 @@ export class BpuList {
         this.techniciansLoading.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.techniciansError.set(this.apiError(err, 'Erreur chargement techniciens'));
+        this.techniciansError.set(apiError(err, 'Erreur chargement techniciens'));
         this.techniciansLoading.set(false);
       }
     });
@@ -308,10 +343,173 @@ export class BpuList {
           this.warning.set('Le segment BPU ERT est vide. Le catalogue de base est affiché pour initialiser le référentiel ERT.');
         }
         this.loading.set(false);
+        this.loadHistory();
       },
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.apiError(err, 'Erreur chargement BPU'));
+        this.error.set(apiError(err, 'Erreur chargement BPU'));
         this.loading.set(false);
+      }
+    });
+  }
+
+  loadHistory(): void {
+    if (this.isTechnician()) return;
+    this.historyLoading.set(true);
+    const owner = this.selectedTechnicianId() || null;
+    this.bpuSelectionService.listHistory({ owner }).subscribe({
+      next: (history) => {
+        this.priceHistory.set(history || []);
+        this.historyLoading.set(false);
+      },
+      error: () => {
+        this.priceHistory.set([]);
+        this.historyLoading.set(false);
+      }
+    });
+  }
+
+  toggleHistoryEntry(id: string): void {
+    const next = this.historyExpanded() === id ? null : id;
+    this.historyExpanded.set(next);
+    if (next) {
+      // Initialise les prix éditables depuis le snapshot
+      const entry = this.priceHistory().find(e => e._id === next);
+      const map = new Map<string, number>();
+      for (const p of entry?.prestations ?? []) {
+        map.set(String(p.code || '').trim().toUpperCase(), Number(p.unitPrice ?? 0));
+      }
+      this.editedPeriodPrices.set(map);
+    } else {
+      this.editedPeriodPrices.set(new Map());
+    }
+  }
+
+  historyEntryDate(entry: BpuPriceHistory): string {
+    const d = new Date(entry.validFrom);
+    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  }
+
+  deleteHistoryEntry(entry: BpuPriceHistory, event: Event): void {
+    event.stopPropagation();
+    const id = entry._id;
+    if (!id) return;
+    const next = new Set(this.historyDeleting());
+    next.add(id);
+    this.historyDeleting.set(next);
+    this.bpuSelectionService.deleteHistory(id).subscribe({
+      next: () => {
+        this.priceHistory.set(this.priceHistory().filter(e => e._id !== id));
+        if (this.historyExpanded() === id) {
+          this.historyExpanded.set(null);
+          this.editedPeriodPrices.set(new Map());
+        }
+        const s = new Set(this.historyDeleting());
+        s.delete(id);
+        this.historyDeleting.set(s);
+      },
+      error: () => {
+        const s = new Set(this.historyDeleting());
+        s.delete(id);
+        this.historyDeleting.set(s);
+        this.error.set('Erreur lors de la suppression du snapshot.');
+      }
+    });
+  }
+
+  isHistoryDeleting(entry: BpuPriceHistory): boolean {
+    return !!entry._id && this.historyDeleting().has(entry._id);
+  }
+
+  isInPeriodView(): boolean {
+    return this.activePeriodMap() !== null;
+  }
+
+  /** Prix du snapshot actif pour un item ; null si pas de snapshot ou code absent */
+  periodPrice(item: BpuEntry): number | null {
+    const map = this.activePeriodMap();
+    if (!map) return null;
+    const key = String(item.code || '').trim().toUpperCase();
+    const val = map.get(key);
+    return val !== undefined ? val : null;
+  }
+
+  onPeriodPriceChange(item: BpuEntry, event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    if (!target) return;
+    const key = String(item.code || '').trim().toUpperCase();
+    if (!key) return;
+    const raw = target.value.trim();
+    const next = new Map(this.editedPeriodPrices());
+    if (raw === '') {
+      // Champ vidé : retirer de la map (ne pas enregistrer)
+      next.delete(key);
+    } else {
+      const value = Number(raw);
+      next.set(key, Number.isFinite(value) ? value : 0);
+    }
+    this.editedPeriodPrices.set(next);
+  }
+
+  /** true si le code est dans le snapshot original (présent à l'ouverture de la période) */
+  isInOriginalSnapshot(item: BpuEntry): boolean {
+    const id = this.historyExpanded();
+    if (!id) return false;
+    const entry = this.priceHistory().find(e => e._id === id);
+    if (!entry) return false;
+    const key = String(item.code || '').trim().toUpperCase();
+    return entry.prestations.some(p => String(p.code || '').trim().toUpperCase() === key);
+  }
+
+  hasPeriodChanges(): boolean {
+    const id = this.historyExpanded();
+    if (!id) return false;
+    const entry = this.priceHistory().find(e => e._id === id);
+    if (!entry) return false;
+    const edited = this.editedPeriodPrices();
+
+    // Modifications sur les prestations existantes
+    const originalKeys = new Set<string>();
+    for (const p of entry.prestations) {
+      const key = String(p.code || '').trim().toUpperCase();
+      originalKeys.add(key);
+      if (edited.get(key) !== Number(p.unitPrice ?? 0)) return true;
+    }
+
+    // Nouvelles prestations ajoutées (prix > 0)
+    for (const [key, price] of edited.entries()) {
+      if (!originalKeys.has(key) && price > 0) return true;
+    }
+
+    return false;
+  }
+
+  requestUpdatePeriod(): void {
+    this.openConfirm('updatePeriod', { action: 'updatePeriod' });
+  }
+
+  private performUpdatePeriod(): void {
+    const id = this.historyExpanded();
+    if (!id) return;
+    const edited = this.editedPeriodPrices();
+    const prestations = Array.from(edited.entries())
+      .map(([code, unitPrice]) => ({ code, unitPrice }))
+      .filter(p => p.code && Number.isFinite(p.unitPrice));
+    if (!prestations.length) return;
+    this.saving.set(true);
+    this.error.set(null);
+    this.success.set(null);
+    this.bpuSelectionService.updateHistory(id, prestations).subscribe({
+      next: (updated) => {
+        // Mettre à jour le snapshot dans le signal local
+        this.priceHistory.set(
+          this.priceHistory().map(e => e._id === id ? { ...e, prestations: updated.prestations } : e)
+        );
+        this.success.set('Snapshot mis à jour avec succès.');
+        this.saving.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set(apiError(err, 'Erreur mise à jour du snapshot'));
+        this.saving.set(false);
       }
     });
   }
@@ -409,10 +607,10 @@ export class BpuList {
         this.selectedCodes.set(selectionState.selected);
         this.editedPrices.set(selectionState.edited);
         this.loading.set(false);
-        this.success.set('BPU global copié. Vous pouvez ajuster avant d’enregistrer.');
+        this.success.set(`BPU global copié. Vous pouvez ajuster avant d'enregistrer.`);
       },
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.apiError(err, 'Erreur chargement BPU'));
+        this.error.set(apiError(err, 'Erreur chargement BPU'));
         this.loading.set(false);
       }
     });
@@ -469,9 +667,10 @@ export class BpuList {
 
   confirmTitle(): string {
     const action = this.confirmAction();
-    if (action === 'addPrestation') return 'Confirmer l’ajout';
+    if (action === 'addPrestation') return `Confirmer l'ajout`;
     if (action === 'updateCode') return 'Confirmer la modification';
     if (action === 'deletePersonalized') return 'Confirmer la suppression du BPU personnalisé';
+    if (action === 'updatePeriod') return 'Modifier les prix de la période';
     return 'Confirmer la validation';
   }
 
@@ -487,6 +686,11 @@ export class BpuList {
     if (action === 'deletePersonalized' && context?.action === 'deletePersonalized') {
       return `Le BPU personnalisé de ${context.technicianLabel} sera supprimé. Cette action retire sa configuration dédiée et le technicien reviendra sur le BPU par défaut.`;
     }
+    if (action === 'updatePeriod') {
+      const entry = this.priceHistory().find(e => e._id === this.historyExpanded());
+      const date = entry ? this.historyEntryDate(entry) : '';
+      return `Les prix du snapshot « Valable à partir du ${date} » seront mis à jour. Cette action est irréversible.`;
+    }
     if (action === 'saveSelection' && context?.action === 'saveSelection') {
       if (context.technicianLabel) {
         return `Le BPU de suivi sera sauvegardé pour ${context.technicianLabel}.`;
@@ -501,12 +705,14 @@ export class BpuList {
     if (action === 'addPrestation') return 'Ajouter';
     if (action === 'updateCode') return 'Modifier';
     if (action === 'deletePersonalized') return 'Supprimer';
+    if (action === 'updatePeriod') return 'Mettre à jour';
     return 'Valider';
   }
 
   confirmTone(): 'primary' | 'success' | 'danger' {
     const action = this.confirmAction();
     if (action === 'updateCode') return 'primary';
+    if (action === 'updatePeriod') return 'primary';
     if (action === 'deletePersonalized') return 'danger';
     return 'success';
   }
@@ -515,6 +721,7 @@ export class BpuList {
     const action = this.confirmAction();
     if (action === 'addPrestation') return this.adding();
     if (action === 'saveSelection') return this.saving();
+    if (action === 'updatePeriod') return this.saving();
     if (action === 'updateCode') {
       const context = this.confirmContext();
       if (context?.action === 'updateCode') {
@@ -575,7 +782,7 @@ export class BpuList {
       unitPrice: Number(context.unitPrice || 0)
     };
     if (!payload.prestation || !payload.code || !Number.isFinite(payload.unitPrice)) {
-      this.error.set('Champs invalides pour l’ajout.');
+      this.error.set(`Champs invalides pour l'ajout.`);
       return;
     }
 
@@ -591,7 +798,7 @@ export class BpuList {
       },
       error: (err: HttpErrorResponse) => {
         this.adding.set(false);
-        this.error.set(this.apiError(err, 'Erreur ajout prestation'));
+        this.error.set(apiError(err, 'Erreur ajout prestation'));
       }
     });
   }
@@ -641,7 +848,7 @@ export class BpuList {
         const nextSaving = new Set(this.savingCodes());
         nextSaving.delete(id);
         this.savingCodes.set(nextSaving);
-        this.error.set(this.apiError(err, 'Erreur mise à jour du code'));
+        this.error.set(apiError(err, 'Erreur mise à jour du code'));
       }
     });
   }
@@ -664,7 +871,7 @@ export class BpuList {
       },
       error: (err: HttpErrorResponse) => {
         this.deletingPersonalized.set(false);
-        this.error.set(this.apiError(err, 'Erreur suppression BPU'));
+        this.error.set(apiError(err, 'Erreur suppression BPU'));
       }
     });
   }
@@ -755,6 +962,11 @@ export class BpuList {
     return this.selectedCodes().size > 0;
   }
 
+  onValidFromChange(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    this.selectionValidFrom.set(target?.value ?? '');
+  }
+
   saveSelection(): void {
     if (this.isTechnician()) {
       this.error.set('Vous pouvez consulter votre BPU, mais pas le modifier.');
@@ -796,6 +1008,10 @@ export class BpuList {
       this.performSaveSelection();
       return;
     }
+    if (action === 'updatePeriod') {
+      this.performUpdatePeriod();
+      return;
+    }
     if (action === 'addPrestation' && context?.action === 'addPrestation') {
       this.performAddPrestation(context);
       return;
@@ -812,6 +1028,7 @@ export class BpuList {
   private openConfirm(
     action: ConfirmAction,
     context: { action: 'saveSelection'; technicianLabel?: string | null }
+      | { action: 'updatePeriod' }
       | { action: 'addPrestation'; prestation: string; code: string; unitPrice: number }
       | { action: 'updateCode'; id: string; prestation: string; currentCode: string; nextCode: string }
       | { action: 'deletePersonalized'; ownerId: string; technicianLabel: string; selectionId: string }
@@ -845,12 +1062,16 @@ export class BpuList {
       return;
     }
 
-    const payload: { type: string; prestations: { code: string; unitPrice: number }[]; owner?: string | null } = {
+    const validFromRaw = this.selectionValidFrom().trim();
+    const payload: { type: string; prestations: { code: string; unitPrice: number }[]; owner?: string | null; validFrom?: string } = {
       type,
       prestations
     };
     if (!this.isTechnician() && this.selectedTechnicianId()) {
       payload.owner = this.selectedTechnicianId();
+    }
+    if (validFromRaw) {
+      payload.validFrom = new Date(validFromRaw).toISOString();
     }
 
     this.saving.set(true);
@@ -875,7 +1096,7 @@ export class BpuList {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.error.set(this.apiError(err, 'Erreur sauvegarde BPU'));
+        this.error.set(apiError(err, 'Erreur sauvegarde BPU'));
       }
     });
   }
@@ -895,11 +1116,23 @@ export class BpuList {
       return;
     }
 
+    const validFromRaw = this.selectionValidFrom().trim();
+    const validFrom = validFromRaw ? new Date(validFromRaw).toISOString() : undefined;
+
     this.saving.set(true);
     this.error.set(null);
     this.success.set(null);
     this.bpuService.bulkUpsert('ERT', payload).subscribe({
       next: (res) => {
+        // Créer aussi une BpuSelection ERT pour déclencher l'historisation
+        const selectionPrestations = payload.map(p => ({ code: p.code, unitPrice: p.unitPrice }));
+        this.bpuSelectionService.create({
+          type: 'ERT',
+          owner: null,
+          prestations: selectionPrestations,
+          validFrom
+        }).subscribe({ error: () => { /* ignoré */ } });
+
         this.saving.set(false);
         this.selectedCodes.set(new Set());
         const created = Number(res.created || 0);
@@ -909,7 +1142,7 @@ export class BpuList {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.error.set(this.apiError(err, 'Erreur sauvegarde BPU ERT'));
+        this.error.set(apiError(err, 'Erreur sauvegarde BPU ERT'));
       }
     });
   }
@@ -918,7 +1151,7 @@ export class BpuList {
     this.bpuService.exportCsv().subscribe({
       next: (blob) => downloadBlob(blob, 'bpu.csv'),
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.apiError(err, 'Erreur export CSV'));
+        this.error.set(apiError(err, 'Erreur export CSV'));
       }
     });
   }
@@ -927,7 +1160,7 @@ export class BpuList {
     this.bpuService.exportPdf().subscribe({
       next: (blob) => downloadBlob(blob, 'bpu.pdf'),
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.apiError(err, 'Erreur export PDF'));
+        this.error.set(apiError(err, 'Erreur export PDF'));
       }
     });
   }
@@ -1003,14 +1236,6 @@ export class BpuList {
       || c === 'CABLE_PAV_3'
       || c === 'CABLE_PAV_4'
       || c === 'CABLE_PAV_SL';
-  }
-
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
   }
 
   private resolveSelection(ownerSelections: BpuSelection[], globalSelections: BpuSelection[], segment: Segment): BpuSelection | null {

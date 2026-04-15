@@ -3,12 +3,32 @@
 import { Component, computed, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import {CommonModule, DatePipe} from '@angular/common';
 import {Router, RouterModule} from '@angular/router';
+import { forkJoin } from 'rxjs';
 import {AdminService} from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Role } from '../../core/models/roles.model';
 import {HistoryItem} from '../../core/models/historyItem.model';
 import { AbsenceService } from '../../core/services/absence.service';
 import { InterventionService } from '../../core/services/intervention.service';
+import { MovementService } from '../../core/services/movement.service';
+import { Movement } from '../../core/models';
+
+type DashboardAuditItem = {
+  technician: string;
+  region: string;
+  nbTotal: number;
+  txEchecGlobal: number;
+  echecs: Array<{ motifEchec: string }>;
+};
+
+type DashboardAuditInsight = {
+  riskiestTechnician: string | null;
+  riskiestRate: number | null;
+  riskiestFailures: number;
+  riskiestScore: number;
+  riskiestRegion: string | null;
+  regionFailures: number;
+};
 
 @Component({
   standalone: true,
@@ -24,6 +44,7 @@ export class Dashboard implements OnInit {
   private router = inject(Router);
   private absenceService = inject(AbsenceService);
   private interventions = inject(InterventionService);
+  private movementService = inject(MovementService);
   private readonly numberFormat = new Intl.NumberFormat('fr-FR');
   private readonly donutRadius = 90;
   private readonly donutCircumference = 2 * Math.PI * this.donutRadius;
@@ -60,6 +81,15 @@ export class Dashboard implements OnInit {
   readonly prestationsTypesRange = signal<{ from: string; to: string } | null>(null);
   readonly todayInterventionsCount = signal(0);
   readonly todayAbsentTechniciansCount = signal(0);
+  readonly auditItems = signal<DashboardAuditItem[]>([]);
+  readonly auditTotals = signal<{ nbTotal: number; nbEchecs: number; txEchecGlobal: number } | null>(null);
+  readonly auditTopMotif = signal<string | null>(null);
+  readonly materialInsight = signal({
+    topTechnician: null as string | null,
+    topTechnicianQty: 0,
+    ptoQty: 0,
+    jarretiereQty: 0
+  });
 
   // On réexpose les signals du service pour les templates
   readonly stats = this.adminService.stats;       // Signal<DashboardStats | null>
@@ -148,6 +178,89 @@ export class Dashboard implements OnInit {
   readonly prestationsTrendTypesShort = computed(() =>
     this.prestationsTrendTypes().slice(0, 4)
   );
+  readonly topPrestations = computed(() => this.prestationsTypes().slice(0, 4));
+  readonly executionRate = computed(() => {
+    const month = Number(this.stats()?.prestationsMonth ?? 0);
+    if (!month) return 0;
+    return Math.min(100, Math.round((this.prestationsTypesWeekTotal() / month) * 100));
+  });
+  readonly auditInsight = computed(() => this.buildAuditInsight(this.auditItems()));
+  readonly moduleCards = computed(() => [
+    {
+      key: 'import',
+      title: 'Import CSV Osiris',
+      icon: 'upload_file',
+      tone: 'blue',
+      status: 'Actif',
+      metric: `${this.formatCount(this.todayInterventionsCount())} interventions du jour`,
+      detail: 'Import, fusion et lecture du flux terrain sans intégration officielle.',
+      action: 'Ouvrir import',
+      route: ['/admin/interventions/import']
+    },
+    {
+      key: 'dashboard',
+      title: 'Dashboard interventions',
+      icon: 'insights',
+      tone: 'green',
+      status: 'Pilotage',
+      metric: `${this.formatCount(this.prestationsTypesWeekTotal())} prestations cette semaine`,
+      detail: 'Lecture immédiate du volume, des tendances 7 jours et des priorités terrain.',
+      action: 'Voir le cockpit',
+      route: ['/admin/interventions/week']
+    },
+    {
+      key: 'failures',
+      title: 'Analyse des échecs',
+      icon: 'crisis_alert',
+      tone: 'amber',
+      status: 'DB + CSV',
+      metric: this.auditTotals()
+        ? `${this.formatCount(this.auditTotals()?.nbEchecs ?? 0)} échecs · ${this.auditTotals()?.txEchecGlobal ?? 0} % taux global`
+        : 'Audit mensuel en chargement',
+      detail: this.auditInsight().riskiestTechnician
+        ? `Alerte prioritaire : ${this.auditInsight().riskiestTechnician} (score ${this.auditInsight().riskiestScore}, ${this.auditInsight().riskiestFailures} échecs, ${this.auditInsight().riskiestRate} %). Zone la plus touchée : ${this.auditInsight().riskiestRegion} (${this.formatCount(this.auditInsight().regionFailures)} échecs). Top motif : ${this.auditTopMotif() || 'n/d'}.`
+        : (this.auditTopMotif()
+          ? `Top motif du mois : ${this.auditTopMotif()}. Vue détaillée par technicien, base et fichier Osiris.`
+          : 'Vue détaillée par technicien, base et fichier Osiris pour isoler rapidement les échecs critiques.'),
+      action: 'Auditer',
+      route: ['/admin/interventions/audit']
+    },
+    {
+      key: 'technicians',
+      title: 'Gestion techniciens',
+      icon: 'engineering',
+      tone: 'violet',
+      status: 'Actif',
+      metric: `${this.formatCount(this.todayAbsentTechniciansCount())} indisponibilité(s) aujourd'hui`,
+      detail: 'Suivi d activité, interventions et absences depuis un point d entrée unique.',
+      action: 'Voir activité',
+      route: ['/admin/technicians/activity']
+    },
+    {
+      key: 'materials',
+      title: 'Gestion matériel',
+      icon: 'inventory_2',
+      tone: 'slate',
+      status: 'Stock',
+      metric: `${this.formatCount((this.stats()?.totalLowStockMaterials ?? 0) + (this.stats()?.totalLowStockConsumables ?? 0))} alerte(s) stock · ${this.formatCount(this.materialInsight().topTechnicianQty)} unités affectées`,
+      detail: this.materialInsight().topTechnician
+        ? `Top consommation technicien : ${this.materialInsight().topTechnician} (${this.formatCount(this.materialInsight().topTechnicianQty)} unités). PTO : ${this.formatCount(this.materialInsight().ptoQty)} · JARRETIÈRES : ${this.formatCount(this.materialInsight().jarretiereQty)}.`
+        : `PTO : ${this.formatCount(this.materialInsight().ptoQty)} · JARRETIÈRES : ${this.formatCount(this.materialInsight().jarretiereQty)}. Objectif : réduire les pertes et mieux lire la consommation terrain.`,
+      action: 'Voir consommation',
+      route: ['/admin/resources/material-consumption']
+    },
+    {
+      key: 'compliance',
+      title: 'Mini conformité',
+      icon: 'verified_user',
+      tone: 'rose',
+      status: 'Phase 2',
+      metric: `${this.formatCount(this.pendingAbsenceCount())} demande(s) RH en attente`,
+      detail: 'Socle RH présent, à étendre avec documents techniciens et alertes expiration.',
+      action: 'Ouvrir RH',
+      route: ['/admin/hr']
+    }
+  ]);
   readonly prestationsDonut = computed(() => {
     const items = this.prestationsTypes();
     const total = items.reduce((sum, item) => sum + item.value, 0);
@@ -248,6 +361,58 @@ export class Dashboard implements OnInit {
         this.todayAbsentTechniciansCount.set(0);
       }
     });
+
+    this.interventions.auditEchecs({
+      fromDate: this.firstDayOfCurrentMonth(),
+      toDate: this.lastDayOfCurrentMonth()
+    }).subscribe({
+      next: (res) => {
+        this.auditItems.set(res?.data?.items ?? []);
+        this.auditTotals.set(res?.data?.totals ?? null);
+        this.auditTopMotif.set(res?.data?.topMotifs?.[0]?.motif ?? null);
+      },
+      error: () => {
+        this.auditItems.set([]);
+        this.auditTotals.set(null);
+        this.auditTopMotif.set(null);
+      }
+    });
+
+    forkJoin([
+      this.movementService.listRaw({
+        resourceType: 'CONSUMABLE',
+        action: 'ASSIGN',
+        toType: 'USER',
+        fromDate: this.firstDayOfCurrentMonth(),
+        toDate: this.lastDayOfCurrentMonth(),
+        page: 1,
+        limit: 500
+      }),
+      this.movementService.listRaw({
+        resourceType: 'MATERIAL',
+        action: 'ASSIGN',
+        toType: 'USER',
+        fromDate: this.firstDayOfCurrentMonth(),
+        toDate: this.lastDayOfCurrentMonth(),
+        page: 1,
+        limit: 500
+      })
+    ]).subscribe({
+      next: ([consumables, materials]) => {
+        this.materialInsight.set(this.buildMaterialInsight([
+          ...(consumables.items ?? []),
+          ...(materials.items ?? [])
+        ]));
+      },
+      error: () => {
+        this.materialInsight.set({
+          topTechnician: null,
+          topTechnicianQty: 0,
+          ptoQty: 0,
+          jarretiereQty: 0
+        });
+      }
+    });
   }
 
   // Navigation rapide depuis les cartes du dashboard
@@ -292,7 +457,12 @@ export class Dashboard implements OnInit {
   }
 
   goToAbsences(): void {
-    this.router.navigate(['/admin/hr']);
+    this.router.navigate(['/admin/hr'], { queryParams: { tab: 'leaves' } });
+  }
+
+  scrollToTrend(): void {
+    const el = document.getElementById('radar-interventions');
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   goToNewUser(): void {
@@ -333,6 +503,14 @@ export class Dashboard implements OnInit {
 
   goToTechnicianInterventions(): void {
     this.router.navigate(['/admin/technicians/interventions']);
+  }
+
+  goToInterventionsAudit(): void {
+    this.router.navigate(['/admin/interventions/audit']);
+  }
+
+  openModule(route: string[]): void {
+    this.router.navigate(route);
   }
 
   trackHistory(index: number, item: HistoryItem): string {
@@ -395,6 +573,126 @@ export class Dashboard implements OnInit {
     const month = `${now.getMonth() + 1}`.padStart(2, '0');
     const day = `${now.getDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private buildAuditInsight(items: DashboardAuditItem[]): DashboardAuditInsight {
+    if (!items.length) {
+      return {
+        riskiestTechnician: null,
+        riskiestRate: null,
+        riskiestFailures: 0,
+        riskiestScore: 0,
+        riskiestRegion: null,
+        regionFailures: 0
+      };
+    }
+
+    const maxFailures = Math.max(...items.map((item) => Number(item.echecs?.length || 0)), 1);
+    const scored = items
+      .map((item) => {
+        const failures = Math.max(0, Number(item.echecs?.length || 0));
+        const rate = Math.max(0, Number(item.txEchecGlobal || 0));
+        return {
+          ...item,
+          failures,
+          rate,
+          score: this.scoreAuditRisk(item, maxFailures)
+        };
+      })
+      .filter((item) => item.failures > 0);
+
+    const riskiest = [...scored].sort((a, b) => {
+      const scoreDiff = b.score - a.score;
+      if (scoreDiff !== 0) return scoreDiff;
+      const failureDiff = b.failures - a.failures;
+      if (failureDiff !== 0) return failureDiff;
+      return b.rate - a.rate;
+    })[0];
+
+    const regionMap = new Map<string, number>();
+    for (const item of items) {
+      const region = String(item.region || '').trim() || 'Non renseignee';
+      regionMap.set(region, (regionMap.get(region) || 0) + Number(item.echecs?.length || 0));
+    }
+    const riskiestRegionEntry = [...regionMap.entries()].sort((a, b) => b[1] - a[1])[0];
+
+    return {
+      riskiestTechnician: riskiest?.technician || null,
+      riskiestRate: riskiest?.rate ?? null,
+      riskiestFailures: riskiest?.failures ?? 0,
+      riskiestScore: riskiest?.score ?? 0,
+      riskiestRegion: riskiestRegionEntry?.[0] || null,
+      regionFailures: riskiestRegionEntry?.[1] || 0
+    };
+  }
+
+  private buildMaterialInsight(items: Movement[]): {
+    topTechnician: string | null;
+    topTechnicianQty: number;
+    ptoQty: number;
+    jarretiereQty: number;
+  } {
+    if (!items.length) {
+      return {
+        topTechnician: null,
+        topTechnicianQty: 0,
+        ptoQty: 0,
+        jarretiereQty: 0
+      };
+    }
+
+    const totalsByTechnician = new Map<string, number>();
+    let ptoQty = 0;
+    let jarretiereQty = 0;
+
+    for (const item of items) {
+      const qty = Math.max(0, Number(item.quantity || 0));
+      const technician = String(item.toLabel || item.authorName || item.to?.id || '').trim() || 'Technicien non renseigne';
+      totalsByTechnician.set(technician, (totalsByTechnician.get(technician) || 0) + qty);
+
+      const label = this.normalizeKey(item.resourceLabel || item.resourceId || '');
+      if (label.includes('pto')) {
+        ptoQty += qty;
+      }
+      if (label.includes('jarretiere') || label.includes('jarretière') || label.includes('jarret')) {
+        jarretiereQty += qty;
+      }
+    }
+
+    const topTechnicianEntry = [...totalsByTechnician.entries()].sort((a, b) => b[1] - a[1])[0];
+
+    return {
+      topTechnician: topTechnicianEntry?.[0] || null,
+      topTechnicianQty: topTechnicianEntry?.[1] || 0,
+      ptoQty,
+      jarretiereQty
+    };
+  }
+
+  private scoreAuditRisk(item: DashboardAuditItem, maxFailures: number): number {
+    const total = Math.max(0, Number(item.nbTotal || 0));
+    const failures = Math.max(0, Number(item.echecs?.length || 0));
+    const rate = Math.max(0, Number(item.txEchecGlobal || 0));
+    const volumeFactor = Math.min(total / 12, 1);
+    const failureWeight = failures / Math.max(1, maxFailures);
+
+    return Math.round(((rate * 0.6) + (failureWeight * 100 * 0.3) + (volumeFactor * 100 * 0.1)) * 10) / 10;
+  }
+
+  private firstDayOfCurrentMonth(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = `${now.getMonth() + 1}`.padStart(2, '0');
+    return `${year}-${month}-01`;
+  }
+
+  private lastDayOfCurrentMonth(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const monthIndex = now.getMonth();
+    const month = `${monthIndex + 1}`.padStart(2, '0');
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+    return `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
   }
 
   private mapTrendDays(

@@ -18,8 +18,11 @@
   <section class="pulse-section">
     <div class="pulse-head">
       <div class="pulse-title-wrap">
-        <span class="hero-badge">ERP FXN · ERT Technologies</span>
-        <h1>Tableau de bord dirigeant</h1>
+        <span class="hero-badge">ERP FXN · MVP terrain 7 jours</span>
+        <h1>Cockpit interventions et performance réseau</h1>
+        <p class="pulse-subtitle">
+          Priorités du terrain, volume exploitable et modules MVP pour signer les premières PME.
+        </p>
       </div>
       <div class="pulse-controls">
         <button class="ctrl-btn ctrl-dirigeant" type="button" (click)="goToDirigeant()">
@@ -39,7 +42,7 @@
     @if (stats(); as s) {
       <div class="pulse-kpis">
 
-        <article class="pkpi pkpi-perf" (click)="goToDirigeant()" role="button" tabindex="0">
+        <article class="pkpi pkpi-perf" (click)="scrollToTrend()" role="button" tabindex="0">
           <div class="pkpi-icon-wrap">
             <span class="material-icons notranslate">insights</span>
           </div>
@@ -51,7 +54,7 @@
           <div class="pkpi-arrow">→</div>
         </article>
 
-        <article class="pkpi pkpi-today" (click)="goToInterventions()" role="button" tabindex="0">
+        <article class="pkpi pkpi-today" (click)="goToTechnicianInterventions()" role="button" tabindex="0">
           <div class="pkpi-icon-wrap">
             <span class="material-icons notranslate">build_circle</span>
           </div>
@@ -109,6 +112,49 @@
     }
   </section>
 
+  <section class="mvp-strip card">
+    <div class="mvp-strip-head">
+      <div>
+        <span class="section-kicker">Plan produit</span>
+        <h2>6 modules clés pour le MVP terrain</h2>
+      </div>
+      <div class="mvp-strip-meta">
+        <div class="mvp-meta-pill">
+          <span class="material-icons notranslate">speed</span>
+          <span>{{ executionRate() }}% du volume mensuel déjà visible cette semaine</span>
+        </div>
+        <div class="mvp-meta-pill">
+          <span class="material-icons notranslate">hub</span>
+          <span>{{ formatCount(topPrestations().length) }} familles prioritaires suivies</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mvp-module-grid">
+      @for (module of moduleCards(); track module.key) {
+        <article class="mvp-module-card" [ngClass]="'tone-' + module.tone">
+          <div class="module-card-head">
+            <div class="module-icon">
+              <span class="material-icons notranslate">{{ module.icon }}</span>
+            </div>
+            <span class="module-status">{{ module.status }}</span>
+          </div>
+
+          <div class="module-card-body">
+            <h3>{{ module.title }}</h3>
+            <strong>{{ module.metric }}</strong>
+            <p>{{ module.detail }}</p>
+          </div>
+
+          <button class="module-link" type="button" (click)="openModule(module.route)">
+            {{ module.action }}
+            <span class="material-icons notranslate">arrow_forward</span>
+          </button>
+        </article>
+      }
+    </div>
+  </section>
+
   <!-- ═══════════════════════════════════════════
        2. CONTENU PRINCIPAL — Prestations + Décisions
   ═══════════════════════════════════════════ -->
@@ -116,10 +162,10 @@
     <div class="main-grid">
 
       <!-- LEFT : graphique prestations -->
-      <section class="prestations-panel card">
+      <section class="prestations-panel card" id="radar-interventions">
         <div class="panel-head">
           <div>
-            <h2>Répartition des prestations</h2>
+            <h2>Radar interventions</h2>
             <p>
               @if (prestationsTypesRange(); as r) {
                 Du {{ r.from }} au {{ r.to }}
@@ -127,11 +173,11 @@
                 Derniers 30 jours
               }
               @if (prestationsTypes().length) {
-                · <strong>{{ formatCount(prestationsTypesTotal()) }}</strong> au total
+                · <strong>{{ formatCount(prestationsTypesTotal()) }}</strong> prestations consolidées
               }
             </p>
           </div>
-          <button class="panel-link" type="button" (click)="goToDirigeant()">Voir détails →</button>
+          <button class="panel-link" type="button" (click)="goToInterventions()">Ouvrir les interventions →</button>
         </div>
 
         @if (prestationsTypes().length) {
@@ -230,8 +276,8 @@
         <!-- Volume prestations semaine / mois -->
         <article class="summary-card card">
           <div class="summary-header">
-            <span class="summary-title">Volume prestations</span>
-            <button class="summary-link" type="button" (click)="goToDirigeant()">Détails →</button>
+            <span class="summary-title">Exécution terrain</span>
+            <button class="summary-link" type="button" (click)="goToDirigeant()">Pilotage →</button>
           </div>
 
           <div class="summary-counters">
@@ -317,7 +363,7 @@
         <!-- Accès rapide opérations -->
         <article class="quick-ops card">
           <div class="qops-head">
-            <h3>Accès rapide</h3>
+            <h3>Accès rapide MVP</h3>
           </div>
           <div class="qops-grid">
             <button class="qop" type="button" (click)="goToInterventions()">

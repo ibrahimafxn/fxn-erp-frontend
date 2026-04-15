@@ -22,6 +22,14 @@
       <button class="tab" [class.active]="tab() === 'leaves'" (click)="switchTab('leaves')">
         <span class="material-icons notranslate">beach_access</span>Congés
       </button>
+      @if (isAdminOnly()) {
+        <button class="tab" [class.active]="isAthemisTab()" (click)="openAthemisTab()">
+          <span class="material-icons notranslate">verified_user</span>ERT
+          @if (athemisData()?.stats?.nonConforme) {
+            <span class="tab-badge badge-danger">{{ athemisData()!.stats.nonConforme }}</span>
+          }
+        </button>
+      }
     </div>
   </header>
 
@@ -242,6 +250,12 @@
                       <label>Adresse</label>
                       <input type="text" formControlName="address" />
                     </div>
+                    @if (isAdmin()) {
+                      <div class="field">
+                        <label>N° Sécurité Sociale</label>
+                        <input type="text" formControlName="ssNumber" placeholder="1 85 12 75 113 254 78" autocomplete="off" />
+                      </div>
+                    }
                   </div>
                 </section>
 
@@ -294,6 +308,49 @@
                     </div>
                   </div>
                 </section>
+
+                @if (isAdmin()) {
+                  <section class="profile-section-card athemis-card">
+                    <div class="profile-section-header">
+                      <h3><span class="material-icons notranslate">verified_user</span>Conformité ERT</h3>
+                      <p>Données sensibles transmises à ERT Technologie. Accès restreint ADMIN/DIRIGEANT.</p>
+                    </div>
+                    <div class="form-grid">
+                      <div class="field">
+                        <label>N° Sécurité Sociale <span class="required-star">*</span></label>
+                        <input type="text" formControlName="ssNumber" placeholder="1 85 12 75 113 254 78" autocomplete="off" />
+                        <span class="field-hint">Obligatoire pour ATHEMIS</span>
+                      </div>
+                      <div class="field">
+                        <label>N° CNI <span class="required-star">*</span></label>
+                        <input type="text" formControlName="cniNumber" placeholder="123456789012" autocomplete="off" />
+                        <span class="field-hint">Obligatoire pour ATHEMIS</span>
+                      </div>
+                      <div class="field">
+                        <label>Statut ATHEMIS</label>
+                        <select formControlName="athemisStatus">
+                          <option value="EN_ATTENTE">En attente</option>
+                          <option value="CONFORME">Conforme</option>
+                          <option value="NON_CONFORME">Non conforme</option>
+                        </select>
+                      </div>
+                    </div>
+                    @if (s.profile?.athemisLastCheck) {
+                      <p class="field-hint">Dernière vérification : {{ formatDate(s.profile?.athemisLastCheck) }}</p>
+                    }
+                    <div class="athemis-status-indicator"
+                      [class.badge-success]="profileAthemisIsConforme()"
+                      [class.badge-danger]="profileAthemisIsNonConforme()"
+                      [class.badge-warning]="profileAthemisIsEnAttente()">
+                      <span class="material-icons notranslate">
+                        @if (profileAthemisIsConforme()) { check_circle }
+                        @else if (profileAthemisIsNonConforme()) { cancel }
+                        @else { schedule }
+                      </span>
+                      {{ athemisStatusLabel(profileForm.controls.athemisStatus.value) }}
+                    </div>
+                  </section>
+                }
 
                 <section class="profile-section-card">
                   <div class="profile-section-header">
@@ -878,4 +935,209 @@
     (cancel)="closeProfileConfirm()"
     (confirm)="confirmSaveProfile()">
   </app-confirm-action-modal>
+
+  @if (isAthemisTab()) {
+    <div class="panel athemis-panel">
+      <div class="athemis-header">
+        <div>
+          <h2 class="section-title"><span class="material-icons notranslate">verified_user</span>Conformite ATHEMIS - ERT Technologie</h2>
+          <p class="subtitle">Suivi des dossiers techniciens pour transmission a ERT. Donnees sensibles (CNI, N SS, habilitations).</p>
+        </div>
+        <div class="athemis-actions">
+          <button class="btn-outline" type="button" (click)="loadAthemisCompliance()" [disabled]="athemisLoading()">
+            <span class="material-icons notranslate">refresh</span>Actualiser
+          </button>
+          <button class="btn-primary" type="button" (click)="exportAthemisCsv()" [disabled]="athemisExportLoading()">
+            <span class="material-icons notranslate">download</span>
+            {{ athemisExportLabel() }}
+          </button>
+        </div>
+      </div>
+
+      @if (athemisError()) {
+        <div class="state error">{{ athemisError() }}</div>
+      }
+
+      @if (athemisLoading()) {
+        <div class="state">Chargement des données ATHEMIS…</div>
+      }
+
+      @if (athemisData(); as data) {
+        <!-- KPIs -->
+        <div class="athemis-kpis">
+          <div class="kpi-card">
+            <span class="kpi-icon material-icons notranslate">people</span>
+            <div>
+              <div class="kpi-value">{{ data.stats.total }}</div>
+              <div class="kpi-label">Techniciens</div>
+            </div>
+          </div>
+          <div class="kpi-card kpi-success">
+            <span class="kpi-icon material-icons notranslate">check_circle</span>
+            <div>
+              <div class="kpi-value">{{ data.stats.conforme }}</div>
+              <div class="kpi-label">Conformes</div>
+            </div>
+          </div>
+          <div class="kpi-card kpi-danger">
+            <span class="kpi-icon material-icons notranslate">cancel</span>
+            <div>
+              <div class="kpi-value">{{ data.stats.nonConforme }}</div>
+              <div class="kpi-label">Non conformes</div>
+            </div>
+          </div>
+          <div class="kpi-card kpi-warning">
+            <span class="kpi-icon material-icons notranslate">schedule</span>
+            <div>
+              <div class="kpi-value">{{ data.stats.enAttente }}</div>
+              <div class="kpi-label">En attente</div>
+            </div>
+          </div>
+          <div class="kpi-card kpi-alert">
+            <span class="kpi-icon material-icons notranslate">badge</span>
+            <div>
+              <div class="kpi-value">{{ data.stats.missingCniNumber }}</div>
+              <div class="kpi-label">N° CNI manquant</div>
+            </div>
+          </div>
+          <div class="kpi-card kpi-alert">
+            <span class="kpi-icon material-icons notranslate">security</span>
+            <div>
+              <div class="kpi-value">{{ data.stats.missingSsNumber }}</div>
+              <div class="kpi-label">N° SS manquant</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filters">
+          <input
+            #athemisQ
+            type="search"
+            [value]="athemisSearch()"
+            placeholder="Rechercher un technicien…"
+            (input)="athemisSearch.set(athemisQ.value)"
+          />
+          <select #athemisStatusSel [value]="athemisStatusFilter()" (change)="athemisStatusFilter.set(athemisStatusSel.value)">
+            <option value="">Tous les statuts</option>
+            <option value="CONFORME">Conforme</option>
+            <option value="NON_CONFORME">Non conforme</option>
+            <option value="EN_ATTENTE">En attente</option>
+          </select>
+        </div>
+
+        <!-- Tableau techniciens -->
+        <div class="table-wrap">
+          <table class="athemis-table">
+            <thead>
+              <tr>
+                <th>Technicien</th>
+                <th>Statut ATHEMIS</th>
+                <th>N° CNI</th>
+                <th>N° SS</th>
+                <th>Doc CNI</th>
+                <th>Carte Vitale</th>
+                <th>Contrat</th>
+                <th>Habilitations ERT</th>
+                <th>Points manquants</th>
+                <th>Vérifié le</th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (!athemisFilteredTechs().length) {
+                <tr><td colspan="10" class="state">Aucun technicien trouvé.</td></tr>
+              }
+              @for (tech of athemisFilteredTechs(); track tech.userId) {
+                <tr [class.row-danger]="isAthemisNonConforme(tech.athemisStatus)" [class.row-warning]="isAthemisEnAttente(tech.athemisStatus)">
+                  <td>
+                    <div class="tech-name">{{ tech.lastName }} {{ tech.firstName }}</div>
+                    <div class="tech-email">{{ tech.email }}</div>
+                  </td>
+                  <td>
+                    <span class="badge"
+                      [class.badge-success]="isAthemisConforme(tech.athemisStatus)"
+                      [class.badge-danger]="isAthemisNonConforme(tech.athemisStatus)"
+                      [class.badge-warning]="isAthemisEnAttente(tech.athemisStatus)">
+                      {{ athemisStatusLabel(tech.athemisStatus) }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (tech.hasCniNumber) {
+                      <span class="material-icons notranslate icon-success">check_circle</span>
+                    } @else {
+                      <span class="material-icons notranslate icon-danger">cancel</span>
+                    }
+                  </td>
+                  <td>
+                    @if (tech.hasSsNumber) {
+                      <span class="material-icons notranslate icon-success">check_circle</span>
+                    } @else {
+                      <span class="material-icons notranslate icon-danger">cancel</span>
+                    }
+                  </td>
+                  <td>
+                    @if (tech.hasCniDoc) {
+                      <span class="material-icons notranslate icon-success">check_circle</span>
+                    } @else {
+                      <span class="material-icons notranslate icon-danger">cancel</span>
+                    }
+                  </td>
+                  <td>
+                    @if (tech.hasCarteVitale) {
+                      <span class="material-icons notranslate icon-success">check_circle</span>
+                    } @else {
+                      <span class="material-icons notranslate icon-danger">cancel</span>
+                    }
+                  </td>
+                  <td>
+                    @if (tech.hasContrat) {
+                      <span class="material-icons notranslate icon-success">check_circle</span>
+                    } @else {
+                      <span class="material-icons notranslate icon-danger">cancel</span>
+                    }
+                  </td>
+                  <td class="habilitations-cell">
+                    @if (tech.habilitations.length) {
+                      @for (hab of tech.habilitations; track hab) {
+                        <span class="pill pill-sm">{{ hab }}</span>
+                      }
+                    } @else {
+                      <span class="text-muted">Aucune</span>
+                    }
+                  </td>
+                  <td>
+                    @if (tech.missingAthemis.length) {
+                      <span class="badge badge-danger">{{ athemisMissingBadge(tech) }}</span>
+                      <ul class="missing-list">
+                        @for (m of tech.missingAthemis; track m) {
+                          <li>{{ m }}</li>
+                        }
+                      </ul>
+                    } @else {
+                      <span class="material-icons notranslate icon-success">verified</span>
+                    }
+                  </td>
+                  <td>{{ formatDate(tech.athemisLastCheck) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Référentiel habilitations ERT -->
+        <div class="panel athemis-ref-panel">
+          <h3 class="section-title"><span class="material-icons notranslate">construction</span>Référentiel habilitations ERT</h3>
+          <div class="habilitations-ref-grid">
+            @for (hab of ertHabilitations; track hab.value) {
+              <div class="hab-ref-card">
+                <strong class="hab-code">{{ hab.value }}</strong>
+                <span class="hab-label">{{ hab.label }}</span>
+                <span class="pill pill-sm hab-group">{{ hab.group }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
 </section>

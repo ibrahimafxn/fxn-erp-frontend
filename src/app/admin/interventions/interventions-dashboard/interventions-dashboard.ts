@@ -46,6 +46,7 @@ import {
   REVENUE_CODE_ALIASES,
   REVENUE_KEYS
 } from './interventions-dashboard.constants';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -90,6 +91,7 @@ export class InterventionsDashboard {
   readonly rateSaving = signal(false);
   readonly rateSuccess = signal<string | null>(null);
   readonly rateError = signal<string | null>(null);
+  private rateSuccessTimer: ReturnType<typeof setTimeout> | null = null;
   readonly showRates = signal(true);
   readonly invoiceLoading = signal(false);
   readonly invoiceResetLoading = signal(false);
@@ -171,7 +173,7 @@ export class InterventionsDashboard {
         window.URL.revokeObjectURL(url);
       },
       error: (err) => {
-        this.importsError.set(this.apiError(err, 'Erreur téléchargement CSV'));
+        this.importsError.set(apiError(err, 'Erreur téléchargement CSV'));
       }
     });
   }
@@ -665,7 +667,7 @@ export class InterventionsDashboard {
       },
       error: (err: HttpErrorResponse) => {
         this.importLoading.set(false);
-        this.importError.set(this.apiError(err, 'Erreur import CSV'));
+        this.importError.set(apiError(err, 'Erreur import CSV'));
         this.resetFileInput();
       }
     });
@@ -693,7 +695,7 @@ export class InterventionsDashboard {
       },
       error: (err) => {
         this.importsLoading.set(false);
-        this.importsError.set(this.apiError(err, 'Erreur chargement imports'));
+        this.importsError.set(apiError(err, 'Erreur chargement imports'));
       }
     });
   }
@@ -719,7 +721,7 @@ export class InterventionsDashboard {
       },
       error: (err) => {
         this.ticketsLoading.set(false);
-        this.ticketsError.set(this.apiError(err, 'Erreur chargement tickets'));
+        this.ticketsError.set(apiError(err, 'Erreur chargement tickets'));
       }
     });
   }
@@ -783,7 +785,7 @@ export class InterventionsDashboard {
       },
       error: (err: HttpErrorResponse) => {
         this.invoiceLoading.set(false);
-        this.invoiceError.set(this.apiError(err, 'Erreur import factures'));
+        this.invoiceError.set(apiError(err, 'Erreur import factures'));
         this.resetInvoiceInput();
       }
     });
@@ -823,7 +825,7 @@ export class InterventionsDashboard {
       },
       error: (err: HttpErrorResponse) => {
         this.invoiceResetLoading.set(false);
-        this.invoiceError.set(this.apiError(err, 'Erreur suppression factures'));
+        this.invoiceError.set(apiError(err, 'Erreur suppression factures'));
       }
     });
   }
@@ -841,7 +843,7 @@ export class InterventionsDashboard {
       },
       error: (err: HttpErrorResponse) => {
         this.formatVersionsLoading.set(false);
-        this.formatVersionsError.set(this.apiError(err, 'Erreur formatage versions'));
+        this.formatVersionsError.set(apiError(err, 'Erreur formatage versions'));
       }
     });
   }
@@ -916,7 +918,7 @@ export class InterventionsDashboard {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement indicateurs'));
+        this.error.set(apiError(err, 'Erreur chargement indicateurs'));
       }
     });
     this.loadRevenueItems();
@@ -956,7 +958,7 @@ export class InterventionsDashboard {
       },
       error: (err: HttpErrorResponse) => {
         this.compareLoading.set(false);
-        this.compareError.set(this.apiError(err, 'Erreur comparaison factures'));
+        this.compareError.set(apiError(err, 'Erreur comparaison factures'));
       }
     });
   }
@@ -992,7 +994,7 @@ export class InterventionsDashboard {
       },
       error: (err: HttpErrorResponse) => {
         this.detailLoading.set(false);
-        this.detailError.set(this.apiError(err, 'Erreur chargement interventions'));
+        this.detailError.set(apiError(err, 'Erreur chargement interventions'));
       }
     });
   }
@@ -1027,7 +1029,7 @@ export class InterventionsDashboard {
     } catch (err) {
       if (requestId !== this.revenueRequestId) return;
       this.revenueItems.set([]);
-      this.revenueError.set(this.apiError(err as HttpErrorResponse, 'Erreur chargement revenus'));
+      this.revenueError.set(apiError(err as HttpErrorResponse, 'Erreur chargement revenus'));
     } finally {
       if (requestId !== this.revenueRequestId) return;
       this.revenueItemsLoaded.set(true);
@@ -1315,13 +1317,12 @@ export class InterventionsDashboard {
         this.rateSaving.set(false);
         this.rateSuccess.set('Prix enregistrés.');
         this.rateForm.markAsPristine();
-        setTimeout(() => {
-          if (this.rateSuccess()) this.rateSuccess.set(null);
-        }, 3000);
+        if (this.rateSuccessTimer !== null) clearTimeout(this.rateSuccessTimer);
+        this.rateSuccessTimer = setTimeout(() => { this.rateSuccessTimer = null; if (this.rateSuccess()) this.rateSuccess.set(null); }, 3000);
       },
       error: (err: HttpErrorResponse) => {
         this.rateSaving.set(false);
-        this.rateError.set(this.apiError(err, 'Erreur enregistrement prix'));
+        this.rateError.set(apiError(err, 'Erreur enregistrement prix'));
       }
     });
   }
@@ -1465,14 +1466,6 @@ export class InterventionsDashboard {
       },
       error: () => {}
     });
-  }
-
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
   }
 
   resetFileInput(): void {

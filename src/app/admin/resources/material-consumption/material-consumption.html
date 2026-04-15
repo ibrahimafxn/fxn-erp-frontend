@@ -1,0 +1,178 @@
+<section class="material-consumption">
+  <header class="page-header">
+    <div>
+      <span class="page-kicker">GESTION MATÉRIEL</span>
+      <h1>CONSOMMATION PAR TECHNICIEN</h1>
+      <p class="subtitle">PTO, JARRETIÈRES ET MATÉRIELS ATTRIBUÉS AUX TECHNICIENS SUR LA PÉRIODE.</p>
+    </div>
+  </header>
+
+  <section class="toolbar card">
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="load()">
+      <label>
+        DU
+        <input type="date" formControlName="fromDate" />
+      </label>
+
+      <label>
+        AU
+        <input type="date" formControlName="toDate" />
+      </label>
+
+      <label>
+        TYPE
+        <select formControlName="resourceType">
+          <option value="ALL">TOUT</option>
+          <option value="MATERIAL">MATÉRIEL</option>
+          <option value="CONSUMABLE">CONSOMMABLE</option>
+        </select>
+      </label>
+
+      <div class="actions">
+        <button class="btn-primary" type="submit">CHARGER</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()">RÉINITIALISER</button>
+      </div>
+    </form>
+
+    <div class="period-pill">PÉRIODE : {{ formatPeriod() }}</div>
+  </section>
+
+  @if (loading()) {
+    <div class="state card">CHARGEMENT DES CONSOMMATIONS…</div>
+  } @else if (error()) {
+    <div class="state error card">{{ error() }}</div>
+  } @else {
+    <section class="kpi-grid">
+      <article class="kpi-card">
+        <span class="kpi-label">UNITÉS ATTRIBUÉES</span>
+        <strong class="kpi-value">{{ totals().totalQty }}</strong>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">TECHNICIENS COUVERTS</span>
+        <strong class="kpi-value">{{ totals().technicianCount }}</strong>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">PTO CONSOMMÉES</span>
+        <strong class="kpi-value">{{ totals().ptoQty }}</strong>
+      </article>
+      <article class="kpi-card">
+        <span class="kpi-label">JARRETIÈRES CONSOMMÉES</span>
+        <strong class="kpi-value">{{ totals().jarretiereQty }}</strong>
+      </article>
+    </section>
+
+    <section class="family-strip card">
+      <div class="family-head">
+        <h2>FAMILLES STOCK MISES EN AVANT</h2>
+        <span>LECTURE MÉTIER DES ATTRIBUTIONS</span>
+      </div>
+      <div class="family-legend">
+        <span class="legend-pill"><strong>BOÎTIERS</strong> : boîtier PTO, PBO, boîtier intérieur</span>
+        <span class="legend-pill"><strong>CÂBLES</strong> : câble fibre, drop, câble de raccordement</span>
+        <span class="legend-pill"><strong>CONNECTIQUE</strong> : connecteur, adaptateur, coupleur, cassette, SFP</span>
+      </div>
+      <div class="family-grid">
+        <article class="family-card">
+          <span class="family-label">PTO</span>
+          <strong>{{ totals().ptoQty }}</strong>
+        </article>
+        <article class="family-card">
+          <span class="family-label">JARRETIÈRES</span>
+          <strong>{{ totals().jarretiereQty }}</strong>
+        </article>
+        <article class="family-card">
+          <span class="family-label">BOÎTIERS</span>
+          <strong>{{ totals().boitierQty }}</strong>
+        </article>
+        <article class="family-card">
+          <span class="family-label">CÂBLES</span>
+          <strong>{{ totals().cableQty }}</strong>
+        </article>
+        <article class="family-card">
+          <span class="family-label">CONNECTIQUE</span>
+          <strong>{{ totals().connectiqueQty }}</strong>
+        </article>
+        <article class="family-card">
+          <span class="family-label">OUTILS</span>
+          <strong>{{ totals().outilQty }}</strong>
+        </article>
+        <article class="family-card">
+          <span class="family-label">EPI</span>
+          <strong>{{ totals().epiQty }}</strong>
+        </article>
+      </div>
+    </section>
+
+    @if (topConsumer(); as top) {
+      <section class="spotlight card">
+        <span class="spotlight-label">POINT D’ATTENTION</span>
+        <h2>{{ top.technician }}</h2>
+        <p>
+          <strong>{{ top.totalQty }} UNITÉS</strong> SUR {{ top.movementCount }} MOUVEMENT(S)
+          · PTO {{ top.ptoQty }} · JARRETIÈRES {{ top.jarretiereQty }} · BOÎTIERS {{ top.boitierQty }} · CÂBLES {{ top.cableQty }} · OUTILS {{ top.outilQty }} · EPI {{ top.epiQty }}
+        </p>
+      </section>
+    }
+
+    <section class="table-card card">
+      <div class="table-head">
+        <h2>DÉTAIL PAR TECHNICIEN</h2>
+        <span>{{ rows().length }} LIGNE(S)</span>
+      </div>
+
+      @if (!rows().length) {
+        <div class="state">AUCUNE CONSOMMATION SUR LA PÉRIODE.</div>
+      } @else {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>TECHNICIEN</th>
+                <th>UNITÉS</th>
+                <th>PTO</th>
+                <th>JARRETIÈRES</th>
+                <th>BOÎTIERS</th>
+                <th>CÂBLES</th>
+                <th>CONNECTIQUE</th>
+                <th>OUTILS</th>
+                <th>EPI</th>
+                <th>MATÉRIEL</th>
+                <th>CONSOMMABLE</th>
+                <th>MOUVEMENTS</th>
+                <th>RESSOURCES PRINCIPALES</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track trackRow($index, row)) {
+                <tr>
+                  <td class="technician-cell">
+                    <strong>{{ row.technician }}</strong>
+                    <span class="bar-track">
+                      <span class="bar-fill" [style.width.%]="shareOfTop(row)"></span>
+                    </span>
+                  </td>
+                  <td>{{ row.totalQty }}</td>
+                  <td>{{ row.ptoQty }}</td>
+                  <td>{{ row.jarretiereQty }}</td>
+                  <td>{{ row.boitierQty }}</td>
+                  <td>{{ row.cableQty }}</td>
+                  <td>{{ row.connectiqueQty }}</td>
+                  <td>{{ row.outilQty }}</td>
+                  <td>{{ row.epiQty }}</td>
+                  <td>{{ row.materialQty }}</td>
+                  <td>{{ row.consumableQty }}</td>
+                  <td>{{ row.movementCount }}</td>
+                  <td class="resources-cell">
+                    @for (resource of row.topResources; track resource) {
+                      <span class="resource-pill">{{ resource }}</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</section>

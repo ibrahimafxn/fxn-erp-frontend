@@ -189,6 +189,10 @@ export class AppHeader {
   goInterventionsAudit(): void {
     this.router.navigate(['/admin/interventions/audit']).then();
   }
+
+  goInterventionsWeek(): void {
+    this.router.navigate(['/admin/interventions/week']).then();
+  }
   goTechnicianActivity(): void {
     this.router.navigate(['/admin/technicians/activity']).then();
   }
@@ -410,6 +414,7 @@ export class AppHeader {
     if (url.includes('/alerts/stock')) return 'Alertes';
     if (url.includes('/interventions/import')) return 'Import interventions';
     if (url.includes('/interventions/audit')) return 'Audit échecs';
+    if (url.includes('/interventions/week')) return 'Dashboard semaine';
     if (url.includes('/interventions')) return 'Interventions';
     if (url.includes('/technicians/interventions')) return 'Interventions techniciens';
     if (url.includes('/technicians/activity')) return 'Prestations techniciens';

@@ -187,8 +187,8 @@ describe('AuthService', () => {
         user: mockUser
       };
 
-      service.refreshToken().subscribe(token => {
-        expect(token).toBe('new-access-token');
+      service.refreshToken().subscribe(result => {
+        expect(result).toBeUndefined();
       });
 
       const req = httpMock.expectOne(`${environment.apiBaseUrl}/auth/refresh`);
@@ -196,6 +196,7 @@ describe('AuthService', () => {
       expect(req.request.withCredentials).toBeTrue();
 
       req.flush(refreshResponse);
+      expect(service.getAccessToken()).toBe('new-access-token');
     });
 
     it('should update access token after refresh', () => {

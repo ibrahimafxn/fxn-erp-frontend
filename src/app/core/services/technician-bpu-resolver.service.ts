@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, forkJoin } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { BpuService } from './bpu.service';
 import { BpuSelectionService } from './bpu-selection.service';
 import { EffectiveBpuService } from './effective-bpu.service';
-import { BpuEntry, BpuSelection, EffectiveBpuItem } from '../models';
+import { BpuEntry, BpuSelection, BpuPriceHistory, EffectiveBpuItem } from '../models';
 
 export type ResolvedTechnicianBpuItem = {
   prestationId?: string;
@@ -17,9 +17,38 @@ export type ResolvedTechnicianBpuItem = {
 export type ResolvedTechnicianBpuState = {
   items: ResolvedTechnicianBpuItem[];
   prices: Map<string, number>;
+  /** Prix courants indexés par date (triés validFrom DESC) */
+  priceHistory: BpuPriceHistory[];
   selections: BpuSelection[];
   usesPersonalizedBpu: boolean;
 };
+
+/**
+ * Retourne la Map<code, unitPrice> en vigueur à la date donnée,
+ * en cherchant dans l'historique le snapshot le plus récent dont validFrom ≤ date.
+ * Si aucun snapshot n'est antérieur, retourne les prix du snapshot le plus ancien.
+ * Si l'historique est vide, retourne la map courante (fallback).
+ */
+export function pricesForDate(
+  history: BpuPriceHistory[],
+  reportDate: string | Date | null | undefined,
+  fallback: Map<string, number>
+): Map<string, number> {
+  if (!history.length) return fallback;
+
+  const ts = reportDate ? new Date(reportDate).getTime() : 0;
+
+  // history est trié validFrom DESC côté backend
+  // On cherche le premier (= le plus récent) dont validFrom ≤ ts
+  const snapshot = history.find((h) => new Date(h.validFrom).getTime() <= ts) ?? history[history.length - 1];
+
+  const map = new Map<string, number>();
+  for (const { code, unitPrice } of snapshot.prestations) {
+    const key = String(code || '').trim().toUpperCase();
+    if (key) map.set(key, Number(unitPrice ?? 0));
+  }
+  return map;
+}
 
 @Injectable({ providedIn: 'root' })
 export class TechnicianBpuResolverService {
@@ -30,15 +59,23 @@ export class TechnicianBpuResolverService {
   ) {}
 
   resolve(technicianId?: string | null): Observable<ResolvedTechnicianBpuState> {
-    return this.bpuSelectionService.list().pipe(
-      switchMap((selections) => {
+    const historyOwner = technicianId ?? null;
+
+    return forkJoin({
+      selections: this.bpuSelectionService.list(),
+      history: this.bpuSelectionService.listHistory({ owner: historyOwner }).pipe(catchError(() => of([])))
+    }).pipe(
+      switchMap(({ selections, history }) => {
         const allSelections = selections || [];
         const fallbackSelection = this.latestSelection(allSelections);
+        const priceHistory = history || [];
 
         if (!technicianId) {
+          const prices = this.selectionPrices(fallbackSelection);
           return of({
             items: this.selectionItems(fallbackSelection),
-            prices: this.selectionPrices(fallbackSelection),
+            prices,
+            priceHistory,
             selections: allSelections,
             usesPersonalizedBpu: false
           });
@@ -50,22 +87,22 @@ export class TechnicianBpuResolverService {
             if (!effectiveItems.length) {
               throw new Error('EMPTY_EFFECTIVE_BPU');
             }
-            // usesPersonalizedBpu = true uniquement si une sélection personnelle existe (source OVERRIDE)
             const usesPersonalizedBpu = effectiveItems.some(item => item.source === 'OVERRIDE');
             return {
               items: this.effectiveItems(effectiveItems),
               prices: this.effectivePrices(effectiveItems),
+              priceHistory,
               selections: allSelections,
               usesPersonalizedBpu
             };
           }),
-          catchError(() => this.resolveLegacy(allSelections))
+          catchError(() => this.resolveLegacy(allSelections, priceHistory))
         );
       })
     );
   }
 
-  private resolveLegacy(selections: BpuSelection[]): Observable<ResolvedTechnicianBpuState> {
+  private resolveLegacy(selections: BpuSelection[], priceHistory: BpuPriceHistory[] = []): Observable<ResolvedTechnicianBpuState> {
     const active = this.latestSelection(selections);
     const allowedCodes = new Set(
       (active?.prestations || []).map((item) => String(item.code || '').trim().toUpperCase()).filter(Boolean)
@@ -75,6 +112,7 @@ export class TechnicianBpuResolverService {
       return of({
         items: [],
         prices: new Map<string, number>(),
+        priceHistory,
         selections,
         usesPersonalizedBpu: false
       });
@@ -103,6 +141,7 @@ export class TechnicianBpuResolverService {
         return {
           items,
           prices,
+          priceHistory,
           selections,
           usesPersonalizedBpu: false
         };
@@ -111,6 +150,7 @@ export class TechnicianBpuResolverService {
         of({
           items: this.selectionItems(active),
           prices: selectionPrices,
+          priceHistory,
           selections,
           usesPersonalizedBpu: false
         })

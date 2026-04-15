@@ -8,8 +8,8 @@ import { AuditLogService, AuditLogItem } from '../../../core/services/audit-log.
 import { UserService } from '../../../core/services/user.service';
 import { AuthHistoryItem, AuthHistoryResult, User } from '../../../core/models';
 import { formatPersonName } from '../../../core/utils/text-format';
-import { formatPageRange } from '../../../core/utils/pagination';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -31,9 +31,10 @@ export class AuthHistory {
   readonly error = signal<string | null>(null);
   readonly result = signal<AuthHistoryResult | null>(null);
 
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   readonly usersResult: Signal<any | null> = this.usersSvc.result;
   readonly users = computed<User[]>(() => this.usersResult()?.items ?? []);
@@ -48,13 +49,9 @@ export class AuthHistory {
 
   readonly items = computed<AuthHistoryItem[]>(() => this.result()?.items ?? []);
   readonly total = computed(() => this.result()?.total ?? 0);
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
 
   readonly auditOpen = signal(false);
   readonly auditLoading = signal(false);
@@ -93,40 +90,33 @@ export class AuthHistory {
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.apiError(err, 'Erreur chargement historique'));
+        this.error.set(apiError(err, 'Erreur chargement historique'));
         this.loading.set(false);
       }
     });
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh();
   }
 
   clearSearch(): void {
     this.filterForm.setValue({ user: '', action: '', status: '', date: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh();
   }
 
   prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh();
+    this.pag.prevPage(() => this.refresh());
   }
 
   nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh();
+    this.pag.nextPage(() => this.refresh());
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh();
+    this.pag.setLimitValue(value, () => this.refresh());
   }
 
   userLabel(u: User): string {
@@ -290,17 +280,10 @@ export class AuthHistory {
         this.auditLoading.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.auditError.set(this.apiError(err, 'Erreur chargement actions'));
+        this.auditError.set(apiError(err, 'Erreur chargement actions'));
         this.auditLoading.set(false);
       }
     });
   }
 
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
-  }
 }

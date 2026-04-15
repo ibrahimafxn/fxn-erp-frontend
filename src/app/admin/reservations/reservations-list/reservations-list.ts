@@ -11,10 +11,11 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
 import { Consumable, Depot, Movement, MovementListResult, User } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
-import { formatPageRange } from '../../../core/utils/pagination';
+import { normalizeDateRangeWithTime } from '../../../core/utils/date-format';
 import { downloadBlob } from '../../../core/utils/download';
 import { ConfirmCancelModal } from '../../../shared/components/dialog/confirm-cancel-modal/confirm-cancel-modal';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   selector: 'app-reservations-list',
@@ -38,9 +39,10 @@ export class ReservationsList {
   readonly error = this.movementService.error;
   readonly result: Signal<MovementListResult | null> = this.movementService.result;
 
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   readonly users = signal<User[]>([]);
   readonly depots = signal<Depot[]>([]);
@@ -78,13 +80,9 @@ export class ReservationsList {
   readonly items = computed<Movement[]>(() => this.result()?.items ?? []);
   readonly assignedByTech = signal<Record<string, number>>({});
   readonly total = computed(() => this.result()?.total ?? 0);
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
 
   readonly technicians = computed(() =>
     this.users().filter((u) => u.role === Role.TECHNICIEN)
@@ -102,7 +100,7 @@ export class ReservationsList {
 
   refresh(force = false): void {
     const f = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(f.fromDate, f.toDate);
+    const dates = normalizeDateRangeWithTime(f.fromDate, f.toDate);
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     this.loadConsumables(depotId || null);
     this.movementService.refresh(force, {
@@ -126,7 +124,7 @@ export class ReservationsList {
 
   exportCsv(): void {
     const f = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(f.fromDate, f.toDate);
+    const dates = normalizeDateRangeWithTime(f.fromDate, f.toDate);
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     this.movementService.exportCsv({
       resourceType: 'CONSUMABLE',
@@ -145,7 +143,7 @@ export class ReservationsList {
 
   exportPdf(): void {
     const f = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(f.fromDate, f.toDate);
+    const dates = normalizeDateRangeWithTime(f.fromDate, f.toDate);
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
     this.movementService.exportPdf({
       resourceType: 'CONSUMABLE',
@@ -163,7 +161,7 @@ export class ReservationsList {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
@@ -175,20 +173,16 @@ export class ReservationsList {
       fromDate: '',
       toDate: ''
     });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
+    this.pag.prevPage(() => this.refresh(true));
   }
 
   nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
+    this.pag.nextPage(() => this.refresh(true));
   }
 
   onLimitChange(event: Event): void {
@@ -200,10 +194,7 @@ export class ReservationsList {
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh(true);
+    this.pag.setLimitValue(value, () => this.refresh(true));
   }
 
   resourceLabel(m: Movement): string {
@@ -296,7 +287,7 @@ export class ReservationsList {
       },
       error: (err: HttpErrorResponse) => {
         this.setRowActionLoading(m._id, false);
-        this.setRowActionError(m._id, this.apiError(err, 'Erreur reprise'));
+        this.setRowActionError(m._id, apiError(err, 'Erreur reprise'));
       }
     });
   }
@@ -326,7 +317,7 @@ export class ReservationsList {
       },
       error: (err: HttpErrorResponse) => {
         this.setRowCancelLoading(m._id, false);
-        this.setRowCancelError(m._id, this.apiError(err, 'Erreur annulation'));
+        this.setRowCancelError(m._id, apiError(err, 'Erreur annulation'));
         this.closeCancelModal();
       }
     });
@@ -454,23 +445,6 @@ export class ReservationsList {
         this.authorLoading.delete(id);
       }
     });
-  }
-
-  private normalizeDateRange(fromDate: string, toDate: string): { fromDate?: string; toDate?: string } {
-    const from = fromDate ? `${fromDate}T00:00:00` : '';
-    const to = toDate ? `${toDate}T23:59:59.999` : '';
-    return {
-      fromDate: from || undefined,
-      toDate: to || undefined
-    };
-  }
-
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
   }
 
   private computeAssignedByTechnician(items: Movement[]): Record<string, number> {

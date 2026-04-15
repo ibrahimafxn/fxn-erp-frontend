@@ -1,0 +1,288 @@
+<div class="wdb">
+
+  <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+  <header class="wdb-header">
+    <div class="wdb-header-left">
+      <span class="material-icons notranslate wdb-header-icon">insights</span>
+      <div>
+        <h1 class="wdb-title">Dashboard Semaine</h1>
+        <p class="wdb-subtitle">{{ week.label }}</p>
+      </div>
+    </div>
+    <div class="wdb-header-right">
+      <a routerLink="/admin/interventions" class="wdb-btn wdb-btn-ghost">
+        <span class="material-icons notranslate">arrow_back</span>Interventions
+      </a>
+      <button class="wdb-btn wdb-btn-primary" (click)="load()" [disabled]="loading()">
+        <span class="material-icons notranslate">refresh</span>Actualiser
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════ LOADING ═══════════════════════ -->
+  @if (loading()) {
+    <div class="wdb-loading">
+      <div class="wdb-spinner"></div>
+      <span>Chargement des données de la semaine…</span>
+    </div>
+  }
+
+  <!-- ═══════════════════════ ERREUR ════════════════════════ -->
+  @if (hasError()) {
+    <div class="wdb-alert wdb-alert-danger">
+      <span class="material-icons notranslate">error_outline</span>
+      {{ error() }}
+      <button class="wdb-btn wdb-btn-ghost wdb-btn-sm" (click)="load()">Réessayer</button>
+    </div>
+  }
+
+  <!-- ═══════════════════════ VIDE ══════════════════════════ -->
+  @if (isEmpty()) {
+    <div class="wdb-empty">
+      <span class="material-icons notranslate wdb-empty-icon">search_off</span>
+      <p>Aucune intervention enregistrée pour cette semaine.</p>
+    </div>
+  }
+
+  @if (hasData()) {
+
+    <!-- ═══════════════════════ KPIs ══════════════════════════ -->
+    <section class="wdb-kpis">
+
+      <article class="wdb-kpi wdb-kpi-primary">
+        <div class="wdb-kpi-icon-wrap">
+          <span class="material-icons notranslate">bolt</span>
+        </div>
+        <div class="wdb-kpi-body">
+          <span class="wdb-kpi-value">{{ totalAll() }}</span>
+          <span class="wdb-kpi-label">Interventions cette semaine</span>
+        </div>
+      </article>
+
+      <article class="wdb-kpi wdb-kpi-success">
+        <div class="wdb-kpi-icon-wrap">
+          <span class="material-icons notranslate">group</span>
+        </div>
+        <div class="wdb-kpi-body">
+          <span class="wdb-kpi-value">{{ activeTechCount() }}</span>
+          <span class="wdb-kpi-label">Techniciens actifs</span>
+        </div>
+      </article>
+
+      <article class="wdb-kpi wdb-kpi-accent">
+        <div class="wdb-kpi-icon-wrap">
+          <span class="material-icons notranslate">emoji_events</span>
+        </div>
+        <div class="wdb-kpi-body">
+          <span class="wdb-kpi-value">{{ topTechName() }}</span>
+          <span class="wdb-kpi-label">Top technicien · {{ topTechTotal() }} interventions</span>
+        </div>
+      </article>
+
+      <article class="wdb-kpi wdb-kpi-info">
+        <div class="wdb-kpi-icon-wrap">
+          <span class="material-icons notranslate">star</span>
+        </div>
+        <div class="wdb-kpi-body">
+          <span class="wdb-kpi-value">{{ topPrestaLabel() }}</span>
+          <span class="wdb-kpi-label">Prestation dominante · {{ topPrestaValue() }} fois</span>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- ═══════════════════ GRAPHIQUES LIGNE 1 ════════════════ -->
+    <div class="wdb-charts-row">
+
+      <!-- Donut — Répartition prestations -->
+      <div class="wdb-card wdb-donut-card">
+        <h2 class="wdb-card-title">
+          <span class="material-icons notranslate">pie_chart</span>
+          Répartition des prestations
+        </h2>
+
+        <div class="wdb-donut-wrap">
+          <svg class="wdb-donut-svg" viewBox="0 0 180 180" aria-hidden="true">
+            <!-- fond -->
+            <circle
+              cx="90" cy="90" r="70"
+              fill="none"
+              stroke="var(--fxn-border)"
+              stroke-width="22"
+            />
+            <!-- segments -->
+            @for (slice of donutSlices(); track trackBySlice($index, slice)) {
+              <circle
+                cx="90" cy="90" r="70"
+                fill="none"
+                [attr.stroke]="slice.color"
+                stroke-width="22"
+                stroke-linecap="butt"
+                [attr.stroke-dasharray]="strokeDash(slice)"
+                [attr.stroke-dashoffset]="strokeOffset(slice)"
+                [attr.transform]="donutTransform()"
+              />
+            }
+            <!-- centre -->
+            <text x="90" y="84" text-anchor="middle" class="donut-center-value">
+              {{ totalAll() }}
+            </text>
+            <text x="90" y="102" text-anchor="middle" class="donut-center-label">
+              interventions
+            </text>
+          </svg>
+
+          <ul class="wdb-legend">
+            @for (slice of donutSlices(); track trackBySlice($index, slice)) {
+              <li class="wdb-legend-item">
+                <span class="wdb-legend-dot" [style.background]="slice.color"></span>
+                <span class="wdb-legend-name">{{ slice.label }}</span>
+                <span class="wdb-legend-val">{{ slice.value }}</span>
+                <span class="wdb-legend-pct">{{ slicePctLabel(slice) }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Bars — Classement techniciens -->
+      <div class="wdb-card wdb-bars-card">
+        <h2 class="wdb-card-title">
+          <span class="material-icons notranslate">leaderboard</span>
+          Classement techniciens
+        </h2>
+
+        <ol class="wdb-bars-list">
+          @for (row of techRows(); track trackByTech($index, row); let i = $index) {
+            <li class="wdb-bar-item" [class.wdb-bar-top]="i === 0">
+              <div class="wdb-bar-meta">
+                <span class="wdb-bar-rank">{{ i + 1 }}</span>
+                <span class="wdb-bar-name">{{ techName(row) }}</span>
+                <span class="wdb-bar-count">{{ techTotal(row) }}</span>
+              </div>
+              <div class="wdb-bar-track">
+                <div
+                  class="wdb-bar-fill"
+                  [class.wdb-bar-fill-top]="i === 0"
+                  [style.width]="barWidth(row.pct)"
+                ></div>
+              </div>
+            </li>
+          }
+        </ol>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════ SYNTHÈSE PRESTATIONS ═════════════ -->
+    <div class="wdb-card wdb-presta-summary-card">
+      <h2 class="wdb-card-title">
+        <span class="material-icons notranslate">table_chart</span>
+        Synthèse par prestation — semaine
+      </h2>
+
+      <div class="wdb-presta-grid">
+        @for (cell of prestaCells(); track trackByCell($index, cell)) {
+          <div class="wdb-presta-cell">
+            <span class="wdb-presta-label">{{ cell.label }}</span>
+            <span class="wdb-presta-value">{{ cell.value }}</span>
+            <div class="wdb-presta-bar-track">
+              <div class="wdb-presta-bar-fill"
+                [style.width]="barWidth(cell.pct)"
+                [style.background]="cell.color"></div>
+            </div>
+            <span class="wdb-presta-pct">{{ cellPctLabel(cell.pct) }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ═══════════════════ TABLE TECHNICIENS ════════════════ -->
+    <div class="wdb-card wdb-table-card">
+      <h2 class="wdb-card-title">
+        <span class="material-icons notranslate">engineering</span>
+        Détail techniciens
+      </h2>
+
+      <div class="wdb-table-wrap">
+        <table class="wdb-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Technicien</th>
+              <th class="num">Total</th>
+              <th class="num">RACPRO_C</th>
+              <th class="num">RACPRO_S</th>
+              <th class="num">RAC_PBO_AERIEN</th>
+              <th class="num">RAC_PBO_FACADE</th>
+              <th class="num">RAC_PBO_SOUT</th>
+              <th class="num">RACIH</th>
+              <th class="num">RECOIP</th>
+              <th class="num">DEPL_TORT</th>
+              <th class="num">DEPL_OFFERT</th>
+              <th class="num">Autres</th>
+              <th class="num">Part</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of techRows(); track trackByTech($index, row); let i = $index) {
+              <tr [class.wdb-row-top]="i === 0">
+                <td class="wdb-rank-cell">
+                  @if (i === 0) {
+                    <span class="material-icons notranslate wdb-medal gold">emoji_events</span>
+                  } @else if (i === 1) {
+                    <span class="material-icons notranslate wdb-medal silver">emoji_events</span>
+                  } @else if (i === 2) {
+                    <span class="material-icons notranslate wdb-medal bronze">emoji_events</span>
+                  } @else {
+                    <span class="wdb-rank-num">{{ i + 1 }}</span>
+                  }
+                </td>
+                <td>
+                  <a [routerLink]="['/admin/interventions/technician', row.technician]" class="wdb-tech-link">
+                    {{ techName(row) }}
+                  </a>
+                </td>
+                <td class="num wdb-total-cell">{{ techTotal(row) }}</td>
+                <td class="num">{{ techRacProC(row) || '—' }}</td>
+                <td class="num">{{ techRacProS(row) || '—' }}</td>
+                <td class="num">{{ techRacAerien(row) || '—' }}</td>
+                <td class="num">{{ techRacFacade(row) || '—' }}</td>
+                <td class="num">{{ techRacSout(row) || '—' }}</td>
+                <td class="num">{{ techRacIh(row) || '—' }}</td>
+                <td class="num">{{ techReco(row) || '—' }}</td>
+                <td class="num">{{ techDeplTort(row) || '—' }}</td>
+                <td class="num">{{ techDeplOffert(row) || '—' }}</td>
+                <td class="num">{{ techAutre(row) || '—' }}</td>
+                <td class="num">
+                  <div class="wdb-pct-cell">
+                    <div class="wdb-pct-bar" [style.width]="barWidth(row.pct)"></div>
+                    <span>{{ pctLabel(row.pct) }}</span>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr class="wdb-totals-row">
+              <td colspan="2">Totaux</td>
+              <td class="num">{{ totalAll() }}</td>
+              <td class="num">{{ totalRacProC() }}</td>
+              <td class="num">{{ totalRacProS() }}</td>
+              <td class="num">{{ totalRacAerien() }}</td>
+              <td class="num">{{ totalRacFacade() }}</td>
+              <td class="num">{{ totalRacSout() }}</td>
+              <td class="num">{{ totalRacIh() }}</td>
+              <td class="num">{{ totalReco() }}</td>
+              <td class="num">{{ totalDeplTort() }}</td>
+              <td class="num">{{ totalDeplOffert() }}</td>
+              <td class="num">{{ totalAutre() }}</td>
+              <td class="num">100 %</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+  }
+</div>

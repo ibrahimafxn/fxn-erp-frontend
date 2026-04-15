@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { SupplierService, Supplier } from '../../../core/services/supplier.service';
 import { Order } from '../../../core/services/order.service';
-import { formatPageRange } from '../../../core/utils/pagination';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -28,16 +28,14 @@ export class SupplierDetail {
   readonly orders = signal<Order[]>([]);
   readonly ordersLoading = signal(false);
   readonly ordersError = signal<string | null>(null);
-  readonly ordersTotal = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
 
-  readonly pageCount = computed(() => {
-    const t = this.ordersTotal();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
+  /** Alias transparent : le template utilise ordersTotal(), pag.total est la source de vérité. */
+  readonly ordersTotal = this.pag.total;
 
   constructor() {
     const id = this.route.snapshot.paramMap.get('id') || '';
@@ -59,24 +57,9 @@ export class SupplierDetail {
     this.router.navigate(['/admin/orders', order._id, 'detail']).then();
   }
 
-  prevPage(): void {
-    if (this.page() <= 1) return;
-    this.page.set(this.page() - 1);
-    this.loadOrders(this.supplier()?._id || '');
-  }
-
-  nextPage(): void {
-    if (this.page() >= this.pageCount()) return;
-    this.page.set(this.page() + 1);
-    this.loadOrders(this.supplier()?._id || '');
-  }
-
-  setLimit(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.loadOrders(this.supplier()?._id || '');
-  }
+  prevPage(): void { this.pag.prevPage(() => this.loadOrders(this.supplier()?._id || '')); }
+  nextPage(): void { this.pag.nextPage(() => this.loadOrders(this.supplier()?._id || '')); }
+  setLimit(value: number): void { this.pag.setLimitValue(value, () => this.loadOrders(this.supplier()?._id || '')); }
 
   formatCurrency(value?: number | string | null): string {
     const amount = Number(value ?? 0);
@@ -100,7 +83,7 @@ export class SupplierDetail {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement fournisseur'));
+        this.error.set(apiError(err, 'Erreur chargement fournisseur'));
       }
     });
   }
@@ -120,16 +103,9 @@ export class SupplierDetail {
       },
       error: (err: HttpErrorResponse) => {
         this.ordersLoading.set(false);
-        this.ordersError.set(this.apiError(err, 'Erreur chargement commandes'));
+        this.ordersError.set(apiError(err, 'Erreur chargement commandes'));
       }
     });
   }
 
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
-  }
 }

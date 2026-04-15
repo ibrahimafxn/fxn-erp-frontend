@@ -146,14 +146,14 @@
             <tbody>
               @for (it of sortedInterventions(); track it._id) {
                 <tr>
-                  <td>{{ interventionDateLabel(it) }}</td>
-                  <td>{{ technicianName(it) }}</td>
-                  <td>{{ depotName(it) }}</td>
-                  <td class="prestations-cell">
+                  <td data-label="Date">{{ interventionDateLabel(it) }}</td>
+                  <td data-label="Technicien">{{ technicianName(it) }}</td>
+                  <td data-label="Dépôt">{{ depotName(it) }}</td>
+                  <td class="prestations-cell" data-label="Prestations">
                     <app-report-prestations-badges [items]="prestationsSummary(it)"></app-report-prestations-badges>
                   </td>
-                  <td>{{ reportAmount(it) | amountCurrency }}</td>
-                  <td class="note">{{ it.comment || '—' }}</td>
+                  <td data-label="Montant">{{ reportAmount(it) | amountCurrency }}</td>
+                  <td class="note" data-label="Commentaire">{{ it.comment || '—' }}</td>
                 </tr>
               }
             </tbody>

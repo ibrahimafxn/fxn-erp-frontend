@@ -13,10 +13,9 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
 import { formatResourceName, formatDepotName } from '../../../../core/utils/text-format';
-import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
-import { preferredPageSize } from '../../../../core/utils/page-size';
+import { PaginationState } from '../../../../core/utils/pagination-state';
 
 type SortKey = 'name' | 'available' | 'category' | 'depot' | 'updatedAt';
 
@@ -54,9 +53,10 @@ export class MaterialList extends DetailBack {
   readonly deletingId = signal<string | null>(null);
 
   // Pagination
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   // Depots (filtre)
   readonly depots = signal<Depot[]>([]);
@@ -104,16 +104,11 @@ export class MaterialList extends DetailBack {
   });
   readonly total = computed(() => this.result()?.total ?? 0);
   readonly initialLoading = computed(() => this.loading() && this.items().length === 0 && !this.error());
-
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
+  readonly pageCount = this.pag.pageCount;
 
   // Boutons pager (désactivation propre)
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
 
@@ -178,13 +173,13 @@ export class MaterialList extends DetailBack {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   clearSearch(): void {
     this.filterForm.setValue({ q: '', depot: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
@@ -192,15 +187,11 @@ export class MaterialList extends DetailBack {
   // Pagination
   // -----------------------------
   prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
+    this.pag.prevPage(() => this.refresh(true));
   }
 
   nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
+    this.pag.nextPage(() => this.refresh(true));
   }
 
   onLimitChange(event: Event): void {
@@ -214,10 +205,7 @@ export class MaterialList extends DetailBack {
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh(true);
+    this.pag.setLimitValue(value, () => this.refresh(true));
   }
 
   // -----------------------------

@@ -1300,3 +1300,207 @@
     margin: 0;
   }
 }
+
+/* ========== ERT ========== */
+
+.tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 0 5px;
+
+  &.badge-danger {
+    background: var(--fxn-danger);
+    color: #fff;
+  }
+}
+
+.athemis-panel {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.athemis-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.athemis-actions {
+  display: flex;
+  gap: .5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.athemis-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: .75rem;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .85rem 1rem;
+  border-radius: .85rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface);
+  box-shadow: var(--fxn-shadow-sm);
+
+  .kpi-icon {
+    font-size: 1.7rem;
+    color: var(--fxn-text-muted);
+    flex-shrink: 0;
+  }
+
+  .kpi-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--fxn-text);
+  }
+
+  .kpi-label {
+    font-size: .75rem;
+    color: var(--fxn-text-muted);
+    margin-top: 2px;
+  }
+
+  &.kpi-success { border-color: var(--fxn-success); .kpi-icon { color: var(--fxn-success); } }
+  &.kpi-danger  { border-color: var(--fxn-danger);  .kpi-icon { color: var(--fxn-danger);  } }
+  &.kpi-warning { border-color: var(--fxn-warning); .kpi-icon { color: var(--fxn-warning); } }
+  &.kpi-alert   { border-color: var(--fxn-warning-soft, #f59e0b44); .kpi-icon { color: var(--fxn-warning); } }
+}
+
+.athemis-table {
+  th, td {
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .habilitations-cell {
+    white-space: normal;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem;
+  }
+
+  .tech-name { font-weight: 600; font-size: .95rem; }
+  .tech-email { color: var(--fxn-text-muted); font-size: .8rem; }
+
+  .row-danger td { background: color-mix(in srgb, var(--fxn-danger) 6%, transparent); }
+  .row-warning td { background: color-mix(in srgb, var(--fxn-warning) 6%, transparent); }
+}
+
+.icon-success { color: var(--fxn-success); font-size: 1.2rem; vertical-align: middle; }
+.icon-danger  { color: var(--fxn-danger);  font-size: 1.2rem; vertical-align: middle; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+
+  &.badge-success { background: color-mix(in srgb, var(--fxn-success) 15%, transparent); color: var(--fxn-success); border: 1px solid var(--fxn-success); }
+  &.badge-danger  { background: color-mix(in srgb, var(--fxn-danger)  15%, transparent); color: var(--fxn-danger);  border: 1px solid var(--fxn-danger);  }
+  &.badge-warning { background: color-mix(in srgb, var(--fxn-warning) 15%, transparent); color: var(--fxn-warning); border: 1px solid var(--fxn-warning); }
+}
+
+.pill-sm {
+  font-size: .7rem;
+  padding: .15rem .5rem;
+}
+
+.missing-list {
+  margin: .3rem 0 0;
+  padding-left: 1rem;
+  font-size: .78rem;
+  color: var(--fxn-danger);
+  list-style: disc;
+}
+
+.text-muted {
+  color: var(--fxn-text-muted);
+  font-size: .85rem;
+}
+
+.athemis-card {
+  border: 1px solid color-mix(in srgb, var(--fxn-warning) 40%, transparent);
+  background: color-mix(in srgb, var(--fxn-warning) 4%, var(--fxn-surface));
+
+  h3 {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: var(--fxn-text);
+  }
+}
+
+.required-star {
+  color: var(--fxn-danger);
+  font-size: .85em;
+}
+
+.field-hint {
+  font-size: .78rem;
+  color: var(--fxn-text-muted);
+  margin-top: .2rem;
+}
+
+.athemis-status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  padding: .4rem .85rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: .85rem;
+  margin-top: .5rem;
+  border: 1px solid transparent;
+
+  &.badge-success { background: color-mix(in srgb, var(--fxn-success) 12%, transparent); color: var(--fxn-success); border-color: var(--fxn-success); }
+  &.badge-danger  { background: color-mix(in srgb, var(--fxn-danger)  12%, transparent); color: var(--fxn-danger);  border-color: var(--fxn-danger);  }
+  &.badge-warning { background: color-mix(in srgb, var(--fxn-warning) 12%, transparent); color: var(--fxn-warning); border-color: var(--fxn-warning); }
+}
+
+.athemis-ref-panel {
+  border: 1px solid var(--fxn-border);
+  border-radius: .85rem;
+  padding: 1rem;
+  background: var(--fxn-surface-soft);
+}
+
+.habilitations-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: .6rem;
+  margin-top: .75rem;
+}
+
+.hab-ref-card {
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-radius: .6rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface);
+  flex-wrap: wrap;
+
+  .hab-code { font-size: .9rem; font-weight: 700; color: var(--fxn-primary); flex-shrink: 0; }
+  .hab-label { font-size: .82rem; color: var(--fxn-text); flex: 1; }
+  .hab-group { flex-shrink: 0; }
+}
+

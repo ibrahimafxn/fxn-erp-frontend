@@ -17,9 +17,10 @@ import { BpuEntry, BpuSelection, User, Role } from '../../../core/models';
 import { UserService } from '../../../core/services/user.service';
 import { hasRacpavInArticles, isRacihSuccess, isRacpavSuccess } from '../../../core/utils/intervention-prestations';
 import { formatPersonName } from '../../../core/utils/text-format';
-import { formatPageRange } from '../../../core/utils/pagination';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { apiError } from '../../../core/utils/http-error';
+import { normalizeDateRange } from '../../../core/utils/date-format';
+import { PaginationState } from '../../../core/utils/pagination-state';
 
 type TechnicianInterventionStats = {
   total: number;
@@ -326,9 +327,10 @@ export class TechnicianInterventions {
   readonly tableLoading = signal(false);
   readonly tableError = signal<string | null>(null);
   readonly interventions = signal<InterventionItem[]>([]);
-  readonly total = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
   readonly detailOpen = signal(false);
   readonly selectedDetail = signal<InterventionItem | null>(null);
   readonly initialLoading = signal(true);
@@ -374,14 +376,10 @@ export class TechnicianInterventions {
     { key: 'importedAt', label: 'Importe le' }
   ];
 
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
-  readonly pageRange = formatPageRange;
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
+  readonly pageRange = this.pag.pageRange;
   readonly limitOptions = [10, 20, 50, 100];
   readonly isBusy = computed(() => this.filterLoading() || this.summaryLoading() || this.tableLoading());
 
@@ -452,24 +450,9 @@ export class TechnicianInterventions {
     this.reloadAll();
   }
 
-  prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.update((value) => value - 1);
-    this.loadInterventions();
-  }
-
-  nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.update((value) => value + 1);
-    this.loadInterventions();
-  }
-
-  setLimit(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.loadInterventions();
-  }
+  prevPage(): void { this.pag.prevPage(() => this.loadInterventions()); }
+  nextPage(): void { this.pag.nextPage(() => this.loadInterventions()); }
+  setLimit(value: number): void { this.pag.setLimitValue(value, () => this.loadInterventions()); }
 
   refresh(): void {
     this.clearFilters();
@@ -525,7 +508,7 @@ export class TechnicianInterventions {
       },
       error: (err) => {
         this.filterLoading.set(false);
-        this.filtersError.set(this.apiError(err, 'Impossible de charger les filtres des interventions.'));
+        this.filtersError.set(apiError(err, 'Impossible de charger les filtres des interventions.'));
         this.markInitialLoadComplete();
       }
     });
@@ -547,7 +530,7 @@ export class TechnicianInterventions {
       },
       error: (err) => {
         this.bpuLoading.set(false);
-        this.bpuError.set(this.apiError(err, 'Erreur chargement BPU AUTO'));
+        this.bpuError.set(apiError(err, 'Erreur chargement BPU AUTO'));
       }
     });
   }
@@ -666,7 +649,7 @@ export class TechnicianInterventions {
             },
             error: (err) => {
               this.tableLoading.set(false);
-              this.tableError.set(this.apiError(err, 'Impossible de charger les interventions.'));
+              this.tableError.set(apiError(err, 'Impossible de charger les interventions.'));
               this.markInitialLoadComplete();
             }
           });
@@ -683,7 +666,7 @@ export class TechnicianInterventions {
       },
       error: (err) => {
         this.tableLoading.set(false);
-        this.tableError.set(this.apiError(err, 'Impossible de charger les interventions.'));
+        this.tableError.set(apiError(err, 'Impossible de charger les interventions.'));
         this.markInitialLoadComplete();
       }
     });
@@ -721,7 +704,7 @@ export class TechnicianInterventions {
 
   private buildQuery(options?: { includePagination?: boolean }): InterventionSummaryQuery {
     const filters = this.filterForm.getRawValue();
-    const range = this.normalizeDateRange(filters.fromDate, filters.toDate);
+    const range = normalizeDateRange(filters.fromDate, filters.toDate);
     const rawType = filters.type || '';
     const normalizedType = this.normalizeToken(rawType);
     const typeFilter = rawType === 'RACPAV' ? undefined : rawType;
@@ -740,14 +723,6 @@ export class TechnicianInterventions {
     };
   }
 
-  private normalizeDateRange(from: string, to: string): { fromDate?: string; toDate?: string } {
-    const fromDate = from?.trim() || '';
-    const toDate = to?.trim() || '';
-    return {
-      fromDate: fromDate || undefined,
-      toDate: toDate || undefined
-    };
-  }
 
   private isExactEchecFilterActive(): boolean {
     const rawFilters = this.filterForm.getRawValue();
@@ -2108,13 +2083,6 @@ export class TechnicianInterventions {
       return 'status-error';
     }
     return '';
-  }
-
-  private apiError(err: any, fallback: string): string {
-    if (typeof err?.error === 'object' && err.error !== null && 'message' in err.error) {
-      return String(err.error.message ?? fallback);
-    }
-    return err?.message || fallback;
   }
 
   private normalizeToken(value?: string | null): string {

@@ -18,6 +18,7 @@ import { formatPageRange } from '../../../../core/utils/pagination';
 import { ConfirmActionModal } from '../../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 import { preferredPageSize } from '../../../../core/utils/page-size';
+import { apiError } from '../../../../core/utils/http-error';
 
 type AssignMode = 'idle' | 'assign' | 'release';
 type PendingVehicleAction = 'assign' | 'release' | null;
@@ -223,7 +224,7 @@ export class VehicleDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement véhicule'));
+        this.error.set(apiError(err, 'Erreur chargement véhicule'));
       },
     });
   }
@@ -242,7 +243,7 @@ export class VehicleDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.depotsLoading.set(false);
-        this.depotsError.set(this.apiError(err, 'Erreur chargement dépôts'));
+        this.depotsError.set(apiError(err, 'Erreur chargement dépôts'));
       },
     });
   }
@@ -261,7 +262,7 @@ export class VehicleDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.techniciansLoading.set(false);
-        this.techniciansError.set(this.apiError(err, 'Erreur chargement techniciens'));
+        this.techniciansError.set(apiError(err, 'Erreur chargement techniciens'));
       },
     });
   }
@@ -285,7 +286,7 @@ export class VehicleDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.historyLoading.set(false);
-        this.historyError.set(this.apiError(err, 'Erreur chargement historique'));
+        this.historyError.set(apiError(err, 'Erreur chargement historique'));
       },
     });
   }
@@ -304,7 +305,7 @@ export class VehicleDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.breakdownLoading.set(false);
-        this.breakdownError.set(this.apiError(err, 'Erreur chargement panne'));
+        this.breakdownError.set(apiError(err, 'Erreur chargement panne'));
       }
     });
   }
@@ -440,7 +441,7 @@ export class VehicleDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.actionSaving.set(false);
-        this.actionError.set(this.apiError(err, 'Erreur assignation véhicule'));
+        this.actionError.set(apiError(err, 'Erreur assignation véhicule'));
       },
     });
   }
@@ -474,7 +475,7 @@ export class VehicleDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.actionSaving.set(false);
-        this.actionError.set(this.apiError(err, 'Erreur reprise véhicule'));
+        this.actionError.set(apiError(err, 'Erreur reprise véhicule'));
       },
     });
   }
@@ -541,17 +542,6 @@ export class VehicleDetail extends DetailBack {
     const b = this.latestBreakdown();
     if (b?.resolvedCost == null) return '—';
     return `${b.resolvedCost}`;
-  }
-
-  // -----------------------------
-  // Errors helper (0 any)
-  // -----------------------------
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
   }
 
   edit(): void {

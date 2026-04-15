@@ -183,7 +183,12 @@
                 </button>
               </th>
               <th>Code</th>
-              <th>Prix appliqué</th>
+              <th>
+                Prix appliqué
+                @if (isInPeriodView()) {
+                  <span class="period-view-badge">vue période</span>
+                }
+              </th>
             </tr>
             </thead>
             <tbody>
@@ -219,15 +224,40 @@
                       />
                     }
                   </td>
-                  <td data-label="Prix appliqué">
-                    <input
-                      type="number"
-                      min="0"
-                      step="1"
-                      [value]="priceValue(item)"
-                      [disabled]="loading() || saving() || isTechnician()"
-                      (input)="onPriceChange(item, $event)"
-                    />
+                  <td data-label="Prix appliqué" [class.period-price-cell]="isInPeriodView()">
+                    @if (isInPeriodView()) {
+                      @if (periodPrice(item) !== null) {
+                        <input
+                          class="period-price-input"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          [value]="periodPrice(item)"
+                          [disabled]="saving()"
+                          (input)="onPeriodPriceChange(item, $event)"
+                        />
+                      } @else {
+                        <input
+                          class="period-price-input period-price-add"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value=""
+                          placeholder="Ajouter…"
+                          [disabled]="saving()"
+                          (input)="onPeriodPriceChange(item, $event)"
+                        />
+                      }
+                    } @else {
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        [value]="priceValue(item)"
+                        [disabled]="loading() || saving() || isTechnician()"
+                        (input)="onPriceChange(item, $event)"
+                      />
+                    }
                   </td>
                 </tr>
               }
@@ -274,14 +304,37 @@
           </table>
         </div>
         <footer class="actions-footer">
+          @if (isInPeriodView()) {
+            <button class="btn-outline period-exit-btn" type="button" (click)="historyExpanded.set(null)">
+              <i class="bi bi-arrow-left"></i> Quitter
+            </button>
+            <button
+              class="btn-primary period-save-btn"
+              type="button"
+              [disabled]="saving() || !hasPeriodChanges()"
+              (click)="requestUpdatePeriod()">
+              <i class="bi bi-check2"></i>
+              @if (saving()) { Enregistrement… } @else { Mettre à jour la période }
+            </button>
+          }
           @if (!isTechnician()) {
-            <button class="btn-outline" type="button" (click)="addPrestation()" [disabled]="adding() || loading() || saving() || !canAddPrestation()">
+            <button class="btn-outline" type="button" (click)="addPrestation()" [disabled]="adding() || loading() || saving() || !canAddPrestation() || isInPeriodView()">
               <i class="bi bi-plus"></i>
               @if (adding()) { Ajout… } @else { Ajouter au catalogue BPU }
             </button>
           }
           @if (!isTechnician()) {
-            <button class="btn-primary" type="button" (click)="saveSelection()" [disabled]="saving() || loading() || !hasSelection()">
+            <label class="valid-from-label">
+              Valable à partir du
+              <input
+                type="date"
+                class="valid-from-input"
+                [value]="selectionValidFrom()"
+                (change)="onValidFromChange($event)"
+                title="Laisser vide pour utiliser la date d'aujourd'hui"
+              />
+            </label>
+            <button class="btn-primary" type="button" (click)="saveSelection()" [disabled]="saving() || loading() || !hasSelection() || isInPeriodView()">
               <i class="bi bi-check"></i>
               @if (saving()) {
                 Enregistrement…
@@ -328,45 +381,122 @@
             }
           </section>
 
-          <section class="card attached-tech-card quick-access-card">
-            <div class="attached-tech-header">
-              <div>
-                <h2>Accès rapide</h2>
-                <p>Techniciens avec BPU personnalisé actif.</p>
+          <section class="card qa-card">
+            <div class="qa-header">
+              <div class="qa-header-info">
+                <h2 class="qa-title">Accès rapide</h2>
+                <span class="qa-count">{{ activePersonalizedTechnicians().length }}</span>
               </div>
+              <button
+                class="qa-copy-btn"
+                type="button"
+                (click)="copyFromGlobal()"
+                [disabled]="loading() || saving() || !selectedTechnicianId()"
+                title="Copier le BPU par défaut">
+                <i class="bi bi-clipboard-plus"></i>
+                Copier BPU défaut
+              </button>
             </div>
 
-            <button
-              class="btn-outline toolbar-copy quick-access-copy"
-              type="button"
-              (click)="copyFromGlobal()"
-              [disabled]="loading() || saving() || !selectedTechnicianId()"
-            >
-              Copier le BPU par défaut
-            </button>
-
             @if (techniciansLoading()) {
-              <div class="personalized-empty">Chargement…</div>
-            } @else if (activePersonalizedTechnicians().length === 0) {
-              <div class="personalized-empty">Aucun technicien actif.</div>
-            } @else {
-              <div class="personalized-list">
-                @for (tech of activePersonalizedTechnicians(); track tech._id) {
-                  <div class="personalized-item">
-                    <button class="personalized-chip" type="button" (click)="editPersonalized(tech._id)">
-                      {{ tech.firstName }} {{ tech.lastName }}
-                    </button>
-                    <button class="btn-icon subtle" type="button" title="Modifier" (click)="editPersonalized(tech._id)">
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn-icon subtle danger" type="button" title="Supprimer" (click)="requestDeletePersonalized(tech._id)">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                }
+              <div class="qa-empty">
+                <span class="qa-empty-icon bi bi-hourglass-split"></span>
+                Chargement…
               </div>
+            } @else if (activePersonalizedTechnicians().length === 0) {
+              <div class="qa-empty">
+                <span class="qa-empty-icon bi bi-person-x"></span>
+                Aucun technicien actif
+              </div>
+            } @else {
+              <ul class="qa-list">
+                @for (tech of activePersonalizedTechnicians(); track tech._id; let i = $index) {
+                  <li class="qa-row" [class.qa-row-selected]="selectedTechnicianId() === tech._id">
+                    <button class="qa-row-main" type="button" (click)="editPersonalized(tech._id)">
+                      <span class="qa-avatar" [attr.data-idx]="i % 6">
+                        {{ techInitials(tech) }}
+                      </span>
+                      <span class="qa-name">{{ tech.firstName }} {{ tech.lastName }}</span>
+                    </button>
+                    <div class="qa-actions">
+                      <button class="qa-btn-icon" type="button" title="Modifier" (click)="editPersonalized(tech._id)">
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button class="qa-btn-icon qa-btn-danger" type="button" title="Supprimer" (click)="requestDeletePersonalized(tech._id)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </li>
+                }
+              </ul>
             }
           </section>
+          <!-- ══ Historique des tarifs ══ -->
+          <section class="card attached-tech-card history-card">
+            <div class="attached-tech-header">
+              <div>
+                <h2>Historique des tarifs</h2>
+                <p>Snapshots enregistrés avec leur date de validité.</p>
+              </div>
+              <span class="attached-tech-count">{{ priceHistory().length }}</span>
+            </div>
+
+            @if (historyLoading()) {
+              <div class="attached-tech-empty">Chargement…</div>
+            } @else if (priceHistory().length === 0) {
+              <div class="attached-tech-empty">Aucun historique enregistré.</div>
+            } @else {
+              <ul class="history-list">
+                @for (entry of priceHistory(); track entry._id) {
+                  <li class="history-entry" [class.history-entry-active]="historyExpanded() === entry._id">
+                    <div class="history-entry-header" (click)="toggleHistoryEntry(entry._id || '')">
+                      <span class="history-date">
+                        <i class="bi bi-calendar3"></i>
+                        {{ historyEntryDate(entry) }}
+                      </span>
+                      <span class="history-count">{{ entry.prestations.length }} prestations</span>
+                      <button
+                        class="btn-icon subtle danger history-delete-btn"
+                        type="button"
+                        title="Supprimer ce snapshot"
+                        [disabled]="isHistoryDeleting(entry)"
+                        (click)="deleteHistoryEntry(entry, $event)">
+                        @if (isHistoryDeleting(entry)) {
+                          <i class="bi bi-hourglass-split"></i>
+                        } @else {
+                          <i class="bi bi-trash"></i>
+                        }
+                      </button>
+                      <i class="bi" [class.bi-chevron-down]="historyExpanded() !== entry._id" [class.bi-chevron-up]="historyExpanded() === entry._id"></i>
+                    </div>
+
+                    @if (historyExpanded() === entry._id) {
+                      <div class="history-detail">
+                        <p class="history-detail-hint">
+                          <i class="bi bi-info-circle"></i>
+                          Les prix ci-dessous sont affichés dans la liste principale.
+                        </p>
+                        <table class="history-table">
+                          <thead>
+                            <tr><th>Code</th><th class="num">Prix unitaire</th></tr>
+                          </thead>
+                          <tbody>
+                            @for (p of entry.prestations; track p.code) {
+                              <tr>
+                                <td class="history-code">{{ p.code }}</td>
+                                <td class="num">{{ p.unitPrice | number:'1.2-2' }} €</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
         </aside>
       }
     </div>

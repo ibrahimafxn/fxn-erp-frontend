@@ -9,11 +9,9 @@ import { DepotService } from '../../../core/services/depot.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { Depot, User, Vehicle } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
-import { formatPageRange } from '../../../core/utils/pagination';
-
 import { AccessCredentialsModal } from '../../../shared/ui/access-credentials-modal/access-credentials-modal';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
 
 /**
  * ✅ Gestion des accès de connexion :
@@ -51,22 +49,19 @@ export class AccessUsers {
   readonly result: Signal<any | null> = this.usersSvc.result; // ton UserListResult
 
   // pagination
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   readonly items = computed<User[]>(() => this.result()?.items ?? []);
   readonly noAccessCount = computed(() => this.items().filter(u => !u.authEnabled).length);
   readonly lockedItems = computed(() => this.items().filter((u) => this.isLocked(u)));
   readonly lockedCount = computed(() => this.lockedItems().length);
   readonly total = computed(() => this.result()?.total ?? 0);
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
 
   // depots + vehicles pour labels
   readonly depots = signal<Depot[]>([]);
@@ -124,26 +119,22 @@ export class AccessUsers {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   clearSearch(): void {
     this.filterForm.setValue({ q: '', role: '', depot: '', onlyNoAccess: false });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
+    this.pag.prevPage(() => this.refresh(true));
   }
 
   nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
+    this.pag.nextPage(() => this.refresh(true));
   }
 
   onLimitChange(event: Event): void {
@@ -157,10 +148,7 @@ export class AccessUsers {
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh(true);
+    this.pag.setLimitValue(value, () => this.refresh(true));
   }
 
   /** UX: filtre front “sans accès” */

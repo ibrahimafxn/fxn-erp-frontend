@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { Supplier, SupplierService } from '../../../core/services/supplier.service';
-import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -25,10 +25,11 @@ export class SupplierList {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<Supplier[]>([]);
-  readonly total = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
 
   readonly createName = signal('');
   readonly creating = signal(false);
@@ -49,11 +50,9 @@ export class SupplierList {
     q: this.fb.nonNullable.control('')
   });
 
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
 
   constructor() {
     this.refresh();
@@ -82,40 +81,33 @@ export class SupplierList {
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.apiError(err, 'Erreur chargement fournisseurs'));
+        this.error.set(apiError(err, 'Erreur chargement fournisseurs'));
         this.loading.set(false);
       }
     });
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh();
   }
 
   clearSearch(): void {
     this.filterForm.setValue({ q: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh();
   }
 
   prevPage(): void {
-    if (this.page() <= 1) return;
-    this.page.set(this.page() - 1);
-    this.refresh();
+    this.pag.prevPage(() => this.refresh());
   }
 
   nextPage(): void {
-    if (this.page() >= this.pageCount()) return;
-    this.page.set(this.page() + 1);
-    this.refresh();
+    this.pag.nextPage(() => this.refresh());
   }
 
   setLimit(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh();
+    this.pag.setLimitValue(value, () => this.refresh());
   }
 
   onLimitChange(event: Event): void {
@@ -142,7 +134,7 @@ export class SupplierList {
       },
       error: (err: HttpErrorResponse) => {
         this.creating.set(false);
-        this.createError.set(this.apiError(err, 'Erreur création fournisseur'));
+        this.createError.set(apiError(err, 'Erreur création fournisseur'));
       }
     });
   }
@@ -180,7 +172,7 @@ export class SupplierList {
       },
       error: (err: HttpErrorResponse) => {
         this.updating.set(false);
-        this.editError.set(this.apiError(err, 'Erreur modification fournisseur'));
+        this.editError.set(apiError(err, 'Erreur modification fournisseur'));
       }
     });
   }
@@ -212,16 +204,9 @@ export class SupplierList {
       error: (err: HttpErrorResponse) => {
         this.deletingId.set(null);
         this.closeDeleteModal();
-        this.error.set(this.apiError(err, 'Erreur suppression fournisseur'));
+        this.error.set(apiError(err, 'Erreur suppression fournisseur'));
       }
     });
   }
 
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
-  }
 }

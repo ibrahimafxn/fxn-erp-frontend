@@ -7,6 +7,7 @@ import {
   InterventionInvoiceSummary,
   InterventionService
 } from '../../../core/services/intervention.service';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -113,7 +114,7 @@ export class ErtInvoicesPage {
       },
       error: (err: HttpErrorResponse) => {
         this.detailLoading.set(false);
-        this.detailError.set(this.apiError(err, 'Erreur chargement détail facture'));
+        this.detailError.set(apiError(err, 'Erreur chargement détail facture'));
       }
     });
   }
@@ -160,7 +161,7 @@ export class ErtInvoicesPage {
       },
       error: (err: HttpErrorResponse) => {
         this.importLoading.set(false);
-        this.importError.set(this.apiError(err, 'Erreur import factures'));
+        this.importError.set(apiError(err, 'Erreur import factures'));
         this.resetInvoiceInput();
       }
     });
@@ -182,7 +183,7 @@ export class ErtInvoicesPage {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement factures'));
+        this.error.set(apiError(err, 'Erreur chargement factures'));
       }
     });
   }
@@ -200,8 +201,4 @@ export class ErtInvoicesPage {
     this.detailError.set(null);
   }
 
-  private apiError(err: unknown, fallback: string): string {
-    const http = err as HttpErrorResponse | null;
-    return http?.error?.message || http?.message || fallback;
-  }
 }

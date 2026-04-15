@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Consumable, Depot, Material, Movement, MovementListResult } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../core/utils/text-format';
+import { normalizeDateRangeWithTime } from '../../../core/utils/date-format';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { downloadBlob } from '../../../core/utils/download';
 
@@ -220,7 +221,7 @@ export class ReceiptPage {
 
   refreshHistory(force = false): void {
     const f = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(f.fromDate, f.toDate);
+    const dates = normalizeDateRangeWithTime(f.fromDate, f.toDate);
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
 
     this.loadResources(depotId || null);
@@ -241,7 +242,7 @@ export class ReceiptPage {
 
   exportCsv(): void {
     const f = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(f.fromDate, f.toDate);
+    const dates = normalizeDateRangeWithTime(f.fromDate, f.toDate);
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
 
     this.movementService.exportCsv({
@@ -262,7 +263,7 @@ export class ReceiptPage {
 
   exportPdf(): void {
     const f = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(f.fromDate, f.toDate);
+    const dates = normalizeDateRangeWithTime(f.fromDate, f.toDate);
     const depotId = this.isDepotManager() ? this.managerDepotId() : (f.depot || undefined);
 
     this.movementService.exportPdf({
@@ -413,14 +414,6 @@ export class ReceiptPage {
     });
   }
 
-  private normalizeDateRange(fromDate: string, toDate: string): { fromDate?: string; toDate?: string } {
-    const from = fromDate ? `${fromDate}T00:00:00` : '';
-    const to = toDate ? `${toDate}T23:59:59.999` : '';
-    return {
-      fromDate: from || undefined,
-      toDate: to || undefined
-    };
-  }
 
   private apiError(err: HttpErrorResponse, fallback: string): string {
     const apiMsg =

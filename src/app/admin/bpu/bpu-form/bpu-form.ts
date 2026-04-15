@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { BpuService } from '../../../core/services/bpu.service';
 import { DetailBack } from '../../../core/utils/detail-back';
+import { apiError } from '../../../core/utils/http-error';
 
 type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE' | 'ERT';
 
@@ -56,7 +57,7 @@ export class BpuForm extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.error.set(this.apiError(err, 'Erreur sauvegarde BPU'));
+        this.error.set(apiError(err, 'Erreur sauvegarde BPU'));
       }
     });
   }
@@ -70,11 +71,4 @@ export class BpuForm extends DetailBack {
     return !!c && c.invalid && (c.dirty || c.touched);
   }
 
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
-  }
 }

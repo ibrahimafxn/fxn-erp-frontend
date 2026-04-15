@@ -2,10 +2,9 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { Component, ElementRef, ViewChild, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RevenueService, RevenueAttachment, RevenueItem, RevenueSummaryPoint, RevenueUser } from '../../../core/services/revenue.service';
-import { formatPageRange } from '../../../core/utils/pagination';
 import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
 
 type SortKey = 'month' | 'amount' | 'penalty' | 'note' | 'attachments' | 'author' | 'updatedAt';
 
@@ -38,9 +37,10 @@ export class RevenueDashboard {
   readonly summaryPenaltyTotal = signal(0);
   readonly series = signal<RevenueSummaryPoint[]>([]);
   readonly selectedPeriodLabel = signal('Toutes périodes');
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
   readonly totalCount = signal(0);
   readonly pageCount = computed(() => {
     const t = this.totalCount();
@@ -252,7 +252,7 @@ export class RevenueDashboard {
   }
 
   applyFilters(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.loadAll(true);
     this.loadSummaryTotal(true);
     this.updatePeriodLabel();
@@ -260,14 +260,14 @@ export class RevenueDashboard {
 
   clearFilters(): void {
     this.filterForm.setValue({ month: '', year: '', period: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.loadAll(true);
     this.loadSummaryTotal(true);
     this.updatePeriodLabel();
   }
 
   reloadGlobal(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.loadAll(false);
     this.loadSummaryTotal(false);
     this.selectedPeriodLabel.set('Toutes périodes');
@@ -404,14 +404,12 @@ export class RevenueDashboard {
 
   prevPage(): void {
     if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.loadAll();
+    this.pag.prevPage(() => this.loadAll());
   }
 
   nextPage(): void {
     if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.loadAll();
+    this.pag.nextPage(() => this.loadAll());
   }
 
   setLimit(event: Event): void {
@@ -423,10 +421,7 @@ export class RevenueDashboard {
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.loadAll();
+    this.pag.setLimitValue(value, () => this.loadAll());
   }
 
   formatCurrency(value: number): string {

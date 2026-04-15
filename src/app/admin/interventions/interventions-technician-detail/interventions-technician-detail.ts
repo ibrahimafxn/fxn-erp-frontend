@@ -5,9 +5,8 @@ import { combineLatest } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { InterventionItem, InterventionService } from '../../../core/services/intervention.service';
-import { formatPageRange } from '../../../core/utils/pagination';
 import { isRacihSuccess, isRacpavSuccess } from '../../../core/utils/intervention-prestations';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
 
 type DetailFilters = {
   fromDate: string;
@@ -35,17 +34,14 @@ export class InterventionsTechnicianDetail {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<InterventionItem[]>([]);
-  readonly total = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
   readonly technician = signal('');
-  readonly pageRange = formatPageRange;
 
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
 
   readonly detailGroups = computed(() => {
     const items = this.items();
@@ -133,24 +129,9 @@ export class InterventionsTechnicianDetail {
     this.location.back();
   }
 
-  prevPage(): void {
-    if (this.page() <= 1) return;
-    this.page.set(this.page() - 1);
-    this.load();
-  }
-
-  nextPage(): void {
-    if (this.page() >= this.pageCount()) return;
-    this.page.set(this.page() + 1);
-    this.load();
-  }
-
-  setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.load();
-  }
+  prevPage(): void { this.pag.prevPage(() => this.load()); }
+  nextPage(): void { this.pag.nextPage(() => this.load()); }
+  setLimitValue(value: number): void { this.pag.setLimitValue(value, () => this.load()); }
 
   formatArticleCodes(raw?: string | null): string {
     if (!raw) return '—';
