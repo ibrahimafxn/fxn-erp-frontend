@@ -200,6 +200,19 @@
   gap: 0.5rem;
 }
 
+.technician-charges .filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.technician-charges .filter-field span {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--fxn-text-muted);
+}
+
 .technician-charges .filters select,
 .technician-charges .filters input {
   width: 100%;
@@ -383,9 +396,9 @@
   margin-bottom: 3px;
 }
 
-/* ── Table bénéfices : Mois | Bénéfice / CA | Charges ────── */
+/* ── Table bénéfices : Date | Bénéfice / CA | Charges ────── */
 
-.technician-charges .benefit-card td[data-label='Mois'] {
+.technician-charges .benefit-card td[data-label='Date'] {
   grid-column: 1;
   grid-row: 1;
   font-weight: 600;
@@ -499,15 +512,16 @@
   }
 
   .technician-charges .filters {
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+    width: min(100%, 620px);
+    align-items: end;
   }
 
+  .technician-charges .filter-field,
   .technician-charges .filters select,
   .technician-charges .filters input {
-    width: auto;
-    flex: 1 1 160px;
+    width: 100%;
     min-height: 40px;
   }
 
@@ -555,7 +569,7 @@
   }
 
   .technician-charges tbody td,
-  .technician-charges .benefit-card td[data-label='Mois'],
+  .technician-charges .benefit-card td[data-label='Date'],
   .technician-charges .benefit-card td[data-label='Bénéfice'],
   .technician-charges .benefit-card td[data-label='CA'],
   .technician-charges .benefit-card td[data-label='Charges'] {
@@ -589,16 +603,7 @@
   }
 
   .technician-charges .filters {
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: auto;
-  }
-
-  .technician-charges .filters select,
-  .technician-charges .filters input {
-    width: auto;
-    flex: 1 1 160px;
-    min-height: 40px;
+    width: min(100%, 720px);
   }
 
   .technician-charges .pager {
