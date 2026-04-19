@@ -291,19 +291,19 @@
           <tbody>
             @for (item of sortedInterventions(); track item._id) {
               <tr class="row-click" (click)="openDetails(item)">
-                <td>{{ item.dateRdv | date:'shortDate' }}</td>
-                <td>{{ item.numInter || '—' }}</td>
-                <td>{{ formatTechnicianName(item) }}</td>
-                <td>{{ item.region || '—' }}</td>
-                <td>{{ displayType(item) }}</td>
-                <td>
+                <td data-label="Date">{{ item.dateRdv | date:'shortDate' }}</td>
+                <td data-label="Numéro">{{ item.numInter || '—' }}</td>
+                <td data-label="Technicien">{{ formatTechnicianName(item) }}</td>
+                <td data-label="Région">{{ item.region || '—' }}</td>
+                <td data-label="Type">{{ displayType(item) }}</td>
+                <td data-label="Statut">
                   <span class="status-pill" [ngClass]="statusClass(item)">
                     {{ item.statut || '—' }}
                   </span>
                 </td>
-                <td>{{ item.client || '—' }}</td>
-                <td>{{ formatDuration(item) }}</td>
-                <td class="commentaire">{{ item.commentairesTechnicien || '—' }}</td>
+                <td data-label="Client">{{ item.client || '—' }}</td>
+                <td data-label="Durée">{{ formatDuration(item) }}</td>
+                <td class="commentaire" data-label="Commentaires">{{ item.commentairesTechnicien || '—' }}</td>
               </tr>
             }
           </tbody>

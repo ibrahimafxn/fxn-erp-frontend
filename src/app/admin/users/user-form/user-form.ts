@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -41,6 +42,7 @@ export class UserForm extends DetailBack {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
+  private redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
   // -----------------------------
   // Depots & Vehicles pour selects
@@ -129,7 +131,7 @@ export class UserForm extends DetailBack {
     }
 
     // ✅ UX: si role change et devient ≠ TECHNICIEN -> on vide assignedVehicle
-    this.form.controls.role.valueChanges.subscribe((role) => {
+    this.form.controls.role.valueChanges.pipe(takeUntilDestroyed()).subscribe((role) => {
       if (role !== Role.TECHNICIEN) {
         this.form.controls.assignedVehicle.setValue('');
       }
@@ -268,7 +270,8 @@ export class UserForm extends DetailBack {
         next: (created) => {
           this.saving.set(false);
           this.success.set(`Utilisateur créé : ${formatPersonName(created.firstName ?? '', created.lastName ?? '')}`.trim());
-          setTimeout(() => this.router.navigate(['/admin/users']), 400);
+          if (this.redirectTimer !== null) clearTimeout(this.redirectTimer);
+          this.redirectTimer = setTimeout(() => { this.redirectTimer = null; this.router.navigate(['/admin/users']); }, 400);
         },
         error: (err) => {
           this.saving.set(false);

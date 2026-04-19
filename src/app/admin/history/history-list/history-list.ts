@@ -13,10 +13,10 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Role } from '../../../core/models/roles.model';
 import { Consumable, Depot, Material, Movement, MovementListResult, User, Vehicle } from '../../../core/models';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
-import { formatPageRange } from '../../../core/utils/pagination';
 import { downloadBlob } from '../../../core/utils/download';
 import { ConfirmCancelModal } from '../../../shared/components/dialog/confirm-cancel-modal/confirm-cancel-modal';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   selector: 'app-history-list',
@@ -42,9 +42,10 @@ export class HistoryList {
   readonly error = this.movementService.error;
   readonly result: Signal<MovementListResult | null> = this.movementService.result;
 
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   readonly depots = signal<Depot[]>([]);
   readonly users = signal<User[]>([]);
@@ -72,13 +73,9 @@ export class HistoryList {
 
   readonly items = computed<Movement[]>(() => this.result()?.items ?? []);
   readonly total = computed(() => this.result()?.total ?? 0);
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
   readonly sortField = signal<'date' | 'resource' | 'action' | 'from' | 'to' | 'quantity' | 'author' | 'status'>('date');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly sortedItems = computed<Movement[]>(() => {
@@ -196,7 +193,7 @@ export class HistoryList {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
@@ -211,20 +208,16 @@ export class HistoryList {
       toType: '',
       toId: '',
     });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
+    this.pag.prevPage(() => this.refresh(true));
   }
 
   nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
+    this.pag.nextPage(() => this.refresh(true));
   }
 
   onLimitChange(event: Event): void {
@@ -236,10 +229,7 @@ export class HistoryList {
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh(true);
+    this.pag.setLimitValue(value, () => this.refresh(true));
   }
 
   setSort(field: 'date' | 'resource' | 'action' | 'from' | 'to' | 'quantity' | 'author' | 'status'): void {
@@ -373,7 +363,7 @@ export class HistoryList {
       },
       error: (err: HttpErrorResponse) => {
         this.setCancelLoading(m._id, false);
-        this.setCancelError(m._id, this.apiError(err, 'Erreur annulation'));
+        this.setCancelError(m._id, apiError(err, 'Erreur annulation'));
         this.closeCancelModal();
       }
     });
@@ -488,11 +478,4 @@ export class HistoryList {
     this.cancelError.set({ ...this.cancelError(), [id]: message });
   }
 
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
-  }
 }

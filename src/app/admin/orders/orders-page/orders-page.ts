@@ -11,9 +11,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Depot } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { environment } from '../../../environments/environment';
-import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
 
 @Component({
   standalone: true,
@@ -36,9 +35,10 @@ export class OrdersPage {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<Order[]>([]);
-  readonly total = signal(0);
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly total = this.pag.total;
   readonly deleteModalOpen = signal(false);
   readonly deletingId = signal<string | null>(null);
   readonly pendingDeleteId = signal<string | null>(null);
@@ -87,7 +87,7 @@ export class OrdersPage {
     errors: Array<{ row: number; message: string }>;
   } | null>(null);
   readonly importModalOpen = signal(false);
-  readonly pageRange = formatPageRange;
+  readonly pageRange = this.pag.pageRange;
   readonly sortField = signal<'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva' | 'delivery'>('date');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly importTotalTva = computed(() => {
@@ -102,11 +102,9 @@ export class OrdersPage {
     this.items().reduce((sum, order) => sum + this.displayAmount(order), 0)
   );
 
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
   readonly sortedItems = computed(() => {
     const items = [...this.items()];
     const field = this.sortField();
@@ -320,26 +318,22 @@ export class OrdersPage {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh();
   }
 
   clearFilters(): void {
     this.filterForm.setValue({ q: '', status: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh();
   }
 
   prevPage(): void {
-    if (this.page() <= 1) return;
-    this.page.set(this.page() - 1);
-    this.refresh();
+    this.pag.prevPage(() => this.refresh());
   }
 
   nextPage(): void {
-    if (this.page() >= this.pageCount()) return;
-    this.page.set(this.page() + 1);
-    this.refresh();
+    this.pag.nextPage(() => this.refresh());
   }
 
   onLimitChange(event: Event): void {
@@ -351,10 +345,7 @@ export class OrdersPage {
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh();
+    this.pag.setLimitValue(value, () => this.refresh());
   }
 
   setSort(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva' | 'delivery'): void {

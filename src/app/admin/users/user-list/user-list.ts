@@ -13,9 +13,8 @@ import {DATE_FORMAT_FR} from '../../../core/constant/date-format';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { downloadBlob } from '../../../core/utils/download';
-import { formatPageRange } from '../../../core/utils/pagination';
 import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
 
 @Component({
   standalone: true,
@@ -48,9 +47,10 @@ export class UserList extends DetailBack {
   readonly deletingId = signal<string | null>(null);
 
   // Pagination state
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   // Depots (filtre)
   readonly depots = signal<Depot[]>([]);
@@ -117,26 +117,22 @@ export class UserList extends DetailBack {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   clearSearch(): void {
     this.filterForm.setValue({ q: '', role: '', depot: '', createdFrom: '', createdTo: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   prevPage(): void {
-    if (this.page() <= 1) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
+    this.pag.prevPage(() => this.refresh(true));
   }
 
   nextPage(): void {
-    if (this.page() >= this.pageCount()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
+    this.pag.nextPage(() => this.refresh(true));
   }
 
   onLimitChange(event: Event): void {
@@ -150,9 +146,7 @@ export class UserList extends DetailBack {
   }
 
   setLimit(v: number): void {
-    this.limit.set(v);
-    this.page.set(1);
-    this.refresh(true);
+    this.pag.setLimitValue(v, () => this.refresh(true));
   }
 
   createNew(): void {

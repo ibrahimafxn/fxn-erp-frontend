@@ -147,4 +147,71 @@
       </div>
     </div>
   </section>
+
+  <section
+    class="reviews-showcase"
+    aria-labelledby="google-reviews-title"
+    (mouseenter)="pauseReviews()"
+    (mouseleave)="resumeReviews()"
+  >
+    <div class="reviews-head">
+      <div>
+        <div class="reviews-badge">Avis Google</div>
+        <h2 id="google-reviews-title">Ce que les utilisateurs retiennent de FXN</h2>
+        <p>Un carrousel dédié aux retours clients, prêt à être alimenté avec les avis Google de FXN.</p>
+      </div>
+      <div class="reviews-actions">
+        <button type="button" class="review-nav" (click)="previousReview()" aria-label="Avis précédent">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="review-nav" (click)="nextReview()" aria-label="Avis suivant">
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="reviews-shell">
+      <div class="reviews-slider-window">
+        <div class="reviews-slider-track" [style.transform]="'translateX(-' + (activeReviewIndex() * 100) + '%)'">
+          @for (review of googleReviews; track trackReview($index, review)) {
+            <article class="review-slide">
+              <div class="review-meta">
+                <span class="review-highlight">{{ review.highlight }}</span>
+                <span class="review-source">{{ review.publishedLabel }}</span>
+              </div>
+              <div class="review-stars" aria-label="Note {{ review.rating }} sur 5">
+                @for (star of reviewStars(); track star) {
+                  <span>★</span>
+                }
+              </div>
+              <blockquote class="review-quote">“{{ review.text }}”</blockquote>
+              <div class="review-author-block">
+                <div class="review-author">{{ review.author }}</div>
+                <div class="review-company">{{ review.company }}</div>
+              </div>
+            </article>
+          }
+        </div>
+      </div>
+
+      <aside class="reviews-sidecard">
+        <div class="sidecard-label">Slide actif</div>
+        <div class="sidecard-title">{{ currentReview().highlight }}</div>
+        <p>{{ currentReview().text }}</p>
+        <div class="sidecard-author">{{ currentReview().author }} · {{ currentReview().company }}</div>
+      </aside>
+    </div>
+
+    <div class="reviews-dots" role="tablist" aria-label="Sélecteur des avis Google">
+      @for (review of googleReviews; track trackReview($index, review)) {
+        <button
+          type="button"
+          class="review-dot"
+          [class.is-active]="$index === activeReviewIndex()"
+          (click)="selectReview($index)"
+          [attr.aria-label]="'Afficher l’avis ' + ($index + 1)"
+        ></button>
+      }
+    </div>
+  </section>
 </div>

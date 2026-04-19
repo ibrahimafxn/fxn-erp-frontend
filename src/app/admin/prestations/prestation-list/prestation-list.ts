@@ -10,8 +10,7 @@ import { PrestationCatalogService } from '../../../core/services/prestation-cata
 import { Prestation, PrestationCatalog, PrestationListResult } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { DetailBack } from '../../../core/utils/detail-back';
-import { formatPageRange } from '../../../core/utils/pagination';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
 
 @Component({
   standalone: true,
@@ -33,9 +32,10 @@ export class PrestationList extends DetailBack {
   readonly usesCatalogApi = signal(false);
 
   readonly deletingId = signal<string | null>(null);
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control('')
@@ -43,11 +43,9 @@ export class PrestationList extends DetailBack {
 
   readonly items = computed(() => (this.result()?.items ?? []) as Prestation[]);
   readonly total = computed(() => this.result()?.total ?? 0);
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
 
   readonly deleteModalOpen = signal(false);
   readonly pendingDeleteId = signal<string | null>(null);
@@ -88,32 +86,26 @@ export class PrestationList extends DetailBack {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   clearSearch(): void {
     this.filterForm.setValue({ q: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   prevPage(): void {
-    if (this.page() <= 1) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
+    this.pag.prevPage(() => this.refresh(true));
   }
 
   nextPage(): void {
-    if (this.page() >= this.pageCount()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
+    this.pag.nextPage(() => this.refresh(true));
   }
 
   setLimit(v: number): void {
-    this.limit.set(v);
-    this.page.set(1);
-    this.refresh(true);
+    this.pag.setLimitValue(v, () => this.refresh(true));
   }
 
   createNew(): void {

@@ -3,6 +3,7 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 import {catchError, map, of} from 'rxjs';
 import {environment} from '../../environments/environment';
 import {
+  AthemisComplianceResult,
   ComplianceResult,
   DocAlertsSummary,
   EmployeeDoc,
@@ -174,5 +175,14 @@ export class HrService {
   cancelLeave(id: string, note = '') {
     return this.http.patch<{ success: boolean; data: LeaveRequest }>(`${API_BASE}/hr/leaves/${id}/cancel`, { note })
       .pipe(map(resp => resp.data));
+  }
+
+  getAthemisCompliance() {
+    return this.http.get<{ success: boolean; data: AthemisComplianceResult }>(`${API_BASE}/hr/athemis/compliance`)
+      .pipe(map(resp => resp.data));
+  }
+
+  exportAthemisCsv() {
+    return this.http.get(`${API_BASE}/hr/athemis/export`, { responseType: 'blob' });
   }
 }

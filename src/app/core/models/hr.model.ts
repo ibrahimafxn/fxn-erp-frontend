@@ -11,6 +11,8 @@ export type EmployeeDoc = {
   createdAt?: string;
 };
 
+export type AthemisStatus = 'EN_ATTENTE' | 'CONFORME' | 'NON_CONFORME';
+
 export type EmployeeProfile = {
   _id?: string;
   user: string | User;
@@ -22,6 +24,43 @@ export type EmployeeProfile = {
   emergencyName?: string;
   emergencyPhone?: string;
   notes?: string;
+  // --- Conformité ATHEMIS / ERT ---
+  ssNumber?: string;              // N° Sécurité Sociale (sensible)
+  cniNumber?: string;             // N° CNI (sensible)
+  athemisStatus?: AthemisStatus;
+  athemisLastCheck?: string | null;
+};
+
+export type AthemisTechnicianRow = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  athemisStatus: AthemisStatus;
+  athemisLastCheck: string | null;
+  hasCniNumber: boolean;
+  hasSsNumber: boolean;
+  hasCniDoc: boolean;
+  hasCarteVitale: boolean;
+  hasContrat: boolean;
+  habilitations: string[];
+  missingAthemis: string[];
+  isFullyCompliant: boolean;
+};
+
+export type AthemisComplianceStats = {
+  total: number;
+  conforme: number;
+  nonConforme: number;
+  enAttente: number;
+  missingCniNumber: number;
+  missingSsNumber: number;
+  fullyCompliant: number;
+};
+
+export type AthemisComplianceResult = {
+  stats: AthemisComplianceStats;
+  technicians: AthemisTechnicianRow[];
 };
 
 export type ComplianceResult = {

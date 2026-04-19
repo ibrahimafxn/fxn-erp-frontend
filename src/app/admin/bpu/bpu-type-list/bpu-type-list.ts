@@ -15,6 +15,7 @@ import {
   INTERVENTION_PRESTATION_FIELDS,
   InterventionPrestationField
 } from '../../../core/constant/intervention-prestations';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -99,7 +100,7 @@ export class BpuTypeList {
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.apiError(err, 'Erreur chargement BPU'));
+        this.error.set(apiError(err, 'Erreur chargement BPU'));
         this.loading.set(false);
       }
     });
@@ -120,7 +121,7 @@ export class BpuTypeList {
         this.techniciansLoading.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.techniciansError.set(this.apiError(err, 'Erreur chargement techniciens'));
+        this.techniciansError.set(apiError(err, 'Erreur chargement techniciens'));
         this.techniciansLoading.set(false);
       }
     });
@@ -182,7 +183,7 @@ export class BpuTypeList {
       },
       error: (err: HttpErrorResponse) => {
         this.deletingId.set(null);
-        this.error.set(this.apiError(err, 'Erreur suppression BPU'));
+        this.error.set(apiError(err, 'Erreur suppression BPU'));
         this.closeDeleteModal();
       }
     });

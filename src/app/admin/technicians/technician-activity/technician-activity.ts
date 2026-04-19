@@ -12,14 +12,16 @@ import { AuthService } from '../../../core/services/auth.service';
 import { BpuService } from '../../../core/services/bpu.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { HrService } from '../../../core/services/hr.service';
-import { Movement, Depot, User } from '../../../core/models';
+import { Movement, Depot, User, BpuPriceHistory } from '../../../core/models';
 import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
-import { REPORT_CODE_ALIASES, computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { normalizeDateRange } from '../../../core/utils/date-format';
+import { computeReportAmount, normalizeReportPrestations, applyPricesToReport } from '../../../core/utils/technician-report-utils';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
-import { TechnicianBpuResolverService } from '../../../core/services/technician-bpu-resolver.service';
+import { TechnicianBpuResolverService, pricesForDate } from '../../../core/services/technician-bpu-resolver.service';
+import { apiError } from '../../../core/utils/http-error';
 
 type SortField = 'date' | 'technician' | 'depot' | 'amount';
 
@@ -94,10 +96,12 @@ export class TechnicianActivity {
   readonly bpuSegmentPrices = signal(new Map<string, Map<string, number>>());
   /** Sélections personnalisées par technicien : Map<technicianId, Map<code, price>> */
   readonly technicianPersonalPrices = signal(new Map<string, Map<string, number>>());
+  readonly technicianPriceHistories = signal(new Map<string, BpuPriceHistory[]>());
   readonly employeeContracts = signal(new Map<string, string>());
   readonly bpuLoaded = signal(false);
   readonly employeesLoaded = signal(false);
   readonly selectedTechnicianBpuPrices = signal<Map<string, number>>(new Map());
+  readonly selectedTechnicianPriceHistory = signal<BpuPriceHistory[]>([]);
   readonly selectedTechnicianId = signal('');
   readonly hasCustomBpu = signal(false);
   readonly selectedTechnicianLabel = computed(() => {
@@ -171,7 +175,7 @@ export class TechnicianActivity {
 
   refreshReservations(): void {
     const filters = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(filters.fromDate, filters.toDate);
+    const dates = normalizeDateRange(filters.fromDate, filters.toDate);
     const depotId = this.isDepotManager() ? (this.managerDepotId() ?? undefined) : (filters.depot || undefined);
     const technicianId = filters.technicianId || undefined;
 
@@ -214,14 +218,14 @@ export class TechnicianActivity {
       },
       error: (err) => {
         this.reservationsLoading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement attributions'));
+        this.error.set(apiError(err, 'Erreur chargement attributions'));
       }
     });
   }
 
   refreshInterventions(): void {
     const filters = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(filters.fromDate, filters.toDate);
+    const dates = normalizeDateRange(filters.fromDate, filters.toDate);
     const depotId = this.isDepotManager() ? (this.managerDepotId() ?? undefined) : (filters.depot || undefined);
     const technicianId = filters.technicianId || undefined;
 
@@ -241,13 +245,15 @@ export class TechnicianActivity {
           this.interventionsLoading.set(false);
           return;
         }
-        this.interventions.set(res.data.items || []);
+        const items = res.data.items || [];
+        this.interventions.set(items);
         this.interventionTotal.set(res.data.total || 0);
         this.interventionsLoading.set(false);
+        void this.ensureTechnicianPriceHistories(items);
       },
       error: (err) => {
         this.interventionsLoading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement interventions'));
+        this.error.set(apiError(err, 'Erreur chargement interventions'));
       }
     });
   }
@@ -341,19 +347,26 @@ export class TechnicianActivity {
 
   reportAmount(report: TechnicianReport): number {
     if (this.shouldUseSelectedTechnicianPrices(report)) {
-      return this.computeAmountWithPrices(report, this.selectedTechnicianBpuPrices());
+      const prices = pricesForDate(
+        this.selectedTechnicianPriceHistory(),
+        report.reportDate,
+        this.selectedTechnicianBpuPrices()
+      );
+      return applyPricesToReport(report, prices);
     }
     const techId = String(report.technician?._id || '').trim();
     // 1. Sélection personnalisée du technicien (OVERRIDE)
     const personalPrices = techId ? this.technicianPersonalPrices().get(techId) : undefined;
     if (personalPrices?.size) {
-      return this.computeAmountWithPrices(report, personalPrices);
+      const history = this.technicianPriceHistories().get(techId) || [];
+      const prices = pricesForDate(history, report.reportDate, personalPrices);
+      return applyPricesToReport(report, prices);
     }
     // 2. Prix du segment BPU admin (AUTO/SALARIE/AUTRE)
     const segment = this.resolveBpuSegment(techId || null);
     const segmentPrices = this.bpuSegmentPrices().get(segment);
     if (segmentPrices?.size) {
-      return this.computeAmountWithPrices(report, segmentPrices);
+      return applyPricesToReport(report, segmentPrices);
     }
     return computeReportAmount(report);
   }
@@ -424,14 +437,6 @@ export class TechnicianActivity {
     });
   }
 
-  private normalizeDateRange(from: string, to: string): { fromDate?: string; toDate?: string } {
-    const fromDate = from ? String(from) : '';
-    const toDate = to ? String(to) : '';
-    return {
-      fromDate: fromDate || undefined,
-      toDate: toDate || undefined
-    };
-  }
 
   private summaryRequestId = 0;
   private selectedBpuRequestId = 0;
@@ -439,7 +444,7 @@ export class TechnicianActivity {
   private async refreshSummary(): Promise<void> {
     const requestId = ++this.summaryRequestId;
     const filters = this.filterForm.getRawValue();
-    const dates = this.normalizeDateRange(filters.fromDate, filters.toDate);
+    const dates = normalizeDateRange(filters.fromDate, filters.toDate);
     const depotId = this.isDepotManager() ? (this.managerDepotId() ?? undefined) : (filters.depot || undefined);
     const technicianId = filters.technicianId || undefined;
 
@@ -460,7 +465,7 @@ export class TechnicianActivity {
       const count = Number(res.data?.count || 0);
       let totalAmount = Number(res.data?.totalAmount || 0);
 
-      if (technicianId) {
+      if (technicianId || this.technicianPersonalPrices().size) {
         totalAmount = await this.loadSummaryAmountFromReports({
           technicianId,
           depotId,
@@ -475,7 +480,7 @@ export class TechnicianActivity {
       this.summaryTotalCount.set(count);
     } catch (err) {
       if (requestId !== this.summaryRequestId) return;
-      this.error.set(this.apiError(err, 'Erreur chargement montant'));
+      this.error.set(apiError(err, 'Erreur chargement montant'));
     } finally {
       if (requestId !== this.summaryRequestId) return;
       this.summaryLoading.set(false);
@@ -559,10 +564,12 @@ export class TechnicianActivity {
       const state = await firstValueFrom(this.bpuResolver.resolve(techId));
       if (requestId !== this.selectedBpuRequestId) return;
       this.selectedTechnicianBpuPrices.set(state.prices);
+      this.selectedTechnicianPriceHistory.set(state.priceHistory);
       this.hasCustomBpu.set(state.usesPersonalizedBpu);
     } catch {
       if (requestId !== this.selectedBpuRequestId) return;
       this.selectedTechnicianBpuPrices.set(new Map());
+      this.selectedTechnicianPriceHistory.set([]);
       this.hasCustomBpu.set(false);
     } finally {
       if (requestId !== this.selectedBpuRequestId) return;
@@ -577,46 +584,42 @@ export class TechnicianActivity {
     return !reportTechId || reportTechId === techId;
   }
 
-  private computeAmountWithPrices(report: TechnicianReport, prices: Map<string, number>): number {
-    const prestations = normalizeReportPrestations(report);
-    if (!prestations.length || !prices.size) {
-      return computeReportAmount(report);
-    }
+  private async ensureTechnicianPriceHistories(reports: TechnicianReport[]): Promise<void> {
+    const technicianIds = Array.from(
+      new Set(
+        reports
+          .map((report) => String(report.technician?._id || '').trim())
+          .filter((id) => !!id && !this.technicianPriceHistories().has(id))
+      )
+    );
+    if (!technicianIds.length) return;
 
-    let total = 0;
-    let matchedPrice = false;
-    for (const { code, qty } of prestations) {
-      if (!qty) continue;
-      const unitPrice = this.priceForCode(prices, code);
-      if (!Number.isFinite(unitPrice)) continue;
-      matchedPrice = true;
-      total += qty * Number(unitPrice);
-    }
+    const entries = await Promise.all(
+      technicianIds.map(async (technicianId) => {
+        try {
+          const history = await firstValueFrom(this.bpuSelectionService.listHistory({ owner: technicianId }));
+          return { technicianId, history: history || [] };
+        } catch {
+          return { technicianId, history: [] as BpuPriceHistory[] };
+        }
+      })
+    );
 
-    return matchedPrice ? Number(total.toFixed(2)) : computeReportAmount(report);
-  }
-
-  private priceForCode(prices: Map<string, number>, code: string): number | undefined {
-    const key = String(code || '').trim().toUpperCase();
-    let unitPrice = prices.get(key);
-    if (!Number.isFinite(unitPrice)) {
-      const aliasKey = REPORT_CODE_ALIASES[key];
-      if (aliasKey) unitPrice = prices.get(aliasKey);
+    const next = new Map(this.technicianPriceHistories());
+    for (const entry of entries) {
+      next.set(entry.technicianId, entry.history);
     }
-    return Number.isFinite(unitPrice) ? Number(unitPrice) : undefined;
+    this.technicianPriceHistories.set(next);
   }
 
   private async loadSummaryAmountFromReports(params: {
-    technicianId: string;
+    technicianId?: string;
     depotId?: string;
     fromDate?: string;
     toDate?: string;
     fallback: number;
     totalCount: number;
   }): Promise<number> {
-    const prices = this.selectedTechnicianBpuPrices();
-    if (!prices.size) return params.fallback;
-
     const res = await firstValueFrom(this.reportService.list({
       technicianId: params.technicianId,
       depotId: params.depotId,
@@ -630,8 +633,38 @@ export class TechnicianActivity {
     const items = Array.isArray(res.data?.items) ? res.data.items : [];
     if (!items.length) return 0;
 
+    if (params.technicianId) {
+      const basePrices = this.selectedTechnicianBpuPrices();
+      if (!basePrices.size) return params.fallback;
+      const history = this.selectedTechnicianPriceHistory();
+      return Number(
+        items.reduce((sum, report) => {
+          const prices = pricesForDate(history, report.reportDate, basePrices);
+          return sum + applyPricesToReport(report, prices);
+        }, 0).toFixed(2)
+      );
+    }
+
+    await this.ensureTechnicianPriceHistories(items);
+
     return Number(
-      items.reduce((sum, report) => sum + this.computeAmountWithPrices(report, prices), 0).toFixed(2)
+      items.reduce((sum, report) => {
+        const techId = String(report.technician?._id || '').trim();
+        const personalPrices = techId ? this.technicianPersonalPrices().get(techId) : undefined;
+        if (personalPrices?.size) {
+          const history = this.technicianPriceHistories().get(techId) || [];
+          const prices = pricesForDate(history, report.reportDate, personalPrices);
+          return sum + applyPricesToReport(report, prices);
+        }
+
+        const segment = this.resolveBpuSegment(techId || null);
+        const segmentPrices = this.bpuSegmentPrices().get(segment);
+        if (segmentPrices?.size) {
+          return sum + applyPricesToReport(report, segmentPrices);
+        }
+
+        return sum + computeReportAmount(report);
+      }, 0).toFixed(2)
     );
   }
 
@@ -652,14 +685,6 @@ export class TechnicianActivity {
     } finally {
       this.loadingEmployees.set(false);
     }
-  }
-
-  private apiError(err: any, fallback: string): string {
-    const apiMsg =
-      typeof err?.error === 'object' && err.error !== null && 'message' in err.error
-        ? String(err.error.message ?? '')
-        : '';
-    return apiMsg || err?.message || fallback;
   }
 
   private shortId(id: string): string {

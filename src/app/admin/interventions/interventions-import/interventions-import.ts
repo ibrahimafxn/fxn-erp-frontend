@@ -16,6 +16,7 @@ import { OsirisMappingService } from '../../../core/services/osiris-mapping.serv
 import { formatPersonName } from '../../../core/utils/text-format';
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -209,10 +210,10 @@ export class InterventionsImport {
             createdAt: info.existingImport?.createdAt
           });
           this.overwriteOpen.set(true);
-          this.importError.set(this.apiError(err, 'Import deja existant pour la periode.'));
+          this.importError.set(apiError(err, 'Import deja existant pour la periode.'));
           return;
         }
-        this.importError.set(this.apiError(err, 'Erreur import CSV'));
+        this.importError.set(apiError(err, 'Erreur import CSV'));
         this.resetFileInput();
       }
     });
@@ -242,7 +243,7 @@ export class InterventionsImport {
         window.URL.revokeObjectURL(url);
       },
       error: (err) => {
-        this.importsError.set(this.apiError(err, 'Erreur téléchargement CSV'));
+        this.importsError.set(apiError(err, 'Erreur téléchargement CSV'));
       }
     });
   }
@@ -270,7 +271,7 @@ export class InterventionsImport {
       },
       error: (err) => {
         this.importsLoading.set(false);
-        this.importsError.set(this.apiError(err, 'Erreur chargement imports'));
+        this.importsError.set(apiError(err, 'Erreur chargement imports'));
       }
     });
   }
@@ -296,7 +297,7 @@ export class InterventionsImport {
       },
       error: (err) => {
         this.ticketsLoading.set(false);
-        this.ticketsError.set(this.apiError(err, 'Erreur chargement tickets'));
+        this.ticketsError.set(apiError(err, 'Erreur chargement tickets'));
       }
     });
   }
@@ -334,7 +335,7 @@ export class InterventionsImport {
         });
       },
       error: (err: HttpErrorResponse) => {
-        const message = this.apiError(err, 'Erreur chargement catégorie');
+        const message = apiError(err, 'Erreur chargement catégorie');
         this.importCategoryState.set({
           ...this.importCategoryState(),
           [category]: {
@@ -418,7 +419,7 @@ export class InterventionsImport {
       },
       error: (err: HttpErrorResponse) => {
         this.ticketEditSaving.set(false);
-        this.ticketEditError.set(this.apiError(err, 'Erreur correction ticket'));
+        this.ticketEditError.set(apiError(err, 'Erreur correction ticket'));
       }
     });
   }
@@ -431,7 +432,7 @@ export class InterventionsImport {
         if (this.lastImportBatchId()) this.loadImportCategory('tickets', this.lastImportBatchId()!, 1);
       },
       error: (err: HttpErrorResponse) => {
-        this.importsError.set(this.apiError(err, 'Erreur validation automatique'));
+        this.importsError.set(apiError(err, 'Erreur validation automatique'));
       }
     });
   }
@@ -816,10 +817,4 @@ export class InterventionsImport {
     this.previewError.set(null);
   }
 
-  private apiError(err: unknown, fallback: string): string {
-    if (err instanceof HttpErrorResponse) {
-      return err.error?.message || err.message || fallback;
-    }
-    return fallback;
-  }
 }

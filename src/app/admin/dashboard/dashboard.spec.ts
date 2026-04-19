@@ -22,4 +22,30 @@ describe('Dashboard', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should prioritize audit risk using weighted score instead of raw rate only', () => {
+    component.auditItems.set([
+      {
+        technician: 'Tech Volume',
+        region: 'Nord',
+        nbTotal: 12,
+        txEchecGlobal: 25,
+        echecs: [{ motifEchec: 'PBO' }, { motifEchec: 'PTO' }, { motifEchec: 'Client absent' }]
+      },
+      {
+        technician: 'Tech Isolé',
+        region: 'Sud',
+        nbTotal: 2,
+        txEchecGlobal: 50,
+        echecs: [{ motifEchec: 'Adresse' }]
+      }
+    ]);
+
+    const insight = component.auditInsight();
+
+    expect(insight.riskiestTechnician).toBe('Tech Volume');
+    expect(insight.riskiestFailures).toBe(3);
+    expect(insight.riskiestScore).toBeGreaterThan(0);
+    expect(insight.riskiestRegion).toBe('Nord');
+  });
 });

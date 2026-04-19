@@ -1,6 +1,7 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { DepotService } from '../../../core/services/depot.service';
 import { AbsenceService } from '../../../core/services/absence.service';
@@ -10,6 +11,8 @@ import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-ac
 import {
   Absence,
   AbsenceStatus,
+  AthemisComplianceResult,
+  AthemisTechnicianRow,
   Depot,
   DocAlertsSummary,
   EmployeeDoc,
@@ -32,9 +35,11 @@ import {
   ABSENCE_STATUS_LABELS,
   ABSENCE_TYPE_LABELS,
   HR_ALLOWED_ABSENCE_STATUSES,
+  HR_ATHEMIS_STATUS_LABELS,
   HR_COMPLIANCE_FILTERS,
   HR_CONTRACT_TYPES,
   HR_DOC_TYPES,
+  HR_ERT_HABILITATIONS,
   HR_EMPLOYEE_ROLES,
   HR_HABILITATION_OPTIONS,
   HR_LEAVE_TYPES,
@@ -57,8 +62,9 @@ export class HrList {
   private auth = inject(AuthService);
   private depotService = inject(DepotService);
   private datePipe = inject(DatePipe);
+  private route = inject(ActivatedRoute);
 
-  readonly tab = signal<'employees' | 'leaves'>('employees');
+  readonly tab = signal<'employees' | 'leaves' | 'athemis'>('employees');
   readonly employeeSection = signal<'employees' | 'profile' | 'documents'>('employees');
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -106,6 +112,35 @@ export class HrList {
   readonly historyLimit = signal(10);
   readonly historySort = signal<'DATE_DESC' | 'DATE_ASC' | 'ACTION_ASC' | 'AUTHOR_ASC' | 'DETAIL_ASC'>('DATE_DESC');
 
+  // --- ATHEMIS / Conformité ERT ---
+  readonly athemisData = signal<AthemisComplianceResult | null>(null);
+  readonly athemisLoading = signal(false);
+  readonly athemisError = signal<string | null>(null);
+  readonly athemisExportLoading = signal(false);
+  readonly showSsNumber = signal<Record<string, boolean>>({});
+  readonly showCniNumber = signal<Record<string, boolean>>({});
+  readonly athemisSearch = signal('');
+  readonly athemisStatusFilter = signal('');
+
+  readonly athemisFilteredTechs = computed(() => {
+    const data = this.athemisData();
+    if (!data) return [];
+    let items = data.technicians;
+    const q = this.athemisSearch().toLowerCase().trim();
+    if (q) {
+      items = items.filter((t) =>
+        `${t.firstName} ${t.lastName} ${t.email}`.toLowerCase().includes(q)
+      );
+    }
+    const status = this.athemisStatusFilter();
+    if (status) {
+      items = items.filter((t) => t.athemisStatus === status);
+    }
+    return items;
+  });
+
+  readonly ertHabilitations = HR_ERT_HABILITATIONS;
+
   avatarSrc(user: User): string {
     const cacheKey = (user as { updatedAt?: string; lastLoginAt?: string }).updatedAt
       || (user as { updatedAt?: string; lastLoginAt?: string }).lastLoginAt
@@ -130,6 +165,13 @@ export class HrList {
     const role = this.auth.user$()?.role;
     return role === 'ADMIN' || role === 'DIRIGEANT';
   });
+
+  readonly isAdmin = computed(() => {
+    const role = this.auth.user$()?.role;
+    return role === Role.ADMIN || role === Role.DIRIGEANT;
+  });
+
+  readonly isAdminOnly = computed(() => this.auth.user$()?.role === Role.ADMIN);
 
   readonly employeePageCount = computed(() => {
     const total = this.employeeTotal();
@@ -246,7 +288,11 @@ export class HrList {
     address: this.fb.nonNullable.control(''),
     emergencyName: this.fb.nonNullable.control(''),
     emergencyPhone: this.fb.nonNullable.control(''),
-    notes: this.fb.nonNullable.control('')
+    notes: this.fb.nonNullable.control(''),
+    // --- Conformité ATHEMIS ---
+    ssNumber: this.fb.nonNullable.control(''),
+    cniNumber: this.fb.nonNullable.control(''),
+    athemisStatus: this.fb.nonNullable.control<'EN_ATTENTE' | 'CONFORME' | 'NON_CONFORME'>('EN_ATTENTE')
   });
   readonly payslipForm = this.fb.nonNullable.group({
     month: this.fb.nonNullable.control(new Date().getMonth() + 1, [Validators.required, Validators.min(1), Validators.max(12)]),
@@ -301,6 +347,10 @@ export class HrList {
   readonly habilitationOptions = HR_HABILITATION_OPTIONS;
 
   constructor() {
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab === 'leaves' || (tab === 'athemis' && this.isAdminOnly())) {
+      this.tab.set(tab);
+    }
     this.depotService.refreshDepots(true, { page: 1, limit: 200 }).subscribe({
       next: (result) => {
         this.depots.set(result?.items || []);
@@ -327,10 +377,9 @@ export class HrList {
     });
     this.loadEmployees();
     this.loadLeaves();
-  }
-
-  switchTab(next: 'employees' | 'leaves'): void {
-    this.tab.set(next);
+    if (this.tab() === 'athemis') {
+      this.loadAthemisCompliance();
+    }
   }
 
   onLeaveStatusChange(value: string): void {
@@ -572,7 +621,10 @@ export class HrList {
       address: profile?.address || '',
       emergencyName: profile?.emergencyName || '',
       emergencyPhone: profile?.emergencyPhone || '',
-      notes: profile?.notes || ''
+      notes: profile?.notes || '',
+      ssNumber: profile?.ssNumber || '',
+      cniNumber: profile?.cniNumber || '',
+      athemisStatus: profile?.athemisStatus || 'EN_ATTENTE'
     });
   }
 
@@ -1275,5 +1327,90 @@ export class HrList {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 0);
+  }
+
+  // --- ATHEMIS ---
+
+  switchTab(next: 'employees' | 'leaves' | 'athemis'): void {
+    this.tab.set(next);
+    if (next === 'athemis' && !this.athemisData()) {
+      this.loadAthemisCompliance();
+    }
+  }
+
+  loadAthemisCompliance(): void {
+    this.athemisLoading.set(true);
+    this.athemisError.set(null);
+    this.hr.getAthemisCompliance().subscribe({
+      next: (data: AthemisComplianceResult) => {
+        this.athemisData.set(data);
+        this.athemisLoading.set(false);
+      },
+      error: (err: any) => {
+        this.athemisError.set(err?.error?.message || 'Erreur chargement conformité ATHEMIS');
+        this.athemisLoading.set(false);
+      }
+    });
+  }
+
+  exportAthemisCsv(): void {
+    this.athemisExportLoading.set(true);
+    this.hr.exportAthemisCsv().subscribe({
+      next: (blob: Blob) => {
+        const dateStr = new Date().toISOString().slice(0, 10);
+        downloadBlob(blob, `athemis_export_${dateStr}.csv`);
+        this.athemisExportLoading.set(false);
+      },
+      error: (err: any) => {
+        this.athemisError.set(err?.error?.message || 'Erreur export ATHEMIS');
+        this.athemisExportLoading.set(false);
+      }
+    });
+  }
+
+  athemisStatusLabel(status?: string): string {
+    return HR_ATHEMIS_STATUS_LABELS[status || ''] || status || '—';
+  }
+
+  athemisStatusClass(status?: string): string {
+    if (status === 'CONFORME') return 'badge-success';
+    if (status === 'NON_CONFORME') return 'badge-danger';
+    return 'badge-warning';
+  }
+
+  toggleSsView(userId: string): void {
+    this.showSsNumber.set({ ...this.showSsNumber(), [userId]: !this.showSsNumber()[userId] });
+  }
+
+  toggleCniView(userId: string): void {
+    this.showCniNumber.set({ ...this.showCniNumber(), [userId]: !this.showCniNumber()[userId] });
+  }
+
+  isAthemisTab(): boolean { return this.tab() === 'athemis'; }
+  openAthemisTab(): void { this.switchTab('athemis'); }
+  athemisExportLabel(): string { return this.athemisExportLoading() ? 'Export...' : 'Export CSV ATHEMIS'; }
+
+  isAthemisConforme(status: string): boolean { return status === 'CONFORME'; }
+  isAthemisNonConforme(status: string): boolean { return status === 'NON_CONFORME'; }
+  isAthemisEnAttente(status: string): boolean { return status === 'EN_ATTENTE'; }
+
+  profileAthemisIsConforme(): boolean {
+    return this.profileForm.controls.athemisStatus.value === 'CONFORME';
+  }
+  profileAthemisIsNonConforme(): boolean {
+    return this.profileForm.controls.athemisStatus.value === 'NON_CONFORME';
+  }
+  profileAthemisIsEnAttente(): boolean {
+    return this.profileForm.controls.athemisStatus.value === 'EN_ATTENTE';
+  }
+
+  athemisTechHabilitations(tech: AthemisTechnicianRow): string {
+    if (!tech.habilitations?.length) return '—';
+    return tech.habilitations.join(' · ');
+  }
+
+  athemisMissingBadge(tech: AthemisTechnicianRow): string {
+    const count = tech.missingAthemis?.length || 0;
+    return count === 0 ? '' : `${count} manquant${count > 1 ? 's' : ''}`;
   }
 }

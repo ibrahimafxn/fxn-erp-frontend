@@ -189,6 +189,10 @@ export class AppHeader {
   goInterventionsAudit(): void {
     this.router.navigate(['/admin/interventions/audit']).then();
   }
+
+  goInterventionsWeek(): void {
+    this.router.navigate(['/admin/interventions/week']).then();
+  }
   goTechnicianActivity(): void {
     this.router.navigate(['/admin/technicians/activity']).then();
   }
@@ -340,13 +344,14 @@ export class AppHeader {
   private hasLocalBack(url: string): boolean {
     if (!url) return false;
     if (/^\/admin\/resources\/vehicles\/[^/]+\/detail$/.test(url)) return false;
+    if (/^\/admin\/resources\/vehicles\/[^/]+\/breakdowns$/.test(url)) return false;
+    if (/^\/admin\/resources\/materials\/[^/]+$/.test(url)) return false;
+    if (/^\/admin\/resources\/consumables\/[^/]+$/.test(url)) return false;
     if (url.includes('/detail')) return true;
     if (url.includes('/edit')) return true;
     if (url.includes('/new')) return true;
     if (url.includes('/breakdown')) return true;
     if (url.includes('/interventions/technician')) return true;
-    if (/^\/admin\/resources\/materials\/[^/]+$/.test(url)) return true;
-    if (/^\/admin\/resources\/consumables\/[^/]+$/.test(url)) return true;
     return false;
   }
 
@@ -410,6 +415,7 @@ export class AppHeader {
     if (url.includes('/alerts/stock')) return 'Alertes';
     if (url.includes('/interventions/import')) return 'Import interventions';
     if (url.includes('/interventions/audit')) return 'Audit échecs';
+    if (url.includes('/interventions/week')) return 'Dashboard semaine';
     if (url.includes('/interventions')) return 'Interventions';
     if (url.includes('/technicians/interventions')) return 'Interventions techniciens';
     if (url.includes('/technicians/activity')) return 'Prestations techniciens';

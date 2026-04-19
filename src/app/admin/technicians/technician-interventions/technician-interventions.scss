@@ -1,7 +1,13 @@
 .technician-interventions {
-  padding: 1.25rem;
+  padding: 0.9rem;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   display: grid;
   gap: 1.25rem;
+}
+
+.technician-interventions * {
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .technician-interventions.busy button,
@@ -102,7 +108,7 @@
 
 .summary-heading {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: flex-start;
   gap: 1rem;
 }
@@ -372,8 +378,8 @@
 
 .table-head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
@@ -424,42 +430,121 @@
 }
 
 .table-wrapper {
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
+/* ── Table: mobile-first card layout ── */
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 960px;
+  display: block;
 }
 
-thead th {
-  text-align: left;
-  font-size: 0.8rem;
-  opacity: 0.8;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid var(--fxn-border);
-  background: var(--fxn-surface-soft);
+thead {
+  display: none;
+}
+
+tbody {
+  display: grid;
+  gap: 0.55rem;
+}
+
+tbody tr {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem 0.6rem;
+  border-radius: 0.85rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--fxn-surface);
+  border: 1px solid var(--fxn-border);
+  cursor: pointer;
 }
 
 tbody td {
-  padding: 0.85rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: block;
+  padding: 0.15rem 0;
+  border: none;
   vertical-align: top;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
-tbody tr:nth-child(even) {
-  background: color-mix(in srgb, var(--fxn-surface-soft) 60%, transparent);
+tbody td[data-label]::before {
+  display: block;
+  content: attr(data-label);
+  font-size: 0.67rem;
+  color: var(--fxn-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* Commentaire: full row width on mobile */
+tbody td.commentaire {
+  grid-column: 1 / -1;
 }
 
 .row-click {
-  cursor: pointer;
   transition: background 0.15s ease;
 }
 
-.row-click:hover {
-  background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
+/* ── Restore table at 600px ── */
+@media (min-width: 600px) {
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  table {
+    display: table;
+    min-width: 960px;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  thead th {
+    text-align: left;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--fxn-border);
+    background: var(--fxn-surface-soft);
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  tbody tr {
+    display: table-row;
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  tbody tr:nth-child(even) {
+    background: color-mix(in srgb, var(--fxn-surface-soft) 60%, transparent);
+  }
+
+  tbody td {
+    display: table-cell;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.85rem;
+  }
+
+  tbody td[data-label]::before {
+    display: none;
+  }
+
+  tbody td.commentaire {
+    grid-column: unset;
+  }
+
+  .row-click:hover {
+    background: var(--fxn-surface-elevated, rgba(255, 255, 255, 0.04));
+  }
 }
 
 .status-pill {
@@ -639,59 +724,42 @@ tbody tr:nth-child(even) {
   border-radius: 0.85rem;
 }
 
-@media (max-width: 1100px) {
+/* ── Desktop layout ── */
+@media (min-width: 900px) {
   .technician-interventions {
-    padding: 1rem;
+    padding: 1.25rem;
   }
 
-  .summary-heading {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .table-head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .table-actions {
-    width: 100%;
-  }
-
-  table {
-    min-width: 760px;
-  }
-
-  .commentaire {
-    max-width: 180px;
-  }
-
-  .pager {
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 900px) {
   .page-header.card.hero {
-    padding: 0.85rem;
+    padding: 1rem;
   }
 
   .filters-card,
   .stats-card,
   .table-card {
-    padding: 1rem;
+    padding: 1.2rem;
   }
 
-  .filters-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  .summary-heading {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .table-head {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .table-actions {
+    width: auto;
   }
 
   .table-actions .btn-outline {
-    width: 100%;
-    justify-content: center;
+    width: auto;
+    justify-content: flex-start;
   }
 
-  table {
-    min-width: 680px;
+  .pager {
+    align-items: center;
   }
 }

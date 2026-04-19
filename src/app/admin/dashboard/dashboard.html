@@ -18,8 +18,11 @@
   <section class="pulse-section">
     <div class="pulse-head">
       <div class="pulse-title-wrap">
-        <span class="hero-badge">ERP FXN · ERT Technologies</span>
-        <h1>Tableau de bord dirigeant</h1>
+        <span class="hero-badge">ERP FXN · Pilotage des opérations</span>
+        <h1>Cockpit interventions et performance réseau</h1>
+        <p class="pulse-subtitle">
+          Suivi des interventions, des ventes, des stocks et de la performance réseau depuis un seul cockpit.
+        </p>
       </div>
       <div class="pulse-controls">
         <button class="ctrl-btn ctrl-dirigeant" type="button" (click)="goToDirigeant()">
@@ -39,7 +42,7 @@
     @if (stats(); as s) {
       <div class="pulse-kpis">
 
-        <article class="pkpi pkpi-perf" (click)="goToDirigeant()" role="button" tabindex="0">
+        <article class="pkpi pkpi-perf" (click)="scrollToTrend()" role="button" tabindex="0">
           <div class="pkpi-icon-wrap">
             <span class="material-icons notranslate">insights</span>
           </div>
@@ -51,7 +54,7 @@
           <div class="pkpi-arrow">→</div>
         </article>
 
-        <article class="pkpi pkpi-today" (click)="goToInterventions()" role="button" tabindex="0">
+        <article class="pkpi pkpi-today" (click)="goToTechnicianInterventions()" role="button" tabindex="0">
           <div class="pkpi-icon-wrap">
             <span class="material-icons notranslate">build_circle</span>
           </div>
@@ -109,6 +112,49 @@
     }
   </section>
 
+  <section class="mvp-strip card">
+    <div class="mvp-strip-head">
+      <div>
+        <span class="section-kicker">Plan produit</span>
+        <h2>6 modules clés pour le MVP terrain</h2>
+      </div>
+      <div class="mvp-strip-meta">
+        <div class="mvp-meta-pill">
+          <span class="material-icons notranslate">speed</span>
+          <span>{{ executionRate() }}% du volume mensuel déjà visible cette semaine</span>
+        </div>
+        <div class="mvp-meta-pill">
+          <span class="material-icons notranslate">hub</span>
+          <span>{{ formatCount(topPrestations().length) }} familles prioritaires suivies</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mvp-module-grid">
+      @for (module of moduleCards(); track module.key) {
+        <article class="mvp-module-card" [ngClass]="'tone-' + module.tone">
+          <div class="module-card-head">
+            <div class="module-icon">
+              <span class="material-icons notranslate">{{ module.icon }}</span>
+            </div>
+            <span class="module-status">{{ module.status }}</span>
+          </div>
+
+          <div class="module-card-body">
+            <h3>{{ module.title }}</h3>
+            <strong>{{ module.metric }}</strong>
+            <p>{{ module.detail }}</p>
+          </div>
+
+          <button class="module-link" type="button" (click)="openModule(module.route)">
+            {{ module.action }}
+            <span class="material-icons notranslate">arrow_forward</span>
+          </button>
+        </article>
+      }
+    </div>
+  </section>
+
   <!-- ═══════════════════════════════════════════
        2. CONTENU PRINCIPAL — Prestations + Décisions
   ═══════════════════════════════════════════ -->
@@ -116,10 +162,10 @@
     <div class="main-grid">
 
       <!-- LEFT : graphique prestations -->
-      <section class="prestations-panel card">
+      <section class="prestations-panel card" id="radar-interventions">
         <div class="panel-head">
           <div>
-            <h2>Répartition des prestations</h2>
+            <h2>Radar interventions</h2>
             <p>
               @if (prestationsTypesRange(); as r) {
                 Du {{ r.from }} au {{ r.to }}
@@ -127,11 +173,11 @@
                 Derniers 30 jours
               }
               @if (prestationsTypes().length) {
-                · <strong>{{ formatCount(prestationsTypesTotal()) }}</strong> au total
+                · <strong>{{ formatCount(prestationsTypesTotal()) }}</strong> prestations consolidées
               }
             </p>
           </div>
-          <button class="panel-link" type="button" (click)="goToDirigeant()">Voir détails →</button>
+          <button class="panel-link" type="button" (click)="goToInterventions()">Ouvrir les interventions →</button>
         </div>
 
         @if (prestationsTypes().length) {
@@ -205,6 +251,7 @@
                       </div>
                     }
                   </div>
+                  <div class="trend-label">{{ item.label }}</div>
                   @if (item.types?.length) {
                     <div class="trend-types-row">
                       @for (type of (item.types?.slice(0, 4) ?? []); track type.key) {
@@ -214,10 +261,85 @@
                   } @else {
                     <div class="trend-types-row empty"></div>
                   }
-                  <div class="trend-label">{{ item.label }}</div>
                 </div>
               }
             </div>
+            @if (prestationsTrendCurve(); as curve) {
+              <div class="trend-line-card">
+                <div class="trend-line-head">
+                  <span class="trend-line-title">Courbe volume journalier</span>
+                  <span class="trend-line-max">Pic : {{ formatCount(curve.max) }}</span>
+                </div>
+                <svg
+                  class="trend-line-chart"
+                  [attr.viewBox]="'0 0 ' + curve.width + ' ' + curve.height"
+                  role="img"
+                  aria-label="Courbe des prestations sur 7 jours"
+                  preserveAspectRatio="none"
+                >
+                  @for (guide of curve.guides; track $index) {
+                    <line class="trend-line-guide" x1="0" [attr.y1]="guide" x2="100" [attr.y2]="guide"></line>
+                  }
+                  <path class="trend-line-area" [attr.d]="curve.areaPath"></path>
+                  <path class="trend-line-path-glow" [attr.d]="curve.linePath"></path>
+                  <path class="trend-line-path" [attr.d]="curve.linePath"></path>
+                  @for (point of curve.points; track point.key) {
+                    <circle
+                      class="trend-line-point-halo"
+                      [class.is-peak]="point.isPeak"
+                      [attr.cx]="point.x"
+                      [attr.cy]="point.y"
+                      r="4.2"
+                    ></circle>
+                    <circle
+                      class="trend-line-point"
+                      [class.is-peak]="point.isPeak"
+                      [attr.cx]="point.x"
+                      [attr.cy]="point.y"
+                      r="3.2"
+                    >
+                      <title>{{ point.tooltip }} : {{ formatCount(point.value) }}</title>
+                    </circle>
+                    <text
+                      class="trend-line-point-value"
+                      [class.is-peak]="point.isPeak"
+                      [attr.x]="point.x"
+                      [attr.y]="point.valueY"
+                    >
+                      {{ formatCount(point.value) }}
+                    </text>
+                  }
+                </svg>
+                <div class="trend-line-labels">
+                  @for (point of curve.points; track point.key) {
+                    <div
+                      class="trend-line-day"
+                      [style.left.%]="point.x"
+                    >
+                      <span class="trend-line-label">{{ point.label }}</span>
+                      @if (point.types?.length) {
+                        <div class="trend-line-legends">
+                          @for (type of (point.types?.slice(0, 3) ?? []); track type.key) {
+                            <span
+                              class="trend-line-legend"
+                              [style.--legend-color]="type.color"
+                              [attr.title]="type.label + ' : ' + formatCount(type.count)"
+                            >
+                              <span class="trend-line-legend-dot"></span>
+                              <span class="trend-line-legend-text">{{ type.shortLabel }}</span>
+                            </span>
+                          }
+                        </div>
+                      } @else {
+                        <div class="trend-line-legends empty">
+                          <span class="trend-line-empty">Aucune</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           } @else {
             <div class="trend-empty">Données à connecter</div>
           }
@@ -230,8 +352,8 @@
         <!-- Volume prestations semaine / mois -->
         <article class="summary-card card">
           <div class="summary-header">
-            <span class="summary-title">Volume prestations</span>
-            <button class="summary-link" type="button" (click)="goToDirigeant()">Détails →</button>
+            <span class="summary-title">Exécution terrain</span>
+            <button class="summary-link" type="button" (click)="goToDirigeant()">Pilotage →</button>
           </div>
 
           <div class="summary-counters">
@@ -317,7 +439,7 @@
         <!-- Accès rapide opérations -->
         <article class="quick-ops card">
           <div class="qops-head">
-            <h3>Accès rapide</h3>
+            <h3>Accès rapide MVP</h3>
           </div>
           <div class="qops-grid">
             <button class="qop" type="button" (click)="goToInterventions()">

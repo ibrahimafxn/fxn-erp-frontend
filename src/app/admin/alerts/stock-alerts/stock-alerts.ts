@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Signal, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -17,6 +18,7 @@ import { Role } from '../../../core/models/roles.model';
 import { formatDepotName, formatResourceName } from '../../../core/utils/text-format';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { preferredPageSize } from '../../../core/utils/page-size';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   selector: 'app-stock-alerts',
@@ -99,12 +101,12 @@ export class StockAlerts {
     this.loadDepots();
     this.refresh(true);
 
-    this.filterForm.controls.resourceType.valueChanges.subscribe(() => {
+    this.filterForm.controls.resourceType.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.page.set(1);
       this.refresh(true);
     });
 
-    this.filterForm.controls.depot.valueChanges.subscribe(() => {
+    this.filterForm.controls.depot.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.page.set(1);
       this.refresh(true);
     });
@@ -151,7 +153,7 @@ export class StockAlerts {
         },
         error: (err: HttpErrorResponse) => {
           this.loading.set(false);
-          this.error.set(this.apiError(err, 'Erreur chargement alertes'));
+          this.error.set(apiError(err, 'Erreur chargement alertes'));
         }
       });
       return;
@@ -169,7 +171,7 @@ export class StockAlerts {
         },
         error: (err: HttpErrorResponse) => {
           this.loading.set(false);
-          this.error.set(this.apiError(err, 'Erreur chargement alertes'));
+          this.error.set(apiError(err, 'Erreur chargement alertes'));
         }
       });
       return;
@@ -187,7 +189,7 @@ export class StockAlerts {
         },
         error: (err: HttpErrorResponse) => {
           this.loading.set(false);
-          this.error.set(this.apiError(err, 'Erreur chargement alertes'));
+          this.error.set(apiError(err, 'Erreur chargement alertes'));
         }
       });
       return;
@@ -205,7 +207,7 @@ export class StockAlerts {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement alertes'));
+        this.error.set(apiError(err, 'Erreur chargement alertes'));
       }
     });
   }
@@ -459,14 +461,6 @@ export class StockAlerts {
       },
       error: () => this.depotsLoading.set(false)
     });
-  }
-
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
   }
 
 }

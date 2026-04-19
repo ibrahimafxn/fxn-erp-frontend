@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { BpuTypeService } from '../../../core/services/bpu-type.service';
 import { DetailBack } from '../../../core/utils/detail-back';
+import { apiError } from '../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -48,7 +49,7 @@ export class BpuTypeForm extends DetailBack {
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        this.error.set(this.apiError(err, 'Erreur chargement BPU'));
+        this.error.set(apiError(err, 'Erreur chargement BPU'));
         this.loading.set(false);
       }
     });
@@ -72,7 +73,7 @@ export class BpuTypeForm extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.saving.set(false);
-        this.error.set(this.apiError(err, 'Erreur sauvegarde BPU'));
+        this.error.set(apiError(err, 'Erreur sauvegarde BPU'));
       }
     });
   }
@@ -96,11 +97,4 @@ export class BpuTypeForm extends DetailBack {
       : 'Créer un nouveau type de BPU.';
   }
 
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
-  }
 }

@@ -10,9 +10,9 @@ import { Role } from '../../../../core/models/roles.model';
 import { Vehicle, VehicleBreakdown, VehicleBreakdownListResult } from '../../../../core/models';
 import { DetailBack } from '../../../../core/utils/detail-back';
 import { formatPersonName } from '../../../../core/utils/text-format';
-import { formatPageRange } from '../../../../core/utils/pagination';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
-import { preferredPageSize } from '../../../../core/utils/page-size';
+import { PaginationState } from '../../../../core/utils/pagination-state';
+import { apiError } from '../../../../core/utils/http-error';
 
 @Component({
   standalone: true,
@@ -47,19 +47,16 @@ export class VehicleBreakdowns extends DetailBack {
     resolvedNote: this.fb.nonNullable.control('')
   });
 
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   readonly items = computed<VehicleBreakdown[]>(() => this.result()?.items ?? []);
   readonly total = computed(() => this.result()?.total ?? 0);
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
 
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
@@ -85,7 +82,7 @@ export class VehicleBreakdowns extends DetailBack {
 
   refresh(force = false): void {
     if (!this.id) return;
-    if (force) this.page.set(1);
+    if (force) this.pag.resetPage();
 
     this.loading.set(true);
     this.error.set(null);
@@ -97,21 +94,17 @@ export class VehicleBreakdowns extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement pannes'));
+        this.error.set(apiError(err, 'Erreur chargement pannes'));
       }
     });
   }
 
   prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh(false);
+    this.pag.prevPage(() => this.refresh(false));
   }
 
   nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(false);
+    this.pag.nextPage(() => this.refresh(false));
   }
 
   onLimitChange(event: Event): void {
@@ -123,10 +116,7 @@ export class VehicleBreakdowns extends DetailBack {
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh(false);
+    this.pag.setLimitValue(value, () => this.refresh(false));
   }
 
   declareBreakdown(): void {
@@ -194,7 +184,7 @@ export class VehicleBreakdowns extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.resolvingId.set(null);
-        this.error.set(this.apiError(err, 'Erreur clôture panne'));
+        this.error.set(apiError(err, 'Erreur clôture panne'));
       }
     });
   }
@@ -246,11 +236,4 @@ export class VehicleBreakdowns extends DetailBack {
     });
   }
 
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
-  }
 }

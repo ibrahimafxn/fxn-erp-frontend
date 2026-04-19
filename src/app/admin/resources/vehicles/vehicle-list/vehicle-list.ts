@@ -13,10 +13,9 @@ import {DetailBack} from '../../../../core/utils/detail-back';
 import { AuthService } from '../../../../core/services/auth.service';
 import { Role } from '../../../../core/models/roles.model';
 import { formatDepotName, formatPersonName } from '../../../../core/utils/text-format';
-import { formatPageRange } from '../../../../core/utils/pagination';
 import { downloadBlob } from '../../../../core/utils/download';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
-import { preferredPageSize } from '../../../../core/utils/page-size';
+import { PaginationState } from '../../../../core/utils/pagination-state';
 
 type SortKey = 'title' | 'plate' | 'state' | 'assigned' | 'createdAt';
 
@@ -53,9 +52,10 @@ export class VehicleList extends DetailBack {
   readonly pendingDeleteLabel = signal<string>('véhicule');
 
   // Pagination
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   // Depots (select)
   readonly depots = signal<Depot[]>([]);
@@ -104,14 +104,9 @@ export class VehicleList extends DetailBack {
     return items;
   });
   readonly total = computed(() => this.result()?.total ?? 0);
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
-
-  readonly canPrev = computed(() => this.page() > 1);
-  readonly canNext = computed(() => this.page() < this.pageCount());
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
   readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
   readonly isReadOnly = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
   readonly canDeclareBreakdown = computed(() => {
@@ -155,26 +150,22 @@ export class VehicleList extends DetailBack {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   clearSearch(): void {
     this.filterForm.setValue({ q: '', depot: '', assigned: '', createdFrom: '', createdTo: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   prevPage(): void {
-    if (!this.canPrev()) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
+    this.pag.prevPage(() => this.refresh(true));
   }
 
   nextPage(): void {
-    if (!this.canNext()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
+    this.pag.nextPage(() => this.refresh(true));
   }
 
   setSort(key: SortKey): void {
@@ -202,10 +193,7 @@ export class VehicleList extends DetailBack {
   }
 
   setLimitValue(value: number): void {
-    if (!Number.isFinite(value) || value <= 0) return;
-    this.limit.set(value);
-    this.page.set(1);
-    this.refresh(true);
+    this.pag.setLimitValue(value, () => this.refresh(true));
   }
 
   createNew(): void {

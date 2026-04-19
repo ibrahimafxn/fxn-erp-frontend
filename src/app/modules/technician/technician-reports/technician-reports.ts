@@ -1,15 +1,13 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { apiError } from '../../../core/utils/http-error';
 import { PaginationState } from '../../../core/utils/pagination-state';
-import { computeReportAmount, normalizeReportPrestations, REPORT_CODE_ALIASES } from '../../../core/utils/technician-report-utils';
-import { TechnicianBpuResolverService } from '../../../core/services/technician-bpu-resolver.service';
+import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { TechnicianBpuResolverService, pricesForDate } from '../../../core/services/technician-bpu-resolver.service';
+import { BpuPriceHistory } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
@@ -21,11 +19,6 @@ type BpuItem = {
   code: string;
   prestation: string;
   unitPrice: number;
-};
-
-type ResolvedBpuState = {
-  items: BpuItem[];
-  prices: Map<string, number>;
 };
 
 @Component({
@@ -53,6 +46,8 @@ export class TechnicianReports {
   readonly bpuItems = signal<BpuItem[]>([]);
   /** Prix unitaires de la BpuSelection active : Map<CODE, unitPrice> */
   readonly bpuPrices = signal<Map<string, number>>(new Map());
+  /** Historique des tarifs pour résoudre le prix en vigueur à la date d'un rapport */
+  readonly bpuPriceHistory = signal<BpuPriceHistory[]>([]);
   /** Quantités saisies : Map<code, qty> */
   readonly qtys = signal<Map<string, number>>(new Map());
 
@@ -111,9 +106,17 @@ export class TechnicianReports {
   loadBpu(): void {
     this.bpuLoading.set(true);
     this.bpuError.set(null);
-    this.resolveBpuState$().subscribe({
+    this.bpuResolver.resolve(this.currentUserId()).subscribe({
       next: (state) => {
-        this.applyBpuState(state);
+        this.bpuItems.set(state.items.map((item) => ({
+          prestationId: item.prestationId,
+          code: item.code,
+          prestation: item.prestation,
+          unitPrice: item.unitPrice
+        })));
+        this.bpuPrices.set(state.prices);
+        this.bpuPriceHistory.set(state.priceHistory);
+        this.hasBpu.set(state.items.length > 0);
         this.bpuLoading.set(false);
       },
       error: (err) => {
@@ -235,16 +238,12 @@ export class TechnicianReports {
   }
 
   computeAmount(report: TechnicianReport): number {
-    return computeReportAmount(report, this.bpuPrices());
+    const prices = pricesForDate(this.bpuPriceHistory(), report.reportDate, this.bpuPrices());
+    return computeReportAmount(report, prices);
   }
 
   unitPriceFor(code: string): number {
-    const key = String(code || '').toUpperCase();
-    let price = this.bpuPrices().get(key);
-    if (!Number.isFinite(price)) {
-      const aliasKey = REPORT_CODE_ALIASES[key];
-      if (aliasKey) price = this.bpuPrices().get(aliasKey);
-    }
+    const price = this.bpuPrices().get(String(code || '').toUpperCase());
     return Number.isFinite(price) ? Number(price) : 0;
   }
 
@@ -289,26 +288,6 @@ export class TechnicianReports {
 
   private todayInput(): string {
     return this.datePipe.transform(new Date(), 'yyyy-MM-dd') || '';
-  }
-
-  private resolveBpuState$(): Observable<ResolvedBpuState> {
-    return this.bpuResolver.resolve(this.currentUserId()).pipe(
-      map((state) => ({
-        items: state.items.map((item) => ({
-          prestationId: item.prestationId,
-          code: item.code,
-          prestation: item.prestation,
-          unitPrice: item.unitPrice
-        })),
-        prices: state.prices
-      }))
-    );
-  }
-
-  private applyBpuState(state: ResolvedBpuState): void {
-    this.bpuItems.set(state.items);
-    this.bpuPrices.set(state.prices);
-    this.hasBpu.set(state.items.length > 0);
   }
 
   private resetForm(): void {

@@ -1,15 +1,13 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { TechnicianReport, TechnicianReportService } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PaginationState } from '../../../core/utils/pagination-state';
-import { BpuSelection } from '../../../core/models';
+import { BpuPriceHistory } from '../../../core/models';
 import { formatFrDate } from '../../../core/utils/date-format';
 import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
-import { TechnicianBpuResolverService } from '../../../core/services/technician-bpu-resolver.service';
+import { TechnicianBpuResolverService, pricesForDate } from '../../../core/services/technician-bpu-resolver.service';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe, formatAmountCurrency } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
@@ -40,10 +38,10 @@ export class TechnicianRevenue {
   readonly todayLabel = computed(() => formatFrDate(new Date()));
   readonly bpuLoading = signal(false);
   readonly bpuError = signal<string | null>(null);
-  readonly bpuSelections = signal<BpuSelection[]>([]);
   readonly usesPersonalizedBpu = signal(false);
   readonly hasPersonalizedBpu = computed(() => this.usesPersonalizedBpu());
   readonly bpuPrices = signal<Map<string, number>>(new Map());
+  readonly bpuPriceHistory = signal<BpuPriceHistory[]>([]);
 
   private readonly pag = new PaginationState();
   readonly page = this.pag.page;
@@ -153,15 +151,14 @@ export class TechnicianRevenue {
   loadBpuInfo(): void {
     this.bpuLoading.set(true);
     this.bpuError.set(null);
-    this.resolveBpuPrices$().subscribe({
-      next: ({ selections, prices, usesPersonalizedBpu }) => {
-        this.bpuSelections.set(selections);
-        this.bpuPrices.set(prices);
-        this.usesPersonalizedBpu.set(usesPersonalizedBpu);
+    this.bpuResolver.resolve(this.currentUserId()).subscribe({
+      next: (state) => {
+        this.bpuPrices.set(state.prices);
+        this.bpuPriceHistory.set(state.priceHistory);
+        this.usesPersonalizedBpu.set(state.usesPersonalizedBpu);
         this.bpuLoading.set(false);
       },
       error: () => {
-        this.bpuSelections.set([]);
         this.bpuPrices.set(new Map());
         this.usesPersonalizedBpu.set(false);
         this.bpuLoading.set(false);
@@ -171,7 +168,8 @@ export class TechnicianRevenue {
   }
 
   computeAmount(report: TechnicianReport): number {
-    return computeReportAmount(report, this.bpuPrices());
+    const prices = pricesForDate(this.bpuPriceHistory(), report.reportDate, this.bpuPrices());
+    return computeReportAmount(report, prices);
   }
 
   reportDateLabel(report: TechnicianReport): string {
@@ -226,13 +224,4 @@ export class TechnicianRevenue {
     return `Supprimer le rapport du ${this.reportDateLabel(item)} (${amount}) ?`;
   });
 
-  private resolveBpuPrices$(): Observable<{ selections: BpuSelection[]; prices: Map<string, number>; usesPersonalizedBpu: boolean }> {
-    return this.bpuResolver.resolve(this.currentUserId()).pipe(
-      map((state) => ({
-        selections: state.selections,
-        prices: state.prices,
-        usesPersonalizedBpu: state.usesPersonalizedBpu
-      }))
-    );
-  }
 }

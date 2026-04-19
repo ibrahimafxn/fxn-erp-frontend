@@ -124,6 +124,11 @@ export const ADMIN_ROUTES: Routes = [
       import('./interventions/interventions-audit/interventions-audit').then(m => m.InterventionsAudit)
   },
   {
+    path: 'interventions/week',
+    loadComponent: () =>
+      import('./interventions/week-dashboard/week-dashboard').then(m => m.WeekDashboard)
+  },
+  {
     path: 'bpu',
     loadComponent: () => import('./bpu/bpu-list/bpu-list').then(m => m.BpuList)
   },
@@ -229,6 +234,11 @@ export const ADMIN_ROUTES: Routes = [
     path: 'resources/consumables/:id/edit',
     loadComponent: () =>
       import('./resources/consumables/consumable-form/consumables-form').then(m => m.ConsumablesForm)
+  },
+  {
+    path: 'resources/material-consumption',
+    loadComponent: () =>
+      import('./resources/material-consumption/material-consumption').then(m => m.MaterialConsumption)
   },
 
 

@@ -18,6 +18,7 @@ import { Role } from '../../../../core/models/roles.model';
 import { ConfirmDeleteModal } from '../../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { TechnicianMobileNav } from '../../../../modules/technician/technician-mobile-nav/technician-mobile-nav';
 import { preferredPageSize } from '../../../../core/utils/page-size';
+import { apiError } from '../../../../core/utils/http-error';
 
 @Component({
   selector: 'app-consumable-detail',
@@ -165,7 +166,7 @@ export class ConsumablesDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set(this.apiError(err, 'Erreur chargement consommable'));
+        this.error.set(apiError(err, 'Erreur chargement consommable'));
       }
     });
   }
@@ -184,7 +185,7 @@ export class ConsumablesDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.historyLoading.set(false);
-        this.historyError.set(this.apiError(err, 'Erreur chargement historique'));
+        this.historyError.set(apiError(err, 'Erreur chargement historique'));
       }
     });
   }
@@ -451,7 +452,7 @@ export class ConsumablesDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.reserveLoading.set(false);
-        this.reserveError.set(this.apiError(err, 'Erreur attribution consommable'));
+        this.reserveError.set(apiError(err, 'Erreur attribution consommable'));
       }
     });
   }
@@ -500,7 +501,7 @@ export class ConsumablesDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.releaseLoading.set(false);
-        this.releaseError.set(this.apiError(err, 'Erreur reprise consommable'));
+        this.releaseError.set(apiError(err, 'Erreur reprise consommable'));
       }
     });
   }
@@ -535,7 +536,7 @@ export class ConsumablesDetail extends DetailBack {
       },
       error: (err: HttpErrorResponse) => {
         this.techniciansLoading.set(false);
-        this.techniciansError.set(this.apiError(err, 'Erreur chargement techniciens'));
+        this.techniciansError.set(apiError(err, 'Erreur chargement techniciens'));
       }
     });
   }
@@ -565,11 +566,4 @@ export class ConsumablesDetail extends DetailBack {
     return totals;
   }
 
-  private apiError(err: HttpErrorResponse, fallback: string): string {
-    const apiMsg =
-      typeof err.error === 'object' && err.error !== null && 'message' in err.error
-        ? String((err.error as { message?: unknown }).message ?? '')
-        : '';
-    return apiMsg || err.message || fallback;
-  }
 }

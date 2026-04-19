@@ -10,9 +10,8 @@ import { DepotListResult } from '../../../core/models';
 import {ConfirmDeleteModal} from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import {DetailBack} from '../../../core/utils/detail-back';
 import { formatDepotName, formatPersonName } from '../../../core/utils/text-format';
-import { formatPageRange } from '../../../core/utils/pagination';
 import { resolveUserAvatarUrl } from '../../../core/utils/avatar-url';
-import { preferredPageSize } from '../../../core/utils/page-size';
+import { PaginationState } from '../../../core/utils/pagination-state';
 
 @Component({
   standalone: true,
@@ -36,9 +35,10 @@ export class DepotList extends DetailBack {
   readonly deletingId = signal<string | null>(null);
 
   // Pagination state
-  readonly page = signal(1);
-  readonly limit = signal(preferredPageSize());
-  readonly pageRange = formatPageRange;
+  private readonly pag = new PaginationState();
+  readonly page = this.pag.page;
+  readonly limit = this.pag.limit;
+  readonly pageRange = this.pag.pageRange;
 
   // Filters
   readonly filterForm = this.fb.nonNullable.group({
@@ -48,11 +48,9 @@ export class DepotList extends DetailBack {
   // Derived
   readonly items = computed(() => this.result()?.items ?? []);
   readonly total = computed(() => this.result()?.total ?? 0);
-  readonly pageCount = computed(() => {
-    const t = this.total();
-    const l = this.limit();
-    return l > 0 ? Math.max(1, Math.ceil(t / l)) : 1;
-  });
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
 
   // ─────────────────────────────────────────────
   // ✅ Modal suppression
@@ -79,26 +77,22 @@ export class DepotList extends DetailBack {
   }
 
   search(): void {
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   clearSearch(): void {
     this.filterForm.setValue({ q: '' });
-    this.page.set(1);
+    this.pag.resetPage();
     this.refresh(true);
   }
 
   prevPage(): void {
-    if (this.page() <= 1) return;
-    this.page.set(this.page() - 1);
-    this.refresh(true);
+    this.pag.prevPage(() => this.refresh(true));
   }
 
   nextPage(): void {
-    if (this.page() >= this.pageCount()) return;
-    this.page.set(this.page() + 1);
-    this.refresh(true);
+    this.pag.nextPage(() => this.refresh(true));
   }
 
   onLimitChange(event: Event): void {
@@ -112,9 +106,7 @@ export class DepotList extends DetailBack {
   }
 
   setLimit(v: number): void {
-    this.limit.set(v);
-    this.page.set(1);
-    this.refresh(true);
+    this.pag.setLimitValue(v, () => this.refresh(true));
   }
 
   createNew(): void {

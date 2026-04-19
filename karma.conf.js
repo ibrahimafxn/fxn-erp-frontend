@@ -1,3 +1,20 @@
+const fs = require('fs');
+
+const chromeCandidates = [
+  process.env.CHROME_BIN,
+  '/snap/bin/chromium',
+  '/usr/bin/chromium-browser',
+  '/usr/bin/chromium',
+  '/usr/bin/google-chrome'
+].filter(Boolean);
+
+for (const candidate of chromeCandidates) {
+  if (fs.existsSync(candidate)) {
+    process.env.CHROME_BIN = candidate;
+    break;
+  }
+}
+
 module.exports = function (config) {
   config.set({
     basePath: '',
