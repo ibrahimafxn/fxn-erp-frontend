@@ -1306,3 +1306,173 @@ $qa-colors: (#6366f1, #0ea5e9, #10b981, #f59e0b, #ef4444, #a855f7);
     font-size: .78rem;
   }
 }
+
+/* ── Onglets de navigation segment ── */
+.segment-tabs {
+  display: flex;
+  gap: .4rem;
+  flex-wrap: wrap;
+}
+
+.segment-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .45rem .85rem;
+  border-radius: .75rem;
+  border: 1px solid var(--fxn-border);
+  background: transparent;
+  color: var(--fxn-text-soft);
+  font-size: .84rem;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+
+  &:hover:not(:disabled) {
+    border-color: rgba(59, 130, 246, .4);
+    background: rgba(59, 130, 246, .07);
+    color: var(--fxn-text);
+  }
+
+  &.active {
+    border-color: rgba(59, 130, 246, .65);
+    background: rgba(59, 130, 246, .13);
+    color: var(--fxn-primary, #3b82f6);
+    font-weight: 600;
+  }
+
+  &:disabled { opacity: .45; cursor: not-allowed; }
+}
+
+.tab-badge {
+  font-size: .65rem;
+  padding: .1rem .4rem;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, .18);
+  border: 1px solid rgba(59, 130, 246, .35);
+  color: var(--fxn-primary, #3b82f6);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 .3rem;
+  border-radius: 99px;
+  background: var(--fxn-primary, #3b82f6);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+/* ── Fil d'ariane technicien (mode PERSONNALISÉ) ── */
+.tech-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  padding: .55rem .75rem;
+  border-radius: .85rem;
+  border: 1px solid rgba(59, 130, 246, .25);
+  background: rgba(59, 130, 246, .06);
+  font-size: .84rem;
+}
+
+.btn-icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .25rem .5rem;
+  border-radius: .6rem;
+  border: 1px solid var(--fxn-border);
+  background: transparent;
+  color: var(--fxn-text-soft);
+  font-size: .8rem;
+  cursor: pointer;
+
+  &:hover { border-color: var(--fxn-primary); color: var(--fxn-primary); }
+}
+
+.tech-breadcrumb-name {
+  font-weight: 600;
+  color: var(--fxn-text);
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+}
+
+/* ── Placeholder PERSONNALISÉ (sans tech sélectionné) ── */
+.personnalise-placeholder {
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+
+  h2 { margin: 0; font-size: 1.1rem; }
+  p { margin: 0; color: var(--fxn-text-muted); font-size: .88rem; }
+}
+
+.placeholder-icon {
+  font-size: 2.5rem;
+  color: var(--fxn-primary, #3b82f6);
+  opacity: .6;
+}
+
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .6rem;
+  width: 100%;
+}
+
+.tech-card {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  padding: .7rem .85rem;
+  border-radius: .85rem;
+  border: 1px solid var(--fxn-border);
+  background: var(--fxn-surface-soft);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s, background .15s;
+
+  &:hover {
+    border-color: rgba(59, 130, 246, .5);
+    background: rgba(59, 130, 246, .07);
+  }
+
+  i { margin-left: auto; font-size: .75rem; opacity: .5; }
+}
+
+.tech-card-name {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--fxn-text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Lignes table en mode période ── */
+.period-row-active {
+  background: rgba(59, 130, 246, .06);
+}
+
+.period-row-inactive {
+  opacity: .5;
+}
+
+.price-dash {
+  color: var(--fxn-text-muted);
+  font-size: .85rem;
+}
+

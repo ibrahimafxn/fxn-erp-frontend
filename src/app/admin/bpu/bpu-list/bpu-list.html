@@ -77,67 +77,67 @@
     @if (isTechnician()) {
       <div class="toolbar-label">Vue lecture seule de votre BPU effectif</div>
     } @else {
-      <div class="context-banner">
-        <div class="context-copy">
-          <span class="context-kicker">Contexte de travail</span>
-          <strong>{{ contextModeLabel() }}</strong>
-          <p>{{ contextSummary() }}</p>
-        </div>
-        <div class="context-pills">
-          <span class="context-pill">Catalogue : prestations + prix</span>
-          <span class="context-pill">Segment source : {{ segmentLabel() }}</span>
-          <span class="context-pill">
-            Cible :
-            @if (selectedTechnicianLabel()) {
-              {{ selectedTechnicianLabel() }}
-            } @else {
-              BPU par défaut
-            }
-          </span>
-        </div>
-      </div>
-
-      <div class="context-controls-row">
-        <div class="context-panel">
-          <div class="context-panel-title">Contexte</div>
-          @if (isPersonalized()) {
-            <div class="toolbar-badge">
-              Technicien ciblé
-              <span class="mono">{{ selectedTechnicianLabel() }}</span>
-            </div>
+      <nav class="segment-tabs" aria-label="Type de BPU">
+        <button
+          class="segment-tab"
+          [class.active]="currentSegment() === 'ERT'"
+          type="button"
+          [disabled]="loading() || saving()"
+          (click)="setSegment('ERT')">
+          <i class="bi bi-bookmark-star"></i> BPU ERT <span class="tab-badge">Référence</span>
+        </button>
+        <button
+          class="segment-tab"
+          [class.active]="currentSegment() === 'SALARIE'"
+          type="button"
+          [disabled]="loading() || saving()"
+          (click)="setSegment('SALARIE')">
+          <i class="bi bi-person-badge"></i> Salarié
+        </button>
+        <button
+          class="segment-tab"
+          [class.active]="currentSegment() === 'AUTO'"
+          type="button"
+          [disabled]="loading() || saving()"
+          (click)="setSegment('AUTO')">
+          <i class="bi bi-briefcase"></i> Freelance
+        </button>
+        <button
+          class="segment-tab"
+          [class.active]="currentSegment() === 'AUTRE'"
+          type="button"
+          [disabled]="loading() || saving()"
+          (click)="setSegment('AUTRE')">
+          <i class="bi bi-three-dots"></i> Autres
+        </button>
+        <button
+          class="segment-tab"
+          [class.active]="currentSegment() === 'PERSONNALISE'"
+          type="button"
+          [disabled]="loading() || saving()"
+          (click)="setSegment('PERSONNALISE')">
+          <i class="bi bi-person-gear"></i> Personnalisés
+          @if (activePersonalizedTechnicians().length) {
+            <span class="tab-count">{{ activePersonalizedTechnicians().length }}</span>
           }
-          <div class="context-fields">
-            <label>
-              Segment source
-              <select [value]="currentSegment()" (change)="onSegmentChange($event)" [disabled]="loading() || saving()">
-                <option value="AUTO">FREELANCE</option>
-                <option value="SALARIE">SALARIÉ</option>
-                <option value="PERSONNALISE">PERSONNALISÉ</option>
-                <option value="AUTRE">AUTRES</option>
-                <option value="ERT">BPU ERT</option>
-              </select>
-            </label>
-            <label>
-              Technicien ciblé
-              <select
-                [value]="selectedTechnicianId() || ''"
-                (change)="onTechnicianChange($event)"
-                [disabled]="loading() || saving() || techniciansLoading()"
-              >
-                <option value="">BPU par défaut</option>
-                @for (tech of technicians(); track tech._id) {
-                  <option [value]="tech._id">
-                    {{ tech.firstName }} {{ tech.lastName }}
-                  </option>
-                }
-              </select>
-              @if (techniciansError()) {
-                <span class="toolbar-help error">{{ techniciansError() }}</span>
-              }
-            </label>
-          </div>
+        </button>
+      </nav>
+
+      @if (currentSegment() === 'PERSONNALISE' && selectedTechnicianId()) {
+        <div class="tech-breadcrumb">
+          <button class="btn-icon-text" type="button" (click)="clearSelectedTechnician()">
+            <i class="bi bi-arrow-left"></i> Retour à la liste
+          </button>
+          <span class="tech-breadcrumb-name">
+            <i class="bi bi-person-fill"></i> {{ selectedTechnicianLabel() }}
+          </span>
+          @if (isInPeriodView()) {
+            <span class="period-view-badge">
+              <i class="bi bi-calendar3"></i> Vue période
+            </span>
+          }
         </div>
-      </div>
+      }
     }
   </section>
 
@@ -153,6 +153,30 @@
     <div class="state loading card">Chargement…</div>
   } @else if (error()) {
     <div class="state error card"><strong>Erreur :</strong> {{ error() }}</div>
+  } @else if (!showMainTable()) {
+    <!-- Placeholder PERSONNALISÉ : aucun technicien sélectionné -->
+    <div class="content-layout">
+      <div class="personnalise-placeholder card">
+        <i class="bi bi-person-lines-fill placeholder-icon"></i>
+        <h2>BPU personnalisés</h2>
+        <p>Sélectionnez un technicien dans la liste pour voir et modifier son BPU historisé.</p>
+        @if (techniciansLoading()) {
+          <div class="state">Chargement des techniciens…</div>
+        } @else if (activePersonalizedTechnicians().length === 0) {
+          <div class="state empty">Aucun technicien avec BPU personnalisé.</div>
+        } @else {
+          <div class="tech-grid">
+            @for (tech of activePersonalizedTechnicians(); track tech._id; let i = $index) {
+              <button class="tech-card" type="button" (click)="editPersonalized(tech._id)">
+                <span class="qa-avatar" [attr.data-idx]="i % 6">{{ techInitials(tech) }}</span>
+                <span class="tech-card-name">{{ tech.firstName }} {{ tech.lastName }}</span>
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
   } @else if (items().length === 0) {
     <div class="state empty card">Aucune prestation BPU.</div>
   } @else {
@@ -164,17 +188,21 @@
             <tr>
               @if (!isTechnician()) {
                 <th class="select-col select-all">
-                  <label class="select-all-label">
-                    <input
-                      class="select-box"
-                      type="checkbox"
-                      [checked]="allSelected()"
-                      [disabled]="loading() || saving()"
-                      (change)="toggleSelectAll()"
-                      aria-label="Tout sélectionner"
-                    />
-                    <span>Tout</span>
-                  </label>
+                  @if (!isInPeriodView()) {
+                    <label class="select-all-label">
+                      <input
+                        class="select-box"
+                        type="checkbox"
+                        [checked]="allSelected()"
+                        [disabled]="loading() || saving()"
+                        (change)="toggleSelectAll()"
+                        aria-label="Tout sélectionner"
+                      />
+                      <span>Tout</span>
+                    </label>
+                  } @else {
+                    <span class="select-all-label">✓</span>
+                  }
                 </th>
               }
               <th>
@@ -183,26 +211,32 @@
                 </button>
               </th>
               <th>Code</th>
-              <th>
-                Prix appliqué
-                @if (isInPeriodView()) {
-                  <span class="period-view-badge">vue période</span>
-                }
-              </th>
+              <th>Prix appliqué</th>
             </tr>
             </thead>
             <tbody>
               @for (item of sortedItems(); track item._id || item.code) {
-                <tr>
+                <tr [class.period-row-active]="isInPeriodView() && isPeriodCodeSelected(item.code)"
+                    [class.period-row-inactive]="isInPeriodView() && !isPeriodCodeSelected(item.code)">
                   @if (!isTechnician()) {
                     <td data-label="Sélection" class="select-col">
-                      <input
-                        class="select-box"
-                        type="checkbox"
-                        [checked]="isSelected(item)"
-                        [disabled]="loading() || saving()"
-                        (change)="toggleSelection(item)"
-                      />
+                      @if (isInPeriodView()) {
+                        <input
+                          class="select-box"
+                          type="checkbox"
+                          [checked]="isPeriodCodeSelected(item.code)"
+                          [disabled]="saving()"
+                          (change)="togglePeriodCode(item.code)"
+                        />
+                      } @else {
+                        <input
+                          class="select-box"
+                          type="checkbox"
+                          [checked]="isSelected(item)"
+                          [disabled]="loading() || saving()"
+                          (change)="toggleSelection(item)"
+                        />
+                      }
                     </td>
                   }
                   <td data-label="Prestation">
@@ -210,9 +244,9 @@
                   </td>
                   <td data-label="Code" class="mono">
                     @if (isTechnician()) {
-                      <span class="pill-blue">
-                        {{ item.code || '—' }}
-                      </span>
+                      <span class="pill-blue">{{ item.code || '—' }}</span>
+                    } @else if (isInPeriodView()) {
+                      <span class="pill-blue">{{ item.code || '—' }}</span>
                     } @else {
                       <input
                         class="code-input"
@@ -226,27 +260,18 @@
                   </td>
                   <td data-label="Prix appliqué" [class.period-price-cell]="isInPeriodView()">
                     @if (isInPeriodView()) {
-                      @if (periodPrice(item) !== null) {
+                      @if (isPeriodCodeSelected(item.code)) {
                         <input
                           class="period-price-input"
                           type="number"
                           min="0"
                           step="0.01"
-                          [value]="periodPrice(item)"
+                          [value]="editedPeriodPrices().get((item.code || '').trim().toUpperCase()) ?? item.unitPrice"
                           [disabled]="saving()"
                           (input)="onPeriodPriceChange(item, $event)"
                         />
                       } @else {
-                        <input
-                          class="period-price-input period-price-add"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value=""
-                          placeholder="Ajouter…"
-                          [disabled]="saving()"
-                          (input)="onPeriodPriceChange(item, $event)"
-                        />
+                        <span class="price-dash">—</span>
                       }
                     } @else {
                       <input
@@ -473,22 +498,9 @@
                     @if (historyExpanded() === entry._id) {
                       <div class="history-detail">
                         <p class="history-detail-hint">
-                          <i class="bi bi-info-circle"></i>
-                          Les prix ci-dessous sont affichés dans la liste principale.
+                          <i class="bi bi-pencil-square"></i>
+                          {{ entry.prestations.length }} prestation(s) — cochez/décochez dans le tableau pour modifier.
                         </p>
-                        <table class="history-table">
-                          <thead>
-                            <tr><th>Code</th><th class="num">Prix unitaire</th></tr>
-                          </thead>
-                          <tbody>
-                            @for (p of entry.prestations; track p.code) {
-                              <tr>
-                                <td class="history-code">{{ p.code }}</td>
-                                <td class="num">{{ p.unitPrice | number:'1.2-2' }} €</td>
-                              </tr>
-                            }
-                          </tbody>
-                        </table>
                       </div>
                     }
                   </li>

@@ -344,13 +344,14 @@ export class AppHeader {
   private hasLocalBack(url: string): boolean {
     if (!url) return false;
     if (/^\/admin\/resources\/vehicles\/[^/]+\/detail$/.test(url)) return false;
+    if (/^\/admin\/resources\/vehicles\/[^/]+\/breakdowns$/.test(url)) return false;
+    if (/^\/admin\/resources\/materials\/[^/]+$/.test(url)) return false;
+    if (/^\/admin\/resources\/consumables\/[^/]+$/.test(url)) return false;
     if (url.includes('/detail')) return true;
     if (url.includes('/edit')) return true;
     if (url.includes('/new')) return true;
     if (url.includes('/breakdown')) return true;
     if (url.includes('/interventions/technician')) return true;
-    if (/^\/admin\/resources\/materials\/[^/]+$/.test(url)) return true;
-    if (/^\/admin\/resources\/consumables\/[^/]+$/.test(url)) return true;
     return false;
   }
 
