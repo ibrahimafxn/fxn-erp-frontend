@@ -56,11 +56,14 @@
   <section class="import-section">
     <div class="import-head">
       <div>
-        <h2>Import du jour</h2>
-        <p class="subtitle">Interventions importées automatiquement depuis Osiris.</p>
+        <h2>Dernier import Osiris</h2>
+        <p class="subtitle">Interventions et prestations issues du dernier import validé.</p>
       </div>
       <div class="import-meta">
-        <div>{{ importLabel() }}</div>
+        <div class="import-meta-line">{{ importLabel() }}</div>
+        @if (importPeriodLabel()) {
+          <div class="import-meta-line import-meta-line--muted">{{ importPeriodLabel() }}</div>
+        }
       </div>
     </div>
     @if (importLoading()) {
@@ -69,11 +72,11 @@
     @if (importError()) {
       <div class="state error">Erreur : {{ importError() }}</div>
     }
-    @if (!importLoading() && !importBatch()) {
-      <div class="state empty">Aucun import détecté aujourd'hui.</div>
+  @if (!importLoading() && !importBatch()) {
+      <div class="state empty">Aucun import Osiris validé disponible.</div>
     }
     @if (importBatch()) {
-      <div class="import-grid">
+      <div class="import-grid import-grid--summary">
         <article class="import-card">
           <div class="label">Total interventions</div>
           <div class="value">{{ importSummary()?.totals?.total ?? 0 }}</div>
@@ -96,8 +99,8 @@
         </article>
       </div>
       @if (prestationCards().length) {
-        <div class="import-subtitle">Prestations du jour</div>
-        <div class="import-grid">
+        <div class="import-subtitle">Prestations du dernier import</div>
+        <div class="import-grid import-grid--prestations">
           @for (item of prestationCardsVisible(); track item.label) {
             <article class="import-card">
               <div class="label">{{ item.label }}</div>
@@ -113,6 +116,40 @@
       }
     }
   </section>
+
+  @if (!myEquipmentLoading() && hasLowOsirisEquipment()) {
+    <section class="osiris-alert card">
+      <div class="osiris-alert-head">
+        <div>
+          <h2>Alerte stock Osiris</h2>
+          <p class="osiris-alert-subtitle">Certaines références sont sous le seuil de 4 unités.</p>
+        </div>
+        <button class="btn-outline" type="button" (click)="goOsirisEquipment()">
+          <span class="material-icons notranslate">devices</span>
+          Voir le stock
+        </button>
+      </div>
+
+      <div class="osiris-alert-list">
+        @for (item of lowOsirisEquipment(); track item.type + '-' + item.codeProcable) {
+          <article class="osiris-alert-item">
+            <div class="osiris-alert-item-head">
+              <span class="osiris-alert-type">{{ item.type }}</span>
+              <span class="osiris-alert-count" [class.is-critical]="item.count <= 1">{{ item.count }}</span>
+            </div>
+            <div class="osiris-alert-meta">
+              @if (item.codeProcable) {
+                <span>{{ item.codeProcable }}</span>
+              }
+              @if (item.categorie) {
+                <span>{{ item.categorie }}</span>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
 
   <!-- Stock équipements Osiris -->
   @if (myEquipmentLoading() || (myEquipment() && myEquipment()!.total > 0)) {

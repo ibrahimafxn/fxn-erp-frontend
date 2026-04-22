@@ -80,6 +80,8 @@ export class BpuList {
   readonly historyDeleting = signal<Set<string>>(new Set());
   /** Prix édités pour la période active (initialisé depuis le snapshot, modifiable) */
   readonly editedPeriodPrices = signal<Map<string, number>>(new Map());
+  /** Codes cochés dans la période active (prestations sélectionnées dans le snapshot) */
+  readonly editedPeriodCodes = signal<Set<string>>(new Set());
   /** Map<code, unitPrice> du snapshot actuellement développé (null = prix courants) */
   readonly activePeriodMap = computed<Map<string, number> | null>(() => {
     const id = this.historyExpanded();
@@ -95,6 +97,11 @@ export class BpuList {
     }
     return map;
   });
+  /** Affiche le tableau principal sauf si PERSONNALISE sans technicien sélectionné */
+  readonly showMainTable = computed(() =>
+    !(this.currentSegment() === 'PERSONNALISE' && !this.selectedTechnicianId())
+  );
+
   readonly stitFields: InterventionPrestationField[] = INTERVENTION_PRESTATION_FIELDS;
   readonly BPU_STIT_PDF = 'assets/docs/bpu_list.pdf';
   readonly isTechnician = computed(() => this.auth.getUserRole() === Role.TECHNICIEN);
@@ -360,6 +367,11 @@ export class BpuList {
       next: (history) => {
         this.priceHistory.set(history || []);
         this.historyLoading.set(false);
+        // Auto-expand le snapshot le plus récent en mode PERSONNALISÉ
+        if (this.currentSegment() === 'PERSONNALISE' && this.selectedTechnicianId() && history?.length) {
+          const firstId = history[0]._id;
+          if (firstId) this.toggleHistoryEntry(firstId);
+        }
       },
       error: () => {
         this.priceHistory.set([]);
@@ -372,15 +384,19 @@ export class BpuList {
     const next = this.historyExpanded() === id ? null : id;
     this.historyExpanded.set(next);
     if (next) {
-      // Initialise les prix éditables depuis le snapshot
       const entry = this.priceHistory().find(e => e._id === next);
-      const map = new Map<string, number>();
+      const priceMap = new Map<string, number>();
+      const codeSet = new Set<string>();
       for (const p of entry?.prestations ?? []) {
-        map.set(String(p.code || '').trim().toUpperCase(), Number(p.unitPrice ?? 0));
+        const code = String(p.code || '').trim().toUpperCase();
+        priceMap.set(code, Number(p.unitPrice ?? 0));
+        codeSet.add(code);
       }
-      this.editedPeriodPrices.set(map);
+      this.editedPeriodPrices.set(priceMap);
+      this.editedPeriodCodes.set(codeSet);
     } else {
       this.editedPeriodPrices.set(new Map());
+      this.editedPeriodCodes.set(new Set());
     }
   }
 
@@ -433,6 +449,30 @@ export class BpuList {
     return val !== undefined ? val : null;
   }
 
+  togglePeriodCode(code: string): void {
+    const key = String(code || '').trim().toUpperCase();
+    if (!key) return;
+    const next = new Set(this.editedPeriodCodes());
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+      if (!this.editedPeriodPrices().has(key)) {
+        const ertItem = this.items().find(i => String(i.code || '').trim().toUpperCase() === key);
+        if (ertItem) {
+          const prices = new Map(this.editedPeriodPrices());
+          prices.set(key, Number(ertItem.unitPrice || 0));
+          this.editedPeriodPrices.set(prices);
+        }
+      }
+    }
+    this.editedPeriodCodes.set(next);
+  }
+
+  isPeriodCodeSelected(code: string): boolean {
+    return this.editedPeriodCodes().has(String(code || '').trim().toUpperCase());
+  }
+
   onPeriodPriceChange(item: BpuEntry, event: Event): void {
     const target = event.target as HTMLInputElement | null;
     if (!target) return;
@@ -465,19 +505,24 @@ export class BpuList {
     if (!id) return false;
     const entry = this.priceHistory().find(e => e._id === id);
     if (!entry) return false;
-    const edited = this.editedPeriodPrices();
 
-    // Modifications sur les prestations existantes
-    const originalKeys = new Set<string>();
+    const originalCodes = new Set<string>();
+    const originalPrices = new Map<string, number>();
     for (const p of entry.prestations) {
       const key = String(p.code || '').trim().toUpperCase();
-      originalKeys.add(key);
-      if (edited.get(key) !== Number(p.unitPrice ?? 0)) return true;
+      originalCodes.add(key);
+      originalPrices.set(key, Number(p.unitPrice ?? 0));
     }
 
-    // Nouvelles prestations ajoutées (prix > 0)
-    for (const [key, price] of edited.entries()) {
-      if (!originalKeys.has(key) && price > 0) return true;
+    const editedCodes = this.editedPeriodCodes();
+    const editedPrices = this.editedPeriodPrices();
+
+    if (editedCodes.size !== originalCodes.size) return true;
+    for (const code of editedCodes) {
+      if (!originalCodes.has(code)) return true;
+    }
+    for (const [code, price] of editedPrices) {
+      if (originalCodes.has(code) && originalPrices.get(code) !== price) return true;
     }
 
     return false;
@@ -490,20 +535,32 @@ export class BpuList {
   private performUpdatePeriod(): void {
     const id = this.historyExpanded();
     if (!id) return;
-    const edited = this.editedPeriodPrices();
-    const prestations = Array.from(edited.entries())
-      .map(([code, unitPrice]) => ({ code, unitPrice }))
+    const codes = this.editedPeriodCodes();
+    const prices = this.editedPeriodPrices();
+    const prestations = Array.from(codes)
+      .map(code => ({ code, unitPrice: prices.get(code) ?? 0 }))
       .filter(p => p.code && Number.isFinite(p.unitPrice));
-    if (!prestations.length) return;
+    if (!prestations.length) {
+      this.error.set('Sélectionnez au moins une prestation.');
+      return;
+    }
     this.saving.set(true);
     this.error.set(null);
     this.success.set(null);
     this.bpuSelectionService.updateHistory(id, prestations).subscribe({
       next: (updated) => {
-        // Mettre à jour le snapshot dans le signal local
         this.priceHistory.set(
           this.priceHistory().map(e => e._id === id ? { ...e, prestations: updated.prestations } : e)
         );
+        const newPrices = new Map<string, number>();
+        const newCodes = new Set<string>();
+        for (const p of updated.prestations) {
+          const code = String(p.code || '').trim().toUpperCase();
+          newPrices.set(code, Number(p.unitPrice ?? 0));
+          newCodes.add(code);
+        }
+        this.editedPeriodPrices.set(newPrices);
+        this.editedPeriodCodes.set(newCodes);
         this.success.set('Snapshot mis à jour avec succès.');
         this.saving.set(false);
       },
@@ -740,6 +797,34 @@ export class BpuList {
     this.selectedTechnicianId.set(techId);
     this.selectedCodes.set(new Set());
     this.editedPrices.set(new Map());
+    this.historyExpanded.set(null);
+    this.editedPeriodPrices.set(new Map());
+    this.editedPeriodCodes.set(new Set());
+    this.syncQueryParams();
+    this.load();
+  }
+
+  clearSelectedTechnician(): void {
+    this.selectedTechnicianId.set(null);
+    this.selectedCodes.set(new Set());
+    this.editedPrices.set(new Map());
+    this.historyExpanded.set(null);
+    this.editedPeriodPrices.set(new Map());
+    this.editedPeriodCodes.set(new Set());
+    this.syncQueryParams();
+    this.load();
+  }
+
+  setSegment(segment: Segment): void {
+    if (segment === this.currentSegment() && !this.selectedTechnicianId()) return;
+    this.currentSegment.set(segment);
+    if (segment !== 'PERSONNALISE') this.selectedTechnicianId.set(null);
+    this.isEditing.set(false);
+    this.selectedCodes.set(new Set());
+    this.editedPrices.set(new Map());
+    this.historyExpanded.set(null);
+    this.editedPeriodPrices.set(new Map());
+    this.editedPeriodCodes.set(new Set());
     this.syncQueryParams();
     this.load();
   }
@@ -1286,21 +1371,11 @@ export class BpuList {
     return value === 'AUTO' || value === 'SALARIE' || value === 'PERSONNALISE' || value === 'AUTRE' || value === 'ERT';
   }
 
-  private listItemsForSegment(segment: Segment) {
-    if (segment === 'PERSONNALISE') {
-      return this.bpuService.list();
-    }
-    if (segment === 'ERT') {
-      return this.bpuService.list(segment).pipe(
-        switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
-      );
-    }
-    if (segment === 'AUTRE') {
-      return this.bpuService.list(segment).pipe(
-        switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
-      );
-    }
-    return this.bpuService.list(segment);
+  private listItemsForSegment(_segment: Segment) {
+    // ERT est le catalogue de référence pour tous les segments
+    return this.bpuService.list('ERT').pipe(
+      switchMap((items) => (items.length ? of(items) : this.bpuService.list()))
+    );
   }
 
   private buildEditedCodesMap(items: BpuEntry[]): Map<string, string> {

@@ -35,6 +35,7 @@ export class InterventionsTechnicianDetail {
   readonly error = signal<string | null>(null);
   readonly items = signal<InterventionItem[]>([]);
   readonly technician = signal('');
+  readonly technicianFilter = signal('');
 
   private readonly pag = new PaginationState();
   readonly page = this.pag.page;
@@ -107,6 +108,7 @@ export class InterventionsTechnicianDetail {
     combineLatest([this.route.paramMap, this.route.queryParamMap]).subscribe(([params, query]) => {
       const tech = params.get('technician') || '';
       this.technician.set(tech);
+      this.technicianFilter.set(query.get('techFilter') || tech);
       this.filters.set({
         fromDate: query.get('fromDate') || '',
         toDate: query.get('toDate') || '',
@@ -149,7 +151,7 @@ export class InterventionsTechnicianDetail {
   }
 
   private load(): void {
-    const tech = this.technician();
+    const tech = this.technicianFilter();
     if (!tech) {
       this.error.set('Technicien introuvable.');
       return;

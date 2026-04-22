@@ -15,11 +15,18 @@ import {
   InterventionSummaryItem,
   InterventionTotals
 } from '../../../core/services/intervention.service';
+import { HrService } from '../../../core/services/hr.service';
+import { EmployeeSummary } from '../../../core/models';
 import { apiError } from '../../../core/utils/http-error';
+import { formatPersonName } from '../../../core/utils/text-format';
 
 // ─── Types locaux ────────────────────────────────────────────────────────────
 
-type TechRow = InterventionSummaryItem & { pct: number };
+type TechRow = InterventionSummaryItem & {
+  pct: number;
+  techKey: string;
+  techAliases: string[];
+};
 
 type PrestationSlice = {
   label: string;
@@ -90,6 +97,7 @@ const PRESTA_SLICES: Array<{ label: string; key: keyof InterventionTotals }> = [
 })
 export class WeekDashboard implements OnInit {
   private svc = inject(InterventionService);
+  private hr = inject(HrService);
 
   readonly week = currentWeekBounds();
   readonly loading = signal(true);
@@ -178,15 +186,19 @@ export class WeekDashboard implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      const resp = await firstValueFrom(
-        this.svc.summary({ fromDate: this.week.from, toDate: this.week.to, limit: 200 })
-      );
+      const [resp, employees] = await Promise.all([
+        firstValueFrom(
+          this.svc.summary({ fromDate: this.week.from, toDate: this.week.to, limit: 200 })
+        ),
+        firstValueFrom(this.hr.listEmployees({ role: 'TECHNICIEN', page: 1, limit: 1000 }))
+          .then((res) => res.items ?? [])
+          .catch(() => [] as EmployeeSummary[])
+      ]);
       const data = resp.data;
       const items: InterventionSummaryItem[] = data.items ?? [];
       const t: InterventionTotals = data.totals;
       const grand = t?.total ?? items.reduce((s, x) => s + x.total, 0);
-
-      const sorted = [...items]
+      const sorted = this.aggregateTechnicians(items, employees)
         .sort((a, b) => b.total - a.total)
         .map(row => ({ ...row, pct: grand ? (row.total / grand) * 100 : 0 }));
 
@@ -271,7 +283,7 @@ export class WeekDashboard implements OnInit {
   }
 
   trackByTech(_: number, row: TechRow): string {
-    return row.technician;
+    return row.techKey;
   }
 
   trackBySlice(_: number, s: PrestationSlice): string {
@@ -301,4 +313,160 @@ export class WeekDashboard implements OnInit {
   totalDeplTort(): number   { return this.totals()?.deplacementATort  ?? 0; }
   totalDeplOffert(): number { return this.totals()?.deplacementOffert ?? 0; }
   totalAutre(): number      { return this.totals()?.racAutre         ?? 0; }
+
+  techFilter(row: TechRow): string {
+    const aliases = Array.from(new Set(
+      row.techAliases
+        .map((value) => this.cleanTechLabel(value))
+        .filter(Boolean)
+    ));
+    if (!aliases.length) return '';
+    const escaped = aliases.map((value) => this.escapeRegex(value));
+    return `^(?:${escaped.join('|')})$`;
+  }
+
+  private aggregateTechnicians(items: InterventionSummaryItem[], employees: EmployeeSummary[]): TechRow[] {
+    const grouped = new Map<string, TechRow>();
+    const directMap = this.buildDirectTechMap(employees);
+    const lastNameMap = this.buildUniqueLastNameMap(employees);
+    const summarySuffixMap = this.buildSummarySuffixMap(items);
+
+    for (const item of items) {
+      const rawLabel = this.cleanTechLabel(item.technician);
+      const resolvedLabel = this.resolveTechLabel(rawLabel, directMap, lastNameMap, summarySuffixMap);
+      const techKey = this.normalizeLabel(resolvedLabel || rawLabel || 'Inconnu');
+      const displayLabel = resolvedLabel || rawLabel || 'Inconnu';
+      const bucket = grouped.get(techKey) ?? {
+        ...this.cloneSummaryItem(item, displayLabel),
+        pct: 0,
+        techKey,
+        techAliases: rawLabel ? [rawLabel] : []
+      };
+
+      if (bucket !== grouped.get(techKey)) {
+        grouped.set(techKey, bucket);
+      } else {
+        this.mergeSummaryItem(bucket, item);
+        bucket.technician = this.pickPreferredLabel(bucket.technician, displayLabel);
+        if (rawLabel && !bucket.techAliases.includes(rawLabel)) bucket.techAliases.push(rawLabel);
+      }
+    }
+
+    return Array.from(grouped.values());
+  }
+
+  private cloneSummaryItem(item: InterventionSummaryItem, technician: string): TechRow {
+    return {
+      ...item,
+      technician,
+      pct: 0,
+      techKey: this.normalizeLabel(technician || 'Inconnu'),
+      techAliases: []
+    };
+  }
+
+  private mergeSummaryItem(target: InterventionSummaryItem, source: InterventionSummaryItem): void {
+    for (const [key, value] of Object.entries(source)) {
+      if (key === 'technician' || typeof value !== 'number') continue;
+      const current = typeof (target as Record<string, unknown>)[key] === 'number'
+        ? Number((target as Record<string, unknown>)[key])
+        : 0;
+      (target as Record<string, unknown>)[key] = current + value;
+    }
+  }
+
+  private buildDirectTechMap(employees: EmployeeSummary[]): Map<string, string> {
+    const result = new Map<string, string>();
+    for (const entry of employees) {
+      const user = entry.user;
+      const label = formatPersonName(user?.firstName ?? '', user?.lastName ?? '') || user?.email || '';
+      const normalized = this.normalizeLabel(label);
+      if (!normalized) continue;
+      result.set(normalized, label);
+    }
+    return result;
+  }
+
+  private buildUniqueLastNameMap(employees: EmployeeSummary[]): Map<string, string> {
+    const counts = new Map<string, number>();
+    const labels = new Map<string, string>();
+    for (const entry of employees) {
+      const user = entry.user;
+      const lastName = this.normalizeLabel(user?.lastName ?? '');
+      const label = formatPersonName(user?.firstName ?? '', user?.lastName ?? '') || user?.email || '';
+      if (!lastName || !label) continue;
+      counts.set(lastName, (counts.get(lastName) ?? 0) + 1);
+      labels.set(lastName, label);
+    }
+    const result = new Map<string, string>();
+    for (const [lastName, count] of counts.entries()) {
+      if (count === 1) result.set(lastName, labels.get(lastName) || '');
+    }
+    return result;
+  }
+
+  private buildSummarySuffixMap(items: InterventionSummaryItem[]): Map<string, string> {
+    const candidates = new Map<string, Set<string>>();
+    for (const item of items) {
+      const label = this.cleanTechLabel(item.technician);
+      const normalized = this.normalizeLabel(label);
+      if (!normalized.includes(' ')) continue;
+      const parts = normalized.split(' ');
+      const suffix = parts[parts.length - 1];
+      if (!suffix) continue;
+      if (!candidates.has(suffix)) candidates.set(suffix, new Set());
+      candidates.get(suffix)?.add(label);
+    }
+    const result = new Map<string, string>();
+    for (const [suffix, labels] of candidates.entries()) {
+      if (labels.size === 1) result.set(suffix, Array.from(labels)[0]);
+    }
+    return result;
+  }
+
+  private resolveTechLabel(
+    value: string,
+    directMap: Map<string, string>,
+    lastNameMap: Map<string, string>,
+    summarySuffixMap: Map<string, string>
+  ): string {
+    const normalized = this.normalizeLabel(value);
+    if (!normalized) return 'Inconnu';
+    const exact = directMap.get(normalized);
+    if (exact) return exact;
+    if (!normalized.includes(' ')) {
+      const byLastName = lastNameMap.get(normalized);
+      if (byLastName) return byLastName;
+      const bySummarySuffix = summarySuffixMap.get(normalized);
+      if (bySummarySuffix) return bySummarySuffix;
+    }
+    return value;
+  }
+
+  private pickPreferredLabel(current: string, candidate: string): string {
+    const currentLabel = this.cleanTechLabel(current);
+    const nextLabel = this.cleanTechLabel(candidate);
+    if (!currentLabel) return nextLabel || 'Inconnu';
+    if (!nextLabel) return currentLabel;
+    const currentParts = this.normalizeLabel(currentLabel).split(' ').filter(Boolean).length;
+    const nextParts = this.normalizeLabel(nextLabel).split(' ').filter(Boolean).length;
+    if (nextParts > currentParts) return nextLabel;
+    if (nextParts === currentParts && nextLabel.length > currentLabel.length) return nextLabel;
+    return currentLabel;
+  }
+
+  private cleanTechLabel(value: string): string {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  private normalizeLabel(value: string): string {
+    return this.cleanTechLabel(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  private escapeRegex(value: string): string {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 }

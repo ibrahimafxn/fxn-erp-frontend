@@ -1,0 +1,148 @@
+<section class="import-tickets">
+  <header class="page-header">
+    <div>
+      <h1>Tickets d'import Osiris</h1>
+      <p class="subtitle">Traiter les anomalies détectées pendant l'analyse ou après commit.</p>
+    </div>
+    <div class="header-actions">
+      <a class="btn-outline" routerLink="/admin/interventions/import">
+        <i class="bi bi-arrow-left"></i> Retour à l'import
+      </a>
+      <a class="btn-outline" routerLink="/admin/interventions/import/history">
+        <i class="bi bi-clock-history"></i> Historique
+      </a>
+    </div>
+  </header>
+
+  <form class="filters card" [formGroup]="filtersForm">
+    <label>
+      Statut
+      <select formControlName="status" (change)="onFiltersChange()">
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Type
+      <select formControlName="type" (change)="onFiltersChange()">
+        @for (option of typeOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      Batch
+      <select formControlName="importBatchId" (change)="onFiltersChange()">
+        <option value="">Tous les imports</option>
+        @for (batch of batches(); track batch._id) {
+          <option [value]="batch._id">{{ batch.originalName || batch._id }}</option>
+        }
+      </select>
+    </label>
+  </form>
+
+  @if (error()) {
+    <div class="alert alert-error"><i class="bi bi-exclamation-triangle"></i> {{ error() }}</div>
+  }
+
+  @if (actionError()) {
+    <div class="alert alert-error"><i class="bi bi-exclamation-triangle"></i> {{ actionError() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="state card">Chargement…</div>
+  } @else if (tickets().length === 0) {
+    <div class="state card">Aucun ticket pour les filtres sélectionnés.</div>
+  } @else {
+    <div class="pager card">
+      <span>{{ total() }} ticket(s)</span>
+      <div class="pager-nav">
+        <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <span>{{ page() }} / {{ pageCount() }}</span>
+        <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="ticket-list">
+      @for (ticket of tickets(); track ticket._id) {
+        <article class="ticket-card card">
+          <div class="ticket-head">
+            <div class="ticket-title">
+              <span class="badge badge-type">{{ ticketTypeLabel(ticket.type) }}</span>
+              <span class="badge" [class]="statusClass(ticket.status)">{{ statusLabel(ticket.status) }}</span>
+            </div>
+            <div class="ticket-actions">
+              @if (isOpen(ticket)) {
+                <button class="btn-outline" type="button" (click)="resolveAuto(ticket)" [disabled]="actionLoadingId() === ticket._id">
+                  @if (actionLoadingId() === ticket._id) {
+                    Traitement…
+                  } @else {
+                    <i class="bi bi-magic"></i> Résolution auto
+                  }
+                </button>
+              }
+              @if (canManualResolve(ticket)) {
+                <button class="btn-primary" type="button" (click)="openManualResolve(ticket)" [disabled]="actionLoadingId() === ticket._id">
+                  <i class="bi bi-pencil-square"></i> Corriger
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="ticket-meta">
+            <span><strong>Import :</strong> {{ batchLabel(ticket) }}</span>
+            <span><strong>N° inter :</strong> {{ ticket.numInter || '—' }}</span>
+            <span><strong>Technicien :</strong> {{ techLabel(ticket) }}</span>
+            <span><strong>Créé le :</strong> {{ formatDate(ticket.createdAt) }}</span>
+            @if (ticket.resolvedAt) {
+              <span><strong>Résolu le :</strong> {{ formatDate(ticket.resolvedAt) }}</span>
+            }
+          </div>
+
+          <p class="ticket-reason">{{ ticket.reason || 'Aucun motif détaillé.' }}</p>
+
+          @if (ticket.correctedCode || ticket.correctedLabel) {
+            <div class="ticket-resolution">
+              <span class="pill">Code : {{ ticket.correctedCode || '—' }}</span>
+              @if (ticket.correctedLabel) {
+                <span class="pill">{{ ticket.correctedLabel }}</span>
+              }
+            </div>
+          }
+
+          @if (editingTicketId() === ticket._id) {
+            <form class="resolve-form" [formGroup]="resolveForm" (ngSubmit)="resolveManual(ticket)">
+              <label>
+                Code prestation
+                <input type="text" formControlName="code" placeholder="Ex. RAC_PAVILLON" />
+              </label>
+              <label>
+                Libellé
+                <input type="text" formControlName="label" placeholder="Optionnel" />
+              </label>
+              <div class="resolve-actions">
+                <button class="btn-outline" type="button" (click)="cancelManualResolve()" [disabled]="actionLoadingId() === ticket._id">
+                  Annuler
+                </button>
+                <button class="btn-primary" type="submit" [disabled]="actionLoadingId() === ticket._id">
+                  @if (actionLoadingId() === ticket._id) {
+                    Enregistrement…
+                  } @else {
+                    Valider
+                  }
+                </button>
+              </div>
+            </form>
+          }
+        </article>
+      }
+    </div>
+  }
+</section>

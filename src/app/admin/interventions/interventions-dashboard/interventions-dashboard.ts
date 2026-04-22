@@ -48,6 +48,11 @@ import {
 } from './interventions-dashboard.constants';
 import { apiError } from '../../../core/utils/http-error';
 
+type DashboardSummaryItem = InterventionSummaryItem & {
+  technicianKey: string;
+  technicianAliases: string[];
+};
+
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -105,8 +110,8 @@ export class InterventionsDashboard {
   readonly compareResult = signal<InterventionCompare | null>(null);
   readonly selectedPeriodKey = signal<string>('');
 
-  readonly summaryItems = signal<InterventionSummaryItem[]>([]);
-  readonly summaryAllItems = signal<InterventionSummaryItem[]>([]);
+  readonly summaryItems = signal<DashboardSummaryItem[]>([]);
+  readonly summaryAllItems = signal<DashboardSummaryItem[]>([]);
   readonly totals = signal<InterventionTotals | null>(null);
   readonly totalItems = signal(0);
   readonly page = signal(1);
@@ -115,11 +120,13 @@ export class InterventionsDashboard {
   readonly detailOpen = signal(false);
   readonly detailLoading = signal(false);
   readonly detailError = signal<string | null>(null);
+  readonly detailAllItems = signal<InterventionItem[]>([]);
   readonly detailItems = signal<InterventionItem[]>([]);
   readonly detailTotal = signal(0);
   readonly detailPage = signal(1);
   readonly detailLimit = signal(20);
   readonly detailTechnician = signal<string | null>(null);
+  readonly detailTechnicianAliases = signal<string[]>([]);
   readonly revenueItems = signal<InterventionItem[]>([]);
   readonly revenueItemsLoaded = signal(false);
   readonly revenueItemsLoading = signal(false);
@@ -185,6 +192,8 @@ export class InterventionsDashboard {
     technicians: [],
     types: []
   });
+  readonly technicianFilterOptions = computed(() => this.uniqueTechnicianOptions(this.filters().technicians));
+  readonly depotFilterOptions = computed(() => this.uniqueDepotOptions(this.depots()));
   readonly prestationTypeOptions = [
     { label: 'RACPAV', value: 'RACPAV' },
     ...INTERVENTION_PRESTATION_FIELDS
@@ -276,7 +285,7 @@ export class InterventionsDashboard {
 
   private touchStartX = 0;
   private touchStartY = 0;
-  private touchTargetTech: string | null = null;
+  private touchTargetTech: DashboardSummaryItem | null = null;
 
   readonly rateFields = INTERVENTION_PRESTATION_FIELDS;
 
@@ -499,9 +508,11 @@ export class InterventionsDashboard {
     this.refresh();
   }
 
-  openDetail(technician: string): void {
+  openDetail(item: DashboardSummaryItem): void {
+    const technician = String(item.technician || '').trim();
     if (!technician) return;
     this.detailTechnician.set(technician);
+    this.detailTechnicianAliases.set(this.uniqueTechnicianAliases(item.technicianAliases));
     this.detailPage.set(1);
     this.detailOpen.set(true);
     this.loadDetail();
@@ -523,16 +534,18 @@ export class InterventionsDashboard {
 
   closeDetail(): void {
     this.detailOpen.set(false);
+    this.detailAllItems.set([]);
     this.detailItems.set([]);
     this.detailError.set(null);
+    this.detailTechnicianAliases.set([]);
   }
 
-  onRowTouchStart(event: TouchEvent, technician: string): void {
-    if (!technician || event.touches.length !== 1) return;
+  onRowTouchStart(event: TouchEvent, item: DashboardSummaryItem): void {
+    if (!item?.technician || event.touches.length !== 1) return;
     const touch = event.touches[0];
     this.touchStartX = touch.clientX;
     this.touchStartY = touch.clientY;
-    this.touchTargetTech = technician;
+    this.touchTargetTech = item;
   }
 
   onRowTouchEnd(event: TouchEvent): void {
@@ -566,13 +579,13 @@ export class InterventionsDashboard {
   detailPrev(): void {
     if (this.detailPage() <= 1) return;
     this.detailPage.set(this.detailPage() - 1);
-    this.loadDetail();
+    this.applyDetailPagination();
   }
 
   detailNext(): void {
     if (this.detailPage() >= this.detailPageCount()) return;
     this.detailPage.set(this.detailPage() + 1);
-    this.loadDetail();
+    this.applyDetailPagination();
   }
 
   detailLimitChange(event: Event): void {
@@ -587,7 +600,7 @@ export class InterventionsDashboard {
     if (!Number.isFinite(value) || value <= 0) return;
     this.detailLimit.set(value);
     this.detailPage.set(1);
-    this.loadDetail();
+    this.applyDetailPagination();
   }
 
   onFileChange(event: Event): void {
@@ -907,7 +920,8 @@ export class InterventionsDashboard {
         const items = (res.data.items || [])
           .map((item) => this.normalizeSummaryItem(item))
           .filter((item): item is InterventionSummaryItem => item !== null);
-        const filteredItems = this.applyAdvancedFilters(items);
+        const mergedItems = this.mergeSummaryItems(items);
+        const filteredItems = this.applyAdvancedFilters(mergedItems);
         const pagedItems = this.paginateSummaryItems(filteredItems);
         const totals = this.computeTotals(filteredItems);
         this.summaryAllItems.set(filteredItems);
@@ -972,31 +986,21 @@ export class InterventionsDashboard {
     this.refreshCompare();
   }
 
-  private loadDetail(): void {
-    const tech = this.detailTechnician();
-    if (!tech) return;
-    const summaryQuery = this.buildSummaryQuery();
+  private async loadDetail(): Promise<void> {
+    const aliases = this.detailTechnicianAliases();
+    if (!aliases.length) return;
     this.detailLoading.set(true);
     this.detailError.set(null);
-
-    this.svc.list({
-      ...summaryQuery,
-      technician: tech,
-      page: this.detailPage(),
-      limit: this.detailLimit()
-    }).subscribe({
-      next: (res) => {
-        this.detailItems.set(res.data.items || []);
-        this.detailTotal.set(res.data.total ?? 0);
-        if (res.data.page) this.detailPage.set(res.data.page);
-        if (res.data.limit) this.detailLimit.set(res.data.limit);
-        this.detailLoading.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.detailLoading.set(false);
-        this.detailError.set(apiError(err, 'Erreur chargement interventions'));
-      }
-    });
+    try {
+      const items = await this.loadDetailItemsForAliases(aliases);
+      this.detailAllItems.set(items);
+      this.detailTotal.set(items.length);
+      this.applyDetailPagination();
+      this.detailLoading.set(false);
+    } catch (err) {
+      this.detailLoading.set(false);
+      this.detailError.set(apiError(err, 'Erreur chargement interventions'));
+    }
   }
 
   private revenueRequestId = 0;
@@ -1133,7 +1137,34 @@ export class InterventionsDashboard {
     });
   }
 
-  private applyAdvancedFilters(items: InterventionSummaryItem[]): InterventionSummaryItem[] {
+  private uniqueTechnicianOptions(values: string[]): string[] {
+    const seen = new Set<string>();
+    const unique: string[] = [];
+    for (const value of values) {
+      const label = String(value || '').trim();
+      if (!label) continue;
+      const match = this.matchEmployeeForLabel(label);
+      const key = match?.id ? `id:${match.id}` : `label:${this.normalizeLabel(label)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(match?.label || label);
+    }
+    return unique;
+  }
+
+  private uniqueDepotOptions(values: Depot[]): Depot[] {
+    const seen = new Set<string>();
+    const unique: Depot[] = [];
+    for (const depot of values) {
+      const key = `${this.normalizeLabel(depot?.name || '')}|${this.normalizeLabel(depot?.city || '')}`;
+      if (!key.trim() || seen.has(key)) continue;
+      seen.add(key);
+      unique.push(depot);
+    }
+    return unique;
+  }
+
+  private applyAdvancedFilters(items: DashboardSummaryItem[]): DashboardSummaryItem[] {
     const f = this.filterForm.getRawValue();
     const depotId = f.depot || '';
     const contractType = f.contractType || '';
@@ -1141,8 +1172,9 @@ export class InterventionsDashboard {
     if (!this.employees().length) return items;
     const metaMap = this.buildTechMetaMap();
     return items.filter((item) => {
-      const key = this.normalizeLabel(item.technician || '');
-      const meta = metaMap.get(key);
+      const meta = metaMap.get(item.technicianKey)
+        ?? metaMap.get(`label:${this.normalizeLabel(item.technician || '')}`)
+        ?? metaMap.get(`sig:${this.normalizeNameSignature(item.technician || '')}`);
       if (!meta) return false;
       if (depotId && meta.depotId !== depotId) return false;
       if (contractType && meta.contractType !== contractType) return false;
@@ -1150,7 +1182,7 @@ export class InterventionsDashboard {
     });
   }
 
-  private paginateSummaryItems(items: InterventionSummaryItem[]): InterventionSummaryItem[] {
+  private paginateSummaryItems(items: DashboardSummaryItem[]): DashboardSummaryItem[] {
     const page = this.page();
     const limit = this.limit();
     if (!items.length || limit <= 0) return items;
@@ -1281,15 +1313,119 @@ export class InterventionsDashboard {
     for (const entry of this.employees()) {
       const user = entry.user as User | undefined;
       if (!user) continue;
-      const label = this.normalizeLabel(formatPersonName(user.firstName ?? '', user.lastName ?? '') || user.email || '');
-      if (!label) continue;
+      const displayLabel = formatPersonName(user.firstName ?? '', user.lastName ?? '') || user.email || '';
+      const label = this.normalizeLabel(displayLabel);
+      const signature = this.normalizeNameSignature(displayLabel);
       const depotId = typeof user.idDepot === 'string'
         ? user.idDepot
         : (user.idDepot && typeof user.idDepot === 'object' ? String(user.idDepot._id || '') : '');
       const contractType = entry.profile?.contractType || '';
-      map.set(label, { depotId: depotId || undefined, contractType: contractType || undefined });
+      const meta = { depotId: depotId || undefined, contractType: contractType || undefined };
+      if (user._id) map.set(`id:${String(user._id)}`, meta);
+      if (label) map.set(`label:${label}`, meta);
+      if (signature) map.set(`sig:${signature}`, meta);
     }
     return map;
+  }
+
+  private mergeSummaryItems(items: InterventionSummaryItem[]): DashboardSummaryItem[] {
+    const merged = new Map<string, DashboardSummaryItem>();
+    for (const item of items) {
+      const match = this.matchEmployeeForLabel(item.technician || '');
+      const techId = typeof item.technicienId === 'string' && item.technicienId.trim()
+        ? item.technicienId.trim()
+        : (match?.id || null);
+      const fallbackSignature = this.normalizeNameSignature(item.technician || '');
+      const fallbackLabel = this.normalizeLabel(item.technician || '');
+      const technicianKey = techId
+        ? `id:${techId}`
+        : (fallbackSignature ? `sig:${fallbackSignature}` : `label:${fallbackLabel || '—'}`);
+      const technicianLabel = match?.label || String(item.technician || '').trim() || '—';
+      const alias = String(item.technician || '').trim() || technicianLabel;
+      const existing = merged.get(technicianKey);
+
+      if (!existing) {
+        merged.set(technicianKey, {
+          ...item,
+          technicienId: techId,
+          technician: technicianLabel,
+          technicianKey,
+          technicianAliases: this.uniqueTechnicianAliases([alias])
+        });
+        continue;
+      }
+
+      this.accumulateSummaryCounts(existing, item);
+      existing.technicienId = existing.technicienId || techId;
+      existing.technician = match?.label || existing.technician || technicianLabel;
+      existing.technicianAliases = this.uniqueTechnicianAliases([...existing.technicianAliases, alias]);
+    }
+
+    return Array.from(merged.values())
+      .sort((a, b) => a.technician.localeCompare(b.technician, 'fr', { sensitivity: 'base' }));
+  }
+
+  private accumulateSummaryCounts(target: DashboardSummaryItem, source: InterventionSummaryItem): void {
+    const targetRecord = target as Record<string, unknown>;
+    for (const [key, value] of Object.entries(source as Record<string, unknown>)) {
+      if (key === 'technician' || key === 'technicienId') continue;
+      if (typeof value !== 'number') continue;
+      const current = typeof targetRecord[key] === 'number' ? Number(targetRecord[key]) : 0;
+      targetRecord[key] = current + value;
+    }
+  }
+
+  private matchEmployeeForLabel(label: string): { id: string; label: string } | null {
+    const normalized = this.normalizeLabel(label);
+    const signature = this.normalizeNameSignature(label);
+    if (!normalized && !signature) return null;
+
+    const labelTokens = normalized.split(' ').filter(Boolean);
+    const employees = this.employees()
+      .map((entry) => entry.user as User | undefined)
+      .filter((user): user is User => Boolean(user?._id))
+      .map((user) => {
+        const display = formatPersonName(user.firstName ?? '', user.lastName ?? '') || user.email || '';
+        const employeeNormalized = this.normalizeLabel(display);
+        return {
+          id: String(user._id),
+          label: display || label,
+          normalized: employeeNormalized,
+          signature: this.normalizeNameSignature(display),
+          tokens: employeeNormalized.split(' ').filter(Boolean),
+          firstName: this.normalizeLabel(user.firstName ?? ''),
+          lastName: this.normalizeLabel(user.lastName ?? '')
+        };
+      });
+
+    const exactMatch = this.pickUniqueEmployeeMatch(employees, (employee) => Boolean(normalized) && employee.normalized === normalized);
+    if (exactMatch) return exactMatch;
+
+    const signatureMatch = this.pickUniqueEmployeeMatch(employees, (employee) => Boolean(signature) && employee.signature === signature);
+    if (signatureMatch) return signatureMatch;
+
+    if (labelTokens.length === 1) {
+      const lastNameMatch = this.pickUniqueEmployeeMatch(employees, (employee) => employee.lastName === labelTokens[0]);
+      if (lastNameMatch) return lastNameMatch;
+    }
+
+    const subsetMatch = this.pickUniqueEmployeeMatch(employees, (employee) =>
+      labelTokens.length > 0 && labelTokens.every((token) => employee.tokens.includes(token))
+    );
+    if (subsetMatch) return subsetMatch;
+
+    return this.pickUniqueEmployeeMatch(employees, (employee) =>
+      labelTokens.length === 1 && employee.tokens.includes(labelTokens[0])
+    );
+  }
+
+  private pickUniqueEmployeeMatch<T extends { id: string; label: string }>(
+    employees: T[],
+    predicate: (employee: T) => boolean
+  ): { id: string; label: string } | null {
+    const matches = employees.filter((employee) => predicate(employee));
+    if (matches.length !== 1) return null;
+    return { id: matches[0].id, label: matches[0].label };
   }
 
   private normalizeLabel(value: string): string {
@@ -1299,6 +1435,73 @@ export class InterventionsDashboard {
       .toLowerCase()
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  private normalizeNameSignature(value: string): string {
+    const normalized = this.normalizeLabel(value);
+    if (!normalized) return '';
+    return normalized
+      .split(' ')
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+      .join(' ');
+  }
+
+  private uniqueTechnicianAliases(aliases: string[]): string[] {
+    const seen = new Set<string>();
+    const unique: string[] = [];
+    for (const alias of aliases) {
+      const value = String(alias || '').trim();
+      if (!value) continue;
+      if (seen.has(value)) continue;
+      seen.add(value);
+      unique.push(value);
+    }
+    return unique;
+  }
+
+  private async loadDetailItemsForAliases(aliases: string[]): Promise<InterventionItem[]> {
+    const summaryQuery = this.buildSummaryQuery();
+    const uniqueItems = new Map<string, InterventionItem>();
+
+    for (const alias of aliases) {
+      const limit = 200;
+      let page = 1;
+      let total = 0;
+
+      do {
+        const res = await firstValueFrom(this.svc.list({
+          ...summaryQuery,
+          technician: alias,
+          page,
+          limit
+        }));
+        const pageItems = res.data.items || [];
+        for (const item of pageItems) {
+          uniqueItems.set(item._id, item);
+        }
+        total = res.data.total ?? pageItems.length;
+        page += 1;
+      } while ((page - 1) * limit < total);
+    }
+
+    return Array.from(uniqueItems.values()).sort((a, b) => {
+      const dateA = new Date(a.dateRdv || 0).getTime();
+      const dateB = new Date(b.dateRdv || 0).getTime();
+      return dateB - dateA;
+    });
+  }
+
+  private applyDetailPagination(): void {
+    const items = this.detailAllItems();
+    const limit = this.detailLimit();
+    const pageCount = limit > 0 ? Math.max(1, Math.ceil(items.length / limit)) : 1;
+    const nextPage = Math.min(Math.max(1, this.detailPage()), pageCount);
+    if (nextPage !== this.detailPage()) {
+      this.detailPage.set(nextPage);
+    }
+    const start = (nextPage - 1) * limit;
+    this.detailItems.set(limit > 0 ? items.slice(start, start + limit) : items);
   }
 
   saveRates(): void {

@@ -43,6 +43,7 @@ export type BpuAnalysisReport = {
 
 export type InterventionSummaryItem = {
   technician: string;
+  technicienId?: string | null;
   total: number;
   racPavillon: number;
   racSouterrain?: number;
@@ -136,6 +137,7 @@ export type InterventionSummaryResponse = InterventionSummary & {
 export type InterventionItem = {
   _id: string;
   numInter: string;
+  technicienId?: string | null;
   dateRdv?: string | null;
   region?: string;
   plaque?: string;
@@ -221,10 +223,12 @@ export type InterventionImportBatch = {
 
 export type InterventionImportTicket = {
   _id: string;
+  type?: string;
   numInter?: string;
   techFirstName?: string;
   techLastName?: string;
   techFull?: string;
+  rawData?: Record<string, unknown> | null;
   reason?: string;
   status?: string;
   correctedCode?: string;
@@ -383,6 +387,74 @@ export type AuditEchecQuery = {
   technician?: string;
 };
 
+// ── Pipeline import types ─────────────────────────────────────────────────────
+
+export type ImportPreviewDecisions = {
+  create: number;
+  version: number;
+  skip: number;
+  ticket: number;
+};
+
+export type ImportPreviewSummary = {
+  totalLines: number;
+  validLines: number;
+  blockedLines: number;
+  decisions: ImportPreviewDecisions;
+  referentials: { created: { group: string; label: string }[]; total: number };
+  unknownPrestations: { code: string; count: number }[];
+  unknownTechnicians: { name: string; count: number }[];
+  missingColumns: string[];
+  detectedPeriod: { start: string | null; end: string | null };
+};
+
+export type ImportPipelineResult = {
+  batchId: string;
+  preview: ImportPreviewSummary;
+  status: string;
+};
+
+export type ImportBatchDetail = {
+  _id: string;
+  originalName?: string;
+  storedPath?: string;
+  fileSize?: number;
+  fileHash?: string;
+  status: string;
+  detectedEncoding?: string;
+  detectedDelimiter?: string;
+  previewSummary?: ImportPreviewSummary;
+  periodStart?: string | null;
+  periodEnd?: string | null;
+  createdAt?: string;
+  importedBy?: { _id?: string; firstName?: string; lastName?: string };
+};
+
+export type ImportCommitResult = {
+  total: number;
+  created: number;
+  versioned: number;
+  skipped: number;
+  ticketed: number;
+  success: number;
+  failure: number;
+  batchId: string;
+};
+
+export type ImportRowItem = {
+  _id: string;
+  numInter?: string;
+  techFull?: string;
+  statut?: string;
+  articles?: string;
+  reason?: string;
+  decision?: string;
+  decisionReason?: string;
+  issues?: { code: string; message: string; severity: string }[];
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export type InterventionSummaryQuery = {
   fromDate?: string;
   toDate?: string;
@@ -405,6 +477,7 @@ export type InterventionImportTicketQuery = {
   page?: number;
   limit?: number;
   status?: string;
+  type?: string;
   importBatchId?: string;
 };
 
@@ -536,6 +609,7 @@ export class InterventionService {
     if (query.page) params = params.set('page', String(query.page));
     if (query.limit) params = params.set('limit', String(query.limit));
     if (query.status) params = params.set('status', query.status);
+    if (query.type) params = params.set('type', query.type);
     if (query.importBatchId) params = params.set('importBatchId', query.importBatchId);
     return this.http.get<{ success: boolean; data: InterventionImportTicketResponse }>(
       `${this.baseUrl}/import-tickets`,
@@ -580,6 +654,7 @@ export class InterventionService {
     if (query.page) params = params.set('page', String(query.page));
     if (query.limit) params = params.set('limit', String(query.limit));
     if (query.status) params = params.set('status', query.status);
+    if (query.type) params = params.set('type', query.type);
     if (query.importBatchId) params = params.set('importBatchId', query.importBatchId);
     return this.http.get<{ success: boolean; data: InterventionImportTicketResponse }>(
       `${this.baseUrl}/import-tickets/technician`,
@@ -654,6 +729,50 @@ export class InterventionService {
         'X-Confirm-Destructive': 'yes'
       })
     });
+  }
+
+  // ── Pipeline import (analyze / preview / commit) ──────────────────────────
+
+  analyzeImport(file: File, overwrite = false): Observable<{ success: boolean; data: ImportPipelineResult }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (overwrite) formData.append('overwrite', 'true');
+    return this.http.post<{ success: boolean; data: ImportPipelineResult }>(
+      `${this.baseUrl}/imports/analyze`,
+      formData
+    );
+  }
+
+  getImportPreview(batchId: string): Observable<{ success: boolean; data: ImportBatchDetail }> {
+    return this.http.get<{ success: boolean; data: ImportBatchDetail }>(
+      `${this.baseUrl}/imports/${batchId}/preview`
+    );
+  }
+
+  commitImport(batchId: string): Observable<{ success: boolean; data: ImportCommitResult }> {
+    return this.http.post<{ success: boolean; data: ImportCommitResult }>(
+      `${this.baseUrl}/imports/${batchId}/commit`,
+      {}
+    );
+  }
+
+  listImportItems(batchId: string, query: { category?: string; decision?: string; page?: number; limit?: number } = {}) {
+    let params = new HttpParams();
+    if (query.category) params = params.set('category', query.category);
+    if (query.decision)  params = params.set('decision', query.decision);
+    if (query.page)      params = params.set('page', String(query.page));
+    if (query.limit)     params = params.set('limit', String(query.limit));
+    return this.http.get<{ success: boolean; data: { items: ImportRowItem[]; total: number; page: number; limit: number } }>(
+      `${this.baseUrl}/imports/${batchId}/items`, { params }
+    );
+  }
+
+  listReferentials(groups?: string[]): Observable<{ success: boolean; data: Record<string, { label: string; key: string }[]> }> {
+    let params = new HttpParams();
+    if (groups?.length) params = params.set('groups', groups.join(','));
+    return this.http.get<{ success: boolean; data: Record<string, { label: string; key: string }[]> }>(
+      `${this.baseUrl}/referentials`, { params }
+    );
   }
 
   compare(

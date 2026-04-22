@@ -136,6 +136,55 @@ export class Dashboard implements OnInit {
   readonly prestationsTrendTotal = computed(() =>
     this.prestationsTrend().reduce((sum, item) => sum + item.value, 0)
   );
+  readonly prestationsTrendCurve = computed(() => {
+    const items = this.prestationsTrend();
+    if (!items.length) return null;
+
+    const width = 100;
+    const height = 72;
+    const left = 4;
+    const right = 96;
+    const top = 9;
+    const bottom = 62;
+    const max = Math.max(...items.map((item) => item.value), 1);
+    const step = items.length > 1 ? (right - left) / (items.length - 1) : 0;
+
+    const points = items.map((item, index) => {
+      const x = Number((left + step * index).toFixed(2));
+      const y = Number((bottom - ((item.value / max) * (bottom - top))).toFixed(2));
+      const valueY = Number((y + 1.1).toFixed(2));
+      return {
+        key: item.key,
+        label: item.label,
+        tooltip: item.tooltip,
+        value: item.value,
+        types: item.types ?? [],
+        x,
+        y,
+        valueY,
+        isPeak: item.value === max && item.value > 0
+      };
+    });
+
+    const linePath = this.buildSmoothLine(points);
+    const firstPoint = points[0];
+    const lastPoint = points[points.length - 1];
+    const areaPath = `${linePath} L ${lastPoint.x} ${bottom} L ${firstPoint.x} ${bottom} Z`;
+    const guides = [0.25, 0.5, 0.75].map((ratio) => Number((bottom - ((bottom - top) * ratio)).toFixed(2)));
+
+    return {
+      width,
+      height,
+      left,
+      right,
+      bottom,
+      max,
+      guides,
+      points,
+      linePath,
+      areaPath
+    };
+  });
 
   readonly prestationsTypesTotal = computed(() =>
     this.prestationsTypes().reduce((sum, item) => sum + item.value, 0)
@@ -806,6 +855,20 @@ export class Dashboard implements OnInit {
     return String(value || '')
       .toLowerCase()
       .replace(/[_\s-]/g, '');
+  }
+
+  private buildSmoothLine(points: { x: number; y: number }[]): string {
+    if (!points.length) return '';
+    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const current = points[index];
+      const next = points[index + 1];
+      const controlX = Number(((current.x + next.x) / 2).toFixed(2));
+      path += ` C ${controlX} ${current.y}, ${controlX} ${next.y}, ${next.x} ${next.y}`;
+    }
+    return path;
   }
 
   private toLocalDateKey(date: Date): string {

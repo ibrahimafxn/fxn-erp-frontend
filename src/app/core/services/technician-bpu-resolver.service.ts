@@ -36,11 +36,19 @@ export function pricesForDate(
 ): Map<string, number> {
   if (!history.length) return fallback;
 
-  const ts = reportDate ? new Date(reportDate).getTime() : 0;
+  const normalizeDay = (value: string | Date | null | undefined): number => {
+    if (!value) return 0;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 0;
+    date.setHours(0, 0, 0, 0);
+    return date.getTime();
+  };
+
+  const ts = normalizeDay(reportDate);
 
   // history est trié validFrom DESC côté backend
   // On cherche le premier (= le plus récent) dont validFrom ≤ ts
-  const snapshot = history.find((h) => new Date(h.validFrom).getTime() <= ts) ?? history[history.length - 1];
+  const snapshot = history.find((h) => normalizeDay(h.validFrom) <= ts) ?? history[history.length - 1];
 
   const map = new Map<string, number>();
   for (const { code, unitPrice } of snapshot.prestations) {
@@ -60,9 +68,10 @@ export class TechnicianBpuResolverService {
 
   resolve(technicianId?: string | null): Observable<ResolvedTechnicianBpuState> {
     const historyOwner = technicianId ?? null;
+    const selectionOwner = technicianId ?? null;
 
     return forkJoin({
-      selections: this.bpuSelectionService.list(),
+      selections: this.bpuSelectionService.list({ owner: selectionOwner }),
       history: this.bpuSelectionService.listHistory({ owner: historyOwner }).pipe(catchError(() => of([])))
     }).pipe(
       switchMap(({ selections, history }) => {
@@ -71,9 +80,13 @@ export class TechnicianBpuResolverService {
         const priceHistory = history || [];
 
         if (!technicianId) {
-          const prices = this.selectionPrices(fallbackSelection);
+          const selectionPrices = this.selectionPrices(fallbackSelection);
+          const prices = pricesForDate(priceHistory, new Date(), selectionPrices);
           return of({
-            items: this.selectionItems(fallbackSelection),
+            items: this.selectionItems(fallbackSelection).map((item) => ({
+              ...item,
+              unitPrice: prices.get(String(item.code || '').trim().toUpperCase()) ?? item.unitPrice
+            })),
             prices,
             priceHistory,
             selections: allSelections,
@@ -88,9 +101,13 @@ export class TechnicianBpuResolverService {
               throw new Error('EMPTY_EFFECTIVE_BPU');
             }
             const usesPersonalizedBpu = effectiveItems.some(item => item.source === 'OVERRIDE');
+            const prices = pricesForDate(priceHistory, new Date(), this.effectivePrices(effectiveItems));
             return {
-              items: this.effectiveItems(effectiveItems),
-              prices: this.effectivePrices(effectiveItems),
+              items: this.effectiveItems(effectiveItems).map((item) => ({
+                ...item,
+                unitPrice: prices.get(String(item.code || '').trim().toUpperCase()) ?? item.unitPrice
+              })),
+              prices,
               priceHistory,
               selections: allSelections,
               usesPersonalizedBpu
@@ -119,6 +136,7 @@ export class TechnicianBpuResolverService {
     }
 
     const selectionPrices = this.selectionPrices(active);
+    const currentPrices = pricesForDate(priceHistory, new Date(), selectionPrices);
     return this.bpuService.list().pipe(
       map((allItems: BpuEntry[]) => {
         const seen = new Set<string>();
@@ -129,7 +147,7 @@ export class TechnicianBpuResolverService {
           const code = String(item.code || '').trim().toUpperCase();
           if (!allowedCodes.has(code) || seen.has(code)) continue;
           seen.add(code);
-          const unitPrice = selectionPrices.get(code) ?? 0;
+          const unitPrice = currentPrices.get(code) ?? selectionPrices.get(code) ?? 0;
           prices.set(code, unitPrice);
           items.push({
             code,
@@ -148,8 +166,11 @@ export class TechnicianBpuResolverService {
       }),
       catchError(() =>
         of({
-          items: this.selectionItems(active),
-          prices: selectionPrices,
+          items: this.selectionItems(active).map((item) => ({
+            ...item,
+            unitPrice: currentPrices.get(String(item.code || '').trim().toUpperCase()) ?? item.unitPrice
+          })),
+          prices: currentPrices,
           priceHistory,
           selections,
           usesPersonalizedBpu: false

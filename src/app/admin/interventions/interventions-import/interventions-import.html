@@ -1,471 +1,304 @@
-<section class="interventions">
-  @if (importLoading()) {
-    <div class="import-blocker" aria-live="polite" aria-busy="true">
-      <div class="import-blocker-card">
-        <span class="spinner" aria-hidden="true"></span>
-        <div class="import-blocker-text">
-          <strong>Import en cours…</strong>
-          <span>Merci de patienter, la page est temporairement désactivée.</span>
-        </div>
-      </div>
-    </div>
-  }
-  <header class="page-header card hero">
-    <div>
-      <h1>Import interventions du jour</h1>
-      <p class="subtitle">Importer l’export Osiris et distribuer les interventions.</p>
-    </div>
+<section class="import-page">
 
+  <!-- ── En-tête ─────────────────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div>
+      <h1>Import Osiris</h1>
+      <p class="subtitle">Analyser et valider un export CSV avant import en base.</p>
+    </div>
     <div class="header-actions">
-      <label class="file-input" [class.disabled]="importLoading()">
-        <input
-          #csvInput
-          type="file"
-          accept=".csv"
-          [disabled]="importLoading()"
-          (click)="onFileClick()"
-          (change)="onFileChange($event)"
-        />
-        <span class="material-icons notranslate" aria-hidden="true">upload_file</span>
-        <span>Choisir un export CSV</span>
-      </label>
-      @if (selectedFile) {
-        <div class="file-meta">
-          <span class="material-icons notranslate" aria-hidden="true">description</span>
-          <span>{{ selectedFile.name }}</span>
-        </div>
-      }
-      <button class="btn-primary" type="button" (click)="importCsv()" [disabled]="importLoading() || !selectedFile">
-        <span class="material-icons notranslate" aria-hidden="true">cloud_upload</span>
-        @if (importLoading()) { Import… } @else { Importer }
-      </button>
-      <a class="btn-outline" routerLink="/admin/technicians/interventions">
-        <span class="material-icons notranslate" aria-hidden="true">person-badge</span>
-        Aller aux interventions techniciens
+      <a class="btn-outline" routerLink="/admin/interventions/import/history">
+        <i class="bi bi-clock-history"></i> Historique
+      </a>
+      <a class="btn-outline" routerLink="/admin/interventions/import/tickets">
+        <i class="bi bi-ticket-perforated"></i> Tickets
       </a>
     </div>
   </header>
 
-  @if (todayImportNotice()) {
-    <div class="state info card import-notice">{{ todayImportNotice() }}</div>
-  } @else if (latestImportNotice()) {
-    <div class="state hint card import-notice">{{ latestImportNotice() }}</div>
+  <!-- ── Stepper ─────────────────────────────────────────────────────────────── -->
+  <div class="stepper">
+    <div class="step-item" [class.active]="step() === 'upload'" [class.done]="step() !== 'upload'">
+      <span class="step-num">1</span><span class="step-label">Fichier</span>
+    </div>
+    <div class="step-sep"></div>
+    <div class="step-item" [class.active]="step() === 'preview'" [class.done]="step() === 'commit' || step() === 'result'">
+      <span class="step-num">2</span><span class="step-label">Analyse</span>
+    </div>
+    <div class="step-sep"></div>
+    <div class="step-item" [class.active]="step() === 'commit' || step() === 'result'">
+      <span class="step-num">3</span><span class="step-label">Confirmation</span>
+    </div>
+  </div>
+
+  <!-- ── Erreur globale ───────────────────────────────────────────────────────── -->
+  @if (error()) {
+    <div class="alert alert-error"><i class="bi bi-exclamation-triangle"></i> {{ error() }}</div>
   }
 
-  <app-confirm-delete-modal
-    [open]="overwriteOpen()"
-    title="Importer a nouveau"
-    entityLabel="import"
-    [question]="'Un import existe deja pour la periode ' + (overwriteInfo()?.periodLabel || 'selectionnee') + '. Voulez-vous l ecraser ?'"
-    confirmText="Ecraser l import"
-    cancelText="Annuler"
-    confirmIcon="bi bi-arrow-repeat"
-    (confirm)="confirmOverwrite()"
-    (cancel)="cancelOverwrite()"
-  />
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- ÉTAPE 1 — UPLOAD                                                          -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  @if (step() === 'upload') {
+    <div class="step-panel card">
+      <h2 class="step-title"><i class="bi bi-file-earmark-arrow-up"></i> Sélectionner un export Osiris</h2>
 
-  @if (importError()) {
-    <div class="state error card"><strong>Import :</strong> {{ importError() }}</div>
-  } @else if (importResult()) {
-    <div class="state ok card import-result">
-      <div class="import-result-text">{{ importResult() }}</div>
-      <div class="import-categories">
-        @for (category of categoryKeys; track category) {
-          <div class="category-card">
-            <div class="category-head">
-              <span class="label">{{ categoryLabels[category] }}</span>
-              <span class="count">{{ categoryState(category).total }}</span>
-            </div>
-            @if (categoryState(category).loading) {
-              <div class="state">Chargement…</div>
-            } @else if (categoryState(category).error) {
-              <div class="state error">{{ categoryState(category).error }}</div>
-            } @else if (categoryState(category).items.length === 0) {
-              <div class="state hint">Aucune intervention.</div>
-            } @else {
-              <div class="category-list">
-                @for (item of categoryState(category).items; track $index) {
-                  <div class="category-row">
-                    <div class="row-main">
-                      <span class="mono">{{ item.numInter || '—' }}</span>
-                      <span class="tech">{{ item.techFull || '—' }}</span>
-                      @if (item.versionIndex && category === 'versioned') {
-                        <span class="pill subtle">V{{ item.versionIndex }}</span>
-                      }
-                    </div>
-                    <div class="row-meta">
-                      @if (item.statut) {
-                        <span>{{ item.statut }}</span>
-                      }
-                      @if (item.reason) {
-                        <span>{{ item.reason }}</span>
-                      }
-                      @if (item.articles) {
-                        <span class="articles">Articles: {{ item.articles }}</span>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-              <div class="category-pager">
-                <button
-                  class="btn-outline btn-compact"
-                  type="button"
-                  (click)="prevCategoryPage(category)"
-                  [disabled]="categoryState(category).page <= 1"
-                >
-                  <i class="bi bi-chevron-left"></i>
-                </button>
-                <span class="pager-range">{{ categoryPageRange(category) }}</span>
-                <button
-                  class="btn-outline btn-compact"
-                  type="button"
-                  (click)="nextCategoryPage(category)"
-                  [disabled]="categoryState(category).page >= categoryTotalPages(category)"
-                >
-                  <i class="bi bi-chevron-right"></i>
-                </button>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    </div>
-  }
-
-  <section class="card">
-    <div class="table-head">
-      <h2><span class="material-icons notranslate">history</span>Derniers imports</h2>
-      <p>Archive CSV et statut du dernier import.</p>
-    </div>
-    <div class="invoice-summary">
-      @if (importsLoading()) {
-        <div class="state">Chargement des imports…</div>
-      } @else if (importsError()) {
-        <div class="state error">{{ importsError() }}</div>
-      } @else if (!latestImport()) {
-        <div class="state">Aucun import enregistré.</div>
-      } @else {
-        <div class="summary-card">
-          <span class="label">{{ latestImport().originalName || 'Import CSV' }}</span>
-          <span class="value">{{ latestImport().status || '—' }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Créées</span>
-          <span class="value">{{ latestImport().totals?.created ?? 0 }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Versionnées</span>
-          <span class="value">{{ latestImport().totals?.versioned ?? 0 }}</span>
-        </div>
-        <div class="summary-card">
-          <span class="label">Rejetées</span>
-          <span class="value">{{ latestImport().totals?.rejected ?? 0 }}</span>
-        </div>
-        <button class="btn-outline" type="button" (click)="downloadLatestImport()" [disabled]="!latestImport()">
-          <span class="material-icons notranslate">download</span>
-          Télécharger CSV
-        </button>
-      }
-    </div>
-  </section>
-
-  <section class="table card">
-    <div class="table-head">
-      <h2><span class="material-icons notranslate">report</span>Tickets import (dernier import)</h2>
-      <p>Interventions rejetées en attente de résolution.</p>
-    </div>
-    @if (ticketsLoading()) {
-      <div class="state">Chargement des tickets…</div>
-    } @else if (ticketsError()) {
-      <div class="state error">{{ ticketsError() }}</div>
-    } @else if (importTickets().length === 0) {
-      <div class="state">Aucun ticket ouvert.</div>
-    } @else {
-      <table>
-        <thead>
-          <tr>
-            <th>Num Inter</th>
-            <th>Technicien</th>
-            <th>Raison</th>
-            <th>Import</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (ticket of importTickets(); track ticket._id) {
-            <tr>
-              <td>{{ ticket.numInter || '—' }}</td>
-              <td>{{ ticketTechLabel(ticket) }}</td>
-              <td>{{ ticket.reason || '—' }}</td>
-              <td>{{ ticket.importBatchId?.originalName || ticket.importBatchId?.storedName || '—' }}</td>
-              <td>{{ ticket.createdAt | date:'short' }}</td>
-              <td class="ticket-actions">
-                <button class="btn-outline btn-xs" type="button" (click)="autoResolveTicket(ticket)">
-                  Valider auto
-                </button>
-                <button class="btn-outline btn-xs" type="button" (click)="openTicketEdit(ticket)">
-                  Corriger
-                </button>
-              </td>
-            </tr>
+      <div class="upload-zone" [class.has-file]="selectedFile()">
+        <label class="upload-label">
+          <input #csvInput type="file" accept=".csv" (click)="onFileClick()" (change)="onFileChange($event)" />
+          <i class="bi bi-cloud-upload upload-icon"></i>
+          @if (selectedFile()) {
+            <span class="upload-filename"><i class="bi bi-file-text"></i> {{ selectedFile()!.name }}</span>
+            <span class="upload-hint">Cliquez pour changer de fichier</span>
+          } @else {
+            <span class="upload-cta">Choisir un fichier CSV</span>
+            <span class="upload-hint">Encodage cp1252 ou UTF-8 — séparateur ;</span>
           }
-        </tbody>
-      </table>
-    }
-  </section>
-  @if (ticketEditOpen()) {
-    <div class="ticket-edit card">
-      <div class="table-head">
-        <h3>Corriger une prestation</h3>
-        <button class="btn-outline btn-xs" type="button" (click)="closeTicketEdit()">Fermer</button>
-      </div>
-      <div class="ticket-edit-body">
-        <label>
-          Prestation (BPU)
-          <select [(ngModel)]="ticketEditCode" [disabled]="ticketEditSaving()">
-            <option value="">Sélectionner…</option>
-            @for (p of prestationRules; track p.code) {
-              <option [value]="p.code">{{ p.code }} — {{ p.label }}</option>
-            }
-          </select>
         </label>
-        @if (ticketEditError()) {
-          <div class="state error">{{ ticketEditError() }}</div>
-        }
-        <div class="actions">
-          <button class="btn-outline" type="button" (click)="closeTicketEdit()" [disabled]="ticketEditSaving()">Annuler</button>
-          <button class="btn-primary" type="button" (click)="saveTicketEdit()" [disabled]="ticketEditSaving()">
-            @if (ticketEditSaving()) { Enregistrement… } @else { Valider }
-          </button>
-        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn-primary" type="button" [disabled]="!selectedFile() || analyzing()" (click)="analyze()">
+          @if (analyzing()) {
+            <span class="spinner-sm"></span> Analyse en cours…
+          } @else {
+            <i class="bi bi-search"></i> Analyser le fichier
+          }
+        </button>
       </div>
     </div>
+
+    <!-- Dernier import -->
+    @if (latestImport()) {
+      <div class="card last-import-notice">
+        <i class="bi bi-info-circle"></i>
+        Dernier import : <strong>{{ latestImport()!.originalName }}</strong>
+        le {{ formatDate(latestImport()!.createdAt) }}
+        par {{ batchImporter(latestImport()!) }}
+        — <span class="badge" [class]="statusClass(latestImport()!.status ?? '')">{{ statusLabel(latestImport()!.status ?? '') }}</span>
+      </div>
+    }
   }
-  <section class="card import-validation">
-    <div class="table-head">
-      <h2><span class="material-icons notranslate">assignment_turned_in</span>Vérification export</h2>
-      <p>Confirme la colonne des prestations et la reconnaissance des codes BPU avant l’import.</p>
-    </div>
-    @if (!selectedFile) {
-      <div class="state">Choisis un export pour lancer l’analyse rapide.</div>
-    } @else if (previewLoading()) {
-      <div class="state">Analyse du fichier…</div>
-    } @else if (previewError()) {
-      <div class="state error">{{ previewError() }}</div>
-    } @else {
-      @if (previewRows() === 0) {
-        <div class="state hint">Les lignes analysées ne contiennent aucun code de prestation.</div>
-      }
-      <div class="validation-grid">
-        <div class="validation-card columns">
-          <span class="validation-label">Colonnes détectées</span>
-          <div class="column-list">
-            @for (column of previewColumns(); track column.name) {
-              <div [class.present]="column.present" [class.absent]="!column.present">
-                <span class="material-icons notranslate" aria-hidden="true">
-                  @if (column.present) { check_circle } @else { radio_button_unchecked }
-                </span>
-                {{ column.name }}
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- ÉTAPE 2 — PREVIEW                                                         -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  @if (step() === 'preview' && preview()) {
+    <div class="preview-grid">
+
+      <!-- Contrôle export (FE-02) -->
+      <div class="card preview-card">
+        <h3 class="card-title"><i class="bi bi-file-earmark-check"></i> Contrôle export</h3>
+        <div class="kpi-row">
+          <div class="kpi"><span class="kpi-val">{{ preview()!.totalLines }}</span><span class="kpi-lbl">Lignes lues</span></div>
+          <div class="kpi"><span class="kpi-val ok">{{ preview()!.validLines }}</span><span class="kpi-lbl">Valides</span></div>
+          <div class="kpi"><span class="kpi-val" [class.err]="preview()!.blockedLines > 0">{{ preview()!.blockedLines }}</span><span class="kpi-lbl">Bloquées</span></div>
+        </div>
+        @if (preview()!.detectedPeriod.start) {
+          <p class="detail-line">
+            <i class="bi bi-calendar-range"></i>
+            Période : {{ formatDate(preview()!.detectedPeriod.start) }} → {{ formatDate(preview()!.detectedPeriod.end) }}
+          </p>
+        }
+        <p class="detail-line">
+          <i class="bi bi-filetype-csv"></i>
+          Encodage : {{ batchDetail()?.detectedEncoding || '—' }}
+        </p>
+        <p class="detail-line">
+          <i class="bi bi-layout-text-window-reverse"></i>
+          Séparateur : {{ batchDetail()?.detectedDelimiter || '—' }}
+        </p>
+        @if (preview()!.missingColumns.length > 0) {
+          <div class="alert alert-warn">
+            <strong>Colonnes manquantes :</strong> {{ preview()!.missingColumns.join(', ') }}
+          </div>
+        }
+      </div>
+
+      <!-- Résumé décisions (FE-05) -->
+      <div class="card preview-card">
+        <h3 class="card-title"><i class="bi bi-clipboard2-data"></i> Résumé de décision</h3>
+        <div class="decision-list">
+          <div class="decision-row create">
+            <span class="decision-badge">+</span>
+            <span class="decision-label">À créer</span>
+            <span class="decision-count">{{ preview()!.decisions.create }}</span>
+            <span class="decision-pct">{{ pct(preview()!.decisions.create) }}</span>
+          </div>
+          <div class="decision-row version">
+            <span class="decision-badge">↑</span>
+            <span class="decision-label">À versionner</span>
+            <span class="decision-count">{{ preview()!.decisions.version }}</span>
+            <span class="decision-pct">{{ pct(preview()!.decisions.version) }}</span>
+          </div>
+          <div class="decision-row skip">
+            <span class="decision-badge">=</span>
+            <span class="decision-label">Ignorées (identiques)</span>
+            <span class="decision-count">{{ preview()!.decisions.skip }}</span>
+            <span class="decision-pct">{{ pct(preview()!.decisions.skip) }}</span>
+          </div>
+          <div class="decision-row ticket">
+            <span class="decision-badge">!</span>
+            <span class="decision-label">En ticket</span>
+            <span class="decision-count">{{ preview()!.decisions.ticket }}</span>
+            <span class="decision-pct">{{ pct(preview()!.decisions.ticket) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nouvelles valeurs référentielles (FE-03) -->
+      @if (preview()!.referentials.created.length > 0) {
+        <div class="card preview-card">
+          <h3 class="card-title"><i class="bi bi-tags"></i> Nouvelles valeurs détectées</h3>
+          <p class="detail-line muted">{{ preview()!.referentials.created.length }} nouvelle(s) valeur(s) créées dans les référentiels</p>
+          <div class="ref-groups">
+            @for (group of referentialGroups(); track group.group) {
+              <div class="ref-group">
+                <div class="ref-group-head">
+                  <span class="ref-group-name">{{ group.group }}</span>
+                  <span class="ref-group-count">{{ group.count }}</span>
+                </div>
+                <div class="ref-list">
+                  @for (label of group.labels; track label) {
+                    <span class="ref-badge">{{ label }}</span>
+                  }
+                  @if (group.count > group.labels.length) {
+                    <span class="ref-more">+{{ group.count - group.labels.length }} autres</span>
+                  }
+                </div>
               </div>
             }
           </div>
         </div>
-        <div class="validation-card rows">
-          <span class="validation-label">Lignes analysées</span>
-          <span class="value">{{ previewRows() }}</span>
-          <p class="hint">Basé sur les premières 40 lignes.</p>
-          @if (previewRecognizedList().length) {
-            <div class="code-list">
-              @for (code of previewRecognizedList(); track code) {
-                <span>{{ code }}</span>
-              }
-            </div>
-          } @else {
-            <p class="hint">Aucun code reconnu.</p>
-          }
-        </div>
-        <div class="validation-card unknown">
-          <span class="validation-label">Codes inconnus</span>
-          @if (previewUnknownList().length === 0) {
-            <span class="value ok">Aucun</span>
-          } @else {
-            <ul>
-              @for (code of previewUnknownList(); track code) {
-                <li>{{ code }}</li>
-              }
-            </ul>
-          }
-          <p class="hint">Ces codes ne correspondent pas à ceux attendus par FXN.</p>
-        </div>
-      </div>
-    }
-  </section>
-  <!-- ─── Analyse BPU du dernier import ─────────────────────────────────── -->
-  <section class="card bpu-analysis-section">
-    <div class="bpu-analysis-header">
-      <div>
-        <h2 class="bpu-analysis-title">Analyse articles vs référentiel BPU</h2>
-        <p class="bpu-analysis-subtitle">Comparaison automatique des codes OSIRIS avec les prestations définies par l'admin.</p>
-      </div>
-    </div>
+      }
 
-    @if (bpuAnalysisLoading()) {
-      <div class="bpu-state">Chargement de l'analyse…</div>
-    } @else if (bpuAnalysisPending()) {
-      <div class="bpu-state bpu-pending">
-        <span class="spinner-sm"></span>
-        Analyse en cours en arrière-plan…
-      </div>
-    } @else if (!bpuAnalysis()) {
-      <div class="bpu-state bpu-empty">Aucune analyse disponible pour cet import.</div>
-    } @else {
+      <!-- Prestations inconnues (FE-04) -->
+      @if (preview()!.unknownPrestations.length > 0) {
+        <div class="card preview-card warn-card">
+          <h3 class="card-title"><i class="bi bi-exclamation-triangle"></i> Prestations inconnues</h3>
+          <p class="detail-line">Ces codes ne seront pas calculés — mappez-les dans BPU avant de committer.</p>
+          <div class="tag-list">
+            @for (p of preview()!.unknownPrestations.slice(0, 20); track p.code) {
+              <span class="tag tag-warn">{{ p.code }} (×{{ p.count }})</span>
+            }
+          </div>
+          <a class="btn-link" routerLink="/admin/bpu/osiris-mappings">Gérer les mappings BPU →</a>
+        </div>
+      }
 
-      <!-- Stats -->
-      <div class="bpu-stats-row">
-        <div class="bpu-stat">
-          <span class="bpu-stat-value" [class]="bpuMatchRateClass(bpuAnalysis()!.stats.matchRate)">
-            {{ bpuAnalysis()!.stats.matchRate }}%
-          </span>
-          <span class="bpu-stat-label">Taux de correspondance</span>
+      <!-- Techniciens inconnus -->
+      @if (preview()!.unknownTechnicians.length > 0) {
+        <div class="card preview-card warn-card">
+          <h3 class="card-title"><i class="bi bi-person-exclamation"></i> Techniciens à vérifier</h3>
+          <p class="detail-line">Ces techniciens n’ont pas été rapprochés automatiquement et peuvent générer des tickets.</p>
+          <div class="tag-list">
+            @for (tech of preview()!.unknownTechnicians.slice(0, 12); track tech.name) {
+              <span class="tag">{{ tech.name }} (×{{ tech.count }})</span>
+            }
+          </div>
+          <a class="btn-link" routerLink="/admin/interventions/import/tickets">Traiter les tickets →</a>
         </div>
-        <div class="bpu-stat">
-          <span class="bpu-stat-value">{{ bpuAnalysis()!.stats.linesWithArticles }}</span>
-          <span class="bpu-stat-label">Lignes avec articles</span>
-        </div>
-        <div class="bpu-stat">
-          <span class="bpu-stat-value">{{ bpuAnalysis()!.stats.matchedOccurrences }}</span>
-          <span class="bpu-stat-label">Occurrences reconnues</span>
-        </div>
-        <div class="bpu-stat">
-          <span class="bpu-stat-value bpu-warn">{{ bpuAnalysis()!.stats.unknownOccurrences }}</span>
-          <span class="bpu-stat-label">Occurrences inconnues</span>
-        </div>
-        <div class="bpu-stat">
-          <span class="bpu-stat-value bpu-muted">{{ bpuAnalysis()!.stats.uniqueUnknownCodes }}</span>
-          <span class="bpu-stat-label">Codes inconnus uniques</span>
-        </div>
-      </div>
+      }
 
-      <!-- Codes inconnus -->
-      @if (bpuUnknownEntries().length) {
-        <div class="bpu-unknown-block">
-          <h3 class="bpu-block-title">
-            <i class="bi bi-exclamation-triangle-fill bpu-icon-warn"></i>
-            Codes non reconnus dans le référentiel
-          </h3>
-          <table class="bpu-table">
-            <thead>
-              <tr>
-                <th>Code OSIRIS</th>
-                <th>Occurrences</th>
-                <th>Exemples bruts</th>
-                <th>Suggestions</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (entry of bpuUnknownEntries(); track entry.code) {
-                <tr [class.bpu-row-mapping]="mappingFormOpen() === entry.code">
-                  <td><span class="bpu-pill bpu-pill-red">{{ entry.code }}</span></td>
-                  <td class="mono">{{ entry.count }}</td>
-                  <td>
-                    @for (ex of entry.rawExamples; track ex) {
-                      <code class="bpu-raw">{{ ex }}</code>
-                    }
-                  </td>
-                  <td>
-                    @if (!entry.suggestions.length) {
-                      <span class="bpu-muted">—</span>
-                    } @else {
-                      @for (sug of entry.suggestions; track sug.code) {
-                        <span class="bpu-sug"
-                              [title]="sug.label"
-                              (click)="openMappingForm(entry.code); mappingFormCanonical.set(sug.code)"
-                              style="cursor:pointer">
-                          {{ sug.code }}
-                          <span class="bpu-dist">dist.{{ sug.distance }}</span>
+      <!-- Lignes bloquées -->
+      @if (blockedRows().length > 0) {
+        <div class="card preview-card full-width">
+          <h3 class="card-title"><i class="bi bi-ban"></i> Lignes bloquées ({{ preview()!.decisions.ticket }})</h3>
+          <div class="table">
+            <table>
+              <thead><tr>
+                <th>N° Inter</th><th>Technicien</th><th>Statut</th><th>Raison</th><th>Issues</th>
+              </tr></thead>
+              <tbody>
+                @for (row of blockedRows(); track row._id) {
+                  <tr>
+                    <td>{{ row.numInter || '—' }}</td>
+                    <td>{{ row.techFull || '—' }}</td>
+                    <td>{{ row.statut || '—' }}</td>
+                    <td class="reason-cell">{{ row.decisionReason || row.reason || '—' }}</td>
+                    <td>
+                      @for (issue of (row.issues ?? []); track issue.code) {
+                        <span class="tag" [class.tag-err]="issue.severity==='error'" [class.tag-warn]="issue.severity==='warning'">
+                          {{ issue.code }}
                         </span>
                       }
-                    }
-                  </td>
-                  <td>
-                    @if (mappingFormOpen() === entry.code) {
-                      <div class="bpu-mapping-form">
-                        <input
-                          class="bpu-mapping-input"
-                          type="text"
-                          placeholder="Code admin (ex: RACPAV)"
-                          [(ngModel)]="mappingFormCanonical"
-                          [disabled]="mappingFormLoading()"
-                          (keydown.enter)="saveMappingForm()"
-                        />
-                        <input
-                          class="bpu-mapping-input bpu-mapping-label"
-                          type="text"
-                          placeholder="Description (optionnel)"
-                          [(ngModel)]="mappingFormLabel"
-                          [disabled]="mappingFormLoading()"
-                        />
-                        @if (mappingFormError()) {
-                          <span class="bpu-mapping-err">{{ mappingFormError() }}</span>
-                        }
-                        <div class="bpu-mapping-actions">
-                          <button class="btn-primary btn-xs" type="button"
-                                  (click)="saveMappingForm()"
-                                  [disabled]="mappingFormLoading() || !mappingFormCanonical()">
-                            @if (mappingFormLoading()) { Enregistrement… } @else { Enregistrer }
-                          </button>
-                          <button class="btn-outline btn-xs" type="button"
-                                  (click)="closeMappingForm()"
-                                  [disabled]="mappingFormLoading()">
-                            Annuler
-                          </button>
-                        </div>
-                      </div>
-                    } @else {
-                      <button class="btn-map" type="button" (click)="openMappingForm(entry.code)"
-                              title="Mapper ce code OSIRIS vers un code admin">
-                        <i class="bi bi-link-45deg"></i> Mapper
-                      </button>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      } @else {
-        <p class="bpu-all-ok">
-          <i class="bi bi-check-circle-fill"></i>
-          Tous les codes articles sont reconnus dans le référentiel admin.
-        </p>
-      }
-
-      @if (mappingFormSuccess()) {
-        <div class="bpu-mapping-ok">
-          <i class="bi bi-check-circle-fill"></i> {{ mappingFormSuccess() }}
-          — <a routerLink="/admin/bpu/osiris-mappings">Gérer tous les mappings</a>
-        </div>
-      }
-
-      <!-- Codes admin jamais vus -->
-      @if (bpuAnalysis()!.notSeenInCsv.length) {
-        <div class="bpu-notseen-block">
-          <h3 class="bpu-block-title bpu-title-muted">
-            <i class="bi bi-eye-slash"></i>
-            Prestations admin absentes de cet export ({{ bpuAnalysis()!.notSeenInCsv.length }})
-          </h3>
-          <div class="bpu-chips">
-            @for (item of bpuAnalysis()!.notSeenInCsv; track item.code) {
-              <span class="bpu-pill bpu-pill-grey" [title]="item.label">{{ item.code }}</span>
-            }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
       }
 
-    }
-  </section>
+    </div>
+
+    <!-- Actions étape 2 -->
+    <div class="step-actions card">
+      <button class="btn-outline" type="button" (click)="reset()">
+        <i class="bi bi-arrow-left"></i> Recommencer
+      </button>
+      <button class="btn-primary" type="button" [disabled]="!canCommit() || committing()" (click)="commit()">
+        @if (committing()) {
+          <span class="spinner-sm"></span> Import en cours…
+        } @else {
+          <i class="bi bi-check2-circle"></i> Confirmer l'import
+          ({{ preview()!.decisions.create + preview()!.decisions.version }} intervention(s))
+        }
+      </button>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  <!-- ÉTAPE 3 — RÉSULTAT                                                        -->
+  <!-- ══════════════════════════════════════════════════════════════════════════ -->
+  @if (step() === 'result' && commitResult()) {
+    <div class="card result-panel">
+      <div class="result-icon ok"><i class="bi bi-check-circle-fill"></i></div>
+      <h2>Import terminé avec succès</h2>
+      <div class="kpi-row result-kpis">
+        <div class="kpi"><span class="kpi-val ok">{{ commitResult()!.created }}</span><span class="kpi-lbl">Créées</span></div>
+        <div class="kpi"><span class="kpi-val">{{ commitResult()!.versioned }}</span><span class="kpi-lbl">Versionnées</span></div>
+        <div class="kpi"><span class="kpi-val muted">{{ commitResult()!.skipped }}</span><span class="kpi-lbl">Ignorées</span></div>
+        <div class="kpi"><span class="kpi-val" [class.err]="commitResult()!.ticketed > 0">{{ commitResult()!.ticketed }}</span><span class="kpi-lbl">Tickets</span></div>
+      </div>
+      <div class="kpi-row result-kpis">
+        <div class="kpi"><span class="kpi-val ok">{{ commitResult()!.success }}</span><span class="kpi-lbl">Succès</span></div>
+        <div class="kpi"><span class="kpi-val err">{{ commitResult()!.failure }}</span><span class="kpi-lbl">Échecs</span></div>
+        <div class="kpi"><span class="kpi-val">{{ commitResult()!.total }}</span><span class="kpi-lbl">Total</span></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn-outline" type="button" (click)="reset()">
+          <i class="bi bi-plus-circle"></i> Nouvel import
+        </button>
+        <a class="btn-outline" routerLink="/admin/interventions">
+          <i class="bi bi-bar-chart-line"></i> Voir le dashboard
+        </a>
+        @if (commitResult()!.ticketed > 0) {
+          <a class="btn-outline warn" routerLink="/admin/interventions/import/tickets">
+            <i class="bi bi-ticket-perforated"></i> Voir les tickets ({{ commitResult()!.ticketed }})
+          </a>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Dialogue conflit de période ─────────────────────────────────────────── -->
+  @if (conflictOpen()) {
+    <div class="modal-overlay" (click)="cancelOverwrite()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <h3>Import déjà existant</h3>
+        <p>
+          Un import a déjà été commité pour la période
+          <strong>{{ conflictInfo()?.periodLabel || 'sélectionnée' }}</strong>.
+          Voulez-vous analyser quand même ?
+        </p>
+        <div class="modal-actions">
+          <button class="btn-outline" type="button" (click)="cancelOverwrite()">Annuler</button>
+          <button class="btn-primary" type="button" (click)="confirmOverwrite()">Analyser quand même</button>
+        </div>
+      </div>
+    </div>
+  }
 
 </section>

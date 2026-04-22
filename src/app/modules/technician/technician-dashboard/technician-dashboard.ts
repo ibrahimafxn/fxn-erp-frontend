@@ -24,6 +24,8 @@ import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-
   styleUrl: './technician-dashboard.scss'
 })
 export class TechnicianDashboard {
+  private static readonly OSIRIS_LOW_STOCK_THRESHOLD = 4;
+
   private router = inject(Router);
   private interventions = inject(InterventionService);
   private reports = inject(TechnicianReportService);
@@ -50,14 +52,32 @@ export class TechnicianDashboard {
 
   readonly myEquipment = signal<OsirisMyEquipment | null>(null);
   readonly myEquipmentLoading = signal(false);
+  readonly lowOsirisEquipment = computed(() => {
+    const equipment = this.myEquipment()?.equipment ?? [];
+    return equipment
+      .filter((entry) => !this.isIgnoredOsirisAlertType(entry.type))
+      .filter((entry) => Number(entry.count || 0) < TechnicianDashboard.OSIRIS_LOW_STOCK_THRESHOLD)
+      .sort((a, b) => Number(a.count || 0) - Number(b.count || 0) || String(a.type || '').localeCompare(String(b.type || ''), 'fr'));
+  });
+  readonly hasLowOsirisEquipment = computed(() => this.lowOsirisEquipment().length > 0);
 
   readonly importLabel = computed(() => {
-    const summaryDate = this.importSummary()?.referenceDate;
     const batch = this.importBatch();
-    const date = summaryDate || batch?.importedAt || batch?.createdAt;
-    if (!date) return 'Aucun import du jour';
+    const date = batch?.importedAt || batch?.createdAt;
+    if (!date) return 'Aucun import Osiris';
     const formatted = formatFrDateTime(date);
     return `Dernier import : ${formatted}`;
+  });
+
+  readonly importPeriodLabel = computed(() => {
+    const batch = this.importBatch();
+    if (!batch) return '';
+    const start = batch.periodStart ? formatFrDate(batch.periodStart) : '';
+    const end = batch.periodEnd ? formatFrDate(batch.periodEnd) : '';
+    if (!start && !end) return '';
+    if (start && end) return `Période CSV : du ${start} au ${end}`;
+    if (start) return `Période CSV : à partir du ${start}`;
+    return `Période CSV : jusqu'au ${end}`;
   });
 
   readonly techRaccordements = computed(() => {
@@ -199,11 +219,14 @@ export class TechnicianDashboard {
     this.interventions.listImportsTechnician({ limit: 10 }).subscribe({
       next: (res) => {
         const items = res.data.items || [];
-        const batch = items.find((item) => item.isToday) || items[0] || null;
+        const batch = this.pickLatestCommittedImport(items);
         this.importBatch.set(batch);
-        const today = startOfToday();
-        const todayStr = formatDateInput(today);
-        this.resolveImportSummary$(batch?._id || null, todayStr).subscribe({
+        if (!batch?._id) {
+          this.importSummary.set(null);
+          this.importLoading.set(false);
+          return;
+        }
+        this.interventions.importSummaryTechnician({ importBatchId: batch._id }).subscribe({
           next: (summaryRes) => {
             this.importSummary.set(summaryRes.data);
             this.importLoading.set(false);
@@ -236,10 +259,29 @@ export class TechnicianDashboard {
     });
   }
 
-  private resolveImportSummary$(batchId: string | null, todayStr: string) {
-    return batchId
-      ? this.interventions.importSummaryTechnician({ importBatchId: batchId })
-      : this.interventions.importSummaryTechnician({ fromDate: todayStr, toDate: todayStr });
+  private pickLatestCommittedImport(items: InterventionImportBatch[]): InterventionImportBatch | null {
+    if (!items.length) return null;
+    const committedStatuses = new Set(['committed', 'COMPLETED']);
+    const sorted = [...items].sort((a, b) => this.importBatchTimestamp(b) - this.importBatchTimestamp(a));
+    return sorted.find((item) => committedStatuses.has(String(item.status || ''))) || sorted[0] || null;
+  }
+
+  private importBatchTimestamp(batch: InterventionImportBatch): number {
+    const raw = batch.importedAt || batch.createdAt;
+    if (!raw) return 0;
+    const timestamp = new Date(raw).getTime();
+    return Number.isFinite(timestamp) ? timestamp : 0;
+  }
+
+  private isIgnoredOsirisAlertType(type: string | null | undefined): boolean {
+    const normalized = String(type || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[\s_-]+/g, ' ')
+      .trim();
+    if (!normalized) return false;
+    return normalized.includes('gen8 ftth sfrbusiness');
   }
 
   private currentUserId(): string | null {

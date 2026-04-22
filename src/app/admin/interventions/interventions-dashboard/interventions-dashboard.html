@@ -319,7 +319,7 @@
             Technicien
             <select formControlName="technician" (change)="search()">
               <option value="">Tous</option>
-              @for (tech of filters().technicians; track tech) {
+              @for (tech of technicianFilterOptions(); track tech) {
                 <option [value]="tech">{{ tech }}</option>
               }
             </select>
@@ -328,7 +328,7 @@
             Dépôt
             <select formControlName="depot" (change)="search()">
               <option value="">Tous</option>
-              @for (d of depots(); track d._id) {
+              @for (d of depotFilterOptions(); track d._id) {
                 <option [value]="d._id">{{ d.name }}</option>
               }
             </select>
@@ -413,8 +413,8 @@
       <table class="tech-summary-table">
         <thead>
         <tr>
-          <th><span class="th-label" title="Technicien">Technicien</span></th>
-          <th><span class="th-label" title="Total">Tot.</span></th>
+          <th class="tech-col"><span class="th-label" title="Technicien">Technicien</span></th>
+          <th class="total-col"><span class="th-label" title="Total">Tot.</span></th>
           @for (col of detailSummaryPrestations; track col.key) {
             <th><span class="th-label" [title]="col.label">{{ col.label }}</span></th>
           }
@@ -423,25 +423,25 @@
         </tr>
         </thead>
         <tbody>
-          @for (it of summaryItems(); track it.technician) {
+          @for (it of summaryItems(); track it.technicianKey) {
             <tr
               class="clickable-row"
-              (click)="openDetail(it.technician || '')"
-              (touchstart)="onRowTouchStart($event, it.technician || '')"
+              (click)="openDetail(it)"
+              (touchstart)="onRowTouchStart($event, it)"
               (touchend)="onRowTouchEnd($event)"
             >
-              <td data-label="Technicien">
+              <td class="tech-col" data-label="Technicien">
                 <button
-                  class="link"
+                  class="link tech-link"
                   type="button"
                   title="Voir les interventions de ce technicien"
                   aria-label="Voir les interventions de ce technicien"
-                  (click)="openDetail(it.technician || '')"
+                  (click)="openDetail(it)"
                 ><i class="bi bi-eye"></i> 
                   {{ it.technician || '—' }}
                 </button>
               </td>
-              <td data-label="Total">{{ it.total }}</td>
+              <td class="total-col" data-label="Total">{{ it.total }}</td>
               @for (col of detailSummaryPrestations; track col.key) {
                 <td [attr.data-label]="col.label">{{ it[col.key] ?? 0 }}</td>
               }

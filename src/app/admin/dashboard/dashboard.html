@@ -18,10 +18,10 @@
   <section class="pulse-section">
     <div class="pulse-head">
       <div class="pulse-title-wrap">
-        <span class="hero-badge">ERP FXN · MVP terrain 7 jours</span>
+        <span class="hero-badge">ERP FXN · Pilotage des opérations</span>
         <h1>Cockpit interventions et performance réseau</h1>
         <p class="pulse-subtitle">
-          Priorités du terrain, volume exploitable et modules MVP pour signer les premières PME.
+          Suivi des interventions, des ventes, des stocks et de la performance réseau depuis un seul cockpit.
         </p>
       </div>
       <div class="pulse-controls">
@@ -251,6 +251,7 @@
                       </div>
                     }
                   </div>
+                  <div class="trend-label">{{ item.label }}</div>
                   @if (item.types?.length) {
                     <div class="trend-types-row">
                       @for (type of (item.types?.slice(0, 4) ?? []); track type.key) {
@@ -260,10 +261,85 @@
                   } @else {
                     <div class="trend-types-row empty"></div>
                   }
-                  <div class="trend-label">{{ item.label }}</div>
                 </div>
               }
             </div>
+            @if (prestationsTrendCurve(); as curve) {
+              <div class="trend-line-card">
+                <div class="trend-line-head">
+                  <span class="trend-line-title">Courbe volume journalier</span>
+                  <span class="trend-line-max">Pic : {{ formatCount(curve.max) }}</span>
+                </div>
+                <svg
+                  class="trend-line-chart"
+                  [attr.viewBox]="'0 0 ' + curve.width + ' ' + curve.height"
+                  role="img"
+                  aria-label="Courbe des prestations sur 7 jours"
+                  preserveAspectRatio="none"
+                >
+                  @for (guide of curve.guides; track $index) {
+                    <line class="trend-line-guide" x1="0" [attr.y1]="guide" x2="100" [attr.y2]="guide"></line>
+                  }
+                  <path class="trend-line-area" [attr.d]="curve.areaPath"></path>
+                  <path class="trend-line-path-glow" [attr.d]="curve.linePath"></path>
+                  <path class="trend-line-path" [attr.d]="curve.linePath"></path>
+                  @for (point of curve.points; track point.key) {
+                    <circle
+                      class="trend-line-point-halo"
+                      [class.is-peak]="point.isPeak"
+                      [attr.cx]="point.x"
+                      [attr.cy]="point.y"
+                      r="4.2"
+                    ></circle>
+                    <circle
+                      class="trend-line-point"
+                      [class.is-peak]="point.isPeak"
+                      [attr.cx]="point.x"
+                      [attr.cy]="point.y"
+                      r="3.2"
+                    >
+                      <title>{{ point.tooltip }} : {{ formatCount(point.value) }}</title>
+                    </circle>
+                    <text
+                      class="trend-line-point-value"
+                      [class.is-peak]="point.isPeak"
+                      [attr.x]="point.x"
+                      [attr.y]="point.valueY"
+                    >
+                      {{ formatCount(point.value) }}
+                    </text>
+                  }
+                </svg>
+                <div class="trend-line-labels">
+                  @for (point of curve.points; track point.key) {
+                    <div
+                      class="trend-line-day"
+                      [style.left.%]="point.x"
+                    >
+                      <span class="trend-line-label">{{ point.label }}</span>
+                      @if (point.types.length) {
+                        <div class="trend-line-legends">
+                          @for (type of point.types.slice(0, 3); track type.key) {
+                            <span
+                              class="trend-line-legend"
+                              [style.--legend-color]="type.color"
+                              [attr.title]="type.label + ' : ' + formatCount(type.count)"
+                            >
+                              <span class="trend-line-legend-dot"></span>
+                              <span class="trend-line-legend-text">{{ type.shortLabel }}</span>
+                            </span>
+                          }
+                        </div>
+                      } @else {
+                        <div class="trend-line-legends empty">
+                          <span class="trend-line-empty">Aucune</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           } @else {
             <div class="trend-empty">Données à connecter</div>
           }
