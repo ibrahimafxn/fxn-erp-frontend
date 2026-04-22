@@ -317,9 +317,9 @@
                       [style.left.%]="point.x"
                     >
                       <span class="trend-line-label">{{ point.label }}</span>
-                      @if (point.types?.length) {
+                      @if (point.types.length) {
                         <div class="trend-line-legends">
-                          @for (type of (point.types?.slice(0, 3) ?? []); track type.key) {
+                          @for (type of point.types.slice(0, 3); track type.key) {
                             <span
                               class="trend-line-legend"
                               [style.--legend-color]="type.color"

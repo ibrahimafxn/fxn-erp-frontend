@@ -827,7 +827,10 @@ export class TechnicianInterventions {
   }
 
   private countClosedByType(type: string): number {
-    const items = this.statsDataset();
+    return this.countClosedByTypeInItems(this.statsDataset(), type);
+  }
+
+  private countClosedByTypeInItems(items: InterventionItem[], type: string): number {
     if (!items.length) return 0;
     const canonicalType = this.normalizeCanonicalCode(type);
     return items.reduce((acc, item) => {
@@ -999,8 +1002,8 @@ export class TechnicianInterventions {
     const total = Number.isFinite(totalCount) && totalCount >= 0 ? totalCount : items.length;
     if (!items.length) return { ...EMPTY_STATS, total };
     const allowedType = this.normalizeFilterType(filterType);
-    const allowedTypeLabel = allowedType ? this.normalizeTypeLabel(allowedType) : '';
-    const enforcedTypeLabels = allowedType ? [allowedType] : REQUIRED_TYPE_LABELS;
+    const filteredTypeLabel = allowedType ? this.normalizeTypeLabel(allowedType) : '';
+    const enforcedTypeLabels = allowedType ? [] : REQUIRED_TYPE_LABELS;
     let success = 0;
     let failure = 0;
     let cancelled = 0;
@@ -1008,7 +1011,7 @@ export class TechnicianInterventions {
     let durationCount = 0;
     let failureDurationSum = 0;
     let failureDurationCount = 0;
-    const technicians = new Map<string, { success: number; failure: number; cancelled: number }>();
+    const technicians = new Map<string, { label: string; success: number; failure: number; cancelled: number }>();
     const types = new Map<string, number>();
     const statuses = new Map<string, number>();
     const articleTypeCounts = new Map<string, number>(
@@ -1069,14 +1072,14 @@ export class TechnicianInterventions {
       const dominantInArticles = dominantTypes.length
         ? dominantTypes.every((code) => this.hasCode(item.articlesRaw, code))
         : false;
-      const typeLabel = this.canonicalType(item.type, item);
-      const matchesAllowedType = !allowedType
-        || dominantTypes.includes(allowedType)
-        || this.matchesAllowedType(typeLabel, allowedType);
       const includeInTop = isClosed || isFailure || isCancelled;
-      if (matchesAllowedType && includeInTop) {
-        const techLabel = this.formatTechnicianName(item);
-        const techStats = technicians.get(techLabel) ?? { success: 0, failure: 0, cancelled: 0 };
+      if (includeInTop) {
+        const techKey = this.technicianStatsKey(item);
+        const techLabel = this.resolveTechnicianLabel(item);
+        const techStats = technicians.get(techKey) ?? { label: techLabel, success: 0, failure: 0, cancelled: 0 };
+        if (!techStats.label || techStats.label === '–' || techStats.label === '—') {
+          techStats.label = techLabel;
+        }
         if (isCancelled) {
           techStats.cancelled = (techStats.cancelled || 0) + 1;
         } else if (isFailure) {
@@ -1084,7 +1087,7 @@ export class TechnicianInterventions {
         } else if (isSuccess) {
           techStats.success = (techStats.success || 0) + 1;
         }
-        technicians.set(techLabel, techStats);
+        technicians.set(techKey, techStats);
       }
       const isCompleted = statut.includes('termine') || statut.includes('cloture') || isEchecTermine;
       const value = isCompleted ? this.computeDuration(item) : 0;
@@ -1110,11 +1113,7 @@ export class TechnicianInterventions {
           dominantTypes: dominantTypes.join(','),
           dominantInArticles
         });
-        if (allowedType) {
-          if (dominantTypes.includes(allowedType)) {
-            types.set(allowedType, (types.get(allowedType) ?? 0) + 1);
-          }
-        } else if (dominantTypes.length) {
+        if (dominantTypes.length) {
           for (const label of dominantTypes) {
             types.set(label, (types.get(label) ?? 0) + 1);
           }
@@ -1147,9 +1146,7 @@ export class TechnicianInterventions {
       if (!allowedType) {
         statuses.set(statusLabel, (statuses.get(statusLabel) ?? 0) + 1);
       } else {
-        const typeLabel = this.canonicalType(item.type, item);
-        const matchesAllowedType = dominantTypes.includes(allowedType) || this.matchesAllowedType(typeLabel, allowedType);
-        if ((isClosed && matchesAllowedType) || (isCancelled && matchesAllowedType) || (isFailure && matchesAllowedType)) {
+        if (isClosed || isCancelled || isFailure) {
           statuses.set(statusLabel, (statuses.get(statusLabel) ?? 0) + 1);
         }
       }
@@ -1158,16 +1155,13 @@ export class TechnicianInterventions {
         for (const code of dominantTypes) {
           const label = ARTICLE_TYPE_BY_CODE.get(code);
           if (!label) continue;
-          if (allowedType && !this.isAllowedArticleLabel(label, allowedTypeLabel)) {
-            continue;
-          }
           articleTypeCounts.set(label, (articleTypeCounts.get(label) ?? 0) + 1);
           articleLabels.add(label);
         }
         if (!articleLabels.size) {
           const typeLabel = this.canonicalType(item.type, item);
           const label = ARTICLE_TYPE_BY_CODE.get(typeLabel);
-          if (label && (!allowedType || this.isAllowedArticleLabel(label, allowedTypeLabel))) {
+          if (label) {
             articleTypeCounts.set(label, (articleTypeCounts.get(label) ?? 0) + 1);
           }
         }
@@ -1175,8 +1169,8 @@ export class TechnicianInterventions {
     }
 
     const topTechnicians = Array.from(technicians.entries())
-      .map(([label, stats]) => ({
-        label,
+      .map(([, stats]) => ({
+        label: stats.label,
         success: stats.success,
         failure: stats.failure,
         cancelled: stats.cancelled,
@@ -1261,9 +1255,12 @@ export class TechnicianInterventions {
           return normalizedEntry === normalizedAllowed || normalizedEntry === normalizedAllowedLabel;
         })
       : filteredTopTypes;
-    const finalTopTypes = (bpuOnlyTopTypes ?? computedTopTypes).filter((entry) =>
-      entry.count > 0 && !this.isCablePavLabel(entry.label) && !this.isClemLabel(entry.label)
-    );
+    const filteredTypeCount = allowedType ? this.countClosedByTypeInItems(items, allowedType) : 0;
+    const finalTopTypes = allowedType
+      ? [{ label: filteredTypeLabel || allowedType, count: filteredTypeCount }]
+      : (bpuOnlyTopTypes ?? computedTopTypes).filter((entry) =>
+          entry.count > 0 && !this.isCablePavLabel(entry.label) && !this.isClemLabel(entry.label)
+        );
     const ALWAYS_STATUSES = ['ECHEC TERMINE', 'ECHEC', 'ANNULEE', 'A COMPLETER'];
     for (const label of ALWAYS_STATUSES) {
       if (!statuses.has(label)) statuses.set(label, 0);
@@ -1941,20 +1938,6 @@ export class TechnicianInterventions {
     return this.normalizeToken(label) === 'CLEM';
   }
 
-  private matchesAllowedType(typeLabel: string, allowedType: string): boolean {
-    if (!allowedType) return true;
-    const normalizedType = this.normalizeToken(typeLabel);
-    const normalizedAllowed = this.normalizeToken(allowedType);
-    if (normalizedAllowed === 'RACIH' && normalizedType === 'IMM') return true;
-    if (normalizedAllowed === 'RACPAV' && (normalizedType === 'RACC' || normalizedType === 'RACPAV')) return true;
-    return normalizedType === normalizedAllowed;
-  }
-
-  private isAllowedArticleLabel(label: string, allowedLabel: string): boolean {
-    if (!allowedLabel) return true;
-    return this.normalizeToken(label) === this.normalizeToken(allowedLabel);
-  }
-
   private computeFailurePercent(stats: TechnicianInterventionStats): number {
     const denominator = stats.success + stats.failure;
     if (!denominator) return 0;
@@ -1990,8 +1973,7 @@ export class TechnicianInterventions {
   }
 
   formatTechnicianName(item: InterventionItem): string {
-    const formatted = formatPersonName(item.techFirstName ?? '', item.techLastName ?? '');
-    return formatted || '–';
+    return this.resolveTechnicianLabel(item);
   }
 
   openDetails(item: InterventionItem): void {
@@ -2055,6 +2037,64 @@ export class TechnicianInterventions {
 
   technicianLabel(tech: User): string {
     return this.formatTechnicianName({ techFirstName: tech.firstName, techLastName: tech.lastName } as any);
+  }
+
+  private technicianStatsKey(item: InterventionItem): string {
+    const technicianId = String(item.technicienId ?? '').trim();
+    if (technicianId) return `id:${technicianId}`;
+    return `label:${this.normalizeToken(this.resolveTechnicianLabel(item)) || 'INCONNU'}`;
+  }
+
+  private resolveTechnicianLabel(item: InterventionItem): string {
+    const technicianId = String(item.technicienId ?? '').trim();
+    if (technicianId) {
+      const matchedUser = this.technicians().find((tech) => String(tech._id ?? '').trim() === technicianId);
+      const matchedLabel = matchedUser
+        ? formatPersonName(matchedUser.firstName ?? '', matchedUser.lastName ?? '')
+        : '';
+      if (matchedLabel) return matchedLabel;
+    }
+
+    const formatted = formatPersonName(item.techFirstName ?? '', item.techLastName ?? '');
+    const techFull = String(item.techFull ?? '').trim();
+    const bestLocalLabel = this.pickMostDetailedTechnicianLabel(formatted, techFull);
+    const expandedLabel = this.expandTechnicianLabel(bestLocalLabel);
+    return expandedLabel || bestLocalLabel || '–';
+  }
+
+  private pickMostDetailedTechnicianLabel(...labels: string[]): string {
+    const cleaned = labels
+      .map((label) => String(label || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+    if (!cleaned.length) return '';
+    return cleaned.sort((a, b) => {
+      const tokenDiff = b.split(' ').length - a.split(' ').length;
+      if (tokenDiff !== 0) return tokenDiff;
+      return b.length - a.length;
+    })[0];
+  }
+
+  private expandTechnicianLabel(label: string): string {
+    const compactLabel = String(label || '').replace(/\s+/g, ' ').trim();
+    if (!compactLabel) return '';
+
+    const exact = this.technicians().find((tech) =>
+      this.normalizeToken(formatPersonName(tech.firstName ?? '', tech.lastName ?? '')) === this.normalizeToken(compactLabel)
+    );
+    if (exact) {
+      return formatPersonName(exact.firstName ?? '', exact.lastName ?? '');
+    }
+
+    const tokens = compactLabel.split(' ').filter(Boolean);
+    if (tokens.length === 1) {
+      const token = this.normalizeToken(tokens[0]);
+      const byLastName = this.technicians().filter((tech) => this.normalizeToken(tech.lastName) === token);
+      if (byLastName.length === 1) {
+        return formatPersonName(byLastName[0].firstName ?? '', byLastName[0].lastName ?? '');
+      }
+    }
+
+    return compactLabel;
   }
 
   topStatusCount(keyword: string): number {

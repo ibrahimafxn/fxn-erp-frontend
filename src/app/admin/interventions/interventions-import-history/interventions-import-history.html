@@ -1,0 +1,99 @@
+<section class="import-history">
+  <header class="page-header">
+    <div>
+      <h1>Historique des imports</h1>
+      <p class="subtitle">Tous les imports Osiris effectués, triés par date décroissante.</p>
+    </div>
+    <div class="header-actions">
+      <a class="btn-outline" routerLink="/admin/interventions/import">
+        <i class="bi bi-arrow-left"></i> Retour à l'import
+      </a>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="alert alert-error"><i class="bi bi-exclamation-triangle"></i> {{ error() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="state loading">Chargement…</div>
+  } @else if (batches().length === 0) {
+    <div class="state empty card">Aucun import effectué pour le moment.</div>
+  } @else {
+    <div class="pager card pager-bar">
+      <span class="pager-label">{{ total() }} import(s)</span>
+      <div class="pager-nav">
+        <button class="btn-outline" type="button" (click)="prevPage()" [disabled]="!canPrev()"><i class="bi bi-chevron-left"></i></button>
+        <span class="pager-page">{{ page() }} / {{ pageCount() }}</span>
+        <button class="btn-outline" type="button" (click)="nextPage()" [disabled]="!canNext()"><i class="bi bi-chevron-right"></i></button>
+      </div>
+    </div>
+
+    <div class="batch-list">
+      @for (batch of batches(); track batch._id) {
+        <div class="batch-card card">
+          <div class="batch-header" (click)="toggleExpand(batch)">
+            <div class="batch-main">
+              <span class="batch-name">{{ batch.originalName || '—' }}</span>
+              <span class="badge" [class]="statusClass(batch.status ?? '')">{{ statusLabel(batch.status ?? '') }}</span>
+            </div>
+            <div class="batch-meta">
+              <span><i class="bi bi-calendar3"></i> {{ formatDate(batch.createdAt) }}</span>
+              <span><i class="bi bi-person"></i> {{ importer(batch) }}</span>
+              @if (batch.totals) {
+                <span><i class="bi bi-database"></i>
+                  {{ batch.totals.created ?? 0 }} créées /
+                  {{ batch.totals.versioned ?? 0 }} versionnées /
+                  {{ batch.totals.total ?? 0 }} total
+                </span>
+              }
+            </div>
+            <div class="batch-actions" (click)="$event.stopPropagation()">
+              <button class="btn-outline btn-sm" type="button" (click)="download(batch._id, batch.originalName)">
+                <i class="bi bi-download"></i>
+              </button>
+              <button class="btn-outline btn-sm" type="button" (click)="toggleExpand(batch)">
+                <i class="bi" [class.bi-chevron-down]="expandedId() !== batch._id" [class.bi-chevron-up]="expandedId() === batch._id"></i>
+              </button>
+            </div>
+          </div>
+
+          @if (expandedId() === batch._id) {
+            <div class="batch-detail">
+              @if (expandedLoading()) {
+                <span class="detail-loading">Chargement…</span>
+              } @else if (expandedData()) {
+                <div class="detail-grid">
+                  <div class="detail-block">
+                    <div class="detail-label">Période</div>
+                    <div class="detail-val">{{ formatPeriod(batch) }}</div>
+                  </div>
+                  <div class="detail-block">
+                    <div class="detail-label">Encodage</div>
+                    <div class="detail-val">{{ expandedData()!.detectedEncoding || '—' }}</div>
+                  </div>
+                  <div class="detail-block">
+                    <div class="detail-label">Séparateur</div>
+                    <div class="detail-val">{{ expandedData()!.detectedDelimiter || '—' }}</div>
+                  </div>
+                  <div class="detail-block">
+                    <div class="detail-label">Taille fichier</div>
+                    <div class="detail-val">{{ expandedData()!.fileSize ? (expandedData()!.fileSize! / 1024 | number:'1.0-0') + ' Ko' : '—' }}</div>
+                  </div>
+                </div>
+                @if (preview(expandedData()!); as p) {
+                  <div class="preview-summary">
+                    <div class="ps-item"><span class="ps-val ok">{{ p.decisions.create }}</span><span class="ps-lbl">créées</span></div>
+                    <div class="ps-item"><span class="ps-val">{{ p.decisions.version }}</span><span class="ps-lbl">versionnées</span></div>
+                    <div class="ps-item"><span class="ps-val muted">{{ p.decisions.skip }}</span><span class="ps-lbl">ignorées</span></div>
+                    <div class="ps-item"><span class="ps-val" [class.err]="p.decisions.ticket > 0">{{ p.decisions.ticket }}</span><span class="ps-lbl">tickets</span></div>
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</section>

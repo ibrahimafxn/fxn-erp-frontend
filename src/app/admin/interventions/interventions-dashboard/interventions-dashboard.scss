@@ -883,6 +883,21 @@ tbody td {
   gap: 0.25rem;
 }
 
+.tech-summary-table .tech-col {
+  width: 14rem;
+  min-width: 12.5rem;
+}
+
+.tech-summary-table .total-col {
+  width: 5.5rem;
+  min-width: 5rem;
+}
+
+.tech-summary-table td.tech-col {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
 tbody tr {
   transition: background .2s ease;
 }
@@ -908,6 +923,19 @@ button.link {
   padding: 0;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.tech-link {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  text-align: left;
+  line-height: 1.4;
+}
+
+.tech-link i {
+  flex: 0 0 auto;
+  margin-top: 0.12rem;
 }
 
 button.link:hover {

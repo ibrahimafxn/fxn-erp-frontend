@@ -108,9 +108,29 @@ export const ADMIN_ROUTES: Routes = [
       import('./interventions/interventions-dashboard/interventions-dashboard').then(m => m.InterventionsDashboard)
   },
   {
+    path: 'interventions/search',
+    loadComponent: () =>
+      import('./interventions/interventions-search/interventions-search').then(m => m.InterventionsSearch)
+  },
+  {
+    path: 'interventions/import/history',
+    loadComponent: () =>
+      import('./interventions/interventions-import-history/interventions-import-history').then(m => m.InterventionsImportHistory)
+  },
+  {
+    path: 'interventions/import/tickets',
+    loadComponent: () =>
+      import('./interventions/interventions-import-tickets/interventions-import-tickets').then(m => m.InterventionsImportTickets)
+  },
+  {
     path: 'interventions/import',
     loadComponent: () =>
       import('./interventions/interventions-import/interventions-import').then(m => m.InterventionsImport)
+  },
+  {
+    path: 'interventions/imports',
+    redirectTo: 'interventions/import/history',
+    pathMatch: 'full'
   },
   {
     path: 'interventions/technician/:technician',

@@ -178,6 +178,15 @@
   pointer-events: none;
 }
 
+.nav-dot--alert {
+  width: 10px;
+  height: 10px;
+  top: -3px;
+  right: -5px;
+  background: var(--fxn-danger, #e53e3e);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fxn-danger, #e53e3e) 24%, transparent);
+}
+
 /* Hide on desktop */
 @media (min-width: 900px) {
   .tech-mobile-nav {

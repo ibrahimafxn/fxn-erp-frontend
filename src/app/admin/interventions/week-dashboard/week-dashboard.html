@@ -239,7 +239,11 @@
                   }
                 </td>
                 <td>
-                  <a [routerLink]="['/admin/interventions/technician', row.technician]" class="wdb-tech-link">
+                  <a
+                    [routerLink]="['/admin/interventions/technician', row.technician]"
+                    [queryParams]="techFilter(row) ? { techFilter: techFilter(row) } : null"
+                    class="wdb-tech-link"
+                  >
                     {{ techName(row) }}
                   </a>
                 </td>

@@ -21,6 +21,13 @@
       <span class="material-icons notranslate">directions_car</span>
       <span>Véhicules</span>
     </a>
+    <a class="sheet-item sheet-item--badge" routerLink="/technician/resources/osiris-equipment" (click)="closeMenu()">
+      <span class="material-icons notranslate">devices</span>
+      <span>Stock Osiris</span>
+      @if (osirisLowStockCount() > 0) {
+        <span class="sheet-badge">{{ osirisLowStockCount() }}</span>
+      }
+    </a>
     <a class="sheet-item" routerLink="/technician/documents" (click)="closeMenu()">
       <span class="material-icons notranslate">folder</span>
       <span>Documents</span>
@@ -67,7 +74,7 @@
     <span class="nav-icon-wrap">
       <span class="material-icons notranslate">{{ menuOpen() ? 'close' : 'more_horiz' }}</span>
       @if (!menuOpen() && totalSheetBadge() > 0) {
-        <span class="nav-dot"></span>
+        <span class="nav-dot" [class.nav-dot--alert]="hasOsirisLowStock()"></span>
       }
     </span>
     <span class="nav-label">Plus</span>
