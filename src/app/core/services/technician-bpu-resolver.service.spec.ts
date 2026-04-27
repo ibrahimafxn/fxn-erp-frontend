@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 
 import { environment } from '../../environments/environment';
-import { TechnicianBpuResolverService, pricesForDate } from './technician-bpu-resolver.service';
+import { TechnicianBpuResolverService, pricesForDate, snapshotForDate } from './technician-bpu-resolver.service';
 
 describe('TechnicianBpuResolverService', () => {
   let service: TechnicianBpuResolverService;
@@ -132,5 +132,27 @@ describe('TechnicianBpuResolverService', () => {
     const prices = pricesForDate(history, '2026-04-22', fallback);
 
     expect(prices.get('RAC_PBO_SOUT')).toBe(120);
+  });
+
+  it('should resolve the snapshot active on the report date', () => {
+    const history = [
+      {
+        _id: 'hist-new',
+        type: 'PERSONNALISE',
+        validFrom: '2026-04-22T10:30:00.000Z',
+        prestations: [{ code: 'RAC_PBO_SOUT', unitPrice: 120 }]
+      },
+      {
+        _id: 'hist-old',
+        type: 'PERSONNALISE',
+        validFrom: '2026-04-10T00:00:00.000Z',
+        prestations: [{ code: 'RAC_PBO_SOUT', unitPrice: 80 }]
+      }
+    ];
+
+    const snapshot = snapshotForDate(history, '2026-04-22');
+
+    expect(snapshot?._id).toBe('hist-new');
+    expect(snapshot?.prestations[0]?.unitPrice).toBe(120);
   });
 });

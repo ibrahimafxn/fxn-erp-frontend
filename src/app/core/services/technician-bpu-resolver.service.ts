@@ -29,26 +29,36 @@ export type ResolvedTechnicianBpuState = {
  * Si aucun snapshot n'est antérieur, retourne les prix du snapshot le plus ancien.
  * Si l'historique est vide, retourne la map courante (fallback).
  */
+function normalizeDayTimestamp(value: string | Date | null | undefined): number {
+  if (!value) return 0;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 0;
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+export function snapshotForDate(
+  history: BpuPriceHistory[],
+  reportDate: string | Date | null | undefined
+): BpuPriceHistory | null {
+  if (!history.length) return null;
+
+  const sorted = [...history].sort(
+    (a, b) => normalizeDayTimestamp(b.validFrom) - normalizeDayTimestamp(a.validFrom)
+  );
+  const ts = normalizeDayTimestamp(reportDate);
+
+  return sorted.find((h) => normalizeDayTimestamp(h.validFrom) <= ts) ?? sorted[sorted.length - 1] ?? null;
+}
+
 export function pricesForDate(
   history: BpuPriceHistory[],
   reportDate: string | Date | null | undefined,
   fallback: Map<string, number>
 ): Map<string, number> {
   if (!history.length) return fallback;
-
-  const normalizeDay = (value: string | Date | null | undefined): number => {
-    if (!value) return 0;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return 0;
-    date.setHours(0, 0, 0, 0);
-    return date.getTime();
-  };
-
-  const ts = normalizeDay(reportDate);
-
-  // history est trié validFrom DESC côté backend
-  // On cherche le premier (= le plus récent) dont validFrom ≤ ts
-  const snapshot = history.find((h) => normalizeDay(h.validFrom) <= ts) ?? history[history.length - 1];
+  const snapshot = snapshotForDate(history, reportDate);
+  if (!snapshot) return fallback;
 
   const map = new Map<string, number>();
   for (const { code, unitPrice } of snapshot.prestations) {
@@ -97,9 +107,6 @@ export class TechnicianBpuResolverService {
         return this.effectiveBpuService.getTechnicianEffectiveBpu(technicianId).pipe(
           map((items) => {
             const effectiveItems = items || [];
-            if (!effectiveItems.length) {
-              throw new Error('EMPTY_EFFECTIVE_BPU');
-            }
             const usesPersonalizedBpu = effectiveItems.some(item => item.source === 'OVERRIDE');
             const prices = pricesForDate(priceHistory, new Date(), this.effectivePrices(effectiveItems));
             return {
@@ -148,6 +155,7 @@ export class TechnicianBpuResolverService {
           if (!allowedCodes.has(code) || seen.has(code)) continue;
           seen.add(code);
           const unitPrice = currentPrices.get(code) ?? selectionPrices.get(code) ?? 0;
+          if (unitPrice <= 0) continue;
           prices.set(code, unitPrice);
           items.push({
             code,
@@ -200,11 +208,9 @@ export class TechnicianBpuResolverService {
       .map((item) => {
         const code = String(item.code || '').trim().toUpperCase();
         if (!code) return null;
-        return {
-          code,
-          prestation: code,
-          unitPrice: Number(item.unitPrice ?? 0)
-        };
+        const unitPrice = Number(item.unitPrice ?? 0);
+        if (unitPrice <= 0) return null;
+        return { code, prestation: code, unitPrice };
       })
       .filter((item): item is ResolvedTechnicianBpuItem => Boolean(item));
   }
@@ -220,7 +226,7 @@ export class TechnicianBpuResolverService {
 
   private effectiveItems(items: EffectiveBpuItem[]): ResolvedTechnicianBpuItem[] {
     return items
-      .filter((item) => !!String(item.code || '').trim())
+      .filter((item) => !!String(item.code || '').trim() && Number(item.prixUnitaire ?? 0) > 0)
       .sort((a, b) => Number(a.ordreAffichage ?? 0) - Number(b.ordreAffichage ?? 0))
       .map((item) => {
         const code = String(item.code || '').trim().toUpperCase();

@@ -24,13 +24,18 @@
 
       <div class="full prestations">
         <div class="prestations-title">Prestations</div>
+        <div class="subtitle">Prestations synchronisées au snapshot actif pour la date sélectionnée.</div>
         @if (bpuError()) {
           <div class="state error">{{ bpuError() }}</div>
+        } @else if (reportBpuItems().length === 0) {
+          <div class="state empty">Aucune prestation active pour la date sélectionnée.</div>
         } @else {
           <div class="prestations-list">
-            @for (item of bpuItems(); track item.code; let i = $index) {
+            @for (item of reportBpuItems(); track item.code; let i = $index) {
               <div class="prestation-item">
-                <div [class]="'prestation-pill pill-color-' + codeColorIndex(item.code)">{{ item.prestation || item.code }}</div>
+                <div [class]="'prestation-pill pill-color-' + codeColorIndex(item.code)" [title]="item.code">
+                  {{ item.prestation || item.code }}
+                </div>
                 <div class="prestation-meta">
                   <span class="prestation-price">{{ unitPriceFor(item.code) | amountCurrency }}</span>
                 </div>

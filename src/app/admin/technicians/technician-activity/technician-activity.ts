@@ -18,6 +18,7 @@ import { formatDepotName, formatPersonName } from '../../../core/utils/text-form
 import { formatPageRange } from '../../../core/utils/pagination';
 import { normalizeDateRange } from '../../../core/utils/date-format';
 import { computeReportAmount, normalizeReportPrestations, applyPricesToReport } from '../../../core/utils/technician-report-utils';
+import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianBpuResolverService, pricesForDate } from '../../../core/services/technician-bpu-resolver.service';
@@ -341,8 +342,12 @@ export class TechnicianActivity {
     this.sortDirection.set(field === 'date' || field === 'amount' ? 'desc' : 'asc');
   }
 
-  prestationsSummary(report: TechnicianReport): Array<{ code: string; qty: number }> {
-    return normalizeReportPrestations(report).map(({ code, qty }) => ({ code, qty }));
+  prestationsSummary(report: TechnicianReport): Array<{ code: string; qty: number; label: string }> {
+    return normalizeReportPrestations(report).map(({ code, qty, label }) => ({
+      code,
+      qty,
+      label: formatTechnicianPrestationLabel(code, label)
+    }));
   }
 
   reportAmount(report: TechnicianReport): number {

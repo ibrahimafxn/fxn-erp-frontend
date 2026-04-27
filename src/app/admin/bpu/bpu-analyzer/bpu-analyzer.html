@@ -200,7 +200,7 @@
               @for (item of matchedCodesArray(); track item.code) {
                 <tr>
                   <td><span class="code-pill pill-blue">{{ item.code }}</span></td>
-                  <td>{{ item.adminInfo.label }}</td>
+                  <td [title]="item.adminInfo.label">{{ displayPrestationLabel(item.code, item.adminInfo.label) }}</td>
                   <td class="mono">{{ item.count }}</td>
                   <td class="mono">
                     {{ item.adminInfo.unitPrice !== null ? (item.adminInfo.unitPrice | number:'1.2-2') + ' €' : '—' }}
@@ -299,7 +299,7 @@
               @for (item of r.notSeenInCsv; track item.code) {
                 <tr>
                   <td><span class="code-pill pill-grey">{{ item.code }}</span></td>
-                  <td>{{ item.label }}</td>
+                  <td [title]="item.label">{{ displayPrestationLabel(item.code, item.label) }}</td>
                   <td class="mono">
                     {{ item.unitPrice !== null ? (item.unitPrice | number:'1.2-2') + ' €' : '—' }}
                   </td>

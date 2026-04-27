@@ -7,6 +7,7 @@ import { PaginationState } from '../../../core/utils/pagination-state';
 import { BpuPriceHistory } from '../../../core/models';
 import { formatFrDate } from '../../../core/utils/date-format';
 import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
 import { TechnicianBpuResolverService, pricesForDate } from '../../../core/services/technician-bpu-resolver.service';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe, formatAmountCurrency } from '../../../shared/pipes/amount-currency.pipe';
@@ -63,7 +64,7 @@ export class TechnicianRevenue {
     this.items().reduce((sum, item) => sum + this.computeAmount(item), 0)
   );
   readonly prestationCounts = computed(() => {
-    const counts = new Map<string, { code: string; qty: number }>();
+    const counts = new Map<string, { code: string; label: string; qty: number }>();
     for (const report of this.items()) {
       for (const item of this.prestationsSummary(report)) {
         const code = String(item.code || '').toUpperCase();
@@ -72,7 +73,7 @@ export class TechnicianRevenue {
         if (current) {
           current.qty += item.qty;
         } else {
-          counts.set(code, { code, qty: item.qty });
+          counts.set(code, { code, label: item.label, qty: item.qty });
         }
       }
     }
@@ -176,8 +177,12 @@ export class TechnicianRevenue {
     return this.datePipe.transform(report.reportDate, 'shortDate') || '—';
   }
 
-  prestationsSummary(report: TechnicianReport): Array<{ code: string; qty: number }> {
-    return normalizeReportPrestations(report).map(({ code, qty }) => ({ code, qty }));
+  prestationsSummary(report: TechnicianReport): Array<{ code: string; qty: number; label: string }> {
+    return normalizeReportPrestations(report).map(({ code, qty, label }) => ({
+      code,
+      qty,
+      label: formatTechnicianPrestationLabel(code, label)
+    }));
   }
 
   private currentUserId(): string | null {

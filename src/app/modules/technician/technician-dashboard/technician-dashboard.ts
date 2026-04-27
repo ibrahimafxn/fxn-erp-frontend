@@ -14,6 +14,7 @@ import { formatDateInput, formatFrDate, formatFrDateTime, startOfToday } from '.
 import { parseFiniteNumber } from '../../../core/utils/number';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
+import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
 
 @Component({
   selector: 'app-technician-dashboard',
@@ -97,7 +98,7 @@ export class TechnicianDashboard {
     if (!totals) return [];
     const excludedKeys = new Set(['cablePav1', 'cablePav2', 'cablePav3', 'cablePav4']);
     return INTERVENTION_PRESTATION_FIELDS.map((field) => ({
-      label: field.label,
+      label: formatTechnicianPrestationLabel(String(field.code), field.label),
       value: Number(totals[field.key] || 0),
       key: field.key
     }))

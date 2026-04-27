@@ -19,9 +19,10 @@ import {
   InterventionPrestationField
 } from '../../../core/constant/intervention-prestations';
 import { apiError } from '../../../core/utils/http-error';
+import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
 
 type Segment = 'AUTO' | 'SALARIE' | 'PERSONNALISE' | 'AUTRE' | 'ERT';
-type ConfirmAction = 'saveSelection' | 'updateCode' | 'addPrestation' | 'deletePersonalized' | 'updatePeriod';
+type ConfirmAction = 'saveSelection' | 'updateCode' | 'addPrestation' | 'deletePersonalized' | 'updatePeriod' | 'deleteBpu';
 
 const SEGMENT_LABELS: Record<Segment, string> = {
   AUTO: 'Freelance',
@@ -67,7 +68,9 @@ export class BpuList {
   readonly selectedCodes = signal<Set<string>>(new Set());
   readonly editedPrices = signal<Map<string, number>>(new Map());
   readonly editedCodes = signal<Map<string, string>>(new Map());
+  readonly editedPrestations = signal<Map<string, string>>(new Map());
   readonly savingCodes = signal<Set<string>>(new Set());
+  readonly deletingBpuId = signal<string | null>(null);
   readonly newPrestation = signal({ prestation: '', code: '', unitPrice: 0 });
   readonly adding = signal(false);
   readonly showStitRef = signal(false);
@@ -153,6 +156,7 @@ export class BpuList {
     | { action: 'addPrestation'; prestation: string; code: string; unitPrice: number }
     | { action: 'updateCode'; id: string; prestation: string; currentCode: string; nextCode: string }
     | { action: 'deletePersonalized'; ownerId: string; technicianLabel: string; selectionId: string }
+    | { action: 'deleteBpu'; id: string; prestation: string }
     | null
   >(null);
   techInitials(tech: User): string {
@@ -722,11 +726,82 @@ export class BpuList {
     return !!id && this.savingCodes().has(id);
   }
 
+  prestationValue(item: BpuEntry): string {
+    const id = item._id;
+    if (!id) return String(item.prestation || '');
+    return this.editedPrestations().get(id) ?? String(item.prestation || '');
+  }
+
+  onPrestationInput(item: BpuEntry, event: Event): void {
+    if (this.isTechnician()) return;
+    const id = item._id;
+    const target = event.target as HTMLInputElement | null;
+    if (!id || !target) return;
+    const next = new Map(this.editedPrestations());
+    next.set(id, target.value);
+    this.editedPrestations.set(next);
+    this.success.set(null);
+  }
+
+  commitPrestation(item: BpuEntry): void {
+    if (this.isTechnician()) return;
+    const id = item._id;
+    if (!id) return;
+    const next = this.prestationValue(item).trim();
+    const current = String(item.prestation || '').trim();
+    if (!next || next === current) {
+      const m = new Map(this.editedPrestations());
+      m.set(id, current);
+      this.editedPrestations.set(m);
+      return;
+    }
+    this.error.set(null);
+    this.bpuService.updatePrestation(id, next).subscribe({
+      next: (updated) => {
+        item.prestation = updated.prestation;
+        const m = new Map(this.editedPrestations());
+        m.set(id, updated.prestation);
+        this.editedPrestations.set(m);
+        this.success.set('Nom mis à jour.');
+      },
+      error: (err: HttpErrorResponse) => {
+        const m = new Map(this.editedPrestations());
+        m.set(id, current);
+        this.editedPrestations.set(m);
+        this.error.set(apiError(err, 'Erreur mise à jour du nom'));
+      }
+    });
+  }
+
+  requestDeleteBpu(item: BpuEntry): void {
+    if (!item._id) return;
+    this.openConfirm('deleteBpu', { action: 'deleteBpu', id: item._id, prestation: item.prestation || item.code || '' });
+  }
+
+  private performDeleteBpu(context: { action: 'deleteBpu'; id: string; prestation: string } | null): void {
+    if (!context) return;
+    this.deletingBpuId.set(context.id);
+    this.error.set(null);
+    this.success.set(null);
+    this.bpuService.remove(context.id).subscribe({
+      next: () => {
+        this.deletingBpuId.set(null);
+        this.success.set('Prestation supprimée.');
+        this.items.set(this.items().filter(i => i._id !== context.id));
+      },
+      error: (err: HttpErrorResponse) => {
+        this.deletingBpuId.set(null);
+        this.error.set(apiError(err, 'Erreur suppression'));
+      }
+    });
+  }
+
   confirmTitle(): string {
     const action = this.confirmAction();
     if (action === 'addPrestation') return `Confirmer l'ajout`;
     if (action === 'updateCode') return 'Confirmer la modification';
     if (action === 'deletePersonalized') return 'Confirmer la suppression du BPU personnalisé';
+    if (action === 'deleteBpu') return 'Confirmer la suppression';
     if (action === 'updatePeriod') return 'Modifier les prix de la période';
     return 'Confirmer la validation';
   }
@@ -742,6 +817,9 @@ export class BpuList {
     }
     if (action === 'deletePersonalized' && context?.action === 'deletePersonalized') {
       return `Le BPU personnalisé de ${context.technicianLabel} sera supprimé. Cette action retire sa configuration dédiée et le technicien reviendra sur le BPU par défaut.`;
+    }
+    if (action === 'deleteBpu' && context?.action === 'deleteBpu') {
+      return `La prestation « ${context.prestation} » sera définitivement supprimée du catalogue BPU.`;
     }
     if (action === 'updatePeriod') {
       const entry = this.priceHistory().find(e => e._id === this.historyExpanded());
@@ -762,6 +840,7 @@ export class BpuList {
     if (action === 'addPrestation') return 'Ajouter';
     if (action === 'updateCode') return 'Modifier';
     if (action === 'deletePersonalized') return 'Supprimer';
+    if (action === 'deleteBpu') return 'Supprimer';
     if (action === 'updatePeriod') return 'Mettre à jour';
     return 'Valider';
   }
@@ -771,6 +850,7 @@ export class BpuList {
     if (action === 'updateCode') return 'primary';
     if (action === 'updatePeriod') return 'primary';
     if (action === 'deletePersonalized') return 'danger';
+    if (action === 'deleteBpu') return 'danger';
     return 'success';
   }
 
@@ -786,6 +866,7 @@ export class BpuList {
       }
     }
     if (action === 'deletePersonalized') return this.deletingPersonalized();
+    if (action === 'deleteBpu') return !!this.deletingBpuId();
     return this.saving() || this.adding();
   }
 
@@ -1107,6 +1188,10 @@ export class BpuList {
     }
     if (action === 'deletePersonalized' && context?.action === 'deletePersonalized') {
       this.performDeletePersonalized(context);
+      return;
+    }
+    if (action === 'deleteBpu' && context?.action === 'deleteBpu') {
+      this.performDeleteBpu(context);
     }
   }
 
@@ -1117,6 +1202,7 @@ export class BpuList {
       | { action: 'addPrestation'; prestation: string; code: string; unitPrice: number }
       | { action: 'updateCode'; id: string; prestation: string; currentCode: string; nextCode: string }
       | { action: 'deletePersonalized'; ownerId: string; technicianLabel: string; selectionId: string }
+      | { action: 'deleteBpu'; id: string; prestation: string }
   ): void {
     this.confirmAction.set(action);
     this.confirmContext.set(context);
@@ -1310,6 +1396,10 @@ export class BpuList {
     const key = String(code || '').trim().toUpperCase();
     if (!key) return null;
     return this.stitPriceByCode().get(key) ?? null;
+  }
+
+  displayPrestationLabel(code: string | null | undefined, fallbackLabel?: string | null): string {
+    return formatTechnicianPrestationLabel(String(code || ''), String(fallbackLabel || ''));
   }
 
 

@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 type ReportPrestationBadge = {
   code: string;
   qty: number;
+  label?: string;
 };
 
 /** Couleur déterministe (0-7) basée sur le code de prestation */
@@ -58,9 +59,10 @@ function codeColorIndex(code: string): number {
       font-weight: 600;
       font-size: 12px;
       color: var(--fxn-text, #e2e8f0);
-      font-family: var(--fxn-font-mono, monospace);
-      letter-spacing: 0.02em;
-      white-space: nowrap;
+      font-family: inherit;
+      letter-spacing: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
 
     /* Dégradés — identiques pill-color-0…7 du formulaire */
@@ -94,7 +96,7 @@ function codeColorIndex(code: string): number {
         @for (item of items(); track item.code) {
           <div [class]="'prestations-pill color-' + colorIndex(item.code)">
             <span class="qty">{{ item.qty }}</span>
-            <span class="pill-label">{{ item.code }}</span>
+            <span class="pill-label">{{ item.label || item.code }}</span>
           </div>
         }
       </div>

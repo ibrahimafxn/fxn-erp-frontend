@@ -16,6 +16,7 @@ import {
   InterventionPrestationField
 } from '../../../core/constant/intervention-prestations';
 import { apiError } from '../../../core/utils/http-error';
+import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
 
 @Component({
   standalone: true,
@@ -69,6 +70,10 @@ export class BpuTypeList {
     const role = this.auth.getUserRole();
     return role === Role.ADMIN || role === Role.DIRIGEANT;
   });
+
+  displayPrestationLabel(code: string | null | undefined, fallbackLabel?: string | null): string {
+    return formatTechnicianPrestationLabel(String(code || ''), String(fallbackLabel || ''));
+  }
 
   readonly sortedItems = computed(() => {
     const list = [...this.items()];

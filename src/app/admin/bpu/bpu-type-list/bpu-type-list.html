@@ -56,7 +56,7 @@
               @for (f of stitFieldsForView(); track f.key) {
                 <tr>
                   <td class="mono stit-code">{{ f.code }}</td>
-                  <td class="stit-label">{{ f.label }}</td>
+                  <td class="stit-label" [title]="f.label">{{ displayPrestationLabel(f.code, f.label) }}</td>
                   <td class="stit-desc">{{ f.description }}</td>
                 </tr>
               }

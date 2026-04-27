@@ -53,7 +53,7 @@
               @for (f of stitFieldsForView(); track f.key) {
                 <tr>
                   <td class="mono stit-code" data-label="Code">{{ f.code }}</td>
-                  <td class="stit-label" data-label="Prestation">{{ f.label }}</td>
+                  <td class="stit-label" data-label="Prestation" [title]="f.label">{{ displayPrestationLabel(f.code, f.label) }}</td>
                   <td class="stit-desc" data-label="Description">{{ f.description }}</td>
                   @if (isTechnician()) {
                     <td class="stit-price" data-label="Prix unitaire">
@@ -240,7 +240,18 @@
                     </td>
                   }
                   <td data-label="Prestation">
-                    {{ item.prestation || '—' }}
+                    @if (!isTechnician() && !isInPeriodView()) {
+                      <input
+                        class="code-input"
+                        type="text"
+                        [value]="prestationValue(item)"
+                        [disabled]="loading() || saving()"
+                        (input)="onPrestationInput(item, $event)"
+                        (blur)="commitPrestation(item)"
+                      />
+                    } @else {
+                      <span [title]="item.prestation || item.code || ''">{{ displayPrestationLabel(item.code, item.prestation) }}</span>
+                    }
                   </td>
                   <td data-label="Code" class="mono">
                     @if (isTechnician()) {
@@ -258,6 +269,20 @@
                       />
                     }
                   </td>
+                  @if (!isTechnician() && !isInPeriodView()) {
+                    <td class="action-col">
+                      <button
+                        class="btn-icon subtle danger"
+                        type="button"
+                        title="Supprimer cette prestation"
+                        [disabled]="loading() || saving() || deletingBpuId() === item._id"
+                        (click)="requestDeleteBpu(item)"
+                        aria-label="Supprimer"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  }
                   <td data-label="Prix appliqué" [class.period-price-cell]="isInPeriodView()">
                     @if (isInPeriodView()) {
                       @if (isPeriodCodeSelected(item.code)) {

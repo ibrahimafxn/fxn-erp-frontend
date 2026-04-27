@@ -1,12 +1,14 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { apiError } from '../../../core/utils/http-error';
 import { PaginationState } from '../../../core/utils/pagination-state';
-import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
-import { TechnicianBpuResolverService, pricesForDate } from '../../../core/services/technician-bpu-resolver.service';
+import { applyPricesToReport, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
+import { TechnicianBpuResolverService, pricesForDate, snapshotForDate } from '../../../core/services/technician-bpu-resolver.service';
 import { BpuPriceHistory } from '../../../core/models';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
@@ -84,16 +86,37 @@ export class TechnicianReports {
     comment: this.fb.nonNullable.control('')
   });
 
+  readonly reportDate = toSignal(this.form.controls.date.valueChanges, {
+    initialValue: this.form.controls.date.value
+  });
+  readonly commentValue = toSignal(this.form.controls.comment.valueChanges, {
+    initialValue: this.form.controls.comment.value
+  });
+  readonly reportSnapshot = computed(() => snapshotForDate(this.bpuPriceHistory(), this.reportDate()));
+  readonly reportPrices = computed(() => pricesForDate(this.bpuPriceHistory(), this.reportDate(), this.bpuPrices()));
+  readonly currentBpuItemsByCode = computed(() => {
+    const map = new Map<string, BpuItem>();
+    for (const item of this.bpuItems()) {
+      const code = String(item.code || '').trim().toUpperCase();
+      if (!code) continue;
+      map.set(code, item);
+    }
+    return map;
+  });
+  readonly reportBpuItems = computed(() => this.resolveReportBpuItems());
   readonly selectedCount = computed(() =>
-    Array.from(this.qtys().values()).reduce((sum, qty) => sum + (qty > 0 ? qty : 0), 0)
+    this.reportBpuItems().reduce((sum, item) => {
+      const qty = this.qtyFor(item.code);
+      return sum + (qty > 0 ? qty : 0);
+    }, 0)
   );
   readonly formTotalAmount = computed(() =>
-    this.bpuItems().reduce((sum, item) => sum + this.lineAmount(item.code), 0)
+    this.reportBpuItems().reduce((sum, item) => sum + this.lineAmount(item.code), 0)
   );
 
   readonly isDefaultForm = computed(() => {
-    const hasQtys = Array.from(this.qtys().values()).some((v) => v > 0);
-    return !hasQtys && !this.form.get('comment')?.value;
+    const hasQtys = this.reportBpuItems().some((item) => this.qtyFor(item.code) > 0);
+    return !hasQtys && !this.commentValue();
   });
 
   constructor() {
@@ -116,7 +139,7 @@ export class TechnicianReports {
         })));
         this.bpuPrices.set(state.prices);
         this.bpuPriceHistory.set(state.priceHistory);
-        this.hasBpu.set(state.items.length > 0);
+        this.hasBpu.set(state.items.length > 0 || state.priceHistory.length > 0 || state.selections.length > 0);
         this.bpuLoading.set(false);
       },
       error: (err) => {
@@ -158,20 +181,27 @@ export class TechnicianReports {
     const { date, comment } = this.form.getRawValue();
     const prestations = this.selectedPrestationsPayload();
     const entries = this.selectedEntriesPayload();
+    const updatePayload = {
+      prestations,
+      comment,
+      commentaire: comment,
+      ...(entries.length > 0 ? { entries } : {})
+    };
+    const createPayload = {
+      date,
+      dateActivite: date,
+      prestations,
+      comment,
+      commentaire: comment,
+      ...(entries.length > 0 ? { entries } : {})
+    };
 
     this.loading.set(true);
     this.error.set(null);
     const current = this.editing();
     const request$ = current?._id
-      ? this.reportService.update(current._id, { prestations, entries, comment, commentaire: comment })
-      : this.reportService.create({
-          date,
-          dateActivite: date,
-          prestations,
-          entries,
-          comment,
-          commentaire: comment
-        });
+      ? this.reportService.update(current._id, updatePayload)
+      : this.reportService.create(createPayload);
 
     request$.subscribe({
       next: () => {
@@ -233,17 +263,17 @@ export class TechnicianReports {
   prestationsSummary(report: TechnicianReport): Array<{ code: string; label: string; qty: number }> {
     return normalizeReportPrestations(report).map((item) => ({
       ...item,
-      label: item.label || this.bpuItems().find((b) => b.code === item.code)?.prestation || item.code
+      label: this.resolvePrestationLabel(item.code, item.label)
     }));
   }
 
   computeAmount(report: TechnicianReport): number {
     const prices = pricesForDate(this.bpuPriceHistory(), report.reportDate, this.bpuPrices());
-    return computeReportAmount(report, prices);
+    return applyPricesToReport(report, prices);
   }
 
   unitPriceFor(code: string): number {
-    const price = this.bpuPrices().get(String(code || '').toUpperCase());
+    const price = this.reportPrices().get(String(code || '').trim().toUpperCase());
     return Number.isFinite(price) ? Number(price) : 0;
   }
 
@@ -301,19 +331,19 @@ export class TechnicianReports {
   }
 
   private selectedPrestationsPayload(): Array<{ code: string; qty: number }> {
-    return Array.from(this.qtys().entries())
-      .filter(([, qty]) => qty > 0)
-      .map(([code, qty]) => ({ code, qty }));
+    return this.reportBpuItems()
+      .map((item) => ({ code: item.code, qty: this.qtyFor(item.code) }))
+      .filter((item) => item.qty > 0);
   }
 
   private selectedEntriesPayload(): Array<{ prestationId: string; quantite: number }> {
-    return this.bpuItems()
+    return this.reportBpuItems()
+      .filter((item) => !!item.prestationId)
       .map((item) => ({
-        prestationId: item.prestationId,
+        prestationId: item.prestationId as string,
         quantite: this.qtyFor(item.code)
       }))
-      .filter((item) => !!item.prestationId && item.quantite > 0)
-      .map((item) => ({ prestationId: item.prestationId as string, quantite: item.quantite }));
+      .filter((item) => item.quantite > 0);
   }
 
   private restoreQtys(report: TechnicianReport): Map<string, number> {
@@ -339,6 +369,41 @@ export class TechnicianReports {
       return { fromDate: fromInput || `${year}-01-01`, toDate: toInput || `${year}-12-31` };
     }
     return { fromDate: fromInput || '', toDate: toInput || '' };
+  }
+
+  private resolveReportBpuItems(): BpuItem[] {
+    const snapshot = this.reportSnapshot();
+    if (!snapshot) {
+      return this.bpuItems().map((item) => ({
+        ...item,
+        prestation: this.resolvePrestationLabel(item.code, item.prestation)
+      }));
+    }
+
+    const currentByCode = this.currentBpuItemsByCode();
+    const seen = new Set<string>();
+    const items: BpuItem[] = [];
+
+    for (const entry of snapshot.prestations || []) {
+      const code = String(entry.code || '').trim().toUpperCase();
+      if (!code || seen.has(code)) continue;
+      seen.add(code);
+      const current = currentByCode.get(code);
+      items.push({
+        prestationId: current?.prestationId,
+        code,
+        prestation: this.resolvePrestationLabel(code, current?.prestation),
+        unitPrice: Number(entry.unitPrice ?? current?.unitPrice ?? 0)
+      });
+    }
+
+    return items;
+  }
+
+  private resolvePrestationLabel(code: string, fallbackLabel?: string): string {
+    const normalizedCode = String(code || '').trim().toUpperCase();
+    const current = this.currentBpuItemsByCode().get(normalizedCode);
+    return formatTechnicianPrestationLabel(normalizedCode, fallbackLabel || current?.prestation || normalizedCode);
   }
 
   private currentUserId(): string | null {

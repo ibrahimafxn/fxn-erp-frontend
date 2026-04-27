@@ -10,6 +10,7 @@ import { RouterModule } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { DetailBack } from '../../../core/utils/detail-back';
+import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
 
 // ─── Types du rapport ──────────────────────────────────────────────────────────
 
@@ -175,5 +176,9 @@ export class BpuAnalyzer extends DetailBack {
     const f = this.selectedFile();
     if (!f) return '';
     return f.name.length > 40 ? f.name.slice(0, 37) + '...' : f.name;
+  }
+
+  displayPrestationLabel(code: string | null | undefined, fallbackLabel?: string | null): string {
+    return formatTechnicianPrestationLabel(String(code || ''), String(fallbackLabel || ''));
   }
 }
