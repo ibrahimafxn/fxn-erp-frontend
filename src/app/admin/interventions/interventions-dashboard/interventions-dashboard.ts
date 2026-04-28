@@ -190,7 +190,27 @@ export class InterventionsDashboard {
     clients: [],
     statuses: [],
     technicians: [],
-    types: []
+    types: [],
+    societes: [],
+    plaques: [],
+    villes: [],
+    gestionnaires: [],
+    activites: [],
+    typeOffres: [],
+    typePons: [],
+    marques: [],
+    marqueGps: [],
+    gems: [],
+    categoriesRdv: [],
+    statutsBox4g: [],
+    typeLogements: [],
+    parcours: [],
+    multiSavs: [],
+    equipements: [],
+    regroupSavs: [],
+    flagBots: [],
+    provisionnings: [],
+    motifEchecs: []
   });
   readonly technicianFilterOptions = computed(() => this.uniqueTechnicianOptions(this.filters().technicians));
   readonly depotFilterOptions = computed(() => this.uniqueDepotOptions(this.depots()));

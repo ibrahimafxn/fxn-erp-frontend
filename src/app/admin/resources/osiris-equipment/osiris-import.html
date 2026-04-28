@@ -3,6 +3,22 @@
     <div>
       <h1>Stock matériel Osiris</h1>
       <p class="subtitle">Importez le fichier MATERIEL_EXPORT_*.csv extrait d'Osiris pour mettre à jour le stock des techniciens.</p>
+      @if (importDateLabel() !== '—' || importAuthorLabel() !== '—') {
+        <div class="import-meta">
+          @if (importDateLabel() !== '—') {
+            <span class="meta-chip">
+              <span class="material-icons notranslate">event</span>
+              Importé le {{ importDateLabel() }}
+            </span>
+          }
+          @if (importAuthorLabel() !== '—') {
+            <span class="meta-chip">
+              <span class="material-icons notranslate">person</span>
+              Par {{ importAuthorLabel() }}
+            </span>
+          }
+        </div>
+      }
     </div>
     <div class="header-actions">
       <button

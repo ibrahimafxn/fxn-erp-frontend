@@ -632,6 +632,27 @@ tbody td.commentaire {
   gap: 0.65rem;
 }
 
+.detail-section {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--fxn-border);
+}
+
+.detail-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fxn-text-muted);
+}
+
+.detail-raw-grid {
+  display: grid;
+  gap: 0.55rem;
+}
+
 .detail-row {
   display: grid;
   grid-template-columns: minmax(140px, 1fr) 2fr;
@@ -640,6 +661,10 @@ tbody td.commentaire {
   border: 1px solid var(--fxn-border);
   border-radius: 10px;
   background: var(--fxn-surface-glass);
+}
+
+.detail-row-raw {
+  background: color-mix(in srgb, var(--fxn-surface-soft) 65%, transparent);
 }
 
 .detail-label {

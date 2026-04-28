@@ -134,7 +134,7 @@
       <form class="filters-grid" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
         <label>
           Technicien
-          <select formControlName="technician" (change)="applyFilters()">
+          <select formControlName="technician" (change)="onTechnicianChange()">
             <option value="">Tous</option>
             @for (tech of technicians(); track tech._id) {
             <option [value]="technicianLabel(tech)">
@@ -303,7 +303,7 @@
                 </td>
                 <td data-label="Client">{{ item.client || '—' }}</td>
                 <td data-label="Durée">{{ formatDuration(item) }}</td>
-                <td class="commentaire" data-label="Commentaires">{{ item.commentairesTechnicien || '—' }}</td>
+                <td class="commentaire" data-label="Commentaires">{{ formatCommentValue(item) }}</td>
               </tr>
             }
           </tbody>
@@ -327,6 +327,19 @@
             <div class="detail-row">
               <div class="detail-label">{{ entry.label }}</div>
               <div class="detail-value">{{ entry.value }}</div>
+            </div>
+          }
+          @if (detailRawEntries().length) {
+            <div class="detail-section">
+              <div class="detail-section-title">Données brutes Osiris</div>
+              <div class="detail-raw-grid">
+                @for (entry of detailRawEntries(); track entry.label) {
+                  <div class="detail-row detail-row-raw">
+                    <div class="detail-label">{{ entry.label }}</div>
+                    <div class="detail-value">{{ entry.value }}</div>
+                  </div>
+                }
+              </div>
             </div>
           }
         </section>

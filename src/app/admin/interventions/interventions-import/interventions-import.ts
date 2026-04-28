@@ -56,6 +56,7 @@ export class InterventionsImport {
   // ── Lignes bloquées ───────────────────────────────────────────────────────────
   readonly blockedRows = signal<ImportRowItem[]>([]);
   readonly blockedLoading = signal(false);
+  readonly visibleBlockedRows = computed(() => this.blockedRows().filter((row) => !this.isHiddenBlockedRow(row)));
 
   // ── Computed ──────────────────────────────────────────────────────────────────
   readonly latestImport = computed(() => this.importBatches()[0] || null);
@@ -237,6 +238,20 @@ export class InterventionsImport {
   batchImporter(batch: InterventionImportBatch): string {
     if (!batch.importedBy) return '—';
     return formatPersonName(batch.importedBy.firstName ?? '', batch.importedBy.lastName ?? '');
+  }
+
+  isHiddenBlockedRow(row: ImportRowItem): boolean {
+    const status = this.normalizeStatus(row.statut);
+    if (!status) return false;
+    return status.includes('annul') || status.includes('cancel') || status.includes('echec') || status.includes('fail');
+  }
+
+  private normalizeStatus(value?: string | null): string {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   statusLabel(status: string): string {

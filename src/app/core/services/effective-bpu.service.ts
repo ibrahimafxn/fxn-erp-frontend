@@ -14,9 +14,13 @@ export class EffectiveBpuService {
   constructor(private http: HttpClient) {}
 
   getTechnicianEffectiveBpu(technicianId: string): Observable<EffectiveBpuItem[]> {
-    return this.http.get<ApiResponse<EffectiveBpuItem[]>>(`${this.baseUrl}/${technicianId}/effective-bpu`).pipe(
-      map((resp) => resp.data || []),
-      catchError((err: HttpErrorResponse) => throwError(() => err))
-    );
+    return this.http
+      .get<ApiResponse<EffectiveBpuItem[]>>(`${this.baseUrl}/${technicianId}/effective-bpu`, {
+        headers: { 'Cache-Control': 'no-cache' }
+      })
+      .pipe(
+        map((resp) => resp.data || []),
+        catchError((err: HttpErrorResponse) => throwError(() => err))
+      );
   }
 }

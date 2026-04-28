@@ -79,6 +79,22 @@
   text-decoration: underline; cursor: pointer; border: none; background: none;
 }
 
+.warn-actions {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 0.5rem;
+}
+
+.btn-reanalyze {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.8rem; font-weight: 600;
+  color: var(--import-warning); background: color-mix(in srgb, var(--import-warning) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--import-warning) 35%, transparent);
+  border-radius: 6px; padding: 0.3rem 0.75rem; cursor: pointer;
+  transition: background 0.15s;
+  &:hover:not(:disabled) { background: color-mix(in srgb, var(--import-warning) 22%, transparent); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  .bi { font-size: 0.85rem; }
+}
+
 // ── Stepper ──────────────────────────────────────────────────────────────────
 
 .stepper { display: flex; align-items: center; gap: 0.5rem; }

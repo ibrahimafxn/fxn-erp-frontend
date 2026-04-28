@@ -152,7 +152,7 @@ export class Dashboard implements OnInit {
     const points = items.map((item, index) => {
       const x = Number((left + step * index).toFixed(2));
       const y = Number((bottom - ((item.value / max) * (bottom - top))).toFixed(2));
-      const valueY = Number((y + 1.1).toFixed(2));
+      const valueY = Number(((y <= top + 6 ? y + 5.2 : y - 4.6)).toFixed(2));
       return {
         key: item.key,
         label: item.label,

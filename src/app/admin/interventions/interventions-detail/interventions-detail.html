@@ -1,0 +1,335 @@
+@if (item(); as inter) {
+<div class="detail-page">
+
+  <!-- ── Header ──────────────────────────────────────────── -->
+  <header class="detail-header">
+    <button class="btn-back" type="button" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+      <span>Retour</span>
+    </button>
+
+    <div class="header-main">
+      <div class="header-id">
+        <span class="inter-num">{{ inter.numInter || '—' }}</span>
+        @if (inter.commandeId) {
+          <span class="meta-chip">
+            <i class="bi bi-hash"></i> {{ inter.commandeId }}
+          </span>
+        }
+        @if (inter.versionIndex != null) {
+          <span class="meta-chip version-chip">v{{ inter.versionIndex }}</span>
+        }
+      </div>
+
+      <div class="header-badges">
+        @if (inter.type) {
+          <span class="badge badge-type">{{ inter.type }}</span>
+        }
+        @if (inter.statut) {
+          <span class="badge"
+            [class.badge-success]="inter.isSuccess"
+            [class.badge-failure]="inter.isFailure"
+            [class.badge-neutral]="!inter.isSuccess && !inter.isFailure">
+            {{ inter.statut }}
+          </span>
+        }
+        @if (inter.sav24) { <span class="badge badge-warn">SAV 24h</span> }
+        @if (inter.savRouge) { <span class="badge badge-danger">SAV Rouge</span> }
+      </div>
+    </div>
+
+    <div class="header-meta">
+      @if (inter.client || inter.clientOperateur) {
+        <span class="meta-chip"><i class="bi bi-building"></i> {{ inter.client || inter.clientOperateur }}</span>
+      }
+      @if (inter.societe) {
+        <span class="meta-chip"><i class="bi bi-briefcase"></i> {{ inter.societe }}</span>
+      }
+      @if (inter.region) {
+        <span class="meta-chip"><i class="bi bi-geo-alt"></i> {{ inter.region }}{{ inter.plaque ? ' · ' + inter.plaque : '' }}</span>
+      }
+      @if (inter.ville) {
+        <span class="meta-chip"><i class="bi bi-pin-map"></i> {{ inter.ville }}</span>
+      }
+    </div>
+  </header>
+
+  <!-- ── Grid principal ──────────────────────────────────── -->
+  <div class="detail-grid-layout">
+
+    <!-- Colonne principale -->
+    <div class="col-main">
+
+      <!-- Technicien -->
+      <div class="card">
+        <div class="card-title">
+          <i class="bi bi-person-badge"></i> Technicien
+        </div>
+        <div class="kv-grid">
+          <div class="kv-row">
+            <span class="kv-label">Nom</span>
+            <span class="kv-value strong">{{ technicianLabel(inter) }}</span>
+          </div>
+          @if (inter.technicienId) {
+            <div class="kv-row">
+              <span class="kv-label">ID technicien</span>
+              <span class="kv-value mono">{{ inter.technicienId }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Planification -->
+      <div class="card">
+        <div class="card-title">
+          <i class="bi bi-calendar-week"></i> Planification
+        </div>
+        <div class="kv-grid kv-2col">
+          <div class="kv-row">
+            <span class="kv-label">Date RDV</span>
+            <span class="kv-value">{{ dateLabel(inter.dateRdv) }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Heure planifiée</span>
+            <span class="kv-value">{{ inter.heureRdvPlanifiee || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Durée planifiée</span>
+            <span class="kv-value">{{ inter.dureePlanifiee || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Créneau +2h</span>
+            <span class="kv-value">{{ inter.creneauPlus2h || '—' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Réalisation -->
+      <div class="card">
+        <div class="card-title">
+          <i class="bi bi-clock-history"></i> Réalisation
+        </div>
+        <div class="kv-grid kv-2col">
+          <div class="kv-row">
+            <span class="kv-label">Début réel</span>
+            <span class="kv-value">{{ timeLabel(inter.heureDebutReelle || inter.debutIntervention || inter.debut) }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Clôture tech.</span>
+            <span class="kv-value">{{ timeLabel(inter.heureClotureTech || inter.clotureTech) }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Clôture hotline</span>
+            <span class="kv-value">{{ timeLabel(inter.heureClotureHotline || inter.clotureHotline) }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Durée réelle</span>
+            <span class="kv-value">{{ inter.duree || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Nombre de RDV</span>
+            <span class="kv-value">{{ inter.nbRdv ?? '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Occurrences abo. 90j</span>
+            <span class="kv-value">{{ inter.occurrencesAbo90j ?? '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">SAV 24h</span>
+            <span class="kv-value">{{ boolLabel(inter.sav24) }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">SAV rouge</span>
+            <span class="kv-value">{{ boolLabel(inter.savRouge) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Travaux & Matériel -->
+      <div class="card">
+        <div class="card-title">
+          <i class="bi bi-tools"></i> Travaux &amp; Matériel
+        </div>
+        <div class="kv-grid kv-2col">
+          <div class="kv-row">
+            <span class="kv-label">Marque</span>
+            <span class="kv-value">{{ inter.marque || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Type opération</span>
+            <span class="kv-value">{{ inter.typeOperation || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Type PBO</span>
+            <span class="kv-value">{{ inter.typePbo || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Longueur câble</span>
+            <span class="kv-value">{{ inter.longueurCable || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Prise existante</span>
+            <span class="kv-value">{{ inter.priseExistante || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Reco. raccordement</span>
+            <span class="kv-value">{{ inter.recoRacc || '—' }}</span>
+          </div>
+        </div>
+        @if (inter.articlesUtilises || inter.articlesRaw) {
+          <div class="text-block">
+            <span class="kv-label">Articles utilisés</span>
+            <p class="text-content mono">{{ inter.articlesUtilises || inter.articlesRaw }}</p>
+          </div>
+        }
+        @if (inter.listePrestationsRaw) {
+          <div class="text-block">
+            <span class="kv-label">Prestations</span>
+            <p class="text-content mono">{{ inter.listePrestationsRaw }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- Commentaires -->
+      @if (inter.commentairesTechnicien || inter.commentairesCloture) {
+        <div class="card">
+          <div class="card-title">
+            <i class="bi bi-chat-left-text"></i> Commentaires
+          </div>
+          @if (inter.commentairesTechnicien) {
+            <div class="text-block">
+              <span class="kv-label">Rapport technicien</span>
+              <p class="text-content">{{ inter.commentairesTechnicien }}</p>
+            </div>
+          }
+          @if (inter.commentairesCloture) {
+            <div class="text-block">
+              <span class="kv-label">Commentaire clôture hotline</span>
+              <p class="text-content">{{ inter.commentairesCloture }}</p>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Échec & SAV -->
+      @if (inter.isFailure || inter.motifEchec || inter.actionSav) {
+        <div class="card card-failure">
+          <div class="card-title title-failure">
+            <i class="bi bi-exclamation-triangle"></i> Échec &amp; SAV
+          </div>
+          <div class="kv-grid kv-2col">
+            <div class="kv-row">
+              <span class="kv-label">Motif d'échec</span>
+              <span class="kv-value">{{ inter.motifEchec || '—' }}</span>
+            </div>
+            <div class="kv-row">
+              <span class="kv-label">Action SAV</span>
+              <span class="kv-value">{{ inter.actionSav || '—' }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+
+    <!-- Colonne latérale -->
+    <div class="col-side">
+
+      <!-- Localisation -->
+      <div class="card">
+        <div class="card-title">
+          <i class="bi bi-geo-alt"></i> Localisation
+        </div>
+        <div class="kv-grid">
+          <div class="kv-row">
+            <span class="kv-label">Région</span>
+            <span class="kv-value">{{ inter.region || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Plaque</span>
+            <span class="kv-value">{{ inter.plaque || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Ville</span>
+            <span class="kv-value">{{ inter.ville || '—' }}</span>
+          </div>
+          @if (inter.societe) {
+            <div class="kv-row">
+              <span class="kv-label">Société</span>
+              <span class="kv-value">{{ inter.societe }}</span>
+            </div>
+          }
+          @if (inter.client || inter.clientOperateur) {
+            <div class="kv-row">
+              <span class="kv-label">Opérateur</span>
+              <span class="kv-value">{{ inter.client || inter.clientOperateur }}</span>
+            </div>
+          }
+          <div class="kv-row">
+            <span class="kv-label">Type logement</span>
+            <span class="kv-value">{{ inter.typeLogement || '—' }}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Type habitation</span>
+            <span class="kv-value">{{ inter.typeHabitation || '—' }}</span>
+          </div>
+          @if (inter.importedAt) {
+            <div class="kv-row">
+              <span class="kv-label">Importé le</span>
+              <span class="kv-value">{{ dateLabel(inter.importedAt) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Catégories -->
+      @if (inter.categories?.length) {
+        <div class="card">
+          <div class="card-title">
+            <i class="bi bi-tags"></i> Catégories
+          </div>
+          <div class="tags-wrap">
+            @for (cat of inter.categories!; track cat) {
+              <span class="tag">{{ cat }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Données CSV -->
+      <div class="card card-csv">
+        <div class="card-title">
+          <i class="bi bi-filetype-csv"></i> Données CSV brutes
+        </div>
+        @if (csvEntries(inter.osirisFields).length > 0) {
+          <div class="csv-scroll">
+            <table class="csv-table">
+              @for (e of csvEntries(inter.osirisFields); track e.key) {
+                <tr>
+                  <td class="csv-key">{{ e.key }}</td>
+                  <td class="csv-val">{{ e.value || '—' }}</td>
+                </tr>
+              }
+            </table>
+          </div>
+        } @else if (csvEntries(inter.osirisRaw).length > 0) {
+          <div class="csv-scroll">
+            <table class="csv-table">
+              @for (e of csvEntries(inter.osirisRaw); track e.key) {
+                <tr>
+                  <td class="csv-key">{{ e.key }}</td>
+                  <td class="csv-val">{{ e.value || '—' }}</td>
+                </tr>
+              }
+            </table>
+          </div>
+        } @else {
+          <p class="csv-empty">Aucune donnée CSV disponible.</p>
+        }
+      </div>
+
+    </div>
+  </div>
+
+</div>
+}

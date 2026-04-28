@@ -190,6 +190,10 @@ export class AppHeader {
     this.router.navigate(['/admin/interventions/audit']).then();
   }
 
+  goInterventionsSearch(): void {
+    this.router.navigate(['/admin/interventions/search']).then();
+  }
+
   goInterventionsWeek(): void {
     this.router.navigate(['/admin/interventions/week']).then();
   }

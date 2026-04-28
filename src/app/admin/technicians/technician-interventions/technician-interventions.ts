@@ -51,6 +51,43 @@ const EMPTY_STATS: TechnicianInterventionStats = {
 type SortField = 'date' | 'type' | 'statut' | 'duree';
 type InterventionDetailField = { key: keyof InterventionItem; label: string };
 
+const INTERVENTION_DETAIL_FIELD_ALIASES: Partial<Record<keyof InterventionItem, string[]>> = {
+  debut: ['heuredebutreelle', 'debutintervention', 'heuredebutintervention'],
+  duree: ['dureeplanifiee', 'dureeplanifie', 'dureerdv'],
+  clotureHotline: ['heurecloturehotline'],
+  clotureTech: ['heurecloturetech'],
+  debutIntervention: ['heuredebutreelle', 'debut', 'heuredebutintervention'],
+  heureRdvPlanifiee: ['heurerdvplanifiee', 'heureplanifiee', 'heuredebutplanifiee', 'heurerdv'],
+  heureDebutReelle: ['debutintervention', 'heuredebutintervention'],
+  heureClotureTech: ['cloturetech', 'heurecloturetech'],
+  heureClotureHotline: ['cloturehotline', 'heurecloturehotline'],
+  commentairesTechnicien: ['commentairestechnicien', 'commentairetechnicien', 'commentairesinter', 'commentaires', 'commentaire'],
+  commentairesCloture: ['commentairescloture', 'commentairecloture'],
+  clientOperateur: ['clientoperateur', 'client_operateur', 'operateur'],
+  articlesUtilises: ['articlesutilises', 'articles_utilises'],
+  sav24: ['sav24', 'sav_24', 'sav 24'],
+  savRouge: ['savrouge', 'sav_rouge'],
+  nbRdv: ['nb_rdv', 'nbrdv', 'nrdv', 'dernier_rdv'],
+  occurrencesAbo90j: ['occurrences_abo_90j', 'occurrencesabo90j', 'occabo90j'],
+  commandeId: ['commande', 'commande_id', 'idcommande'],
+  typeOperation: ['typeoperation'],
+  typeHabitation: ['typehabitation'],
+  typePbo: ['typepbo'],
+  longueurCable: ['longueurcable', 'longueur_cable'],
+  actionSav: ['actionsav'],
+  motifEchec: ['motifechec'],
+  ville: ['ville'],
+  recoRacc: ['recoracc', 'reco_racc', 'reco=>racc', 'recoraccordement'],
+  priseExistante: ['priseexistante', 'prise_existante'],
+  client: ['clientnom'],
+  societe: ['societeintervenant', 'societeclient'],
+  plaque: ['immatriculation', 'vehicule'],
+  region: ['regioninter'],
+  techFirstName: ['prenomtechnicien', 'prenomtech', 'prenom'],
+  techLastName: ['nomtechnicien', 'nomtech', 'nom'],
+  techFull: ['technicien', 'tech', 'intervenant', 'nomtechnicien']
+};
+
 const TYPE_CANONICAL_ALIASES = new Map([
   // ── Raccordement immeuble (RACIM remplace RACIH) ───────────────────────────
   ['RACIM', 'RACIM'],
@@ -323,6 +360,7 @@ export class TechnicianInterventions {
   readonly ertEntries = signal<BpuEntry[]>([]);
   readonly bpuLoading = signal(false);
   readonly bpuError = signal<string | null>(null);
+  readonly technicianBpuCodes = signal<Set<string> | null>(null);
 
   readonly tableLoading = signal(false);
   readonly tableError = signal<string | null>(null);
@@ -338,10 +376,14 @@ export class TechnicianInterventions {
   private readonly detailFields: InterventionDetailField[] = [
     { key: '_id', label: 'ID' },
     { key: 'numInter', label: 'Numero' },
+    { key: 'commandeId', label: 'Commande' },
     { key: 'dateRdv', label: 'Date RDV' },
+    { key: 'heureRdvPlanifiee', label: 'Heure RDV planifiee' },
+    { key: 'dureePlanifiee', label: 'Duree planifiee' },
     { key: 'region', label: 'Region' },
     { key: 'plaque', label: 'Plaque' },
     { key: 'societe', label: 'Societe' },
+    { key: 'clientOperateur', label: 'Client operateur' },
     { key: 'techFirstName', label: 'Technicien prenom' },
     { key: 'techLastName', label: 'Technicien nom' },
     { key: 'techFull', label: 'Technicien' },
@@ -349,6 +391,11 @@ export class TechnicianInterventions {
     { key: 'client', label: 'Client' },
     { key: 'statut', label: 'Statut' },
     { key: 'commentairesTechnicien', label: 'Commentaires technicien' },
+    { key: 'commentairesCloture', label: 'Commentaires cloture' },
+    { key: 'sav24', label: 'SAV24' },
+    { key: 'savRouge', label: 'SAV rouge' },
+    { key: 'nbRdv', label: 'Nb RDV' },
+    { key: 'occurrencesAbo90j', label: 'Occurrences abo 90j' },
     { key: 'debut', label: 'Debut' },
     { key: 'duree', label: 'Duree' },
     { key: 'clotureHotline', label: 'Cloture hotline' },
@@ -411,10 +458,17 @@ export class TechnicianInterventions {
         || normalized === 'DEMO'
         || normalized === 'REFRAC';
     };
+    const techBpuCodes = this.technicianBpuCodes();
+    const isAllowedByBpu = (code: string) => {
+      if (!techBpuCodes) return true;
+      const canonical = this.normalizeCanonicalCode(code);
+      return techBpuCodes.has(canonical);
+    };
     const bpuCodes = Array.from(new Set(
       this.bpuAutoEntries()
         .map((entry) => String(entry.code || '').trim())
         .filter((code) => !isExcludedType(code))
+        .filter((code) => isAllowedByBpu(code))
         .filter(Boolean)
     ));
     if (bpuCodes.length > 0) {
@@ -423,6 +477,7 @@ export class TechnicianInterventions {
     const fallbackTypes = (this.filters()?.types ?? [])
       .map((value) => this.normalizeFilterType(value))
       .filter((value) => !isExcludedType(value))
+      .filter((value) => isAllowedByBpu(value))
       .filter(Boolean);
     return Array.from(new Set(fallbackTypes))
       .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
@@ -443,8 +498,40 @@ export class TechnicianInterventions {
     this.reloadAll();
   }
 
+  onTechnicianChange(): void {
+    this.applyFilters();
+    const label = this.filterForm.controls.technician.value;
+    if (!label) {
+      this.technicianBpuCodes.set(null);
+      return;
+    }
+    const user = this.technicians().find((t) => this.technicianLabel(t) === label);
+    if (!user?._id) {
+      this.technicianBpuCodes.set(null);
+      return;
+    }
+    this.bpuSelectionService.list({ owner: String(user._id) }).subscribe({
+      next: (items) => {
+        const sorted = [...(items || [])].sort(
+          (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+        );
+        const selection = sorted.find((s) => this.normalizeToken(s.type) === 'PERSONNALISE') || sorted[0] || null;
+        if (!selection?.prestations?.length) {
+          this.technicianBpuCodes.set(null);
+          return;
+        }
+        const codes = new Set(
+          selection.prestations.map((p) => this.normalizeCanonicalCode(p.code)).filter(Boolean)
+        );
+        this.technicianBpuCodes.set(codes);
+      },
+      error: () => this.technicianBpuCodes.set(null)
+    });
+  }
+
   clearFilters(): void {
     this.resetFilterForm();
+    this.technicianBpuCodes.set(null);
     this.page.set(1);
     this.ratesService.refresh().subscribe();
     this.reloadAll();
@@ -1417,8 +1504,13 @@ export class TechnicianInterventions {
   }
 
   private computeDuration(item: InterventionItem): number {
-    const start = item.debutIntervention || item.debut;
-    const end = item.clotureHotline || item.clotureTech;
+    const start = this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'debutIntervention'))
+      || this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'debut'))
+      || this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'heureDebutReelle'));
+    const end = this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'clotureHotline'))
+      || this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'clotureTech'))
+      || this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'heureClotureHotline'))
+      || this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'heureClotureTech'));
     if (!start || !end) return 0;
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -1430,8 +1522,11 @@ export class TechnicianInterventions {
   }
 
   private computeFailureDuration(item: InterventionItem): number {
-    const start = item.debutIntervention || item.debut;
-    const end = item.clotureTech;
+    const start = this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'debutIntervention'))
+      || this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'debut'))
+      || this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'heureDebutReelle'));
+    const end = this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'clotureTech'))
+      || this.normalizeDetailValue(this.resolveDetailFieldValue(item, 'heureClotureTech'));
     if (!start || !end) return 0;
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -1991,18 +2086,97 @@ export class TechnicianInterventions {
     if (!item) return [];
     return this.detailFields.map((field) => ({
       label: field.label,
-      value: this.formatDetailValueByKey(field.key, item[field.key])
+      value: this.formatDetailValueByKey(field.key, this.resolveDetailFieldValue(item, field.key), item)
     }));
   }
 
-  private formatDetailValueByKey(key: keyof InterventionItem, value: unknown): string {
+  private formatDetailValueByKey(key: keyof InterventionItem, value: unknown, item: InterventionItem): string {
     if (key === 'type') {
-      return this.displayType(this.selectedDetail() as InterventionItem);
+      return this.displayType({
+        ...item,
+        type: this.normalizeDetailValue(value)
+      });
     }
     if (key === 'listePrestationsRaw') {
       return this.formatPrestationsRaw(value);
     }
     return this.formatDetailValue(value);
+  }
+
+  detailRawEntries(): Array<{ label: string; value: string }> {
+    const item = this.selectedDetail();
+    if (!item) return [];
+    const rawSource = item.osirisRaw || item.osirisFields || {};
+    const entries = Object.entries(rawSource)
+      .filter(([key, value]) => {
+        const normalizedKey = this.normalizeDetailKey(key);
+        if (!normalizedKey) return false;
+        if (!this.hasMeaningfulValue(value)) return false;
+        return !this.isStructuredDetailKey(normalizedKey);
+      })
+      .sort((a, b) => a[0].localeCompare(b[0], 'fr', { sensitivity: 'base' }));
+    return entries.map(([label, value]) => ({
+      label: `Osiris · ${label}`,
+      value: this.formatDetailValue(value)
+    }));
+  }
+
+  private resolveDetailFieldValue(item: InterventionItem, key: keyof InterventionItem): unknown {
+    const directValue = item[key];
+    if (this.hasMeaningfulValue(directValue)) {
+      return directValue;
+    }
+    const aliases = [String(key), ...(INTERVENTION_DETAIL_FIELD_ALIASES[key] || [])]
+      .map((value) => this.normalizeDetailKey(value))
+      .filter(Boolean);
+    const rawValue = this.findRawFieldValue(item, aliases);
+    return this.hasMeaningfulValue(rawValue) ? rawValue : directValue;
+  }
+
+  private findRawFieldValue(item: InterventionItem, aliases: string[]): string | undefined {
+    const sources = [item.osirisFields || {}, item.osirisRaw || {}];
+    for (const source of sources) {
+      const direct = this.findValueInRawSource(source, aliases);
+      if (this.hasMeaningfulValue(direct)) {
+        return direct;
+      }
+    }
+    return undefined;
+  }
+
+  private findValueInRawSource(source: Record<string, string>, aliases: string[]): string | undefined {
+    const aliasSet = new Set(aliases);
+    for (const [key, value] of Object.entries(source || {})) {
+      if (!this.hasMeaningfulValue(value)) continue;
+      if (aliasSet.has(this.normalizeDetailKey(key))) {
+        return String(value).trim();
+      }
+    }
+    return undefined;
+  }
+
+  private isStructuredDetailKey(normalizedKey: string): boolean {
+    return this.detailFields.some((field) => {
+      if (this.normalizeDetailKey(String(field.key)) === normalizedKey) return true;
+      return (INTERVENTION_DETAIL_FIELD_ALIASES[field.key] || [])
+        .map((alias) => this.normalizeDetailKey(alias))
+        .includes(normalizedKey);
+    });
+  }
+
+  private hasMeaningfulValue(value: unknown): boolean {
+    if (value === null || value === undefined) return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    if (Array.isArray(value)) return value.length > 0;
+    return true;
+  }
+
+  private normalizeDetailKey(value?: string | null): string {
+    return this.normalizeToken(value).replace(/[^A-Z0-9]/g, '');
+  }
+
+  private normalizeDetailValue(value: unknown): string {
+    return this.hasMeaningfulValue(value) ? String(value).trim() : '';
   }
 
   private formatDetailValue(value: unknown): string {
@@ -2033,6 +2207,12 @@ export class TechnicianInterventions {
       unique.push(code);
     }
     return unique.join(', ');
+  }
+
+  formatCommentValue(item: InterventionItem): string {
+    const value = this.resolveDetailFieldValue(item, 'commentairesTechnicien')
+      || this.resolveDetailFieldValue(item, 'commentairesCloture');
+    return this.formatDetailValue(value);
   }
 
   technicianLabel(tech: User): string {

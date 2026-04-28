@@ -10,6 +10,52 @@ import {
 
 type AuditMode = 'db' | 'csv';
 
+type AuditRow = AuditEchecItem & {
+  auditKey: string;
+};
+
+function cleanTechnicianLabel(value: string): string {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizeTechnicianLabel(value: string): string {
+  return cleanTechnicianLabel(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function normalizeTechnicianSignature(value: string): string {
+  const label = normalizeTechnicianLabel(value);
+  if (!label) return '';
+  return label
+    .split(' ')
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+    .join(' ');
+}
+
+function buildSummarySuffixMap(items: AuditEchecItem[]): Map<string, string> {
+  const candidates = new Map<string, Set<string>>();
+  for (const item of items) {
+    const label = cleanTechnicianLabel(item.technician);
+    const parts = normalizeTechnicianLabel(label).split(' ').filter(Boolean);
+    if (parts.length <= 1) continue;
+    const suffix = parts[parts.length - 1];
+    if (!suffix) continue;
+    if (!candidates.has(suffix)) candidates.set(suffix, new Set());
+    candidates.get(suffix)?.add(label);
+  }
+
+  const result = new Map<string, string>();
+  for (const [suffix, labels] of candidates.entries()) {
+    if (labels.size === 1) {
+      result.set(suffix, Array.from(labels)[0]);
+    }
+  }
+  return result;
+}
+
 @Component({
   selector: 'app-interventions-audit',
   standalone: true,
@@ -52,7 +98,7 @@ export class InterventionsAudit {
   // ── État commun ──────────────────────────────────────────────────────────────
   readonly loading     = signal(false);
   readonly error       = signal<string | null>(null);
-  readonly items       = signal<AuditEchecItem[]>([]);
+  readonly items       = signal<AuditRow[]>([]);
   readonly topMotifs   = signal<AuditTopMotif[]>([]);
   readonly totals      = signal<{ nbTotal: number; nbEchecs: number; txEchecGlobal: number } | null>(null);
   readonly expandedRow = signal<string | null>(null);
@@ -104,7 +150,7 @@ export class InterventionsAudit {
       societe: this.filterSociete() || undefined,
     }).subscribe({
       next: (res) => {
-        this.items.set(res?.data?.items ?? []);
+        this.items.set(this.aggregateRows(res?.data?.items ?? []));
         this.topMotifs.set(res?.data?.topMotifs ?? []);
         this.totals.set(res?.data?.totals ?? null);
         this.loading.set(false);
@@ -140,7 +186,7 @@ export class InterventionsAudit {
 
     this.interventionService.auditEchecsCsv(file).subscribe({
       next: (res) => {
-        this.items.set(res?.data?.items ?? []);
+        this.items.set(this.aggregateRows(res?.data?.items ?? []));
         this.topMotifs.set(res?.data?.topMotifs ?? []);
         this.totals.set(res?.data?.totals ?? null);
         this.csvMeta.set(res?.data?.meta ?? { filename: file.name, rowsRead: 0 });
@@ -160,12 +206,12 @@ export class InterventionsAudit {
   }
 
   // ── Ligne expandée ───────────────────────────────────────────────────────────
-  toggleRow(technician: string): void {
-    this.expandedRow.set(this.expandedRow() === technician ? null : technician);
+  toggleRow(rowKey: string): void {
+    this.expandedRow.set(this.expandedRow() === rowKey ? null : rowKey);
   }
 
-  isExpanded(technician: string): boolean {
-    return this.expandedRow() === technician;
+  isExpanded(rowKey: string): boolean {
+    return this.expandedRow() === rowKey;
   }
 
   // ── Code couleur ─────────────────────────────────────────────────────────────
@@ -235,7 +281,7 @@ export class InterventionsAudit {
     return max > 0 ? Math.round((count / max) * 100) : 0;
   }
 
-  echecsOf(item: AuditEchecItem): AuditEchecDetail[] {
+  echecsOf(item: AuditRow): AuditEchecDetail[] {
     return item.echecs ?? [];
   }
 
@@ -246,5 +292,123 @@ export class InterventionsAudit {
     this.error.set(null);
     this.expandedRow.set(null);
     this.csvMeta.set(null);
+  }
+
+  private aggregateRows(items: AuditEchecItem[]): AuditRow[] {
+    const summarySuffixMap = buildSummarySuffixMap(items);
+    const grouped = new Map<string, AuditRow>();
+    const idToKey = new Map<string, string>();
+    const signatureToKey = new Map<string, string>();
+
+    for (const item of items) {
+      const rawLabel = cleanTechnicianLabel(item.technician);
+      const resolvedLabel = this.resolveTechnicianLabel(rawLabel, summarySuffixMap);
+      const technicianId = String(item.technicienId ?? '').trim();
+      const signature = normalizeTechnicianSignature(resolvedLabel)
+        || normalizeTechnicianLabel(resolvedLabel)
+        || normalizeTechnicianLabel(rawLabel);
+      const fallbackKey = technicianId ? `id:${technicianId}` : `sig:${signature || 'inconnu'}`;
+      const key = (
+        (technicianId && idToKey.get(technicianId))
+        || (signature && signatureToKey.get(signature))
+        || fallbackKey
+      );
+
+      const existing = grouped.get(key);
+      if (!existing) {
+        grouped.set(key, {
+          ...item,
+          technician: resolvedLabel || '—',
+          technicienId: item.technicienId || null,
+          auditKey: key,
+          echecs: Array.isArray(item.echecs) ? [...item.echecs] : []
+        });
+        if (technicianId && !idToKey.has(technicianId)) {
+          idToKey.set(technicianId, key);
+        }
+        if (signature && !signatureToKey.has(signature)) {
+          signatureToKey.set(signature, key);
+        }
+        continue;
+      }
+
+      this.mergeRow(existing, item, resolvedLabel);
+      if (technicianId && !idToKey.has(technicianId)) {
+        idToKey.set(technicianId, key);
+      }
+      if (signature && !signatureToKey.has(signature)) {
+        signatureToKey.set(signature, key);
+      }
+    }
+
+    return Array.from(grouped.values())
+      .filter((row) => row.nbTotal > 0)
+      .map((row) => ({
+        ...row,
+        txEchecRacc: row.nbRacc > 0 ? Math.round((row.nbRaccEchec / row.nbRacc) * 100) : 0,
+        txEchecSav: row.nbSav > 0 ? Math.round((row.nbSavEchec / row.nbSav) * 100) : 0,
+        txEchecGlobal: row.nbTotal > 0
+          ? Math.round(((row.nbRaccEchec + row.nbSavEchec) / row.nbTotal) * 100)
+          : 0
+      }))
+      .sort((a, b) =>
+        b.txEchecGlobal - a.txEchecGlobal
+        || b.nbTotal - a.nbTotal
+        || a.technician.localeCompare(b.technician, 'fr', { sensitivity: 'base' })
+      );
+  }
+
+  private mergeRow(target: AuditRow, source: AuditEchecItem, resolvedLabel: string): void {
+    const targetRecord = target as Record<string, unknown>;
+    for (const [key, value] of Object.entries(source as Record<string, unknown>)) {
+      if (
+        key === 'technician'
+        || key === 'technicienId'
+        || key === 'echecs'
+        || key === 'txEchecRacc'
+        || key === 'txEchecSav'
+        || key === 'txEchecGlobal'
+      ) {
+        continue;
+      }
+      if (typeof value !== 'number') continue;
+      const current = typeof targetRecord[key] === 'number' ? Number(targetRecord[key]) : 0;
+      targetRecord[key] = current + value;
+    }
+
+    target.technician = this.pickPreferredLabel(target.technician, resolvedLabel);
+    target.technicienId = target.technicienId || source.technicienId || null;
+    target.region = this.pickPreferredText(target.region, source.region);
+    target.societe = this.pickPreferredText(target.societe, source.societe);
+    target.echecs = [...target.echecs, ...(source.echecs ?? [])];
+  }
+
+  private resolveTechnicianLabel(value: string, summarySuffixMap: Map<string, string>): string {
+    const label = cleanTechnicianLabel(value);
+    if (!label) return '—';
+    const parts = normalizeTechnicianLabel(label).split(' ').filter(Boolean);
+    if (parts.length === 1) {
+      return summarySuffixMap.get(parts[0]) || label;
+    }
+    return label;
+  }
+
+  private pickPreferredLabel(current: string, candidate: string): string {
+    const currentLabel = cleanTechnicianLabel(current);
+    const nextLabel = cleanTechnicianLabel(candidate);
+    if (!currentLabel) return nextLabel || '—';
+    if (!nextLabel) return currentLabel;
+    const currentParts = normalizeTechnicianLabel(currentLabel).split(' ').filter(Boolean).length;
+    const nextParts = normalizeTechnicianLabel(nextLabel).split(' ').filter(Boolean).length;
+    if (nextParts > currentParts) return nextLabel;
+    if (nextParts === currentParts && nextLabel.length > currentLabel.length) return nextLabel;
+    return currentLabel;
+  }
+
+  private pickPreferredText(current: string, candidate: string): string {
+    const currentValue = cleanTechnicianLabel(current);
+    const nextValue = cleanTechnicianLabel(candidate);
+    if (!currentValue) return nextValue;
+    return currentValue;
   }
 }

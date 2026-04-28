@@ -184,12 +184,12 @@
           </tr>
         </thead>
         <tbody>
-          @for (row of items(); track row.technician) {
-            <tr class="row-summary" [class.row-expanded]="isExpanded(row.technician)"
-                (click)="toggleRow(row.technician)" [class.clickable]="row.echecs.length > 0">
+          @for (row of items(); track row.auditKey) {
+            <tr class="row-summary" [class.row-expanded]="isExpanded(row.auditKey)"
+                (click)="toggleRow(row.auditKey)" [class.clickable]="row.echecs.length > 0">
               <td class="tech-name">
                 <span class="material-icons notranslate expand-icon">
-                  {{ isExpanded(row.technician) ? 'expand_less' : 'expand_more' }}
+                  {{ isExpanded(row.auditKey) ? 'expand_less' : 'expand_more' }}
                 </span>
                 {{ row.technician }}
                 @if (row.region) { <span class="tech-region">{{ row.region }}</span> }
@@ -216,7 +216,7 @@
             </tr>
 
             <!-- Détail des échecs (ligne expandée) -->
-            @if (isExpanded(row.technician) && row.echecs.length > 0) {
+            @if (isExpanded(row.auditKey) && row.echecs.length > 0) {
               <tr class="row-detail">
                 <td colspan="10">
                   <div class="detail-panel">

@@ -27,9 +27,25 @@ export type OsirisTechnicianSummary = {
   total: number;
 };
 
+export type OsirisImportAuthor = {
+  _id?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+} | string | null;
+
+export type OsirisEquipmentSummary = OsirisTechnicianSummary[] & {
+  importedAt?: string | null;
+  createdAt?: string | null;
+  importedBy?: OsirisImportAuthor;
+};
+
 export type OsirisMyEquipment = {
   equipment: Array<OsirisEquipmentEntry & { codeProcable: string; categorie: string }>;
   total: number;
+  importedAt?: string | null;
+  createdAt?: string | null;
+  importedBy?: OsirisImportAuthor;
 };
 
 export type OsirisImportResult = {
@@ -76,8 +92,8 @@ export class OsirisEquipmentService {
   }
 
   /** Résumé global par technicien (admin). */
-  summary(): Observable<{ success: boolean; data: OsirisTechnicianSummary[] }> {
-    return this.http.get<{ success: boolean; data: OsirisTechnicianSummary[] }>(`${this.base}/summary`);
+  summary(): Observable<{ success: boolean; data: OsirisEquipmentSummary }> {
+    return this.http.get<{ success: boolean; data: OsirisEquipmentSummary }>(`${this.base}/summary`);
   }
 
   /** Mon stock (technicien authentifié). */

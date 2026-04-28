@@ -35,7 +35,6 @@ export class InterventionsImportTickets implements OnInit {
   readonly actionLoadingId = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
   readonly editingTicketId = signal<string | null>(null);
-
   readonly filtersForm = this.fb.nonNullable.group({
     status: ['OPEN'],
     type: [''],
@@ -172,6 +171,20 @@ export class InterventionsImportTickets implements OnInit {
     }
   }
 
+  async reprocess(ticket: InterventionImportTicket): Promise<void> {
+    this.actionLoadingId.set(ticket._id);
+    this.actionError.set(null);
+    try {
+      const res = await firstValueFrom(this.svc.reprocessImportTicket(ticket._id));
+      if (!res.success) throw new Error('Erreur reprocess');
+      await this.loadTickets();
+    } catch (err: unknown) {
+      this.actionError.set(apiError(err, 'Erreur lors du reprocess'));
+    } finally {
+      this.actionLoadingId.set(null);
+    }
+  }
+
   isOpen(ticket: InterventionImportTicket): boolean {
     return (ticket.status || 'OPEN') === 'OPEN';
   }
@@ -179,6 +192,10 @@ export class InterventionsImportTickets implements OnInit {
   canManualResolve(ticket: InterventionImportTicket): boolean {
     if (!this.isOpen(ticket)) return false;
     return ['unknown_prestation', 'manual_review'].includes(ticket.type || '');
+  }
+
+  canReprocess(ticket: InterventionImportTicket): boolean {
+    return ticket.status === 'RESOLVED' && ticket.type === 'unknown_prestation' && !!ticket.correctedCode;
   }
 
   formatDate(value?: string | null): string {

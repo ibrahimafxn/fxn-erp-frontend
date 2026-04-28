@@ -3,9 +3,13 @@ import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal, 
 import { FormsModule } from '@angular/forms';
 import {
   OsirisEquipmentService,
+  OsirisEquipmentSummary,
+  OsirisImportAuthor,
   OsirisImportResult,
   OsirisTechnicianSummary,
 } from '../../../core/services/osiris-equipment.service';
+import { formatFrDateTime } from '../../../core/utils/date-format';
+import { formatPersonName } from '../../../core/utils/text-format';
 
 type CsvPreviewRow = {
   stock: string;
@@ -39,7 +43,7 @@ export class OsirisImport {
 
   readonly summaryLoading = signal(false);
   readonly summaryError = signal<string | null>(null);
-  readonly summary = signal<OsirisTechnicianSummary[]>([]);
+  readonly summary = signal<OsirisEquipmentSummary>([]);
 
   readonly clearingAll = signal(false);
   readonly showClearConfirm = signal(false);
@@ -49,6 +53,8 @@ export class OsirisImport {
 
   readonly hasFile = computed(() => this.csvContent() !== null);
   readonly canImport = computed(() => this.hasFile() && !this.importing());
+  readonly importDateLabel = computed(() => this.formatImportDate(this.summary().importedAt || this.summary().createdAt));
+  readonly importAuthorLabel = computed(() => this.formatImportAuthor(this.summary().importedBy));
 
   constructor() {
     this.loadSummary();
@@ -213,5 +219,19 @@ export class OsirisImport {
     const raw = row.technicianRaw || '';
     const idx = raw.indexOf(' - ');
     return idx !== -1 ? raw.slice(idx + 3).trim() : raw;
+  }
+
+  private formatImportDate(date: string | null | undefined): string {
+    if (!date) return '—';
+    const parsed = new Date(date);
+    return Number.isNaN(parsed.getTime()) ? date : formatFrDateTime(parsed);
+  }
+
+  private formatImportAuthor(author: OsirisImportAuthor | undefined): string {
+    if (!author) return '—';
+    if (typeof author === 'string') return author;
+    const name = formatPersonName(author.firstName, author.lastName);
+    if (name) return name;
+    return author.email || author._id || '—';
   }
 }

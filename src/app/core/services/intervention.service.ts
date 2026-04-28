@@ -137,17 +137,24 @@ export type InterventionSummaryResponse = InterventionSummary & {
 export type InterventionItem = {
   _id: string;
   numInter: string;
+  commandeId?: string;
   technicienId?: string | null;
   dateRdv?: string | null;
   region?: string;
   plaque?: string;
   societe?: string;
+  clientOperateur?: string;
   techFirstName?: string;
   techLastName?: string;
   techFull?: string;
   type?: string;
   client?: string;
   statut?: string;
+  heureRdvPlanifiee?: string;
+  dureePlanifiee?: string;
+  heureDebutReelle?: string;
+  heureClotureTech?: string;
+  heureClotureHotline?: string;
   commentairesTechnicien?: string;
   commentairesCloture?: string;
   debut?: string;
@@ -166,16 +173,22 @@ export type InterventionItem = {
   typeHabitation?: string;
   priseExistante?: string;
   marque?: string;
+  articlesUtilises?: string;
   listePrestationsRaw?: string;
   recoRacc?: string;
   isSuccess?: boolean;
   isFailure?: boolean;
+  sav24?: boolean;
+  savRouge?: boolean;
+  nbRdv?: number;
+  occurrencesAbo90j?: number;
   versionIndex?: number;
   latestVersionId?: string;
   articlesRaw?: string;
   categories?: string[];
   importedAt?: string;
   osirisRaw?: Record<string, string>;
+  osirisFields?: Record<string, string>;
 };
 
 export type InterventionListResponse = {
@@ -188,9 +201,29 @@ export type InterventionListResponse = {
 export type InterventionFilters = {
   regions: string[];
   clients: string[];
+  societes: string[];
+  plaques: string[];
+  villes: string[];
   statuses: string[];
   technicians: string[];
   types: string[];
+  gestionnaires: string[];
+  activites: string[];
+  typeOffres: string[];
+  typePons: string[];
+  marques: string[];
+  marqueGps: string[];
+  gems: string[];
+  categoriesRdv: string[];
+  statutsBox4g: string[];
+  typeLogements: string[];
+  parcours: string[];
+  multiSavs: string[];
+  equipements: string[];
+  regroupSavs: string[];
+  flagBots: string[];
+  provisionnings: string[];
+  motifEchecs: string[];
 };
 
 export type InterventionImportBatch = {
@@ -458,12 +491,51 @@ export type ImportRowItem = {
 export type InterventionSummaryQuery = {
   fromDate?: string;
   toDate?: string;
+  fromDateCloture?: string;
+  toDateCloture?: string;
   technician?: string;
   region?: string;
   client?: string;
+  societe?: string;
+  plaque?: string;
+  ville?: string;
+  rue?: string;
+  codePostal?: string;
+  idra?: string;
+  idImmeuble?: string;
   numInter?: string;
+  commandeId?: string;
+  numAbonne?: string;
+  abonne?: string;
+  raisonSociale?: string;
+  sct?: string;
+  nomSro?: string;
+  prise?: string;
+  codeSec?: string;
   status?: string;
   type?: string;
+  gestionnaire?: string;
+  marque?: string;
+  typeOffre?: string;
+  typePon?: string;
+  provisionning?: string;
+  activite?: string;
+  parcours?: string;
+  multiSav?: string;
+  gem?: string;
+  statutBox4g?: string;
+  transfoCable?: string;
+  checkVoisin?: string;
+  recoRacc?: string;
+  equipement?: string;
+  regroupSav?: string;
+  categorieRdv?: string;
+  flagBot?: string;
+  creneau?: string;
+  motifEchec?: string;
+  commNc?: string;
+  noteHotline?: string;
+  rapportTech?: string;
   page?: number;
   limit?: number;
 };
@@ -544,16 +616,56 @@ export class InterventionService {
 
   list(query: InterventionSummaryQuery = {}): Observable<{ success: boolean; data: InterventionListResponse }> {
     let params = new HttpParams();
-    if (query.fromDate) params = params.set('fromDate', query.fromDate);
-    if (query.toDate) params = params.set('toDate', query.toDate);
-    if (query.technician) params = params.set('technician', query.technician);
-    if (query.region) params = params.set('region', query.region);
-    if (query.client) params = params.set('client', query.client);
-    if (query.numInter) params = params.set('numInter', query.numInter);
-    if (query.status) params = params.set('status', query.status);
-    if (query.type) params = params.set('type', query.type);
-    if (query.page) params = params.set('page', String(query.page));
-    if (query.limit) params = params.set('limit', String(query.limit));
+    const setParam = (k: string, v: string | number | undefined) => { if (v) params = params.set(k, String(v)); };
+    setParam('fromDate', query.fromDate);
+    setParam('toDate', query.toDate);
+    setParam('fromDateCloture', query.fromDateCloture);
+    setParam('toDateCloture', query.toDateCloture);
+    setParam('technician', query.technician);
+    setParam('region', query.region);
+    setParam('client', query.client);
+    setParam('societe', query.societe);
+    setParam('plaque', query.plaque);
+    setParam('ville', query.ville);
+    setParam('rue', query.rue);
+    setParam('codePostal', query.codePostal);
+    setParam('idra', query.idra);
+    setParam('idImmeuble', query.idImmeuble);
+    setParam('numInter', query.numInter);
+    setParam('commandeId', query.commandeId);
+    setParam('numAbonne', query.numAbonne);
+    setParam('abonne', query.abonne);
+    setParam('raisonSociale', query.raisonSociale);
+    setParam('sct', query.sct);
+    setParam('nomSro', query.nomSro);
+    setParam('prise', query.prise);
+    setParam('codeSec', query.codeSec);
+    setParam('status', query.status);
+    setParam('type', query.type);
+    setParam('gestionnaire', query.gestionnaire);
+    setParam('marque', query.marque);
+    setParam('typeOffre', query.typeOffre);
+    setParam('typePon', query.typePon);
+    setParam('provisionning', query.provisionning);
+    setParam('activite', query.activite);
+    setParam('parcours', query.parcours);
+    setParam('multiSav', query.multiSav);
+    setParam('gem', query.gem);
+    setParam('statutBox4g', query.statutBox4g);
+    setParam('transfoCable', query.transfoCable);
+    setParam('checkVoisin', query.checkVoisin);
+    setParam('recoRacc', query.recoRacc);
+    setParam('equipement', query.equipement);
+    setParam('regroupSav', query.regroupSav);
+    setParam('categorieRdv', query.categorieRdv);
+    setParam('flagBot', query.flagBot);
+    setParam('creneau', query.creneau);
+    setParam('motifEchec', query.motifEchec);
+    setParam('commNc', query.commNc);
+    setParam('noteHotline', query.noteHotline);
+    setParam('rapportTech', query.rapportTech);
+    setParam('page', query.page);
+    setParam('limit', query.limit);
 
     return this.http.get<{ success: boolean; data: InterventionListResponse }>(`${this.baseUrl}/list`, { params });
   }
@@ -627,6 +739,13 @@ export class InterventionService {
   resolveImportTicketAuto(ticketId: string) {
     return this.http.post<{ success: boolean; data: InterventionImportTicket }>(
       `${this.baseUrl}/import-tickets/${ticketId}/resolve-auto`,
+      {}
+    );
+  }
+
+  reprocessImportTicket(ticketId: string) {
+    return this.http.post<{ success: boolean; data: { action: string; numInter: string } }>(
+      `${this.baseUrl}/import-tickets/${ticketId}/reprocess`,
       {}
     );
   }

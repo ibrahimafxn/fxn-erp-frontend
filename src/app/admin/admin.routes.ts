@@ -113,6 +113,11 @@ export const ADMIN_ROUTES: Routes = [
       import('./interventions/interventions-search/interventions-search').then(m => m.InterventionsSearch)
   },
   {
+    path: 'interventions/detail/:id',
+    loadComponent: () =>
+      import('./interventions/interventions-detail/interventions-detail').then(m => m.InterventionsDetail)
+  },
+  {
     path: 'interventions/import/history',
     loadComponent: () =>
       import('./interventions/interventions-import-history/interventions-import-history').then(m => m.InterventionsImportHistory)

@@ -90,6 +90,20 @@ export class BpuService {
     );
   }
 
+  updatePrestation(id: string, prestation: string): Observable<BpuEntry> {
+    return this.http.patch<ApiResponse<BpuEntry>>(`${this.baseUrl}/${id}`, { prestation }).pipe(
+      map((resp) => resp.data),
+      catchError((err: HttpErrorResponse) => throwError(() => err))
+    );
+  }
+
+  remove(id: string): Observable<void> {
+    return this.http.delete<ApiResponse<{ id: string }>>(`${this.baseUrl}/${id}`).pipe(
+      map(() => void 0),
+      catchError((err: HttpErrorResponse) => throwError(() => err))
+    );
+  }
+
   importCsv(file: File, segment: BpuSegment): Observable<{ imported: number; created?: number; updated?: number; skipped?: number }> {
     const formData = new FormData();
     formData.append('file', file);

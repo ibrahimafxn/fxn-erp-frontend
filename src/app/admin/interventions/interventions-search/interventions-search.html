@@ -23,12 +23,18 @@
           <label class="filter-label">Plaque :</label>
           <select class="filter-input" formControlName="plaque">
             <option value="">---</option>
+            @for (p of filters().plaques; track p) {
+              <option [value]="p">{{ p }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Ville :</label>
           <select class="filter-input" formControlName="ville">
             <option value="">---</option>
+            @for (v of filters().villes; track v) {
+              <option [value]="v">{{ v }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
@@ -55,6 +61,9 @@
           <label class="filter-label">Societe :</label>
           <select class="filter-input" formControlName="societe">
             <option value="">---</option>
+            @for (s of filters().societes; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
@@ -102,12 +111,18 @@
           <label class="filter-label">Provisionning :</label>
           <select class="filter-input" formControlName="provisionning">
             <option value="">---</option>
+            @for (p of filters().provisionnings; track p) {
+              <option [value]="p">{{ p }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Activité :</label>
           <select class="filter-input" formControlName="activite">
             <option value="">---</option>
+            @for (a of filters().activites; track a) {
+              <option [value]="a">{{ a }}</option>
+            }
           </select>
         </div>
       </div>
@@ -127,6 +142,9 @@
           <label class="filter-label">Gestionnaire :</label>
           <select class="filter-input" formControlName="gestionnaire">
             <option value="">---</option>
+            @for (g of filters().gestionnaires; track g) {
+              <option [value]="g">{{ g }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
@@ -148,9 +166,12 @@
           </select>
         </div>
         <div class="filter-row">
-          <label class="filter-label">Echec :</label>
-          <select class="filter-input" formControlName="echec">
+          <label class="filter-label">Motif échec :</label>
+          <select class="filter-input" formControlName="motifEchec">
             <option value="">---</option>
+            @for (m of filters().motifEchecs; track m) {
+              <option [value]="m">{{ m }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
@@ -161,84 +182,123 @@
           <label class="filter-label">Marque :</label>
           <select class="filter-input" formControlName="marque">
             <option value="">---</option>
+            @for (m of filters().marques; track m) {
+              <option [value]="m">{{ m }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Type Offre :</label>
           <select class="filter-input" formControlName="typeOffre">
             <option value="">---</option>
+            @for (to of filters().typeOffres; track to) {
+              <option [value]="to">{{ to }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Type PON :</label>
           <select class="filter-input" formControlName="typePon">
             <option value="">---</option>
+            @for (tp of filters().typePons; track tp) {
+              <option [value]="tp">{{ tp }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Parcours :</label>
           <select class="filter-input" formControlName="parcours">
             <option value="">---</option>
+            @for (p of filters().parcours; track p) {
+              <option [value]="p">{{ p }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Multi SAV :</label>
           <select class="filter-input" formControlName="multiSav">
             <option value="">---</option>
+            @for (m of filters().multiSavs; track m) {
+              <option [value]="m">{{ m }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">GEM :</label>
           <select class="filter-input" formControlName="gem">
             <option value="">---</option>
+            @for (g of filters().gems; track g) {
+              <option [value]="g">{{ g }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Statut Box 4G :</label>
           <select class="filter-input" formControlName="statutBox4g">
             <option value="">---</option>
+            @for (s of filters().statutsBox4g; track s) {
+              <option [value]="s">{{ s }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Transfo câble :</label>
           <select class="filter-input" formControlName="transfoCable">
             <option value="">---</option>
+            <option value="true">Oui</option>
+            <option value="false">Non</option>
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Check Voisin :</label>
           <select class="filter-input" formControlName="checkVoisin">
             <option value="">---</option>
+            <option value="true">Oui</option>
+            <option value="false">Non</option>
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Reco =&gt; racc :</label>
           <select class="filter-input" formControlName="recoRacc">
             <option value="">---</option>
+            <option value="true">Oui</option>
+            <option value="false">Non</option>
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Equipement :</label>
           <select class="filter-input" formControlName="equipement">
             <option value="">---</option>
+            @for (e of filters().equipements; track e) {
+              <option [value]="e">{{ e }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Regroup SAV :</label>
           <select class="filter-input" formControlName="regroupSav">
             <option value="">---</option>
+            @for (r of filters().regroupSavs; track r) {
+              <option [value]="r">{{ r }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Catégorie RDV :</label>
           <select class="filter-input" formControlName="categorieRdv">
             <option value="">---</option>
+            @for (c of filters().categoriesRdv; track c) {
+              <option [value]="c">{{ c }}</option>
+            }
           </select>
         </div>
         <div class="filter-row">
           <label class="filter-label">Flag BOT :</label>
           <select class="filter-input" formControlName="flagBot">
             <option value="">---</option>
+            @for (f of filters().flagBots; track f) {
+              <option [value]="f">{{ f }}</option>
+            }
           </select>
         </div>
       </div>
@@ -248,27 +308,50 @@
     <div class="bottom-row">
 
       <!-- Dates -->
-      <div class="filter-card bottom-card">
-        <div class="filter-row">
-          <label class="filter-label">Date de rdv :</label>
+      <div class="filter-card bottom-card dates-card">
+        <div class="date-group">
+          <span class="date-group-label">
+            <i class="bi bi-calendar-event"></i> Date de RDV
+          </span>
           <div class="date-range">
-            <input class="filter-input date-input" type="date" formControlName="fromDateRdv" />
-            <span class="date-sep">au</span>
-            <input class="filter-input date-input" type="date" formControlName="toDateRdv" />
+            <div class="date-field">
+              <span class="date-field-hint">Du</span>
+              <input class="date-input" type="date" formControlName="fromDateRdv" />
+            </div>
+            <span class="date-sep-arrow">&#8594;</span>
+            <div class="date-field">
+              <span class="date-field-hint">Au</span>
+              <input class="date-input" type="date" formControlName="toDateRdv" />
+            </div>
           </div>
         </div>
-        <div class="filter-row">
-          <label class="filter-label">Créneau :</label>
+
+        <div class="date-group">
+          <span class="date-group-label">
+            <i class="bi bi-clock"></i> Créneau
+          </span>
           <select class="filter-input" formControlName="creneau">
-            <option value="">---</option>
+            <option value="">Tous les créneaux</option>
+            <option value="AM">Matin (AM)</option>
+            <option value="PM">Après-midi (PM)</option>
+            <option value="JO">Journée</option>
           </select>
         </div>
-        <div class="filter-row">
-          <label class="filter-label">Date de clôture :</label>
+
+        <div class="date-group">
+          <span class="date-group-label">
+            <i class="bi bi-calendar-check"></i> Date de clôture
+          </span>
           <div class="date-range">
-            <input class="filter-input date-input" type="date" formControlName="fromDateCloture" />
-            <span class="date-sep">au</span>
-            <input class="filter-input date-input" type="date" formControlName="toDateCloture" />
+            <div class="date-field">
+              <span class="date-field-hint">Du</span>
+              <input class="date-input" type="date" formControlName="fromDateCloture" />
+            </div>
+            <span class="date-sep-arrow">&#8594;</span>
+            <div class="date-field">
+              <span class="date-field-hint">Au</span>
+              <input class="date-input" type="date" formControlName="toDateCloture" />
+            </div>
           </div>
         </div>
       </div>
@@ -276,13 +359,23 @@
       <!-- Actions -->
       <div class="filter-card bottom-card actions-card">
         <button class="action-btn search-btn" type="submit" [disabled]="loading()">
-          <i class="bi bi-search"></i> Rechercher
+          @if (loading()) {
+            <span class="spinner-sm"></span>
+          } @else {
+            <i class="bi bi-search"></i>
+          }
+          Rechercher
         </button>
         <button class="action-btn reset-btn" type="button" (click)="reset()">
           <i class="bi bi-x-circle"></i> Réinitialiser
         </button>
         <button class="action-btn export-btn" type="button" (click)="exportCsv()" [disabled]="exportLoading() || !searched()">
-          <i class="bi bi-file-earmark-spreadsheet"></i> Exporter
+          @if (exportLoading()) {
+            <span class="spinner-sm"></span>
+          } @else {
+            <i class="bi bi-file-earmark-spreadsheet"></i>
+          }
+          Exporter
         </button>
       </div>
 
@@ -355,7 +448,7 @@
             </thead>
             <tbody>
               @for (item of items(); track item._id) {
-                <tr>
+                <tr class="clickable-row" (click)="openDetail(item)" title="Voir le détail">
                   <td data-label="N° Inter">{{ item.numInter || '—' }}</td>
                   <td data-label="Date RDV">{{ dateLabel(item.dateRdv) }}</td>
                   <td data-label="Technicien">{{ technicianLabel(item) }}</td>

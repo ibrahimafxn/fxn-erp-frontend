@@ -176,13 +176,24 @@
       @if (preview()!.unknownPrestations.length > 0) {
         <div class="card preview-card warn-card">
           <h3 class="card-title"><i class="bi bi-exclamation-triangle"></i> Prestations inconnues</h3>
-          <p class="detail-line">Ces codes ne seront pas calculés — mappez-les dans BPU avant de committer.</p>
+          <p class="detail-line">
+            Ces codes ne seront pas calculés.
+            Si vous venez d'ajouter des mappings BPU, re-analysez le fichier pour mettre à jour cette liste.
+          </p>
           <div class="tag-list">
             @for (p of preview()!.unknownPrestations.slice(0, 20); track p.code) {
               <span class="tag tag-warn">{{ p.code }} (×{{ p.count }})</span>
             }
           </div>
-          <a class="btn-link" routerLink="/admin/bpu/osiris-mappings">Gérer les mappings BPU →</a>
+          <div class="warn-actions">
+            <a class="btn-link" routerLink="/admin/bpu/osiris-mappings">Gérer les mappings BPU →</a>
+            @if (selectedFile()) {
+              <button class="btn-reanalyze" (click)="analyze()" [disabled]="analyzing()">
+                <i class="bi bi-arrow-clockwise"></i>
+                {{ analyzing() ? 'Analyse en cours…' : 'Re-analyser avec les nouveaux mappings' }}
+              </button>
+            }
+          </div>
         </div>
       }
 
@@ -201,16 +212,16 @@
       }
 
       <!-- Lignes bloquées -->
-      @if (blockedRows().length > 0) {
+      @if (visibleBlockedRows().length > 0) {
         <div class="card preview-card full-width">
-          <h3 class="card-title"><i class="bi bi-ban"></i> Lignes bloquées ({{ preview()!.decisions.ticket }})</h3>
+          <h3 class="card-title"><i class="bi bi-ban"></i> Lignes bloquées ({{ visibleBlockedRows().length }})</h3>
           <div class="table">
             <table>
               <thead><tr>
                 <th>N° Inter</th><th>Technicien</th><th>Statut</th><th>Raison</th><th>Issues</th>
               </tr></thead>
               <tbody>
-                @for (row of blockedRows(); track row._id) {
+                @for (row of visibleBlockedRows(); track row._id) {
                   <tr>
                     <td>{{ row.numInter || '—' }}</td>
                     <td>{{ row.techFull || '—' }}</td>
