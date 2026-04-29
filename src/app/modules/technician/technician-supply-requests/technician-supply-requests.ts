@@ -12,7 +12,6 @@ import { SupplyRequest, SupplyRequestStatus, SupplyRequestType } from '../../../
 import { apiError } from '../../../core/utils/http-error';
 import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
-import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-supply-requests',

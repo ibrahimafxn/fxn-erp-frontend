@@ -3,7 +3,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { BpuService } from '../../../core/services/bpu.service';
 import { BpuSelectionService } from '../../../core/services/bpu-selection.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -758,7 +758,7 @@ export class BpuList {
     this.error.set(null);
     this.bpuService.updatePrestation(id, next).subscribe({
       next: (updated) => {
-        item.prestation = updated.prestation;
+        this.items.set(this.items().map(i => i._id === id ? { ...i, prestation: updated.prestation } : i));
         const m = new Map(this.editedPrestations());
         m.set(id, updated.prestation);
         this.editedPrestations.set(m);
@@ -985,7 +985,7 @@ export class BpuList {
 
     this.bpuService.updateCode(id, nextCode).subscribe({
       next: (updated) => {
-        item.code = updated.code;
+        this.items.set(this.items().map(i => i._id === id ? { ...i, code: updated.code } : i));
         const selected = new Set(this.selectedCodes());
         if (selected.has(currentCode)) {
           selected.delete(currentCode);
@@ -1293,17 +1293,16 @@ export class BpuList {
     this.saving.set(true);
     this.error.set(null);
     this.success.set(null);
-    this.bpuService.bulkUpsert('ERT', payload).subscribe({
+    const selectionPrestations = payload.map(p => ({ code: p.code, unitPrice: p.unitPrice }));
+    this.bpuService.bulkUpsert('ERT', payload).pipe(
+      switchMap((res) =>
+        this.bpuSelectionService.create({ type: 'ERT', owner: null, prestations: selectionPrestations, validFrom }).pipe(
+          catchError(() => of(null)),
+          switchMap(() => of(res))
+        )
+      )
+    ).subscribe({
       next: (res) => {
-        // Créer aussi une BpuSelection ERT pour déclencher l'historisation
-        const selectionPrestations = payload.map(p => ({ code: p.code, unitPrice: p.unitPrice }));
-        this.bpuSelectionService.create({
-          type: 'ERT',
-          owner: null,
-          prestations: selectionPrestations,
-          validFrom
-        }).subscribe({ error: () => { /* ignoré */ } });
-
         this.saving.set(false);
         this.selectedCodes.set(new Set());
         const created = Number(res.created || 0);

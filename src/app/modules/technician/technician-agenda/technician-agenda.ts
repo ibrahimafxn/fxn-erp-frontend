@@ -1,6 +1,6 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Absence, AbsenceStatus, AbsenceType } from '../../../core/models';
 import { AbsenceService } from '../../../core/services/absence.service';
@@ -31,7 +31,6 @@ export class TechnicianAgenda {
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
   readonly absences = signal<Absence[]>([]);
-  readonly formValid = signal(false);
   readonly editTarget = signal<Absence | null>(null);
   readonly deletingId = signal<string | null>(null);
   readonly confirmUpdateOpen = signal(false);
@@ -56,7 +55,8 @@ export class TechnicianAgenda {
     comment: this.fb.nonNullable.control('')
   });
 
-  readonly canSubmit = computed(() => this.formValid() && !this.saving());
+  readonly formStatus = toSignal(this.form.statusChanges, { initialValue: this.form.status });
+  readonly canSubmit = computed(() => this.formStatus() === 'VALID' && !this.saving());
   readonly isEditing = computed(() => !!this.editTarget());
   readonly pageCount = computed(() => {
     const total = this.sortedAbsences().length;
@@ -75,10 +75,6 @@ export class TechnicianAgenda {
   readonly pageRange = formatPageRange;
 
   constructor() {
-    this.formValid.set(this.form.valid);
-    this.form.statusChanges.pipe(takeUntilDestroyed()).subscribe(() => {
-      this.formValid.set(this.form.valid);
-    });
     this.form.controls.isHalfDay.valueChanges.pipe(takeUntilDestroyed()).subscribe((isHalfDay) => {
       const endControl = this.form.controls.endDate;
       if (isHalfDay) {

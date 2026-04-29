@@ -6,14 +6,13 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PaginationState } from '../../../core/utils/pagination-state';
 import { BpuPriceHistory } from '../../../core/models';
 import { formatFrDate } from '../../../core/utils/date-format';
-import { computeReportAmount, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { applyPricesToReport, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
 import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
 import { TechnicianBpuResolverService, pricesForDate } from '../../../core/services/technician-bpu-resolver.service';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe, formatAmountCurrency } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
-import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-revenue',
@@ -64,20 +63,23 @@ export class TechnicianRevenue {
     this.items().reduce((sum, item) => sum + this.computeAmount(item), 0)
   );
   readonly prestationCounts = computed(() => {
-    const counts = new Map<string, { code: string; label: string; qty: number }>();
+    const counts = new Map<string, { code: string; label: string; qty: number; amount: number }>();
     for (const report of this.items()) {
+      const prices = pricesForDate(this.bpuPriceHistory(), report.reportDate, this.bpuPrices());
       for (const item of this.prestationsSummary(report)) {
         const code = String(item.code || '').toUpperCase();
         if (!code || item.qty <= 0) continue;
+        const unitPrice = prices.get(code) ?? 0;
         const current = counts.get(code);
+        const lineAmount = Number((item.qty * unitPrice).toFixed(2));
         if (current) {
-          current.qty += item.qty;
+          counts.set(code, { ...current, qty: current.qty + item.qty, amount: Number((current.amount + lineAmount).toFixed(2)) });
         } else {
-          counts.set(code, { code, label: item.label, qty: item.qty });
+          counts.set(code, { code, label: item.label, qty: item.qty, amount: lineAmount });
         }
       }
     }
-    return Array.from(counts.values()).sort((a, b) => b.qty - a.qty || a.code.localeCompare(b.code));
+    return Array.from(counts.values()).sort((a, b) => b.amount - a.amount || a.code.localeCompare(b.code));
   });
 
   readonly filterForm = this.fb.nonNullable.group({
@@ -170,7 +172,7 @@ export class TechnicianRevenue {
 
   computeAmount(report: TechnicianReport): number {
     const prices = pricesForDate(this.bpuPriceHistory(), report.reportDate, this.bpuPrices());
-    return computeReportAmount(report, prices);
+    return applyPricesToReport(report, prices);
   }
 
   reportDateLabel(report: TechnicianReport): string {
@@ -186,13 +188,12 @@ export class TechnicianRevenue {
   }
 
   private currentUserId(): string | null {
-    const user = this.auth.getCurrentUser();
-    if (!user?._id) return null;
-    return String(user._id);
+    return this.auth.currentUserId();
   }
 
   openDeleteModal(item: TechnicianReport): void {
     if (!item._id) return;
+    this.deleteError.set(null);
     this.deleteTarget.set(item);
     this.deleteModalOpen.set(true);
   }

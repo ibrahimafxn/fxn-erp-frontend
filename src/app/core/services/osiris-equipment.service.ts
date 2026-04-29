@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { finalize, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export type OsirisEquipmentItem = {
@@ -67,6 +68,16 @@ export type OsirisEquipmentList = {
 export class OsirisEquipmentService {
   private readonly base = `${environment.apiBaseUrl}/osiris-equipment`;
 
+  static isIgnoredType(type: string | null | undefined): boolean {
+    const normalized = String(type || '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/[\s_-]+/g, ' ')
+      .trim();
+    return normalized.includes('gen8 ftth sfrbusiness');
+  }
+
   constructor(private http: HttpClient) {}
 
   /** Importe un CSV Osiris (texte brut, séparateur ;). */
@@ -96,9 +107,19 @@ export class OsirisEquipmentService {
     return this.http.get<{ success: boolean; data: OsirisEquipmentSummary }>(`${this.base}/summary`);
   }
 
-  /** Mon stock (technicien authentifié). */
+  private _myEquipment$: Observable<{ success: boolean; data: OsirisMyEquipment }> | null = null;
+
+  /** Mon stock (technicien authentifié) — une seule requête partagée par cycle de navigation. */
   myEquipment(): Observable<{ success: boolean; data: OsirisMyEquipment }> {
-    return this.http.get<{ success: boolean; data: OsirisMyEquipment }>(`${this.base}/summary/me`);
+    if (!this._myEquipment$) {
+      this._myEquipment$ = this.http
+        .get<{ success: boolean; data: OsirisMyEquipment }>(`${this.base}/summary/me`)
+        .pipe(
+          finalize(() => { this._myEquipment$ = null; }),
+          shareReplay({ bufferSize: 1, refCount: false })
+        );
+    }
+    return this._myEquipment$;
   }
 
   /** Liste paginée (admin). */

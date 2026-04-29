@@ -67,6 +67,10 @@ export class PrestationService {
     return req$;
   }
 
+  setResult(result: PrestationListResult): void {
+    this._result.set(result);
+  }
+
   clearCache(): void {
     this._cache.clear();
   }

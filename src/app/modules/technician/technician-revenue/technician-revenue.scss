@@ -276,6 +276,13 @@
   letter-spacing: 0.02em;
 }
 
+.technician-revenue .count-amount {
+  font-size: 0.72rem;
+  color: var(--fxn-accent, #4ade80);
+  opacity: 0.85;
+  margin-top: 0.1rem;
+}
+
 /* ── States ───────────────────────────────────────────────── */
 .technician-revenue .state {
   padding: 0.9rem 1rem;

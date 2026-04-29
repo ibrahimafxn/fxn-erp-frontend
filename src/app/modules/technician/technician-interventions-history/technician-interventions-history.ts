@@ -1,4 +1,4 @@
-import {CommonModule, DatePipe} from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
@@ -6,19 +6,20 @@ import { InterventionItem, InterventionService } from '../../../core/services/in
 import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
-import { preferredPageSize } from '../../../core/utils/page-size';
 
 @Component({
   selector: 'app-technician-interventions-history',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, ReactiveFormsModule, TechnicianMobileNav],
+  providers: [DatePipe],
   templateUrl: './technician-interventions-history.html',
   styleUrls: ['./technician-interventions-history.scss']
 })
 export class TechnicianInterventionsHistory {
   private interventions = inject(InterventionService);
   private fb = inject(FormBuilder);
+  private datePipe = inject(DatePipe);
 
   private readonly pag = new PaginationState();
   readonly page = this.pag.page;
@@ -118,7 +119,7 @@ export class TechnicianInterventionsHistory {
 
   dateLabel(value?: string | null): string {
     if (!value) return '—';
-    return new DatePipe('fr-FR').transform(value, 'shortDate') ?? '—';
+    return this.datePipe.transform(value, 'shortDate') ?? '—';
   }
 
   setSort(field: 'date' | 'numInter' | 'client' | 'type' | 'typeOperation' | 'typeLogement' | 'statut'): void {
@@ -253,6 +254,6 @@ export class TechnicianInterventionsHistory {
 
   private formatDateTime(value?: string | null, format: 'short' | 'shortDate' | 'shortTime' = 'short'): string {
     if (!value) return '—';
-    return new DatePipe('fr-FR').transform(value, format) ?? '—';
+    return this.datePipe.transform(value, format) ?? '—';
   }
 }

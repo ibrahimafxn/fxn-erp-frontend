@@ -1,7 +1,8 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, OnDestroy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ChargeService } from '../../../core/services/charge.service';
 import { TechnicianReportService } from '../../../core/services/technician-report.service';
 import { Charge, ChargeType } from '../../../core/models';
@@ -28,7 +29,7 @@ type BenefitRow = {
   templateUrl: './technician-charges.html',
   styleUrl: './technician-charges.scss'
 })
-export class TechnicianCharges {
+export class TechnicianCharges implements OnDestroy {
   private fb = inject(FormBuilder);
   private charges = inject(ChargeService);
   private reports = inject(TechnicianReportService);
@@ -64,6 +65,8 @@ export class TechnicianCharges {
   readonly selectedYear = signal(new Date().getFullYear());
   readonly selectedMonth = signal(this.currentMonth());
 
+  private readonly cancelPeriodLoad$ = new Subject<void>();
+
   readonly chargeTypes: Array<{ value: ChargeType; label: string }> = [
     { value: 'VEHICULE', label: 'Véhicule' },
     { value: 'LOYER', label: 'Loyer' },
@@ -96,6 +99,11 @@ export class TechnicianCharges {
   constructor() {
     this.loadCharges(true);
     this.loadBenefit(true);
+  }
+
+  ngOnDestroy(): void {
+    this.cancelPeriodLoad$.next();
+    this.cancelPeriodLoad$.complete();
   }
 
   submit(): void {
@@ -361,7 +369,7 @@ export class TechnicianCharges {
         const remainingRequests = Array.from({ length: pageCount - 1 }, (_, index) =>
           this.charges.listMine({ page: index + 2, limit: pageSize, type: params.type })
         );
-        forkJoin(remainingRequests).subscribe({
+        forkJoin(remainingRequests).pipe(takeUntil(this.cancelPeriodLoad$)).subscribe({
           next: (responses) => {
             const allItems = [
               ...firstItems,

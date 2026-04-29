@@ -190,6 +190,11 @@ export class AuthService {
   getCurrentUser(): AuthUser | null {
     return this.user$();
   }
+  currentUserId(): string | null {
+    const user = this.user$();
+    return user?._id ? String(user._id) : null;
+  }
+
   getCsrfToken(): string | null {
     return this.csrfToken;
   }

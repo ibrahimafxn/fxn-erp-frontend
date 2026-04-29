@@ -5,7 +5,6 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { AttributionService } from '../../../core/services/attribution.service';
 import { PaginationState } from '../../../core/utils/pagination-state';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
-import { preferredPageSize } from '../../../core/utils/page-size';
 
 type AttributionHistoryItem = {
   _id: string;

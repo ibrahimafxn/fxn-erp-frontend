@@ -79,7 +79,7 @@ export class PrestationList extends DetailBack {
         if (result.items.some((item) => 'segment' in item || 'libelle' in item)) {
           this.usesCatalogApi.set(true);
         }
-        (this.svc as any)._result.set(result);
+        this.svc.setResult(result);
       },
       error: () => {}
     });

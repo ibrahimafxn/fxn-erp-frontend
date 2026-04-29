@@ -94,6 +94,9 @@
           <div class="prestation-count-pill">
             <span class="count-value">{{ item.qty }}</span>
             <span class="count-label">{{ item.label }}</span>
+            @if (item.amount > 0) {
+              <span class="count-amount">{{ item.amount | amountCurrency }}</span>
+            }
           </div>
         }
       </div>

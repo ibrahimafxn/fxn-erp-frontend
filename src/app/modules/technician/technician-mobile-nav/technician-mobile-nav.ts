@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SupplyRequestService } from '../../../core/services/supply-request.service';
 import { AbsenceService } from '../../../core/services/absence.service';
@@ -18,7 +18,6 @@ export class TechnicianMobileNav {
   private supplyService = inject(SupplyRequestService);
   private absenceService = inject(AbsenceService);
   private osirisEquipment = inject(OsirisEquipmentService);
-  private cdr = inject(ChangeDetectorRef);
 
   readonly menuOpen = signal(false);
   readonly supplyBadgeCount = this.supplyService.supplyBadgeCount;
@@ -44,11 +43,11 @@ export class TechnicianMobileNav {
   private loadOsirisLowStock(): void {
     this.osirisEquipment.myEquipment().subscribe({
       next: (res) => {
-        const count = (res.data?.equipment ?? []).filter(
-          (entry) => Number(entry.count || 0) < TechnicianMobileNav.OSIRIS_LOW_STOCK_THRESHOLD
-        ).length;
+        const count = (res.data?.equipment ?? [])
+          .filter((entry) => !OsirisEquipmentService.isIgnoredType(entry.type))
+          .filter((entry) => Number(entry.count || 0) < TechnicianMobileNav.OSIRIS_LOW_STOCK_THRESHOLD)
+          .length;
         this.osirisLowStockCount.set(count);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.osirisLowStockCount.set(0);

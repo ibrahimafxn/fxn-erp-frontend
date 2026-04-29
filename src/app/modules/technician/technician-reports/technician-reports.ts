@@ -1,12 +1,12 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TechnicianReportService, TechnicianReport } from '../../../core/services/technician-report.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { apiError } from '../../../core/utils/http-error';
 import { PaginationState } from '../../../core/utils/pagination-state';
-import { applyPricesToReport, normalizeReportPrestations } from '../../../core/utils/technician-report-utils';
+import { applyPricesToReport, normalizeReportPrestations, canonicalCode } from '../../../core/utils/technician-report-utils';
 import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
 import { TechnicianBpuResolverService, pricesForDate, snapshotForDate } from '../../../core/services/technician-bpu-resolver.service';
 import { BpuPriceHistory } from '../../../core/models';
@@ -14,7 +14,6 @@ import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-de
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
-import { preferredPageSize } from '../../../core/utils/page-size';
 
 type BpuItem = {
   prestationId?: string;
@@ -32,7 +31,7 @@ type BpuItem = {
   templateUrl: './technician-reports.html',
   styleUrl: './technician-reports.scss'
 })
-export class TechnicianReports {
+export class TechnicianReports implements OnDestroy {
   private fb = inject(FormBuilder);
   private reportService = inject(TechnicianReportService);
   private bpuResolver = inject(TechnicianBpuResolverService);
@@ -122,6 +121,10 @@ export class TechnicianReports {
   constructor() {
     this.loadBpu();
     this.refresh(true);
+  }
+
+  ngOnDestroy(): void {
+    if (this.saveSuccessTimer !== null) clearTimeout(this.saveSuccessTimer);
   }
 
   // ── Chargement BPU ─────────────────────────────────────────────────────────
@@ -250,6 +253,7 @@ export class TechnicianReports {
       error: (err) => {
         this.deletingId.set(null);
         this.error.set(apiError(err, 'Erreur suppression'));
+        this.closeDeleteModal();
       }
     });
   }
@@ -351,14 +355,16 @@ export class TechnicianReports {
     const entries = Array.isArray(report.entries) ? report.entries : [];
     if (entries.length) {
       for (const entry of entries) {
-        const code = String(entry.codeSnapshot || entry.code || '').toUpperCase();
+        const raw = String(entry.codeSnapshot || entry.code || '').toUpperCase();
+        const code = canonicalCode(raw, report.reportDate);
         const qty = Number(entry.quantite ?? entry.qty ?? 0);
         if (code && qty > 0) next.set(code, qty);
       }
       return next;
     }
     for (const { code, qty } of report.prestations || []) {
-      next.set(String(code).toUpperCase(), qty);
+      const raw = String(code || '').toUpperCase();
+      next.set(canonicalCode(raw, report.reportDate), qty);
     }
     return next;
   }
@@ -387,13 +393,15 @@ export class TechnicianReports {
     for (const entry of snapshot.prestations || []) {
       const code = String(entry.code || '').trim().toUpperCase();
       if (!code || seen.has(code)) continue;
+      const unitPrice = Number(entry.unitPrice ?? currentByCode.get(code)?.unitPrice ?? 0);
+      if (unitPrice <= 0) continue;
       seen.add(code);
       const current = currentByCode.get(code);
       items.push({
         prestationId: current?.prestationId,
         code,
         prestation: this.resolvePrestationLabel(code, current?.prestation),
-        unitPrice: Number(entry.unitPrice ?? current?.unitPrice ?? 0)
+        unitPrice
       });
     }
 
@@ -407,8 +415,7 @@ export class TechnicianReports {
   }
 
   private currentUserId(): string | null {
-    const user = this.auth.getCurrentUser();
-    return user?._id ? String(user._id) : null;
+    return this.auth.currentUserId();
   }
 
   /** Couleur déterministe (0-7) basée sur le code — même index que les pills historique */

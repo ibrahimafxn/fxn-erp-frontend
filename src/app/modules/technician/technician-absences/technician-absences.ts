@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AbsenceService } from '../../../core/services/absence.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -18,7 +18,7 @@ import { preferredPageSize } from '../../../core/utils/page-size';
   templateUrl: './technician-absences.html',
   styleUrl: './technician-absences.scss',
 })
-export class TechnicianAbsences {
+export class TechnicianAbsences implements OnDestroy {
   private absenceService = inject(AbsenceService);
   private auth = inject(AuthService);
   private notif = inject(AppNotificationService);
@@ -61,6 +61,13 @@ export class TechnicianAbsences {
 
   constructor() {
     this.loadAbsences();
+  }
+
+  ngOnDestroy(): void {
+    if (this.successTimer !== null) {
+      clearTimeout(this.successTimer);
+      this.successTimer = null;
+    }
   }
 
   loadAbsences(): void {

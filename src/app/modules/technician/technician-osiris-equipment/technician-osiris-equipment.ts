@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ChangeDetectionStrategy, ChangeDetectorRef, inject, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { OsirisEquipmentService, OsirisMyEquipment } from '../../../core/services/osiris-equipment.service';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
@@ -13,7 +13,6 @@ import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-
 })
 export class TechnicianOsirisEquipment {
   private svc = inject(OsirisEquipmentService);
-  private cdr = inject(ChangeDetectorRef);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -30,12 +29,10 @@ export class TechnicianOsirisEquipment {
       next: (res) => {
         this.data.set(res.data);
         this.loading.set(false);
-        this.cdr.markForCheck();
       },
       error: (err) => {
         this.error.set(err?.error?.message || err?.message || 'Erreur chargement');
         this.loading.set(false);
-        this.cdr.markForCheck();
       },
     });
   }

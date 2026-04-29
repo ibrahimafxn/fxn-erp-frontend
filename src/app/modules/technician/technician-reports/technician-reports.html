@@ -92,7 +92,7 @@
     <form class="history-filters" [class.is-open]="filtersOpen()" [formGroup]="filterForm" (ngSubmit)="applyFilters()">
       <label>
         Année
-        <input type="number" min="2000" max="2100" placeholder="2026" formControlName="year" (input)="applyFilters()" />
+        <input type="number" min="2000" max="2100" placeholder="2026" formControlName="year" (change)="applyFilters()" />
       </label>
       <label>
         Période (du)

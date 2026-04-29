@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import {
   InterventionImportBatch,
@@ -32,7 +32,6 @@ export class TechnicianDashboard {
   private reports = inject(TechnicianReportService);
   private osirisEquipment = inject(OsirisEquipmentService);
   private auth = inject(AuthService);
-  private cdr = inject(ChangeDetectorRef);
 
   readonly caLoading = signal(false);
   readonly caError = signal<string | null>(null);
@@ -56,7 +55,7 @@ export class TechnicianDashboard {
   readonly lowOsirisEquipment = computed(() => {
     const equipment = this.myEquipment()?.equipment ?? [];
     return equipment
-      .filter((entry) => !this.isIgnoredOsirisAlertType(entry.type))
+      .filter((entry) => !OsirisEquipmentService.isIgnoredType(entry.type))
       .filter((entry) => Number(entry.count || 0) < TechnicianDashboard.OSIRIS_LOW_STOCK_THRESHOLD)
       .sort((a, b) => Number(a.count || 0) - Number(b.count || 0) || String(a.type || '').localeCompare(String(b.type || ''), 'fr'));
   });
@@ -173,12 +172,10 @@ export class TechnicianDashboard {
         this.weeklyAmount.set(parseFiniteNumber(res.weekly.data.totalAmount));
         this.monthlyAmount.set(parseFiniteNumber(res.monthly.data.totalAmount));
         this.caLoading.set(false);
-        this.cdr.markForCheck();
       },
       error: (err) => {
         this.caLoading.set(false);
         this.caError.set(err?.message || 'Erreur chargement CA');
-        this.cdr.markForCheck();
       }
     });
   }
@@ -187,15 +184,23 @@ export class TechnicianDashboard {
     const userId = this.currentUserId();
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    this.reports.summaryPeriods(userId || undefined, yesterday).subscribe({
+    const dayStart = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    const toDate = this.formatDate(dayStart);
+    this.reports.summary({ fromDate: toDate, toDate, technicianId: userId || undefined }).subscribe({
       next: (res) => {
-        this.prevDailyAmount.set(parseFiniteNumber(res.daily.data.totalAmount));
-        this.cdr.markForCheck();
+        this.prevDailyAmount.set(parseFiniteNumber(res.data.totalAmount));
       },
       error: () => {
         // Silence — la tendance est optionnelle
       }
     });
+  }
+
+  private formatDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   private loadTodayReport(): void {
@@ -206,7 +211,6 @@ export class TechnicianDashboard {
       .subscribe({
         next: (res) => {
           this.reportExists.set((res.data.items?.length || 0) > 0);
-          this.cdr.markForCheck();
         },
         error: () => {
           this.reportExists.set(null);
@@ -252,7 +256,6 @@ export class TechnicianDashboard {
       next: (res) => {
         this.myEquipment.set(res.data);
         this.myEquipmentLoading.set(false);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.myEquipmentLoading.set(false);
@@ -274,20 +277,7 @@ export class TechnicianDashboard {
     return Number.isFinite(timestamp) ? timestamp : 0;
   }
 
-  private isIgnoredOsirisAlertType(type: string | null | undefined): boolean {
-    const normalized = String(type || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[\s_-]+/g, ' ')
-      .trim();
-    if (!normalized) return false;
-    return normalized.includes('gen8 ftth sfrbusiness');
-  }
-
   private currentUserId(): string | null {
-    const user = this.auth.getCurrentUser();
-    if (!user?._id) return null;
-    return String(user._id);
+    return this.auth.currentUserId();
   }
 }
