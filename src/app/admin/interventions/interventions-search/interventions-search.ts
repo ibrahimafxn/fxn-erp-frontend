@@ -47,6 +47,16 @@ export class InterventionsSearch implements OnInit {
   readonly page = signal(1);
   readonly limit = signal(25);
   readonly filters = signal<InterventionFilters>(EMPTY_FILTERS);
+  readonly checkVoisinOptions = computed(() => {
+    const catalog = [...(this.filters().checkVoisins ?? [])];
+    if (!catalog.length) {
+      catalog.push('Impact', 'Aucun impact', 'Time Out');
+    }
+    return catalog.map((label) => ({
+      value: label.toLowerCase(),
+      label,
+    }));
+  });
 
   readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total() / this.limit())));
   readonly canPrev = computed(() => this.page() > 1);
@@ -62,7 +72,7 @@ export class InterventionsSearch implements OnInit {
     client: [''], gestionnaire: [''], type: [''], status: [''],
     motifEchec: [''], codeSec: [''], marque: [''], typeOffre: [''], typePon: [''],
     parcours: [''], multiSav: [''], gem: [''], statutBox4g: [''],
-    transfoCable: [''], checkVoisin: [''], recoRacc: [''],
+    transfoCable: [''], checkVoisin: this.fb.nonNullable.control<string[]>([]), recoRacc: [''],
     equipement: [''], regroupSav: [''], categorieRdv: [''], flagBot: [''],
     fromDateRdv: [''], toDateRdv: [''], creneau: [''],
     fromDateCloture: [''], toDateCloture: [''],
@@ -94,6 +104,12 @@ export class InterventionsSearch implements OnInit {
       const raw = sessionStorage.getItem(SESSION_KEY);
       if (!raw) return;
       const state = JSON.parse(raw);
+      if (typeof state?.form?.checkVoisin === 'string' && state.form.checkVoisin) {
+        state.form.checkVoisin = state.form.checkVoisin
+          .split('|')
+          .map((value: string) => value.trim())
+          .filter(Boolean);
+      }
       this.form.patchValue(state.form ?? {});
       this.items.set(state.items ?? []);
       this.total.set(state.total ?? 0);
@@ -108,6 +124,12 @@ export class InterventionsSearch implements OnInit {
 
   private buildQuery(): InterventionSummaryQuery {
     const f = this.form.getRawValue();
+    const checkVoisinValue = f.checkVoisin as string[] | string | null | undefined;
+    const checkVoisin = Array.isArray(checkVoisinValue)
+      ? checkVoisinValue.filter(Boolean)
+      : typeof checkVoisinValue === 'string' && checkVoisinValue.trim()
+        ? [checkVoisinValue.trim()]
+        : [];
     return {
       fromDate: f.fromDateRdv || undefined,
       toDate: f.toDateRdv || undefined,
@@ -145,7 +167,7 @@ export class InterventionsSearch implements OnInit {
       gem: f.gem || undefined,
       statutBox4g: f.statutBox4g || undefined,
       transfoCable: f.transfoCable || undefined,
-      checkVoisin: f.checkVoisin || undefined,
+      checkVoisin: checkVoisin.length ? checkVoisin.join('|') : undefined,
       recoRacc: f.recoRacc || undefined,
       equipement: f.equipement || undefined,
       regroupSav: f.regroupSav || undefined,
@@ -157,6 +179,31 @@ export class InterventionsSearch implements OnInit {
       noteHotline: f.noteHotline || undefined,
       rapportTech: f.rapportTech || undefined,
     };
+  }
+
+  isCheckVoisinSelected(value: string): boolean {
+    const current = this.form.controls.checkVoisin.value || [];
+    return current.includes(value);
+  }
+
+  checkVoisinSummaryText(): string {
+    const current = this.form.controls.checkVoisin.value || [];
+    if (!current.length) return '...';
+    const optionsByValue = new Map(this.checkVoisinOptions().map((option) => [option.value, option.label]));
+    const orderedLabels = current
+      .map((value) => optionsByValue.get(value) || value);
+    return orderedLabels.join(' · ');
+  }
+
+  toggleCheckVoisin(value: string, event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const checked = !!input?.checked;
+    const current = this.form.controls.checkVoisin.value || [];
+    const next = checked
+      ? Array.from(new Set([...current, value]))
+      : current.filter((item) => item !== value);
+    this.form.controls.checkVoisin.setValue(next);
+    this.form.controls.checkVoisin.markAsDirty();
   }
 
   async search(resetPage = true): Promise<void> {

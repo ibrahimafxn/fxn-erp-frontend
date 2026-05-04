@@ -28,7 +28,7 @@
   <header class="page-header">
     <div>
       <h1>Tableau de bord Dirigeant</h1>
-      <p class="subtitle">Vue d'ensemble — chiffre d'affaires, pénalités et ressources humaines.</p>
+      <p class="subtitle">Vue d'ensemble — chiffre d'affaires, pénalités, ressources humaines et KPI réseau.</p>
     </div>
   </header>
 
@@ -36,14 +36,19 @@
   <div class="kpi-grid">
 
     <!-- CA ce mois -->
-    <div class="kpi-card revenue">
+    <a class="kpi-card revenue" routerLink="/admin/interventions"
+       aria-label="Ouvrir le tableau des interventions pour voir le total OSIRIS estimé du mois">
       <div class="kpi-header">
         <span class="kpi-title">CA ce mois</span>
         <span class="material-icons notranslate kpi-icon icon-revenue">trending_up</span>
       </div>
       <div class="kpi-value">{{ formatAmount(caThisMonth()) }}</div>
-      <div class="kpi-sub">Calculé depuis les prestations du CSV d'interventions du mois en cours</div>
-    </div>
+      <div class="kpi-sub">Basé sur le total OSIRIS estimé du mois</div>
+      <span class="kpi-link-hint">
+        <span class="material-icons notranslate" aria-hidden="true">open_in_new</span>
+        Détail OSIRIS
+      </span>
+    </a>
 
     <!-- CA annuel -->
     <div class="kpi-card annual">
@@ -84,7 +89,209 @@
 
   </div>
 
-  <!-- ── Section 2 — Évolution CA ─────────────────────────── -->
+  <!-- ── Section 2 — Tableau récapitulatif des indicateurs ── -->
+  @if (!loading()) {
+    <div class="section-block performance-section">
+
+      <!-- En-tête avec sélecteur de mois -->
+      <div class="section-header">
+        <span class="section-title">Tableau récapitulatif des indicateurs de performance</span>
+        <div class="kpi-period-nav">
+          <button class="kpi-nav-btn" type="button" (click)="kpiPrevMonth()"
+                  aria-label="Mois précédent">
+            <span class="material-icons notranslate">chevron_left</span>
+          </button>
+          <span class="kpi-period-display">
+            @if (kpiLoading()) {
+              <span class="spinner spinner--sm" aria-hidden="true"></span>
+            }
+            {{ kpiPeriodLabel() }}
+          </span>
+          <button class="kpi-nav-btn" type="button" (click)="kpiNextMonth()"
+                  [disabled]="kpiIsCurrentMonth()"
+                  aria-label="Mois suivant">
+            <span class="material-icons notranslate">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Note BPU -->
+      <div class="bpu-notice">
+        <span class="material-icons notranslate bpu-notice-icon">info</span>
+        <div>
+          <strong>BONUS/MALUS RACCORDEMENT</strong> applicable selon les indicateurs de performance pour les articles :
+          RACIH, RAC_PBO_AERIEN, RAC_PBO_FACADE, RAC_PBO_SOUT, RECOIP.
+          <br>
+          Le montant des prestations réalisées sur ces articles constitue l'assiette de calcul.
+        </div>
+      </div>
+
+      @if (performanceItems().length > 0) {
+
+        <!-- Résumé impact -->
+        <div class="performance-summary">
+          <span class="summary-pill summary-pill--danger">
+            Perte potentielle {{ formatSignedPercent(-performanceMalusPotential()) }}
+          </span>
+          <span class="summary-pill summary-pill--success">
+            Gain potentiel {{ formatSignedPercent(performanceBonusPotential()) }}
+          </span>
+          <span class="summary-pill summary-pill--neutral">
+            Impact net {{ formatSignedPercent(performanceNetPotential()) }}
+          </span>
+          <span class="summary-pill summary-pill--neutral"
+                [title]="'Total fusionné : ' + performanceTotalMerged() + ' | Base MongoDB : ' + performanceFromDbCount()">
+            {{ performanceItemCount() }} interventions analysées
+          </span>
+          @if (performanceCancelledCount() > 0) {
+            <span class="summary-pill summary-pill--cancelled"
+                  title="Exclues du calcul (statut commençant par ANNUL/CANCELLED)">
+              {{ performanceCancelledCount() }} annulée{{ performanceCancelledCount() > 1 ? 's' : '' }} exclue{{ performanceCancelledCount() > 1 ? 's' : '' }}
+            </span>
+          }
+        </div>
+
+        <!-- ── Tableau principal des indicateurs ── -->
+        <div class="performance-table-wrap">
+          <table class="performance-table">
+            <thead>
+              <tr>
+                <th class="col-type">TYPE</th>
+                <th class="col-num">N° KPI</th>
+                <th class="col-label">DÉSIGNATION DES INDICATEURS DE PERFORMANCE</th>
+                <th class="col-objective">OBJECTIF KPI</th>
+                <th class="col-result">RÉSULTAT</th>
+                <th class="col-base">BASE</th>
+                <th class="col-malus">− MALUS</th>
+                <th class="col-pente">PENTE</th>
+                <th class="col-bonus">+ BONUS</th>
+                <th class="col-pente">PENTE BONUS</th>
+                <th class="col-impact">IMPACT CALCULÉ</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (kpi of performanceItems(); track kpi.code) {
+                <tr [class.is-good]="kpi.status === 'good'"
+                    [class.is-warning]="kpi.status === 'warning'"
+                    [class.is-danger]="kpi.status === 'danger'"
+                    [class.is-neutral]="kpi.status === 'neutral'">
+                  <td class="cell-type">{{ kpi.type }}</td>
+                  <td class="cell-code">{{ kpi.code }}</td>
+                  <td class="cell-label">
+                    {{ kpi.label }}
+                    <button class="kpi-info-btn kpi-info-btn--inline" type="button"
+                            [title]="getKpiTooltip(kpi.code)"
+                            aria-label="Règle de calcul de ce KPI">
+                      <span class="material-icons notranslate" aria-hidden="true">info_outline</span>
+                    </button>
+                  </td>
+                  <td class="cell-objective">{{ formatPerformanceObjective(kpi) }}</td>
+                  <td class="cell-result">
+                    <span class="result-rate" [class.rate-good]="kpi.status === 'good'"
+                          [class.rate-danger]="kpi.status === 'danger'"
+                          [class.rate-warning]="kpi.status === 'warning'">
+                      {{ formatPerformanceRate(kpi) }}
+                    </span>
+                  </td>
+                  <td class="cell-base">{{ kpi.numerator }} / {{ kpi.denominator }}</td>
+                  <td class="cell-malus">−{{ formatPercent(kpi.malus, 0) }}</td>
+                  <td class="cell-pente">{{ formatMetric(kpi.pente, 2) }}</td>
+                  <td class="cell-bonus">+{{ formatPercent(kpi.bonus, 0) }}</td>
+                  <td class="cell-pente">{{ formatMetric(kpi.penteBonus, 2) }}</td>
+                  <td class="cell-impact-applied">
+                    @if (kpi.status === 'good') {
+                      <span class="impact-bonus">+{{ formatPercent(kpi.appliedBonus, 2) }}</span>
+                    } @else if (kpi.status !== 'neutral') {
+                      <span class="impact-malus">−{{ formatPercent(kpi.appliedMalus, 2) }}</span>
+                    } @else {
+                      <span class="impact-neutral">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+              <!-- Ligne total impact potentiel -->
+              <tr class="performance-total-row performance-total-max">
+                <td></td>
+                <td></td>
+                <td class="cell-total-label">
+                  <span class="cell-total-prefix">TOTAL IMPACT POTENTIEL</span>
+                  <span class="cell-total-hint"> (plafond théorique)</span>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="cell-total-malus">−{{ formatPercent(performanceMaxMalus(), 0) }}</td>
+                <td>—</td>
+                <td class="cell-total-bonus">+{{ formatPercent(performanceMaxBonus(), 0) }}</td>
+                <td>—</td>
+                <td>—</td>
+              </tr>
+              <!-- Ligne impact calculé -->
+              <tr class="performance-total-row performance-total-applied"
+                  [class.net-positive]="performanceNetApplied() >= 0"
+                  [class.net-negative]="performanceNetApplied() < 0">
+                <td></td>
+                <td></td>
+                <td class="cell-total-label">
+                  <span class="cell-total-prefix">IMPACT CALCULÉ</span>
+                  <span class="cell-total-hint"> (formule pente, période sélectionnée)</span>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="cell-total-malus">−{{ formatPercent(performanceAppliedMalus(), 2) }}</td>
+                <td>—</td>
+                <td class="cell-total-bonus">+{{ formatPercent(performanceAppliedBonus(), 2) }}</td>
+                <td>—</td>
+                <td class="cell-net-applied" [class.positive]="performanceNetApplied() >= 0"
+                    [class.negative]="performanceNetApplied() < 0">
+                  Net {{ performanceNetApplied() >= 0 ? '+' : '' }}{{ formatPercent(performanceNetApplied(), 2) }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ── Cartes KPI (vue synthétique) ── -->
+        <div class="performance-grid">
+          @for (kpi of performanceItems(); track kpi.code) {
+            <article class="performance-card" [class.is-good]="kpi.status === 'good'"
+                     [class.is-warning]="kpi.status === 'warning'" [class.is-danger]="kpi.status === 'danger'">
+              <div class="performance-card-top">
+                <span class="performance-code">KPI {{ kpi.code }}</span>
+                <span class="performance-badge">{{ kpi.type }}</span>
+                <button class="kpi-info-btn" type="button"
+                        [title]="getKpiTooltip(kpi.code)"
+                        aria-label="Règle de calcul de ce KPI">
+                  <span class="material-icons notranslate" aria-hidden="true">info_outline</span>
+                </button>
+              </div>
+              <h3>{{ kpi.label }}</h3>
+              <p class="performance-scope">{{ kpi.scope }}</p>
+              <div class="performance-rate">{{ formatPerformanceRate(kpi) }}</div>
+              <div class="performance-objective">Objectif {{ formatPerformanceObjective(kpi) }}</div>
+              <div class="performance-meta">
+                <span class="performance-count">{{ kpi.numerator }} / {{ kpi.denominator }}</span>
+                <span class="performance-status">
+                  <span class="material-icons notranslate">{{ performanceIcon(kpi) }}</span>
+                  {{ performanceStatusLabel(kpi) }}
+                </span>
+              </div>
+            </article>
+          }
+        </div>
+
+      } @else {
+        <div class="empty-state">
+          <span class="material-icons notranslate empty-icon">leaderboard</span>
+          <p>Aucune intervention analysée sur <strong>{{ kpiPeriodLabel() }}</strong>.</p>
+          <p class="empty-hint">Naviguez vers un mois avec des données importées via le bouton ‹ ci-dessus.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── Section 3 — Évolution CA ─────────────────────────── -->
   @if (!loading() && revenueMonths().length > 0) {
     <div class="section-block">
       <div class="section-header">
@@ -112,7 +319,7 @@
     </div>
   }
 
-  <!-- ── Section 3 — Absences en attente ──────────────────── -->
+  <!-- ── Section 4 — Absences en attente ──────────────────── -->
   <div class="section-block" id="absences-section">
     <div class="section-header">
       <span class="section-title">Demandes d'absence à traiter</span>
@@ -167,12 +374,20 @@
     }
   </div>
 
-  <!-- ── Section 4 — Liens rapides ────────────────────────── -->
+  <!-- ── Section 5 — Liens rapides ────────────────────────── -->
   <div class="section-block">
     <div class="section-header">
       <span class="section-title">Accès rapide</span>
     </div>
     <div class="quick-links">
+
+      <a class="quick-link-card" routerLink="/depot">
+        <span class="material-icons notranslate quick-link-icon">warehouse</span>
+        <div>
+          <div class="quick-link-title">Dépôt</div>
+          <div class="quick-link-sub">Tableau de bord stock</div>
+        </div>
+      </a>
 
       <a class="quick-link-card" routerLink="/admin/revenue">
         <span class="material-icons notranslate quick-link-icon">show_chart</span>

@@ -39,7 +39,8 @@ export class HistoryList {
   private datePipe = inject(DatePipe);
 
   readonly loading = this.movementService.loading;
-  readonly error = this.movementService.error;
+  private readonly exportError = signal<HttpErrorResponse | null>(null);
+  readonly error = computed(() => this.movementService.error() || this.exportError());
   readonly result: Signal<MovementListResult | null> = this.movementService.result;
 
   private readonly pag = new PaginationState();
@@ -169,7 +170,7 @@ export class HistoryList {
       toId: f.toId.trim() || undefined,
     }).subscribe({
       next: (blob) => downloadBlob(blob, `movements-${new Date().toISOString().slice(0, 10)}.csv`),
-      error: () => {}
+      error: (err: HttpErrorResponse) => this.exportError.set(err)
     });
   }
 
@@ -188,7 +189,7 @@ export class HistoryList {
       toId: f.toId.trim() || undefined,
     }).subscribe({
       next: (blob) => downloadBlob(blob, `movements-${new Date().toISOString().slice(0, 10)}.pdf`),
-      error: () => {}
+      error: (err: HttpErrorResponse) => this.exportError.set(err)
     });
   }
 

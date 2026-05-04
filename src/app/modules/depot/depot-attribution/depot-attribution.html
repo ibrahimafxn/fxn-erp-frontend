@@ -112,10 +112,11 @@
 <app-confirm-delete-modal
   [open]="confirmOpen()"
   title="Confirmer l’attribution"
-  entityLabel="technicien"
+  entityLabel="le technicien"
   [entityName]="selectedTechLabel()"
   confirmText="Valider"
   confirmIcon="bi bi-check2"
+  question="Voulez-vous vraiment attribuer ces articles au technicien sélectionné ?"
   dangerHint="Les articles seront attribués au technicien sélectionné."
   [confirming]="submitting()"
   (cancel)="closeConfirm()"

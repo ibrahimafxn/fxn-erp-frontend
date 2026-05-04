@@ -177,7 +177,7 @@
 
 <app-confirm-delete-modal
   [open]="deleteModalOpen()"
-  [entityLabel]="'mapping'"
+  [entityLabel]="'le mapping'"
   [entityName]="(pendingDelete()?.osirisCode || '') + ' → ' + (pendingDelete()?.canonicalCode || '')"
   [confirming]="deleteLoading()"
   (cancel)="closeDeleteModal()"

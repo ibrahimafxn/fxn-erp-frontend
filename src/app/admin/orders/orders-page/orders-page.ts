@@ -14,6 +14,8 @@ import { environment } from '../../../environments/environment';
 import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { PaginationState } from '../../../core/utils/pagination-state';
 
+type SortField = 'reference' | 'client' | 'date' | 'status' | 'ht' | 'ttc' | 'tva' | 'delivery';
+
 @Component({
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,9 +31,11 @@ export class OrdersPage {
   private depotService = inject(DepotService);
   private resourceListService = inject(ResourceListService);
   private auth = inject(AuthService);
+
   private readonly tvaRate = 0.2;
   private readonly apiRoot = (environment.apiBaseUrl || '').replace(/\/api\/?$/, '');
 
+  // ── Core state ─────────────────────────────────────────────────────────────
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly items = signal<Order[]>([]);
@@ -39,27 +43,23 @@ export class OrdersPage {
   readonly page = this.pag.page;
   readonly limit = this.pag.limit;
   readonly total = this.pag.total;
+  readonly pageRange = this.pag.pageRange;
+  readonly pageCount = this.pag.pageCount;
+  readonly canPrev = this.pag.canPrev;
+  readonly canNext = this.pag.canNext;
+
+  // ── Delete ──────────────────────────────────────────────────────────────────
   readonly deleteModalOpen = signal(false);
   readonly deletingId = signal<string | null>(null);
   readonly pendingDeleteId = signal<string | null>(null);
   readonly pendingDeleteName = signal<string>('');
+
+  // ── Import PDF ──────────────────────────────────────────────────────────────
   readonly importLoading = signal(false);
   readonly importError = signal<string | null>(null);
   readonly importResult = signal<string | null>(null);
   readonly importClient = signal('');
-  readonly depots = signal<Depot[]>([]);
-  readonly depotsLoading = signal(false);
-  readonly resources = signal<ResourceListItem[]>([]);
-  readonly resourcesLoading = signal(false);
-  readonly selectedDepotId = signal('');
-  readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
-  readonly managerDepotId = computed(() => {
-    const raw = this.auth.getCurrentUser()?.idDepot ?? null;
-    if (!raw) return null;
-    if (typeof raw === 'string') return raw;
-    if (typeof raw === 'object' && '_id' in raw) return String((raw as { _id: string })._id);
-    return null;
-  });
+  readonly importModalOpen = signal(false);
   readonly importPreview = signal<{
     reference: string;
     client: string;
@@ -86,62 +86,105 @@ export class OrdersPage {
     }>;
     errors: Array<{ row: number; message: string }>;
   } | null>(null);
-  readonly importModalOpen = signal(false);
-  readonly pageRange = this.pag.pageRange;
-  readonly sortField = signal<'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva' | 'delivery'>('date');
-  readonly sortDirection = signal<'asc' | 'desc'>('desc');
   readonly importTotalTva = computed(() => {
     const preview = this.importPreview();
     if (!preview) return 0;
     return preview.lines.reduce((sum, line) => sum + Number(line.totalTva ?? 0), 0);
   });
-  readonly totalTva = computed(() =>
-    this.items().reduce((sum, order) => sum + this.tvaAmount(order), 0)
-  );
-  readonly totalTtc = computed(() =>
-    this.items().reduce((sum, order) => sum + this.displayAmount(order), 0)
-  );
 
-  readonly pageCount = this.pag.pageCount;
-  readonly canPrev = this.pag.canPrev;
-  readonly canNext = this.pag.canNext;
-  readonly sortedItems = computed(() => {
-    const items = [...this.items()];
-    const field = this.sortField();
-    const direction = this.sortDirection() === 'asc' ? 1 : -1;
-    const compareText = (a?: string | null, b?: string | null) =>
-      (a ?? '').localeCompare(b ?? '', 'fr', { sensitivity: 'base' });
-    const compareNumber = (a?: number | null, b?: number | null) => (a ?? 0) - (b ?? 0);
-    const compareDate = (value?: string | null) => {
-      if (!value) return 0;
-      const time = new Date(value).getTime();
-      return Number.isFinite(time) ? time : 0;
-    };
-    return items.sort((a, b) => {
-      switch (field) {
-        case 'reference':
-          return direction * compareText(a.reference, b.reference);
-        case 'client':
-          return direction * compareText(a.client, b.client);
-        case 'status':
-          return direction * compareText(a.status, b.status);
-        case 'date':
-          return direction * (compareDate(a.date) - compareDate(b.date));
-        case 'ttc':
-          return direction * compareNumber(this.displayAmount(a), this.displayAmount(b));
-        case 'tva':
-          return direction * compareNumber(this.tvaAmount(a), this.tvaAmount(b));
-        case 'delivery':
-          return direction * compareNumber(Number(a.deliveryFee ?? 0), Number(b.deliveryFee ?? 0));
-        default:
-          return 0;
-      }
-    });
+  // ── Depot & resources ───────────────────────────────────────────────────────
+  readonly depots = signal<Depot[]>([]);
+  readonly depotsLoading = signal(false);
+  readonly resources = signal<ResourceListItem[]>([]);
+  readonly resourcesLoading = signal(false);
+  readonly selectedDepotId = signal('');
+
+  // ── Receive order ───────────────────────────────────────────────────────────
+  readonly receivingId = signal<string | null>(null);
+  readonly receiveError = signal<string | null>(null);
+
+  // ── Date filter (client-side) ───────────────────────────────────────────────
+  readonly dateFrom = signal('');
+  readonly dateTo = signal('');
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  readonly isDepotManager = computed(() => this.auth.getUserRole() === Role.GESTION_DEPOT);
+  readonly managerDepotId = computed(() => {
+    const raw = this.auth.getCurrentUser()?.idDepot ?? null;
+    if (!raw) return null;
+    if (typeof raw === 'string') return raw;
+    if (typeof raw === 'object' && '_id' in raw) return String((raw as { _id: string })._id);
+    return null;
   });
 
+  // ── Sort ─────────────────────────────────────────────────────────────────────
+  readonly sortField = signal<SortField>('date');
+  readonly sortDirection = signal<'asc' | 'desc'>('desc');
+
+  // ── Filter form ──────────────────────────────────────────────────────────────
   readonly filterForm = this.fb.nonNullable.group({
     q: this.fb.nonNullable.control(''),
     status: this.fb.nonNullable.control('')
+  });
+
+  // ── Derived / computed ───────────────────────────────────────────────────────
+  readonly filteredItems = computed(() => {
+    const items = this.items();
+    const from = this.dateFrom();
+    const to = this.dateTo();
+    if (!from && !to) return items;
+    const fromMs = from ? new Date(from).getTime() : 0;
+    const toMs = to ? new Date(to + 'T23:59:59').getTime() : Infinity;
+    return items.filter((order) => {
+      const d = order.date ? new Date(order.date).getTime() : 0;
+      return d >= fromMs && d <= toMs;
+    });
+  });
+
+  readonly totalHt = computed(() =>
+    this.filteredItems().reduce((sum, o) => sum + Number(o.amount ?? 0), 0)
+  );
+  readonly totalTva = computed(() =>
+    this.filteredItems().reduce((sum, o) => sum + this.tvaAmount(o), 0)
+  );
+  readonly totalTtc = computed(() =>
+    this.filteredItems().reduce((sum, o) => sum + this.displayAmount(o), 0)
+  );
+  readonly totalDelivery = computed(() =>
+    this.filteredItems().reduce((sum, o) => sum + Number(o.deliveryFee ?? 0), 0)
+  );
+  readonly countDelivered = computed(() =>
+    this.filteredItems().filter((o) => (o.status || '').toLowerCase().includes('livr')).length
+  );
+  readonly countPending = computed(() =>
+    this.filteredItems().filter((o) => (o.status || '').toLowerCase().includes('cours')).length
+  );
+
+  readonly sortedItems = computed(() => {
+    const items = [...this.filteredItems()];
+    const field = this.sortField();
+    const direction = this.sortDirection() === 'asc' ? 1 : -1;
+    const cmpText = (a?: string | null, b?: string | null) =>
+      (a ?? '').localeCompare(b ?? '', 'fr', { sensitivity: 'base' });
+    const cmpNum = (a?: number | null, b?: number | null) => (a ?? 0) - (b ?? 0);
+    const toMs = (v?: string | null) => {
+      if (!v) return 0;
+      const t = new Date(v).getTime();
+      return Number.isFinite(t) ? t : 0;
+    };
+    return items.sort((a, b) => {
+      switch (field) {
+        case 'reference': return direction * cmpText(a.reference, b.reference);
+        case 'client':    return direction * cmpText(a.client, b.client);
+        case 'status':    return direction * cmpText(a.status, b.status);
+        case 'date':      return direction * (toMs(a.date) - toMs(b.date));
+        case 'ht':        return direction * cmpNum(a.amount, b.amount);
+        case 'ttc':       return direction * cmpNum(this.displayAmount(a), this.displayAmount(b));
+        case 'tva':       return direction * cmpNum(this.tvaAmount(a), this.tvaAmount(b));
+        case 'delivery':  return direction * cmpNum(Number(a.deliveryFee ?? 0), Number(b.deliveryFee ?? 0));
+        default:          return 0;
+      }
+    });
   });
 
   constructor() {
@@ -154,52 +197,62 @@ export class OrdersPage {
     this.refresh();
   }
 
-  createNew(): void {
-    this.router.navigate(['/admin/orders/new']).then();
-  }
+  // ── Navigation ───────────────────────────────────────────────────────────────
+  createNew(): void { this.router.navigate(['/admin/orders/new']); }
+  openDetail(order: Order): void { this.router.navigate(['/admin/orders', order._id, 'detail']); }
+  openEdit(order: Order): void { this.router.navigate(['/admin/orders', order._id, 'edit']); }
 
-  openDetail(order: Order): void {
-    this.router.navigate(['/admin/orders', order._id, 'detail']).then();
-  }
-
-  openEdit(order: Order): void {
-    this.router.navigate(['/admin/orders', order._id, 'edit']).then();
-  }
-
+  // ── Delete ───────────────────────────────────────────────────────────────────
   openDeleteModal(order: Order): void {
     this.pendingDeleteId.set(order._id);
     this.pendingDeleteName.set(order.reference || order.client || '');
     this.deleteModalOpen.set(true);
   }
-
   closeDeleteModal(): void {
     this.deleteModalOpen.set(false);
     this.pendingDeleteId.set(null);
     this.pendingDeleteName.set('');
   }
-
   confirmDelete(): void {
     const id = this.pendingDeleteId();
     if (!id) return;
     this.deletingId.set(id);
     this.orders.remove(id).subscribe({
-      next: () => {
-        this.deletingId.set(null);
-        this.closeDeleteModal();
-        this.refresh();
-      },
+      next: () => { this.deletingId.set(null); this.closeDeleteModal(); this.refresh(); },
       error: (err: HttpErrorResponse) => {
-        const apiMsg =
-          typeof err.error === 'object' && err.error !== null && 'message' in err.error
-            ? String((err.error as { message?: unknown }).message ?? '')
-            : '';
-        this.error.set(apiMsg || err.message || 'Erreur suppression commande');
+        this.error.set(this.apiError(err, 'Erreur suppression commande'));
         this.deletingId.set(null);
         this.closeDeleteModal();
       }
     });
   }
 
+  // ── Receive order (→ Livrée + stock dépôt) ──────────────────────────────────
+  canReceive(order: Order): boolean {
+    if (order.importedToDepotAt) return false;
+    if (order.statusCode === 'IMPORTABLE') return true;
+    const s = (order.status || '').toLowerCase();
+    return s.includes('valid') || s.includes('livr');
+  }
+
+  receiveOrder(order: Order): void {
+    const depotId = this.selectedDepotId();
+    if (!depotId) {
+      this.receiveError.set('Sélectionner un dépôt avant de réceptionner.');
+      return;
+    }
+    this.receivingId.set(order._id);
+    this.receiveError.set(null);
+    this.orders.importToDepot(order._id, depotId).subscribe({
+      next: () => { this.receivingId.set(null); this.refresh(); },
+      error: (err: HttpErrorResponse) => {
+        this.receiveError.set(this.apiError(err, 'Erreur réception commande'));
+        this.receivingId.set(null);
+      }
+    });
+  }
+
+  // ── Import PDF ───────────────────────────────────────────────────────────────
   importPdf(event: Event): void {
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
@@ -212,8 +265,8 @@ export class OrdersPage {
         this.importLoading.set(false);
         const preview = res.data || null;
         if (preview) {
-          const deliveryFee = Number(preview.deliveryFee ?? 0);
-          preview.deliveryFee = Number.isFinite(deliveryFee) ? deliveryFee : 0;
+          const fee = Number(preview.deliveryFee ?? 0);
+          preview.deliveryFee = Number.isFinite(fee) ? fee : 0;
         }
         this.importPreview.set(preview);
         this.importModalOpen.set(true);
@@ -221,29 +274,20 @@ export class OrdersPage {
         if (input) input.value = '';
       },
       error: (err: HttpErrorResponse) => {
-        const apiMsg =
-          typeof err.error === 'object' && err.error !== null && 'message' in err.error
-            ? String((err.error as { message?: unknown }).message ?? '')
-            : '';
         this.importLoading.set(false);
-        this.importError.set(apiMsg || err.message || 'Erreur import fichier');
+        this.importError.set(this.apiError(err, 'Erreur import fichier'));
         if (input) input.value = '';
       }
     });
   }
 
-  closeImportModal(): void {
-    this.importModalOpen.set(false);
-  }
+  closeImportModal(): void { this.importModalOpen.set(false); }
 
   confirmImport(): void {
     const preview = this.importPreview();
     if (!preview) return;
     const depotId = this.selectedDepotId();
-    if (!depotId) {
-      this.importError.set('Sélectionner un dépôt pour l’import.');
-      return;
-    }
+    if (!depotId) { this.importError.set(`Sélectionner un dépôt pour l'import.`); return; }
     const validLines = preview.lines
       .filter((line) => line.resourceId && line.resourceType)
       .map((line) => ({
@@ -256,7 +300,6 @@ export class OrdersPage {
         total: Number(line.total || 0)
       }))
       .filter((line) => line.quantity > 0);
-
     this.importLoading.set(true);
     this.importError.set(null);
     this.orders.confirmImportPdf({
@@ -278,21 +321,17 @@ export class OrdersPage {
         this.refresh();
       },
       error: (err: HttpErrorResponse) => {
-        const apiMsg =
-          typeof err.error === 'object' && err.error !== null && 'message' in err.error
-            ? String((err.error as { message?: unknown }).message ?? '')
-            : '';
         this.importLoading.set(false);
-        this.importError.set(apiMsg || err.message || 'Erreur import fichier');
+        this.importError.set(this.apiError(err, 'Erreur import fichier'));
       }
     });
   }
 
+  // ── Filters & refresh ────────────────────────────────────────────────────────
   refresh(): void {
     const f = this.filterForm.getRawValue();
     this.loading.set(true);
     this.error.set(null);
-
     this.orders.list({
       q: f.q.trim() || undefined,
       status: f.status.trim() || undefined,
@@ -307,34 +346,24 @@ export class OrdersPage {
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
-        const apiMsg =
-          typeof err.error === 'object' && err.error !== null && 'message' in err.error
-            ? String((err.error as { message?: unknown }).message ?? '')
-            : '';
-        this.error.set(apiMsg || err.message || 'Erreur chargement commandes');
+        this.error.set(this.apiError(err, 'Erreur chargement commandes'));
         this.loading.set(false);
       }
     });
   }
 
-  search(): void {
-    this.pag.resetPage();
-    this.refresh();
-  }
+  search(): void { this.pag.resetPage(); this.refresh(); }
 
   clearFilters(): void {
     this.filterForm.setValue({ q: '', status: '' });
+    this.dateFrom.set('');
+    this.dateTo.set('');
     this.pag.resetPage();
     this.refresh();
   }
 
-  prevPage(): void {
-    this.pag.prevPage(() => this.refresh());
-  }
-
-  nextPage(): void {
-    this.pag.nextPage(() => this.refresh());
-  }
+  prevPage(): void { this.pag.prevPage(() => this.refresh()); }
+  nextPage(): void { this.pag.nextPage(() => this.refresh()); }
 
   onLimitChange(event: Event): void {
     const el = event.target instanceof HTMLSelectElement ? event.target : null;
@@ -343,12 +372,10 @@ export class OrdersPage {
     if (!Number.isFinite(v) || v <= 0) return;
     this.setLimitValue(v);
   }
+  setLimitValue(value: number): void { this.pag.setLimitValue(value, () => this.refresh()); }
 
-  setLimitValue(value: number): void {
-    this.pag.setLimitValue(value, () => this.refresh());
-  }
-
-  setSort(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva' | 'delivery'): void {
+  // ── Sort ─────────────────────────────────────────────────────────────────────
+  setSort(field: SortField): void {
     if (this.sortField() === field) {
       this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
       return;
@@ -356,44 +383,38 @@ export class OrdersPage {
     this.sortField.set(field);
     this.sortDirection.set(field === 'date' ? 'desc' : 'asc');
   }
-
-  sortArrow(field: 'reference' | 'client' | 'date' | 'status' | 'ttc' | 'tva' | 'delivery'): string {
+  sortArrow(field: SortField): string {
     if (this.sortField() !== field) return '↕';
     return this.sortDirection() === 'asc' ? '↑' : '↓';
   }
 
+  // ── Amount helpers ───────────────────────────────────────────────────────────
   tvaAmount(order: Order): number {
-    if (Number.isFinite(order.tvaAmount)) {
-      return Number(order.tvaAmount);
-    }
+    if (Number.isFinite(order.tvaAmount)) return Number(order.tvaAmount);
     if (order.lines?.length) {
       return order.lines.reduce((sum, line) => {
         if (!line.applyTva) return sum;
         const qty = Number(line.quantity ?? 0);
         const unit = Number(line.unitPrice ?? 0);
-        if (!Number.isFinite(qty) || !Number.isFinite(unit)) return sum;
-        return sum + qty * unit * this.tvaRate;
+        return Number.isFinite(qty) && Number.isFinite(unit) ? sum + qty * unit * this.tvaRate : sum;
       }, 0);
     }
     return Number(order.amount ?? 0) * this.tvaRate;
   }
 
   private isTvaActive(order: Order): boolean {
-    if (Number.isFinite(order.tvaAmount)) {
-      return Number(order.tvaAmount) > 0;
-    }
+    if (Number.isFinite(order.tvaAmount)) return Number(order.tvaAmount) > 0;
     return (order.lines || []).some((line) => Boolean(line.applyTva));
   }
 
   displayAmount(order: Order): number {
-    const baseAmount = Number(order.amount ?? 0);
-    if (!this.isTvaActive(order)) return baseAmount;
-    return baseAmount + this.tvaAmount(order);
+    const base = Number(order.amount ?? 0);
+    return this.isTvaActive(order) ? base + this.tvaAmount(order) : base;
   }
 
   formatAmount(value?: number | string | null): string {
     const amount = Number(value ?? 0);
-    if (!Number.isFinite(amount)) return '0.00';
+    if (!Number.isFinite(amount)) return '0,00 €';
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
       currency: 'EUR',
@@ -402,12 +423,12 @@ export class OrdersPage {
     }).format(amount);
   }
 
+  // ── URL helpers ──────────────────────────────────────────────────────────────
   pdfUrl(order: Order | null | undefined): string | null {
     const raw = order?.invoicePdfUrl || '';
     if (!raw) return null;
     if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
-    const prefix = raw.startsWith('/') ? '' : '/';
-    return `${this.apiRoot}${prefix}${raw}`;
+    return `${this.apiRoot}${raw.startsWith('/') ? '' : '/'}${raw}`;
   }
 
   previewPdfUrl(): string | null {
@@ -416,13 +437,29 @@ export class OrdersPage {
     if (preview.invoicePdfUrl.startsWith('http://') || preview.invoicePdfUrl.startsWith('https://')) {
       return preview.invoicePdfUrl;
     }
-    const prefix = preview.invoicePdfUrl.startsWith('/') ? '' : '/';
-    return `${this.apiRoot}${prefix}${preview.invoicePdfUrl}`;
+    return `${this.apiRoot}${preview.invoicePdfUrl.startsWith('/') ? '' : '/'}${preview.invoicePdfUrl}`;
   }
 
+  // ── Status badge ─────────────────────────────────────────────────────────────
+  statusBadgeClass(status: string): string {
+    const s = (status || '').toLowerCase();
+    if (s.includes('cours')) return 'badge-pending';
+    if (s.includes('valid')) return 'badge-validated';
+    if (s.includes('livr')) return 'badge-delivered';
+    if (s.includes('annul') || s.includes('cancel')) return 'badge-canceled';
+    return 'badge-unknown';
+  }
+
+  // ── Depot name lookup ─────────────────────────────────────────────────────────
+  depotName(id: string | null | undefined): string {
+    if (!id) return '';
+    const depot = this.depots().find((d) => d._id === String(id));
+    return depot?.name || '';
+  }
+
+  // ── Resource helpers ──────────────────────────────────────────────────────────
   resourceLabel(item: ResourceListItem): string {
-    const type = item.type === 'MATERIAL' ? 'Matériel' : 'Consommable';
-    return `${item.name} · ${type}`;
+    return `${item.name} · ${item.type === 'MATERIAL' ? 'Matériel' : 'Consommable'}`;
   }
 
   onDepotSelect(event: Event): void {
@@ -432,6 +469,7 @@ export class OrdersPage {
     this.loadResources();
   }
 
+  // ── Preview field/line helpers ────────────────────────────────────────────────
   updatePreviewField(field: 'reference' | 'client' | 'date' | 'notes' | 'deliveryFee', value: string): void {
     const preview = this.importPreview();
     if (!preview) return;
@@ -441,28 +479,17 @@ export class OrdersPage {
       next.deliveryFee = Number.isFinite(fee) ? fee : 0;
     } else {
       switch (field) {
-        case 'reference':
-          next.reference = value;
-          break;
-        case 'client':
-          next.client = value;
-          break;
-        case 'date':
-          next.date = value;
-          break;
-        case 'notes':
-          next.notes = value;
-          break;
+        case 'reference': next.reference = value; break;
+        case 'client':    next.client = value; break;
+        case 'date':      next.date = value; break;
+        case 'notes':     next.notes = value; break;
       }
     }
     this.importPreview.set(next);
   }
 
   updatePreviewLine(index: number, patch: Partial<{
-    designation: string;
-    description: string;
-    quantity: number | string;
-    unitPrice: number | string;
+    designation: string; description: string; quantity: number | string; unitPrice: number | string;
   }>): void {
     const preview = this.importPreview();
     if (!preview) return;
@@ -474,15 +501,7 @@ export class OrdersPage {
       const totalHt = this.round2(qty * unit);
       const totalTva = this.round2(totalHt * this.tvaRate);
       const totalTtc = this.round2(totalHt + totalTva);
-      return {
-        ...next,
-        quantity: Number.isFinite(qty) ? qty : 0,
-        unitPrice: Number.isFinite(unit) ? unit : 0,
-        total: totalHt,
-        totalHt,
-        totalTva,
-        totalTtc
-      };
+      return { ...next, quantity: Number.isFinite(qty) ? qty : 0, unitPrice: Number.isFinite(unit) ? unit : 0, total: totalHt, totalHt, totalTva, totalTtc };
     });
     const amount = this.round2(lines.reduce((sum, line) => sum + Number(line.totalHt ?? line.total ?? 0), 0));
     this.importPreview.set({ ...preview, lines, amount });
@@ -501,42 +520,22 @@ export class OrdersPage {
     if (!el) return;
     const resourceId = String(el.value || '');
     const resource = this.resources().find((item) => item._id === resourceId);
-    if (!resource) {
-      this.updatePreviewLine(index, {});
-      const preview = this.importPreview();
-      if (!preview) return;
-      const lines = preview.lines.map((line, i) =>
-        i === index ? { ...line, resourceId: null, resourceType: null } : line
-      );
-      this.importPreview.set({ ...preview, lines });
-      return;
-    }
     const preview = this.importPreview();
     if (!preview) return;
-    const lines = preview.lines.map((line, i) =>
-      i === index
-        ? {
-            ...line,
-            resourceId: resource._id,
-            resourceType: resource.type,
-            name: resource.name
-          }
-        : line
-    );
+    const lines = preview.lines.map((line, i) => {
+      if (i !== index) return line;
+      if (!resource) return { ...line, resourceId: null, resourceType: null };
+      return { ...line, resourceId: resource._id, resourceType: resource.type, name: resource.name };
+    });
     this.importPreview.set({ ...preview, lines });
   }
 
+  // ── Private loaders ───────────────────────────────────────────────────────────
   private loadDepots(): void {
     this.depotsLoading.set(true);
     this.depotService.refreshDepots(true).subscribe({
-      next: (res) => {
-        this.depots.set(res.items || []);
-        this.depotsLoading.set(false);
-      },
-      error: () => {
-        this.depots.set([]);
-        this.depotsLoading.set(false);
-      }
+      next: (res) => { this.depots.set(res.items || []); this.depotsLoading.set(false); },
+      error: () => { this.depots.set([]); this.depotsLoading.set(false); }
     });
   }
 
@@ -544,18 +543,16 @@ export class OrdersPage {
     this.resourcesLoading.set(true);
     const depotId = this.selectedDepotId();
     this.resourceListService.refresh(depotId || undefined).subscribe({
-      next: (res) => {
-        this.resources.set(res.data || []);
-        this.resourcesLoading.set(false);
-      },
-      error: () => {
-        this.resources.set([]);
-        this.resourcesLoading.set(false);
-      }
+      next: (res) => { this.resources.set(res.data || []); this.resourcesLoading.set(false); },
+      error: () => { this.resources.set([]); this.resourcesLoading.set(false); }
     });
   }
 
-  private round2(value: number): number {
-    return Math.round(value * 100) / 100;
+  private round2(value: number): number { return Math.round(value * 100) / 100; }
+
+  private apiError(err: HttpErrorResponse, fallback: string): string {
+    const apiMsg = typeof err.error === 'object' && err.error !== null && 'message' in err.error
+      ? String((err.error as { message?: unknown }).message ?? '') : '';
+    return apiMsg || err.message || fallback;
   }
 }

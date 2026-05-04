@@ -233,13 +233,13 @@
 
   <app-confirm-delete-modal
     [open]="invoiceResetModalOpen()"
-    entityLabel="factures ERT"
-    entityName="les factures importées"
-    title="Confirmer le reset des factures"
-    question="Voulez-vous vraiment vider toutes les factures ERT importées ?"
+    entityLabel="les factures ERT importées"
+    title="Confirmer la réinitialisation des factures"
+    question="Voulez-vous vraiment réinitialiser toutes les factures ERT importées ?"
     dangerHint="Cette action supprime les factures ERT enregistrées et remet la comparaison à zéro."
-    confirmText="Reset factures"
-    confirmLoadingText="Reset…"
+    confirmText="Réinitialiser"
+    confirmLoadingText="Réinitialisation…"
+    confirmIcon="bi bi-arrow-counterclockwise"
     [confirming]="invoiceResetLoading()"
     (cancel)="closeInvoiceResetModal()"
     (confirm)="confirmResetInvoices()">
@@ -247,10 +247,12 @@
 
   <app-confirm-delete-modal
     [open]="resetModalOpen()"
-    entityLabel="affichage interventions"
+    entityLabel="l'affichage des interventions"
     entityName="la vue actuelle"
+    question="Voulez-vous vraiment réinitialiser l’affichage des interventions ?"
     dangerHint="Cette action vide uniquement la page et ne supprime rien en base."
     confirmText="Réinitialiser"
+    confirmIcon="bi bi-arrow-counterclockwise"
     [confirming]="resetLoading()"
     (cancel)="closeResetModal()"
     (confirm)="confirmResetData()">

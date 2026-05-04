@@ -19,12 +19,21 @@ import { formatPageRange } from '../../../core/utils/pagination';
 import { normalizeDateRange } from '../../../core/utils/date-format';
 import { computeReportAmount, normalizeReportPrestations, applyPricesToReport } from '../../../core/utils/technician-report-utils';
 import { formatTechnicianPrestationLabel } from '../../../core/utils/technician-prestation-labels';
+import { INTERVENTION_PRESTATION_FIELDS } from '../../../core/constant/intervention-prestations';
 import { ReportPrestationsBadges } from '../../../shared/components/report-prestations-badges/report-prestations-badges';
 import { AmountCurrencyPipe } from '../../../shared/pipes/amount-currency.pipe';
 import { TechnicianBpuResolverService, pricesForDate } from '../../../core/services/technician-bpu-resolver.service';
 import { apiError } from '../../../core/utils/http-error';
 
 type SortField = 'date' | 'technician' | 'depot' | 'amount';
+
+const PRESTATION_TYPE_FILTER_OPTIONS = [
+  { value: '', label: 'Toutes' },
+  ...INTERVENTION_PRESTATION_FIELDS.map((field) => ({
+    value: field.code,
+    label: formatTechnicianPrestationLabel(field.code, field.label)
+  }))
+];
 
 @Component({
   selector: 'app-technician-activity',
@@ -85,10 +94,12 @@ export class TechnicianActivity {
   readonly canNextInterventions = computed(() => this.interventionPage() < this.interventionPageCount());
   readonly sortField = signal<SortField>('date');
   readonly sortDirection = signal<'asc' | 'desc'>('desc');
+  readonly prestationTypeOptions = PRESTATION_TYPE_FILTER_OPTIONS;
 
   readonly filterForm = this.fb.nonNullable.group({
     technicianId: this.fb.nonNullable.control(''),
     depot: this.fb.nonNullable.control(''),
+    prestationType: this.fb.nonNullable.control(''),
     fromDate: this.fb.nonNullable.control(''),
     toDate: this.fb.nonNullable.control('')
   });
@@ -229,6 +240,7 @@ export class TechnicianActivity {
     const dates = normalizeDateRange(filters.fromDate, filters.toDate);
     const depotId = this.isDepotManager() ? (this.managerDepotId() ?? undefined) : (filters.depot || undefined);
     const technicianId = filters.technicianId || undefined;
+    const prestationType = filters.prestationType || undefined;
 
     this.interventionsLoading.set(true);
     this.error.set(null);
@@ -237,6 +249,7 @@ export class TechnicianActivity {
       toDate: dates.toDate,
       technicianId,
       depotId,
+      prestationType,
       page: this.interventionPage(),
       limit: this.interventionLimit()
     }).subscribe({
@@ -265,7 +278,7 @@ export class TechnicianActivity {
   }
 
   clearFilters(): void {
-    this.filterForm.setValue({ technicianId: '', depot: '', fromDate: '', toDate: '' });
+    this.filterForm.reset({ technicianId: '', depot: '', prestationType: '', fromDate: '', toDate: '' });
     this.interventionPage.set(1);
     this.refreshAll();
   }
@@ -396,6 +409,12 @@ export class TechnicianActivity {
     return 'SALARIE';
   });
 
+  prestationTypeLabel(prestationType?: string | null): string {
+    if (!prestationType) return '';
+    const match = this.prestationTypeOptions.find((option) => option.value === prestationType);
+    return match?.label || prestationType;
+  }
+
   totalAmount(): number {
     return this.summaryTotalAmount();
   }
@@ -452,6 +471,7 @@ export class TechnicianActivity {
     const dates = normalizeDateRange(filters.fromDate, filters.toDate);
     const depotId = this.isDepotManager() ? (this.managerDepotId() ?? undefined) : (filters.depot || undefined);
     const technicianId = filters.technicianId || undefined;
+    const prestationType = filters.prestationType || undefined;
 
     this.summaryLoading.set(true);
     this.error.set(null);
@@ -461,7 +481,8 @@ export class TechnicianActivity {
         fromDate: dates.fromDate,
         toDate: dates.toDate,
         technicianId,
-        depotId
+        depotId,
+        prestationType
       }));
       if (requestId !== this.summaryRequestId) return;
       if (!res?.success) {
@@ -474,6 +495,7 @@ export class TechnicianActivity {
         totalAmount = await this.loadSummaryAmountFromReports({
           technicianId,
           depotId,
+          prestationType,
           fromDate: dates.fromDate,
           toDate: dates.toDate,
           fallback: totalAmount,
@@ -620,6 +642,7 @@ export class TechnicianActivity {
   private async loadSummaryAmountFromReports(params: {
     technicianId?: string;
     depotId?: string;
+    prestationType?: string;
     fromDate?: string;
     toDate?: string;
     fallback: number;
@@ -628,6 +651,7 @@ export class TechnicianActivity {
     const res = await firstValueFrom(this.reportService.list({
       technicianId: params.technicianId,
       depotId: params.depotId,
+      prestationType: params.prestationType,
       fromDate: params.fromDate,
       toDate: params.toDate,
       page: 1,

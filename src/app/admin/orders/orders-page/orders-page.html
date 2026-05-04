@@ -1,18 +1,20 @@
 <section class="orders-page">
+
+  <!-- ─── HEADER ─────────────────────────────────────────────────────────────── -->
   <header class="page-header">
-    <div>
-      <h1>Commandes</h1>
-      <p class="subtitle">Suivi minimal des commandes en attente d'integration.</p>
+    <div class="header-info">
+      <h1>Commandes fournisseurs</h1>
+      <p class="subtitle">Suivi complet des commandes — HT, TVA, livraison, réception en dépôt.</p>
     </div>
     <div class="header-actions">
-      <label class="import-client">
-        Dépôt
+      <label class="field-group">
+        <span class="field-label">Dépôt cible</span>
         <select
           [value]="selectedDepotId()"
           [disabled]="importLoading() || (isDepotManager() && !!managerDepotId())"
           (change)="onDepotSelect($event)"
         >
-          <option value="">Sélectionner</option>
+          <option value="">Sélectionner un dépôt</option>
           @for (d of depots(); track d._id) {
             <option [value]="d._id">{{ d.name }}</option>
           }
@@ -25,154 +27,310 @@
           [disabled]="importLoading() || !selectedDepotId()"
           (change)="importPdf($event)"
         />
-        <i class="bi bi-upload"></i> Importer fichier
+        <i class="bi bi-upload"></i> Importer facture
       </label>
       <button class="btn-primary" type="button" [disabled]="importLoading()" (click)="createNew()">
-        <i class="bi bi-plus"></i>
-        Nouvelle commande
+        <i class="bi bi-plus-lg"></i> Nouvelle commande
       </button>
     </div>
   </header>
 
+  <!-- ─── KPI BAR ────────────────────────────────────────────────────────────── -->
+  <div class="kpi-bar">
+    <div class="kpi-card kpi-count">
+      <i class="bi bi-box-seam kpi-icon"></i>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ filteredItems().length }}</span>
+        <span class="kpi-label">Commande{{ filteredItems().length !== 1 ? 's' : '' }}</span>
+      </div>
+      <div class="kpi-detail">
+        <span class="status-badge badge-delivered">{{ countDelivered() }} livrée{{ countDelivered() !== 1 ? 's' : '' }}</span>
+        <span class="status-badge badge-pending">{{ countPending() }} en cours</span>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-ht">
+      <i class="bi bi-receipt kpi-icon"></i>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ formatAmount(totalHt()) }}</span>
+        <span class="kpi-label">Total HT</span>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-tva">
+      <i class="bi bi-percent kpi-icon"></i>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ formatAmount(totalTva()) }}</span>
+        <span class="kpi-label">Total TVA</span>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-delivery">
+      <i class="bi bi-truck kpi-icon"></i>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ formatAmount(totalDelivery()) }}</span>
+        <span class="kpi-label">Frais de livraison</span>
+      </div>
+    </div>
+
+    <div class="kpi-card kpi-ttc">
+      <i class="bi bi-currency-euro kpi-icon"></i>
+      <div class="kpi-body">
+        <span class="kpi-value kpi-ttc-value">{{ formatAmount(totalTtc()) }}</span>
+        <span class="kpi-label">Total TTC</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── RECEIVE ERROR ──────────────────────────────────────────────────────── -->
+  @if (receiveError()) {
+    <div class="alert-error">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      {{ receiveError() }}
+      <button type="button" class="close-alert" (click)="receiveError.set(null)">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  }
+
+  <!-- ─── LIST CARD ──────────────────────────────────────────────────────────── -->
   <article class="card">
-    <h2 class="section-title"><span class="material-icons notranslate">receipt_long</span>Liste des commandes</h2>
+    <div class="card-head">
+      <h2 class="section-title">
+        <i class="bi bi-list-ul"></i>
+        Liste des commandes
+      </h2>
+      <span class="count-badge">{{ total() }} au total</span>
+    </div>
+
+    <!-- FILTERS -->
     <form class="filters" [formGroup]="filterForm" (ngSubmit)="search()">
-      <label>
-        Recherche
-        <input type="text" formControlName="q" placeholder="Référence ou fournisseur" [disabled]="importLoading()" (input)="search()" />
+      <label class="filter-field">
+        <span>Recherche</span>
+        <input type="text" formControlName="q" placeholder="Référence, fournisseur…" (input)="search()" />
       </label>
-      <label>
-        Statut
-        <select formControlName="status" [disabled]="importLoading()" (change)="search()">
-          <option value="">Tous</option>
+      <label class="filter-field">
+        <span>Statut</span>
+        <select formControlName="status" (change)="search()">
+          <option value="">Tous les statuts</option>
           <option value="En cours">En cours</option>
           <option value="Validée">Validée</option>
           <option value="Livrée">Livrée</option>
         </select>
       </label>
-      <div class="actions">
-        <button class="btn-outline" type="submit" [disabled]="importLoading()"><i class="bi bi-search"></i> Rechercher</button>
-        <button class="btn-outline" type="button" [disabled]="importLoading()" (click)="clearFilters()"><i class="bi bi-x"></i> Effacer</button>
+      <label class="filter-field">
+        <span>Du</span>
+        <input type="date" [value]="dateFrom()" (change)="dateFrom.set($any($event.target).value)" />
+      </label>
+      <label class="filter-field">
+        <span>Au</span>
+        <input type="date" [value]="dateTo()" (change)="dateTo.set($any($event.target).value)" />
+      </label>
+      <div class="filter-actions">
+        <button class="btn-outline" type="submit"><i class="bi bi-search"></i> Chercher</button>
+        <button class="btn-outline" type="button" (click)="clearFilters()"><i class="bi bi-x-lg"></i> Effacer</button>
       </div>
     </form>
 
-    <div class="kpi-row">
-      <div class="kpi-card kpi-ttc">
-        <span class="label">Total TTC</span>
-        <span class="value">{{ formatAmount(totalTtc()) }}</span>
-        <span class="hint">Basé sur les commandes filtrées.</span>
+    @if ((dateFrom() || dateTo()) && filteredItems().length !== items().length) {
+      <div class="filter-notice">
+        <i class="bi bi-funnel-fill"></i>
+        Filtre de période actif — {{ filteredItems().length }} commande{{ filteredItems().length !== 1 ? 's' : '' }} sur {{ items().length }} affichée{{ filteredItems().length !== 1 ? 's' : '' }}.
       </div>
-      <div class="kpi-card kpi-tva">
-        <span class="label">Total TVA</span>
-        <span class="value">{{ formatAmount(totalTva()) }}</span>
-        <span class="hint">Basé sur les commandes filtrées.</span>
-      </div>
-    </div>
+    }
 
     @if (importLoading()) {
-      <div class="state loading">Import fichier en cours…</div>
+      <div class="state loading"><i class="bi bi-hourglass-split"></i> Import en cours…</div>
     } @else if (importError()) {
-      <div class="state error">Erreur import : {{ importError() }}</div>
+      <div class="state error"><i class="bi bi-exclamation-triangle"></i> {{ importError() }}</div>
     }
 
     @if (loading()) {
-      <div class="state loading">Chargement...</div>
+      <div class="state loading"><i class="bi bi-hourglass-split"></i> Chargement…</div>
     } @else if (error()) {
-      <div class="state error">Erreur : {{ error() }}</div>
-    } @else if (items().length === 0) {
-      <div class="state empty">Aucune commande.</div>
+      <div class="state error"><i class="bi bi-exclamation-triangle"></i> {{ error() }}</div>
+    } @else if (sortedItems().length === 0) {
+      <div class="state empty"><i class="bi bi-inbox"></i> Aucune commande trouvée.</div>
     } @else {
-      <div class="table">
+
+      <div class="table-wrap">
         <table>
           <thead>
-          <tr>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('reference')">
-                Référence <span class="sort-arrow">{{ sortArrow('reference') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('client')">
-                Fournisseur <span class="sort-arrow">{{ sortArrow('client') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('date')">
-                Date <span class="sort-arrow">{{ sortArrow('date') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('status')">
-                Statut <span class="sort-arrow">{{ sortArrow('status') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('ttc')">
-                Montant TTC <span class="sort-arrow">{{ sortArrow('ttc') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('tva')">
-                TVA <span class="sort-arrow">{{ sortArrow('tva') }}</span>
-              </button>
-            </th>
-            <th>
-              <button class="sort-button" type="button" (click)="setSort('delivery')">
-                Frais livraison <span class="sort-arrow">{{ sortArrow('delivery') }}</span>
-              </button>
-            </th>
-            <th></th>
-          </tr>
+            <tr>
+              <th>
+                <button class="sort-btn" type="button" (click)="setSort('reference')">
+                  Référence <span class="sort-arrow">{{ sortArrow('reference') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-btn" type="button" (click)="setSort('client')">
+                  Fournisseur <span class="sort-arrow">{{ sortArrow('client') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-btn" type="button" (click)="setSort('date')">
+                  Date <span class="sort-arrow">{{ sortArrow('date') }}</span>
+                </button>
+              </th>
+              <th>
+                <button class="sort-btn" type="button" (click)="setSort('status')">
+                  Statut <span class="sort-arrow">{{ sortArrow('status') }}</span>
+                </button>
+              </th>
+              <th class="col-center">Articles</th>
+              <th class="col-right">
+                <button class="sort-btn sort-btn-right" type="button" (click)="setSort('ht')">
+                  Montant HT <span class="sort-arrow">{{ sortArrow('ht') }}</span>
+                </button>
+              </th>
+              <th class="col-right">
+                <button class="sort-btn sort-btn-right" type="button" (click)="setSort('tva')">
+                  TVA <span class="sort-arrow">{{ sortArrow('tva') }}</span>
+                </button>
+              </th>
+              <th class="col-right">
+                <button class="sort-btn sort-btn-right" type="button" (click)="setSort('delivery')">
+                  Livraison <span class="sort-arrow">{{ sortArrow('delivery') }}</span>
+                </button>
+              </th>
+              <th class="col-right">
+                <button class="sort-btn sort-btn-right" type="button" (click)="setSort('ttc')">
+                  Total TTC <span class="sort-arrow">{{ sortArrow('ttc') }}</span>
+                </button>
+              </th>
+              <th>Dépôt</th>
+              <th class="col-right">Actions</th>
+            </tr>
           </thead>
           <tbody>
             @for (order of sortedItems(); track order._id) {
               <tr class="row-clickable" (click)="openDetail(order)">
-                <td>{{ order.reference }}</td>
-                <td>{{ order.client }}</td>
-                <td>{{ order.date | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td>{{ order.status }}</td>
-                <td>
-                  <span
-                    class="amount-pill"
-                    [class.status-delivered]="order.status === 'Livrée'"
-                    [class.status-pending]="order.status === 'En cours'"
-                  >{{ formatAmount(displayAmount(order)) }}</span>
-                </td>
-                <td>
-                  <span class="tva-pill">{{ formatAmount(tvaAmount(order)) }}</span>
-                </td>
-                <td>
-                  <span class="tva-pill">{{ formatAmount(order.deliveryFee ?? 0) }}</span>
-                </td>
-                <td class="actions-cell">
+
+                <!-- Référence + PDF -->
+                <td class="ref-cell">
+                  <span class="ref-text">{{ order.reference }}</span>
                   @if (pdfUrl(order)) {
                     <a
-                      class="btn-outline"
-                      title="Facture PDF"
+                      class="pdf-icon-link"
                       [href]="pdfUrl(order)"
                       target="_blank"
                       rel="noopener"
+                      title="Ouvrir la facture PDF"
                       (click)="$event.stopPropagation()"
                     ><i class="bi bi-file-earmark-pdf"></i></a>
                   }
-                  <button class="btn-outline edit" type="button" title="Modifier" aria-label="Modifier la commande" (click)="$event.stopPropagation(); openEdit(order)"><i class="bi bi-pencil"></i></button>
-                  <button class="btn-outline delete" type="button" title="Supprimer" aria-label="Supprimer la commande" (click)="$event.stopPropagation(); openDeleteModal(order)"><i class="bi bi-trash"></i></button>
                 </td>
+
+                <!-- Fournisseur -->
+                <td>
+                  <span class="supplier-name">{{ order.client }}</span>
+                </td>
+
+                <!-- Date -->
+                <td class="date-cell">
+                  <span class="date-main">{{ order.date | date:'dd/MM/yyyy' }}</span>
+                  <span class="date-sub">{{ order.date | date:'HH:mm' }}</span>
+                </td>
+
+                <!-- Statut -->
+                <td>
+                  <span class="status-badge" [ngClass]="statusBadgeClass(order.status)">
+                    {{ order.status }}
+                  </span>
+                </td>
+
+                <!-- Articles -->
+                <td class="col-center">
+                  <span class="count-pill">{{ order.lines?.length ?? 0 }}</span>
+                </td>
+
+                <!-- HT -->
+                <td class="col-right amount-ht">
+                  {{ formatAmount(order.amount) }}
+                </td>
+
+                <!-- TVA -->
+                <td class="col-right">
+                  <span class="amount-tva">{{ formatAmount(tvaAmount(order)) }}</span>
+                </td>
+
+                <!-- Livraison -->
+                <td class="col-right">
+                  @if ((order.deliveryFee ?? 0) > 0) {
+                    <span class="amount-delivery">{{ formatAmount(order.deliveryFee) }}</span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+
+                <!-- TTC -->
+                <td class="col-right">
+                  <span class="amount-ttc" [ngClass]="statusBadgeClass(order.status)">
+                    {{ formatAmount(displayAmount(order)) }}
+                  </span>
+                </td>
+
+                <!-- Dépôt réception -->
+                <td>
+                  @if (order.importedToDepotId) {
+                    <span class="depot-chip">
+                      <i class="bi bi-building"></i>
+                      {{ depotName(order.importedToDepotId) || 'Dépôt' }}
+                    </span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+
+                <!-- Actions -->
+                <td class="actions-cell" (click)="$event.stopPropagation()">
+                  @if (canReceive(order) && selectedDepotId()) {
+                    <button
+                      class="btn-receive"
+                      type="button"
+                      title="Réceptionner → Livrée"
+                      [disabled]="receivingId() === order._id"
+                      (click)="receiveOrder(order)"
+                    >
+                      @if (receivingId() === order._id) {
+                        <i class="bi bi-hourglass-split"></i>
+                      } @else {
+                        <i class="bi bi-box-arrow-in-down"></i>
+                      }
+                    </button>
+                  }
+                  <button
+                    class="btn-outline"
+                    type="button"
+                    title="Modifier"
+                    aria-label="Modifier la commande"
+                    (click)="openEdit(order)"
+                  ><i class="bi bi-pencil"></i></button>
+                  <button
+                    class="btn-outline delete"
+                    type="button"
+                    title="Supprimer"
+                    aria-label="Supprimer la commande"
+                    (click)="openDeleteModal(order)"
+                  ><i class="bi bi-trash"></i></button>
+                </td>
+
               </tr>
             }
           </tbody>
         </table>
       </div>
 
-      <footer class="pager pager-fixed">
+      <!-- PAGER -->
+      <footer class="pager">
         <div class="pager-left">
           <div class="page-size">
-            <button type="button" [class.active]="limit() === 10" (click)="setLimitValue(10)">10</button>
-            <button type="button" [class.active]="limit() === 20" (click)="setLimitValue(20)">20</button>
-            <button type="button" [class.active]="limit() === 50" (click)="setLimitValue(50)">50</button>
+            <button type="button" [class.active]="limit() === 10"  (click)="setLimitValue(10)">10</button>
+            <button type="button" [class.active]="limit() === 25"  (click)="setLimitValue(25)">25</button>
+            <button type="button" [class.active]="limit() === 50"  (click)="setLimitValue(50)">50</button>
             <button type="button" [class.active]="limit() === 100" (click)="setLimitValue(100)">100</button>
           </div>
-          <span class="pager-label">Éléments par page</span>
+          <span class="pager-label">par page</span>
         </div>
         <div class="pager-right">
           <span class="pager-range">{{ pageRange(page(), limit(), total()) }}</span>
@@ -190,54 +348,62 @@
   </article>
 </section>
 
+<!-- ─── DELETE MODAL ────────────────────────────────────────────────────────── -->
 <app-confirm-delete-modal
   [open]="deleteModalOpen()"
-  entityLabel="commande"
+  entityLabel="la commande"
   [entityName]="pendingDeleteName()"
   [confirming]="!!deletingId()"
   (cancel)="closeDeleteModal()"
   (confirm)="confirmDelete()"
 ></app-confirm-delete-modal>
 
+<!-- ─── IMPORT PDF MODAL ─────────────────────────────────────────────────────── -->
 @if (importModalOpen() && importPreview(); as preview) {
   <div class="modal-backdrop" (click)="closeImportModal()"></div>
   <div class="modal-card" role="dialog" aria-modal="true">
+
     <div class="modal-head">
       <div>
         <div class="modal-title">Commande importée</div>
-        <div class="modal-sub">Référence {{ preview.reference }} · {{ preview.client }}</div>
+        <div class="modal-sub">{{ preview.reference }} · {{ preview.client }}</div>
       </div>
-      <button class="btn-outline" type="button" [disabled]="importLoading()" (click)="closeImportModal()">Fermer</button>
+      <button class="btn-outline" type="button" [disabled]="importLoading()" (click)="closeImportModal()">
+        <i class="bi bi-x-lg"></i> Fermer
+      </button>
     </div>
 
     <div class="import-fields">
       <label>
-        Référence
+        <span>Référence</span>
         <input type="text" [value]="preview.reference" (input)="updatePreviewField('reference', $any($event.target).value)" />
       </label>
       <label>
-        Fournisseur
+        <span>Fournisseur</span>
         <input type="text" [value]="preview.client" (input)="updatePreviewField('client', $any($event.target).value)" />
       </label>
-      @if (preview.supplierExists === false) {
-        <div class="state warning">Fournisseur introuvable. Il sera créé à la validation.</div>
-      }
       <label>
-        Date
+        <span>Date</span>
         <input type="date" [value]="preview.date | date:'yyyy-MM-dd'" (input)="updatePreviewField('date', $any($event.target).value)" />
       </label>
       <label>
-        Frais de livraison
+        <span>Frais de livraison</span>
         <input type="number" min="0" step="0.01" [value]="preview.deliveryFee ?? 0" (input)="updatePreviewField('deliveryFee', $any($event.target).value)" />
       </label>
+      @if (preview.supplierExists === false) {
+        <div class="state warning">Fournisseur introuvable — il sera créé à la validation.</div>
+      }
       @if (previewPdfUrl()) {
-        <a class="btn-outline" [href]="previewPdfUrl()" target="_blank" rel="noopener">Ouvrir le fichier</a>
+        <a class="btn-outline" [href]="previewPdfUrl()" target="_blank" rel="noopener">
+          <i class="bi bi-file-earmark-pdf"></i> Ouvrir le fichier
+        </a>
       }
     </div>
 
     @if (preview.errors.length) {
-      <div class="state error">
-        Certaines lignes n'ont pas été reconnues. Corrige les articles avant validation.
+      <div class="state error" style="text-align:left;padding:10px 14px;">
+        <i class="bi bi-exclamation-triangle"></i>
+        Certaines lignes n'ont pas été reconnues. Corrigez les articles avant validation.
       </div>
       <div class="errors">
         @for (e of preview.errors; track e.row + e.message) {
@@ -246,20 +412,20 @@
       </div>
     }
 
-    <div class="table modal-table">
+    <div class="table-wrap modal-table">
       <table>
         <thead>
-        <tr>
-          <th>Ressource</th>
-          <th>Désignation</th>
-          <th>Description</th>
-          <th>Quantité</th>
-          <th>PU HT</th>
-          <th>Montant HT</th>
-          <th>TVA</th>
-          <th>TTC</th>
-          <th></th>
-        </tr>
+          <tr>
+            <th>Ressource</th>
+            <th>Désignation</th>
+            <th>Description</th>
+            <th>Qté</th>
+            <th>PU HT</th>
+            <th class="col-right">HT</th>
+            <th class="col-right">TVA</th>
+            <th class="col-right">TTC</th>
+            <th></th>
+          </tr>
         </thead>
         <tbody>
           @for (line of preview.lines; track line.designation + line.name) {
@@ -273,27 +439,27 @@
                 </select>
               </td>
               <td>
-                <input type="text" [value]="line.designation || line.name" (input)="updatePreviewLine($index, { designation: $any($event.target).value })" />
+                <input type="text" [value]="line.designation || line.name"
+                  (input)="updatePreviewLine($index, { designation: $any($event.target).value })" />
               </td>
               <td>
-                <input type="text" [value]="line.description || ''" (input)="updatePreviewLine($index, { description: $any($event.target).value })" />
+                <input type="text" [value]="line.description || ''"
+                  (input)="updatePreviewLine($index, { description: $any($event.target).value })" />
               </td>
               <td>
-                <input type="number" min="1" [value]="line.quantity" (input)="updatePreviewLine($index, { quantity: $any($event.target).value })" />
+                <input type="number" min="1" [value]="line.quantity"
+                  (input)="updatePreviewLine($index, { quantity: $any($event.target).value })" />
               </td>
               <td>
-                <input type="number" min="0" step="0.01" [value]="line.unitPrice" (input)="updatePreviewLine($index, { unitPrice: $any($event.target).value })" />
+                <input type="number" min="0" step="0.01" [value]="line.unitPrice"
+                  (input)="updatePreviewLine($index, { unitPrice: $any($event.target).value })" />
               </td>
-              <td>{{ line.totalHt ?? line.total | number:'1.2-2' }}</td>
-              <td>{{ line.totalTva ?? 0 | number:'1.2-2' }}</td>
-              <td>{{ line.totalTtc ?? 0 | number:'1.2-2' }}</td>
+              <td class="col-right">{{ line.totalHt ?? line.total | number:'1.2-2' }}</td>
+              <td class="col-right">{{ line.totalTva ?? 0 | number:'1.2-2' }}</td>
+              <td class="col-right">{{ line.totalTtc ?? 0 | number:'1.2-2' }}</td>
               <td>
-                <button
-                  class="btn-remove-preview-line"
-                  type="button"
-                  title="Supprimer cette ligne"
-                  (click)="removePreviewLine($index)"
-                >
+                <button class="btn-remove-preview-line" type="button" title="Supprimer cette ligne"
+                  (click)="removePreviewLine($index)">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
@@ -304,15 +470,17 @@
     </div>
 
     <div class="modal-actions">
-      <span class="pill">Statut: {{ preview.status }}</span>
-      <span class="pill">Montant: {{ formatAmount(preview.amount) }}</span>
-      <span class="pill">Total TVA: {{ formatAmount(importTotalTva()) }}</span>
+      <span class="pill">Statut : {{ preview.status }}</span>
+      <span class="pill">HT : {{ formatAmount(preview.amount) }}</span>
+      <span class="pill">TVA : {{ formatAmount(importTotalTva()) }}</span>
       <button
         class="btn-primary"
         type="button"
         [disabled]="importLoading() || preview.lines.length === 0"
         (click)="confirmImport()"
-      >Valider la commande</button>
+      >
+        <i class="bi bi-check2-circle"></i> Valider la commande
+      </button>
     </div>
   </div>
 }

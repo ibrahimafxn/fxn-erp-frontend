@@ -22,6 +22,7 @@ export type Order = {
   client: string;
   date: string;
   status: string;
+  statusCode?: 'IMPORTABLE' | 'CANCELED' | 'UNKNOWN';
   amount: number;
   tvaAmount?: number;
   deliveryFee?: number;

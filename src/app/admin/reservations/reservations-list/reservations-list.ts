@@ -36,7 +36,8 @@ export class ReservationsList {
   private datePipe = inject(DatePipe);
 
   readonly loading = this.movementService.loading;
-  readonly error = this.movementService.error;
+  private readonly exportError = signal<HttpErrorResponse | null>(null);
+  readonly error = computed(() => this.movementService.error() || this.exportError());
   readonly result: Signal<MovementListResult | null> = this.movementService.result;
 
   private readonly pag = new PaginationState();
@@ -137,7 +138,7 @@ export class ReservationsList {
       toDate: dates.toDate
     }).subscribe({
       next: (blob) => downloadBlob(blob, `attributions-consommables-${new Date().toISOString().slice(0, 10)}.csv`),
-      error: () => {}
+      error: (err: HttpErrorResponse) => this.exportError.set(err)
     });
   }
 
@@ -156,7 +157,7 @@ export class ReservationsList {
       toDate: dates.toDate
     }).subscribe({
       next: (blob) => downloadBlob(blob, `attributions-consommables-${new Date().toISOString().slice(0, 10)}.pdf`),
-      error: () => {}
+      error: (err: HttpErrorResponse) => this.exportError.set(err)
     });
   }
 

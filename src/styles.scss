@@ -201,3 +201,128 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
   border-color: var(--fxn-primary-border);
   color: var(--fxn-text);
 }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+body.platform-ios {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body.platform-android {
+  text-rendering: optimizeLegibility;
+}
+
+body.theme-technicien {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.platform-ios input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+body.platform-ios select,
+body.platform-ios textarea {
+  font-size: 16px !important;
+}
+
+body.theme-technicien :where(
+  .page-header,
+  .card,
+  .panel,
+  .state,
+  .kpi-section,
+  .import-section,
+  .equipment-section,
+  .osiris-alert,
+  .form-card,
+  .list-card,
+  .toolbar,
+  .pager,
+  .history-filters,
+  .search,
+  .request-panel,
+  .benefit-card
+) {
+  min-width: 0;
+}
+
+body.theme-technicien :where(
+  .kpi-grid > *,
+  .import-grid > *,
+  .action-grid > *,
+  .equip-grid > *,
+  .form-summary > *,
+  .benefit-kpis > *,
+  .prestations-list > *,
+  .history-list > *,
+  .charges-list > *,
+  .supply-list > *,
+  .intervention-list > *,
+  .absence-list > *,
+  .docs-list > *,
+  .osiris-alert-list > *,
+  .table tbody tr > *
+) {
+  min-width: 0;
+}
+
+body.theme-technicien :where(
+  .page-header h1,
+  .page-header h2,
+  .page-title,
+  .subtitle,
+  .kpi-title,
+  .kpi-sub,
+  .kpi-value,
+  .summary-label,
+  .summary-value,
+  .count-label,
+  .benefit-kpis .value,
+  .import-card .label,
+  .import-card .value,
+  .action-title,
+  .action-subtitle,
+  .equip-type,
+  .equip-code,
+  .doc-type,
+  .doc-detail,
+  .doc-expiry,
+  .history-meta,
+  .history-note,
+  .charge-month,
+  .charge-note,
+  .supply-meta,
+  .supply-note,
+  .intervention-meta,
+  .intervention-type,
+  .detail-label,
+  .detail-value,
+  .empty-hint,
+  .bpu-title,
+  .bpu-sub,
+  .bpu-error,
+  .osiris-alert-subtitle,
+  .report-badge,
+  .equip-total-badge,
+  .total-badge,
+  .pager-label,
+  .pager-range,
+  .status,
+  .badge,
+  .status-pill
+) {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+body.theme-technicien .table td,
+body.theme-technicien .table th {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}

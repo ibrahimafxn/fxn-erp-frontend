@@ -150,7 +150,7 @@
 /* 2-col card grid — pill = header, input = body */
 .technician-reports .prestations-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -608,11 +608,11 @@ body.theme-default .technician-reports thead th {
   }
 
   .technician-reports .report-form {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .technician-reports .prestations-list {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .technician-reports .form-summary {
@@ -620,7 +620,7 @@ body.theme-default .technician-reports thead th {
   }
 
   .technician-reports .history-filters {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .technician-reports .history-filters .actions {
@@ -752,7 +752,7 @@ body.theme-default .technician-reports thead th {
   }
 
   .technician-reports .history-filters {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .technician-reports .history-filters .actions {

@@ -929,7 +929,7 @@ export class TechnicianInterventions {
   private isSuccessfulClosedItem(item: InterventionItem): boolean {
     const statut = this.normalizeToken(item.statut);
     const isCancelled = statut.includes('ANNULE');
-    const isFailure = statut.includes('ECHEC') || statut.includes('FAIL');
+    const isFailure = statut.includes('ECHEC');
     return this.isClosedTerminated(item.statut) && !isCancelled && !isFailure;
   }
 

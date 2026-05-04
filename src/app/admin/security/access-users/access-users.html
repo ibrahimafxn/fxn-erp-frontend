@@ -218,12 +218,11 @@
   <!-- Confirm activation -->
   <app-confirm-delete-modal
     [open]="enableOpen()"
-    entityLabel="l’accès de connexion"
-    [entityName]="pendingEnableUser() ? userLabel(pendingEnableUser()!) : ''"
-    [entityId]="pendingEnableUser()?._id ?? null"
+    [question]="enableQuestion(pendingEnableUser())"
     dangerHint="L’utilisateur pourra se connecter dès que le mot de passe est défini."
     cancelText="Annuler"
-    confirmText="Continuer"
+    confirmText="Activer"
+    confirmIcon="bi bi-person-check"
     (cancel)="closeEnable()"
     (confirm)="confirmEnable()"
   ></app-confirm-delete-modal>
@@ -231,12 +230,11 @@
   <!-- Confirm reset MDP -->
   <app-confirm-delete-modal
     [open]="resetOpen()"
-    entityLabel="le mot de passe"
-    [entityName]="pendingResetUser() ? userLabel(pendingResetUser()!) : ''"
-    [entityId]="pendingResetUser()?._id ?? null"
+    [question]="resetQuestion(pendingResetUser())"
     dangerHint="Un nouveau mot de passe sera défini pour cet utilisateur."
     cancelText="Annuler"
-    confirmText="Continuer"
+    confirmText="Réinitialiser"
+    confirmIcon="bi bi-key"
     (cancel)="closeReset()"
     (confirm)="confirmReset()"
   ></app-confirm-delete-modal>

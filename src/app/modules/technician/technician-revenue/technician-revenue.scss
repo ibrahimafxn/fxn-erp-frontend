@@ -126,7 +126,7 @@
 /* KPI grid: 3 colonnes côte à côte sur mobile */
 .technician-revenue .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
   gap: 0.5rem;
 }
 
@@ -183,7 +183,8 @@
   font-weight: 800;
   color: rgba(0, 0, 0, 0.85);
   line-height: 1.1;
-  word-break: break-all;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 /* Section hebdomadaire — fond sombre → textes blancs */

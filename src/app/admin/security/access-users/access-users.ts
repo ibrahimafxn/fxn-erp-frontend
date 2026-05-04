@@ -166,6 +166,16 @@ export class AccessUsers {
     return formatPersonName(u.firstName ?? '', u.lastName ?? '') || u.email || u._id;
   }
 
+  enableQuestion(u: User | null): string {
+    if (!u) return '';
+    return `Voulez-vous vraiment activer l’accès de connexion de ${this.userLabel(u)} ?`;
+  }
+
+  resetQuestion(u: User | null): string {
+    if (!u) return '';
+    return `Voulez-vous vraiment réinitialiser le mot de passe de ${this.userLabel(u)} ?`;
+  }
+
   depotLabel(u: User): string {
     const d: any = (u as any).idDepot;
     if (!d) return '—';

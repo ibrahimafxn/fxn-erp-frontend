@@ -249,13 +249,26 @@
             <option value="false">Non</option>
           </select>
         </div>
-        <div class="filter-row">
+        <div class="filter-row check-voisin-row">
           <label class="filter-label">Check Voisin :</label>
-          <select class="filter-input" formControlName="checkVoisin">
-            <option value="">---</option>
-            <option value="true">Oui</option>
-            <option value="false">Non</option>
-          </select>
+          <details class="check-voisin-dropdown">
+            <summary class="filter-input check-voisin-summary">
+              <span class="check-voisin-summary-text">{{ checkVoisinSummaryText() }}</span>
+              <i class="bi bi-chevron-down check-voisin-caret" aria-hidden="true"></i>
+            </summary>
+            <div class="check-voisin-panel">
+              @for (option of checkVoisinOptions(); track option.value) {
+                <label class="check-voisin-option">
+                  <input
+                    type="checkbox"
+                    [checked]="isCheckVoisinSelected(option.value)"
+                    (change)="toggleCheckVoisin(option.value, $event)"
+                  />
+                  <span>{{ option.label }}</span>
+                </label>
+              }
+            </div>
+          </details>
         </div>
         <div class="filter-row">
           <label class="filter-label">Reco =&gt; racc :</label>

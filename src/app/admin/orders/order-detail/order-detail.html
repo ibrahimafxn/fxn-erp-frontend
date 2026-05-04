@@ -1,147 +1,189 @@
 <section class="order-detail">
+
+  <!-- ─── HEADER ──────────────────────────────────────────────────────────────── -->
   <header class="page-header">
-    <div>
-      <h1>Détail de la commande</h1>
-      <p class="subtitle">Informations principales de la commande.</p>
+    <div class="page-title-wrap">
+      <h1>
+        Commande
+        @if (order(); as o) {
+          <span class="ref-chip">{{ o.reference }}</span>
+        }
+      </h1>
+      <p class="subtitle">{{ order()?.client || '—' }}</p>
     </div>
     <div class="header-actions">
-      <button class="btn-outline btn-back" type="button" (click)="backToList()">
-        <i class="bi bi-arrow-left"></i>
-        Retour
+      <button class="btn-outline" type="button" (click)="backToList()">
+        <i class="bi bi-arrow-left"></i> Retour
       </button>
+      @if (!alreadyImported()) {
+        <button class="btn-outline" type="button" (click)="editOrder()">
+          <i class="bi bi-pencil"></i> Modifier
+        </button>
+      }
+      @if (pdfUrl(order())) {
+        <a class="btn-outline" [href]="pdfUrl(order())" target="_blank" rel="noopener">
+          <i class="bi bi-file-earmark-pdf"></i> Facture PDF
+        </a>
+      }
     </div>
   </header>
 
+  <!-- ─── LOADING / ERROR ──────────────────────────────────────────────────────── -->
   @if (loading()) {
-    <div class="state loading card">Chargement...</div>
+    <div class="state loading card">
+      <i class="bi bi-hourglass-split"></i> Chargement…
+    </div>
   } @else if (error()) {
-    <div class="state error card">{{ error() }}</div>
-  } @else if (!order()) {
-    <div class="state empty card">Aucune donnee.</div>
-  } @else {
-    <article class="card">
-      <h2 class="section-title"><span class="material-icons notranslate">receipt_long</span>Commande</h2>
-      <div class="grid">
-        <div>
-          <div class="label">Référence</div>
-          <div class="value">{{ order()?.reference }}</div>
+    <div class="state error card">
+      <i class="bi bi-exclamation-triangle"></i> {{ error() }}
+    </div>
+  } @else if (order(); as o) {
+
+    <!-- ─── STATUS BANNER ─────────────────────────────────────────────────────── -->
+    @if (alreadyImported()) {
+      <div class="status-banner banner-delivered">
+        <i class="bi bi-check-circle-fill banner-icon"></i>
+        <div class="banner-body">
+          <span class="banner-title">Commande réceptionnée — stock mis à jour</span>
+          <span class="banner-sub">
+            Importée le {{ o.importedToDepotAt | date:'dd/MM/yyyy à HH:mm' }}
+            · Dépôt : <strong>{{ depotNameById(o.importedToDepotId) }}</strong>
+          </span>
         </div>
-        <div>
-          <div class="label">Fournisseur</div>
-          <div class="value">{{ order()?.client }}</div>
+        <span class="status-badge" [ngClass]="statusBadgeClass(o.status)">{{ o.status }}</span>
+      </div>
+    } @else if (isImportable()) {
+      <div class="status-banner banner-importable">
+        <i class="bi bi-inbox-fill banner-icon"></i>
+        <div class="banner-body">
+          <span class="banner-title">En attente de réception dépôt</span>
+          <span class="banner-sub">Cette commande peut être importée dans un dépôt pour alimenter le stock.</span>
         </div>
-        <div>
-          <div class="label">Date</div>
-          <div class="value">{{ order()?.date | date:'dd/MM/yyyy HH:mm' }}</div>
-        </div>
-        <div>
-          <div class="label">Statut</div>
-          <div class="value">{{ order()?.status }}</div>
-        </div>
-        <div>
-          <div class="label">Montant</div>
-          <div class="value">{{ formatCurrency(order()?.amount) }}</div>
-        </div>
-        <div>
-          <div class="label">Frais de livraison</div>
-          <div class="value">{{ formatCurrency(order()?.deliveryFee ?? 0) }}</div>
-        </div>
-        <div>
-          <div class="label">Facture PDF</div>
-          @if (pdfUrl(order())) {
-            <a class="btn-outline" [href]="pdfUrl(order())" target="_blank" rel="noopener">Ouvrir</a>
-          } @else {
-            <div class="value">—</div>
+        <span class="status-badge" [ngClass]="statusBadgeClass(o.status)">{{ o.status }}</span>
+      </div>
+    }
+
+    <!-- ─── INFO + FINANCE ROW ───────────────────────────────────────────────── -->
+    <div class="two-col-grid">
+
+      <!-- Info card -->
+      <article class="card">
+        <h2 class="section-title"><i class="bi bi-card-text"></i> Informations</h2>
+        <dl class="info-grid">
+          <div class="info-item">
+            <dt>Référence</dt>
+            <dd class="bold">{{ o.reference }}</dd>
+          </div>
+          <div class="info-item">
+            <dt>Fournisseur</dt>
+            <dd>{{ o.client }}</dd>
+          </div>
+          <div class="info-item">
+            <dt>Date commande</dt>
+            <dd>{{ o.date | date:'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div class="info-item">
+            <dt>Statut</dt>
+            <dd>
+              <span class="status-badge" [ngClass]="statusBadgeClass(o.status)">
+                {{ o.status }}
+              </span>
+            </dd>
+          </div>
+          @if (alreadyImported()) {
+            <div class="info-item">
+              <dt>Importée le</dt>
+              <dd>{{ o.importedToDepotAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+            </div>
+            <div class="info-item">
+              <dt>Dépôt de réception</dt>
+              <dd class="bold">{{ depotNameById(o.importedToDepotId) }}</dd>
+            </div>
           }
-        </div>
-        <div class="full">
-          <div class="label">Notes</div>
-          <div class="value">{{ order()?.notes || '—' }}</div>
-        </div>
-      </div>
-    </article>
+          @if (o.notes) {
+            <div class="info-item full">
+              <dt>Notes</dt>
+              <dd>{{ o.notes }}</dd>
+            </div>
+          }
+        </dl>
+      </article>
 
+      <!-- Finance card -->
+      <article class="card">
+        <h2 class="section-title"><i class="bi bi-cash-stack"></i> Résumé financier</h2>
+        <div class="finance-grid">
+          <div class="finance-item">
+            <span class="fi-label">Total HT</span>
+            <span class="fi-value">{{ formatCurrency(orderHt()) }}</span>
+          </div>
+          <div class="finance-item">
+            <span class="fi-label">TVA (20 %)</span>
+            <span class="fi-value fi-tva">{{ formatCurrency(orderTva()) }}</span>
+          </div>
+          <div class="finance-item">
+            <span class="fi-label">Frais de livraison</span>
+            <span class="fi-value fi-delivery">
+              @if (orderDelivery() > 0) { {{ formatCurrency(orderDelivery()) }} }
+              @else { <span class="muted">—</span> }
+            </span>
+          </div>
+          <div class="finance-item finance-total">
+            <span class="fi-label">Total TTC</span>
+            <span class="fi-value fi-ttc">{{ formatCurrency(orderTotalDue()) }}</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- ─── ARTICLES CARD ─────────────────────────────────────────────────────── -->
     <article class="card">
-      <h2 class="section-title"><span class="material-icons notranslate">local_shipping</span>Importer dans un dépôt</h2>
-      <p class="subtitle">Ajoute les articles de la commande dans le stock du dépôt sélectionné.</p>
+      <h2 class="section-title">
+        <i class="bi bi-list-ul"></i> Articles commandés
+        <span class="count-chip">{{ (o.lines || []).length }}</span>
+      </h2>
 
-      <div class="actions">
-        <label>
-          Dépôt
-          <select [value]="selectedDepotId()" (change)="onDepotSelect($event)">
-            <option value="">Sélectionner</option>
-            @for (d of depots(); track d._id) {
-              <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
-            }
-          </select>
-        </label>
-        <button
-          class="btn-primary"
-          type="button"
-          (click)="openImportModal()"
-          [disabled]="importLoading() || !selectedDepotId() || !isImportable() || !!order()?.importedToDepotAt || (order()?.lines || []).length === 0"
-        ><i class="bi bi-upload"></i> 
-          @if (importLoading()) { Import… } @else { Importer au dépôt }
-        </button>
-      </div>
-
-      @if (order()?.importedToDepotAt) {
-        <div class="state ok">
-          Déjà importée le {{ order()?.importedToDepotAt | date:'dd/MM/yyyy HH:mm' }}
-          vers {{ depotNameById(order()?.importedToDepotId || '') }}.
-        </div>
-      } @else if (!isImportable()) {
-        <div class="state error">Statut commande non importable.</div>
-      }
-
-      @if (importError()) {
-        <div class="state error">{{ importError() }}</div>
-      } @else if (importResult()) {
-        <div class="state ok">{{ importResult() }}</div>
-      }
-      @if (deleteLineError()) {
-        <div class="state error">{{ deleteLineError() }}</div>
-      }
-    </article>
-
-    <article class="card">
-      <h2 class="section-title"><span class="material-icons notranslate">list_alt</span>Articles</h2>
-      @if ((order()?.lines || []).length === 0) {
-        <div class="state empty">Aucun article.</div>
+      @if ((o.lines || []).length === 0) {
+        <div class="state empty"><i class="bi bi-inbox"></i> Aucun article.</div>
       } @else {
-        <div class="table">
+        <div class="table-wrap">
           <table>
             <thead>
-            <tr>
-              <th>Article</th>
-              <th>Type</th>
-              <th>Quantité</th>
-              <th>Prix unitaire</th>
-              <th>Total</th>
-              @if (!order()?.importedToDepotAt) {
-                <th></th>
-              }
-            </tr>
+              <tr>
+                <th>Article</th>
+                <th>Type</th>
+                <th class="col-center">Quantité</th>
+                <th class="col-right">PU HT</th>
+                <th class="col-right">TVA</th>
+                <th class="col-right">Total HT</th>
+                @if (!alreadyImported()) {
+                  <th></th>
+                }
+              </tr>
             </thead>
             <tbody>
-              @for (line of (order()?.lines || []); track line._id ?? $index) {
+              @for (line of (o.lines || []); track line._id ?? $index) {
                 <tr>
-                  <td>{{ line.name }}</td>
-                  <td>{{ line.resourceType === 'MATERIAL' ? 'Matériel' : 'Consommable' }}</td>
-                  <td>{{ line.quantity }}</td>
-                  <td>{{ formatCurrency(line.unitPrice) }}</td>
-                  <td>{{ formatCurrency(line.total ?? (line.quantity * line.unitPrice)) }}</td>
-                  @if (!order()?.importedToDepotAt) {
+                  <td class="line-name">{{ line.name }}</td>
+                  <td>
+                    <span class="type-chip" [class.chip-material]="line.resourceType === 'MATERIAL'">
+                      {{ resourceTypeLabel(line.resourceType) }}
+                    </span>
+                  </td>
+                  <td class="col-center qty-cell">{{ line.quantity }}</td>
+                  <td class="col-right">{{ formatCurrency(line.unitPrice) }}</td>
+                  <td class="col-right tva-col">{{ formatCurrency(lineTva(line)) }}</td>
+                  <td class="col-right bold">{{ formatCurrency(line.total ?? (line.quantity * line.unitPrice)) }}</td>
+                  @if (!alreadyImported()) {
                     <td class="td-action">
                       <button
-                        class="btn-outline danger btn-remove-line"
+                        class="btn-remove-line"
                         type="button"
                         [disabled]="deletingLine()"
                         (click)="openDeleteLineModal(line._id!)"
-                        title="Supprimer la ligne"
-                      >
-                        <i class="bi bi-trash"></i>
-                      </button>
+                        title="Supprimer cette ligne"
+                      ><i class="bi bi-trash"></i></button>
                     </td>
                   }
                 </tr>
@@ -149,30 +191,221 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Lines totals footer -->
         <div class="lines-total">
-          <div class="label">Total des lignes</div>
-          <div class="value">{{ formatCurrency(linesTotal(order()?.lines || [])) }}</div>
+          <div class="lt-item">
+            <span class="lt-label">Total HT</span>
+            <span class="lt-value">{{ formatCurrency(orderHt()) }}</span>
+          </div>
+          <div class="lt-sep"></div>
+          <div class="lt-item">
+            <span class="lt-label">TVA</span>
+            <span class="lt-value lt-tva">{{ formatCurrency(orderTva()) }}</span>
+          </div>
+          <div class="lt-sep"></div>
+          @if (orderDelivery() > 0) {
+            <div class="lt-item">
+              <span class="lt-label">Livraison</span>
+              <span class="lt-value lt-delivery">{{ formatCurrency(orderDelivery()) }}</span>
+            </div>
+            <div class="lt-sep"></div>
+          }
+          <div class="lt-item lt-item-ttc">
+            <span class="lt-label">Total TTC</span>
+            <span class="lt-value lt-ttc">{{ formatCurrency(orderTotalDue()) }}</span>
+          </div>
+        </div>
+      }
+
+      @if (deleteLineError()) {
+        <div class="state error" style="margin-top:10px">
+          <i class="bi bi-exclamation-triangle"></i> {{ deleteLineError() }}
         </div>
       }
     </article>
+
+    <!-- ─── IMPORT DÉPÔT CARD ─────────────────────────────────────────────────── -->
+    <article class="card">
+      <h2 class="section-title"><i class="bi bi-box-arrow-in-down"></i> Réception en dépôt</h2>
+      <p class="subtitle">Importer les articles dans le stock du dépôt — le statut passera à <strong>Livrée</strong>.</p>
+
+      @if (alreadyImported()) {
+        <div class="import-done-banner">
+          <i class="bi bi-check2-circle import-done-icon"></i>
+          <div class="import-done-text">
+            <div class="import-done-title">Articles reçus et stock mis à jour</div>
+            <div class="import-done-sub">
+              Dépôt : <strong>{{ depotNameById(o.importedToDepotId) }}</strong>
+              · Le {{ o.importedToDepotAt | date:'dd/MM/yyyy à HH:mm' }}
+            </div>
+          </div>
+        </div>
+
+      } @else if (isImportable()) {
+        <div class="import-form">
+          <label class="import-depot-label">
+            <span class="import-depot-text">Dépôt de destination</span>
+            <select [value]="selectedDepotId()" (change)="onDepotSelect($event)">
+              <option value="">— Sélectionner un dépôt —</option>
+              @for (d of depots(); track d._id) {
+                <option [value]="d._id">{{ depotOptionLabel(d) }}</option>
+              }
+            </select>
+          </label>
+
+          @if (selectedDepotId() && (o.lines || []).length > 0) {
+            <div class="import-preview">
+              <div class="import-preview-header">
+                <i class="bi bi-eye"></i>
+                <span>Aperçu : {{ (o.lines || []).length }} article{{ (o.lines || []).length > 1 ? 's' : '' }} seront ajoutés au stock</span>
+              </div>
+              <ul class="import-preview-list">
+                @for (line of (o.lines || []); track line._id ?? $index) {
+                  <li class="preview-line">
+                    <span class="type-chip" [class.chip-material]="line.resourceType === 'MATERIAL'">
+                      {{ resourceTypeLabel(line.resourceType) }}
+                    </span>
+                    <span class="preview-name">{{ line.name }}</span>
+                    <span class="preview-qty">× {{ line.quantity }}</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          <button
+            class="btn-primary btn-import"
+            type="button"
+            [disabled]="importLoading() || !selectedDepotId() || (o.lines || []).length === 0"
+            (click)="openImportModal()"
+          >
+            @if (importLoading()) {
+              <i class="bi bi-hourglass-split"></i> Import en cours…
+            } @else {
+              <i class="bi bi-box-arrow-in-down"></i> Réceptionner dans ce dépôt
+            }
+          </button>
+        </div>
+
+      } @else {
+        <div class="state-inline error">
+          <i class="bi bi-exclamation-triangle"></i>
+          Statut non importable : <strong>{{ o.status }}</strong>
+        </div>
+      }
+
+      @if (importError()) {
+        <div class="state error" style="margin-top:10px">
+          <i class="bi bi-exclamation-triangle"></i> {{ importError() }}
+        </div>
+      }
+      @if (importResult()) {
+        <div class="state ok" style="margin-top:10px">
+          <i class="bi bi-check-circle"></i> {{ importResult() }}
+        </div>
+      }
+    </article>
+
+    <!-- ─── TRAÇABILITÉ CARD ──────────────────────────────────────────────────── -->
+    @if (alreadyImported()) {
+      <article class="card">
+        <h2 class="section-title">
+          <i class="bi bi-clock-history"></i> Traçabilité des mouvements
+          @if (importMovements().length > 0) {
+            <span class="count-chip">{{ importMovements().length }}</span>
+          }
+        </h2>
+        <p class="subtitle">
+          Mouvements de stock générés lors de la réception dans le dépôt
+          <strong>{{ depotNameById(o.importedToDepotId) }}</strong>
+          le {{ o.importedToDepotAt | date:'dd/MM/yyyy à HH:mm' }}.
+        </p>
+
+        @if (movementsLoading()) {
+          <div class="state loading">
+            <i class="bi bi-hourglass-split"></i> Chargement des mouvements…
+          </div>
+        } @else if (movementsError()) {
+          <div class="state error">
+            <i class="bi bi-exclamation-triangle"></i> {{ movementsError() }}
+          </div>
+        } @else if (importMovements().length === 0) {
+          <div class="state empty">
+            <i class="bi bi-inbox"></i> Aucun mouvement enregistré pour cette commande.
+          </div>
+        } @else {
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Article</th>
+                  <th>Type</th>
+                  <th class="col-center">Quantité</th>
+                  <th>Action</th>
+                  <th>Référence</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (mv of importMovements(); track mv._id) {
+                  <tr>
+                    <td class="mv-date-cell">
+                      <span class="mv-date">{{ mv.createdAt | date:'dd/MM/yyyy' }}</span>
+                      <span class="date-sub">{{ mv.createdAt | date:'HH:mm' }}</span>
+                    </td>
+                    <td class="mv-resource">{{ mv.resourceLabel || '—' }}</td>
+                    <td>
+                      <span class="type-chip" [class.chip-material]="mv.resourceType === 'MATERIAL'">
+                        {{ resourceTypeLabel(mv.resourceType) }}
+                      </span>
+                    </td>
+                    <td class="col-center">
+                      <span class="qty-badge">+{{ mv.quantity }} {{ mv.unit }}</span>
+                    </td>
+                    <td>
+                      <span class="action-badge" [ngClass]="'action-' + mv.action.toLowerCase()">
+                        {{ movementActionLabel(mv.action) }}
+                      </span>
+                    </td>
+                    <td class="mv-note">{{ mv.note || '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="trace-summary">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ importMovements().length }} mouvement{{ importMovements().length > 1 ? 's' : '' }}
+            enregistré{{ importMovements().length > 1 ? 's' : '' }} —
+            Commande <strong>{{ o.reference }}</strong> ·
+            Dépôt <strong>{{ depotNameById(o.importedToDepotId) }}</strong>
+          </div>
+        }
+      </article>
+    }
+
   }
 </section>
 
+<!-- ─── IMPORT CONFIRM MODAL ─────────────────────────────────────────────────── -->
 <app-confirm-delete-modal
   [open]="importConfirmOpen()"
-  entityLabel="commande"
+  entityLabel="la commande"
   [entityName]="importEntityName()"
-  dangerHint="Cette action importera les articles de la commande dans le dépôt sélectionné."
+  dangerHint="Les articles seront ajoutés au stock du dépôt et le statut passera à Livrée."
   cancelText="Annuler"
-  confirmText="Importer"
+  confirmText="Réceptionner"
   [confirming]="importLoading()"
   (cancel)="cancelImportModal()"
   (confirm)="confirmImport()"
 ></app-confirm-delete-modal>
 
+<!-- ─── DELETE LINE MODAL ─────────────────────────────────────────────────────── -->
 <app-confirm-delete-modal
   [open]="deleteLineConfirmOpen()"
-  entityLabel="ligne"
+  entityLabel="la ligne"
   [entityName]="deleteLineEntityName()"
   dangerHint="La ligne sera supprimée de la commande et le montant HT recalculé."
   cancelText="Annuler"

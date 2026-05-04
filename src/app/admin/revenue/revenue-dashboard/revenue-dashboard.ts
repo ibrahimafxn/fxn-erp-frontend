@@ -456,20 +456,17 @@ export class RevenueDashboard {
       this.selectedAttachments.set([]);
       return;
     }
-    if (files.length > this.maxAttachmentCount) {
-      this.fileError.set(`Maximum ${this.maxAttachmentCount} fichiers.`);
-    }
     const filtered = files.slice(0, this.maxAttachmentCount).filter((file) => {
       if (!this.isAllowedAttachment(file)) return false;
       return file.size <= this.maxAttachmentSize;
-
     });
-    const oversized = files.find((file) => file.size > this.maxAttachmentSize);
-    if (oversized) {
-      this.fileError.set(`"${oversized.name}" dépasse 10 Mo.`);
-    }
     const invalid = files.find((file) => !this.isAllowedAttachment(file));
-    if (invalid) {
+    const oversized = files.find((file) => file.size > this.maxAttachmentSize);
+    if (files.length > this.maxAttachmentCount) {
+      this.fileError.set(`Maximum ${this.maxAttachmentCount} fichiers.`);
+    } else if (oversized) {
+      this.fileError.set(`"${oversized.name}" dépasse 10 Mo.`);
+    } else if (invalid) {
       this.fileError.set(`"${invalid.name}" n'est pas un format autorisé.`);
     }
     this.selectedAttachments.set(filtered);

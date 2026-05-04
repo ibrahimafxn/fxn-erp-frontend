@@ -232,7 +232,7 @@ export class VehicleBreakdowns extends DetailBack {
     if (!this.id) return;
     this.svc.getById(this.id).subscribe({
       next: (v) => this.vehicle.set(v),
-      error: () => {}
+      error: (err: HttpErrorResponse) => this.error.set(apiError(err, 'Erreur chargement véhicule'))
     });
   }
 

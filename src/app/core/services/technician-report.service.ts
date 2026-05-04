@@ -81,6 +81,7 @@ export class TechnicianReportService {
     toDate?: string;
     technicianId?: string;
     depotId?: string;
+    prestationType?: string;
   }): Observable<{ success: boolean; data: TechnicianReportList }> {
     let httpParams = new HttpParams();
     if (params?.page) httpParams = httpParams.set('page', String(params.page));
@@ -90,6 +91,7 @@ export class TechnicianReportService {
     if (params?.toDate) httpParams = httpParams.set('to', params.toDate);
     if (params?.technicianId) httpParams = httpParams.set('technician', params.technicianId);
     if (params?.depotId) httpParams = httpParams.set('depot', params.depotId);
+    if (params?.prestationType) httpParams = httpParams.set('prestationType', params.prestationType);
     return this.http.get<{ success: boolean; data: TechnicianReportList }>(this.baseUrl, { params: httpParams });
   }
 
@@ -110,12 +112,14 @@ export class TechnicianReportService {
     toDate?: string;
     technicianId?: string;
     depotId?: string;
+    prestationType?: string;
   }): Observable<{ success: boolean; data: { totalAmount: number; count: number } }> {
     let httpParams = new HttpParams();
     if (params?.fromDate) httpParams = httpParams.set('from', params.fromDate);
     if (params?.toDate) httpParams = httpParams.set('to', params.toDate);
     if (params?.technicianId) httpParams = httpParams.set('technician', params.technicianId);
     if (params?.depotId) httpParams = httpParams.set('depot', params.depotId);
+    if (params?.prestationType) httpParams = httpParams.set('prestationType', params.prestationType);
     return this.http.get<{ success: boolean; data: { totalAmount: number; count: number } }>(
       `${this.baseUrl}/summary`,
       { params: httpParams }
@@ -126,11 +130,13 @@ export class TechnicianReportService {
     year?: number;
     technicianId?: string;
     depotId?: string;
+    prestationType?: string;
   }): Observable<{ success: boolean; data: { year: number; months: { month: string; totalAmount: number }[] } }> {
     let httpParams = new HttpParams();
     if (params?.year) httpParams = httpParams.set('year', String(params.year));
     if (params?.technicianId) httpParams = httpParams.set('technician', params.technicianId);
     if (params?.depotId) httpParams = httpParams.set('depot', params.depotId);
+    if (params?.prestationType) httpParams = httpParams.set('prestationType', params.prestationType);
     return this.http.get<{ success: boolean; data: { year: number; months: { month: string; totalAmount: number }[] } }>(
       `${this.baseUrl}/summary-by-month`,
       { params: httpParams }

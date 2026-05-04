@@ -134,6 +134,60 @@ export type InterventionSummaryResponse = InterventionSummary & {
   limit?: number;
 };
 
+export type InterventionPerformanceKpi = {
+  code: number;
+  type: string;
+  label: string;
+  objectiveOperator: '>' | '<';
+  objectiveValue: number;
+  objectivePrecision?: number;
+  malus: number;
+  pente: number;
+  bonus: number;
+  penteBonus: number;
+  numerator: number;
+  denominator: number;
+  rate: number | null;
+  ratePrecision?: number;
+  delta: number | null;
+  status: 'good' | 'warning' | 'danger' | 'neutral';
+  /** Impact malus calculé par pente : min(cap, |delta| / pente) */
+  appliedMalus: number;
+  /** Impact bonus calculé par pente : min(cap, |delta| / penteBonus) */
+  appliedBonus: number;
+  scope: string;
+  basis: string;
+};
+
+export type InterventionPerformanceSummary = {
+  period: {
+    fromDate: string;
+    toDate: string;
+    label: string;
+  };
+  totals: {
+    itemCount: number;
+    cancelledCount?: number;
+    totalMerged?: number;
+    fromDbCount?: number;
+    /** Exposition max (cap fixe) pour les KPIs hors objectif */
+    malusPotential: number;
+    /** Exposition max (cap fixe) pour les KPIs dans l'objectif */
+    bonusPotential: number;
+    netPotential: number;
+    /** Malus effectif calculé via la formule pente */
+    appliedMalus: number;
+    /** Bonus effectif calculé via la formule pente */
+    appliedBonus: number;
+    netApplied: number;
+    /** Plafond théorique absolu (tous KPIs au pire) */
+    maxMalusPotential: number;
+    /** Plafond théorique absolu (tous KPIs au mieux) */
+    maxBonusPotential: number;
+  };
+  items: InterventionPerformanceKpi[];
+};
+
 export type InterventionItem = {
   _id: string;
   numInter: string;
@@ -224,6 +278,10 @@ export type InterventionFilters = {
   flagBots: string[];
   provisionnings: string[];
   motifEchecs: string[];
+  checkVoisins?: string[];
+  creneaux?: string[];
+  transfoCables?: string[];
+  recoRaccs?: string[];
 };
 
 export type InterventionImportBatch = {
@@ -545,6 +603,11 @@ export type InterventionImportQuery = {
   limit?: number;
 };
 
+export type InterventionPerformanceQuery = {
+  fromDate?: string;
+  toDate?: string;
+};
+
 export type InterventionImportTicketQuery = {
   page?: number;
   limit?: number;
@@ -586,6 +649,23 @@ export class InterventionService {
       params,
       headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
     });
+  }
+
+  performanceKpis(
+    query: InterventionPerformanceQuery = {}
+  ): Observable<{ success: boolean; data: InterventionPerformanceSummary }> {
+    let params = new HttpParams();
+    if (query.fromDate) params = params.set('fromDate', query.fromDate);
+    if (query.toDate) params = params.set('toDate', query.toDate);
+    params = params.set('_ts', String(Date.now()));
+
+    return this.http.get<{ success: boolean; data: InterventionPerformanceSummary }>(
+      `${this.baseUrl}/performance-kpis`,
+      {
+        params,
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' }
+      }
+    );
   }
 
   exportCsv(query: InterventionSummaryQuery = {}): Observable<Blob> {

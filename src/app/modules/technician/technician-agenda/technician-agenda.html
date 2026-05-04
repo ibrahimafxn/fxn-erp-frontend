@@ -158,7 +158,7 @@
 <app-confirm-action-modal
   [open]="confirmUpdateOpen()"
   title="Confirmer la mise à jour"
-  description="Souhaitez-vous modifier cette demande d'absence ?"
+  message="Souhaitez-vous modifier cette demande d'absence ?"
   confirmText="Mettre à jour"
   confirmIcon="bi bi-check2"
   [confirming]="saving()"
@@ -166,15 +166,13 @@
   (confirm)="confirmUpdate()">
 </app-confirm-action-modal>
 
-<app-confirm-action-modal
+<app-confirm-delete-modal
   [open]="confirmDeleteOpen()"
-  title="Confirmer la suppression"
-  description="Souhaitez-vous supprimer cette demande ?"
-  confirmText="Supprimer"
-  confirmIcon="bi bi-trash"
+  entityLabel="la demande d'absence"
+  [entityName]="confirmDeleteTarget() ? absenceLabel(confirmDeleteTarget()!) : ''"
   [confirming]="deletingId() !== null"
   (cancel)="confirmDeleteOpen.set(false); confirmDeleteTarget.set(null)"
   (confirm)="confirmDelete()">
-</app-confirm-action-modal>
+</app-confirm-delete-modal>
 
 <app-technician-mobile-nav></app-technician-mobile-nav>

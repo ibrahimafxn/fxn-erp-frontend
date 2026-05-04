@@ -340,7 +340,7 @@ body.theme-default .technician-dashboard .kpi-header h2 {
 /* Import grid */
 .technician-dashboard .import-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -377,7 +377,7 @@ body.theme-default .technician-dashboard .kpi-header h2 {
 /* ── Action Grid ─────────────────────────────────────────── */
 .technician-dashboard .action-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -464,7 +464,7 @@ body.theme-default .technician-dashboard .kpi-header h2 {
 
 .technician-dashboard .equip-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -570,7 +570,7 @@ body.theme-default .technician-dashboard .action-subtitle {
 /* ── Responsive: 480px ───────────────────────────────────── */
 @media (min-width: 480px) {
   .technician-dashboard .kpi-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .technician-dashboard .kpi-card {

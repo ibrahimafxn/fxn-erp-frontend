@@ -8,13 +8,14 @@ import { AuthService } from '../../../core/services/auth.service';
 import { preferredPageSize } from '../../../core/utils/page-size';
 import { formatPageRange } from '../../../core/utils/pagination';
 import { ConfirmActionModal } from '../../../shared/components/dialog/confirm-action-modal/confirm-action-modal';
+import { ConfirmDeleteModal } from '../../../shared/components/dialog/confirm-delete-modal/confirm-delete-modal';
 import { TechnicianMobileNav } from '../technician-mobile-nav/technician-mobile-nav';
 
 @Component({
   standalone: true,
   selector: 'app-technician-agenda',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule, ConfirmActionModal, TechnicianMobileNav],
+  imports: [CommonModule, ReactiveFormsModule, ConfirmActionModal, ConfirmDeleteModal, TechnicianMobileNav],
   providers: [DatePipe],
   templateUrl: './technician-agenda.html',
   styleUrls: ['./technician-agenda.scss'],
@@ -258,6 +259,21 @@ export class TechnicianAgenda {
   formatDate(value?: string | null): string {
     if (!value) return '—';
     return this.datePipe.transform(value, 'dd/MM/yyyy') || '—';
+  }
+
+  absenceTypeLabel(type?: AbsenceType | null): string {
+    switch (type) {
+      case 'CONGE': return 'Congé';
+      case 'MALADIE': return 'Maladie';
+      case 'PERMISSION': return 'Permission';
+      case 'AUTRE':
+      default:
+        return 'Autre';
+    }
+  }
+
+  absenceLabel(absence: Absence): string {
+    return `${this.absenceTypeLabel(absence.type)} · ${this.formatDate(absence.startDate)} → ${this.formatDate(absence.endDate)}`;
   }
 
   private dateKeyFromValue(value: string | Date): string | undefined {

@@ -118,6 +118,14 @@ export class App implements AfterViewInit, OnDestroy {
     body.classList.add(themeClass);
   });
 
+  private readonly platformEffect = effect(() => {
+    this.routeUrl();
+
+    const body = this.document.body;
+    body.classList.remove('platform-ios', 'platform-android', 'platform-desktop');
+    body.classList.add(this.resolvePlatformClass());
+  });
+
   private readonly densityEffect = effect(() => {
     const body = this.document.body;
     const prefs = this.normalizePreferences(this.auth.user$()?.preferences);
@@ -276,6 +284,20 @@ export class App implements AfterViewInit, OnDestroy {
       default:
         return 'theme-default';
     }
+  }
+
+  private resolvePlatformClass(): string {
+    const win = this.document.defaultView;
+    const nav = win?.navigator;
+    const userAgent = (nav?.userAgent || '').toLowerCase();
+    const platform = (nav?.platform || '').toLowerCase();
+    const isIos =
+      /iphone|ipad|ipod/.test(userAgent) ||
+      (platform === 'macintel' && (nav?.maxTouchPoints || 0) > 1);
+
+    if (isIos) return 'platform-ios';
+    if (/android/.test(userAgent)) return 'platform-android';
+    return 'platform-desktop';
   }
 
   private isFullscreenAuthRoute(url: string): boolean {

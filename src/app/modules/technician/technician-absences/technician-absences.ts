@@ -224,7 +224,11 @@ export class TechnicianAbsences implements OnDestroy {
     const id = this.pendingDeleteId();
     if (!id) return '';
     const item = this.items().find((a) => a._id === id);
-    return item ? this.typeLabel(item.type) : '';
+    if (!item) return '';
+    const type = this.typeLabel(item.type);
+    const start = this.formatDate(item.startDate);
+    const end = this.formatDate(item.endDate);
+    return start && end ? `${type} · ${start} → ${end}` : type;
   }
 
   private notifyStatusChanges(prev: Absence[], next: Absence[]): void {

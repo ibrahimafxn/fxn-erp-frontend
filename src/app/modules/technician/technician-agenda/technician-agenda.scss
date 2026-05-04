@@ -349,11 +349,11 @@ body.theme-default .technician-agenda thead th {
 /* ── Responsive: 600px — Tablet ─────────────────────────── */
 @media (min-width: 600px) {
   .technician-agenda .form-card .request-form {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .technician-agenda .list-card .filters {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .technician-agenda .actions .btn-primary,
@@ -393,7 +393,7 @@ body.theme-default .technician-agenda thead th {
   }
 
   .technician-agenda .list-card .filters {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .technician-agenda .table {

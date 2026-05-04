@@ -97,7 +97,10 @@ export class AbsenceList {
         this.notif.beep('success');
         this.load();
       },
-      error: () => {},
+      error: (err: HttpErrorResponse) => {
+        this.error.set(this.extractError(err));
+        this.notif.beep('alert');
+      },
     });
   }
 
@@ -133,10 +136,12 @@ export class AbsenceList {
         this.notif.beep('alert');
         this.load();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.rejecting.set(false);
         this.confirmRejectOpen.set(false);
         this.pendingRejectId.set(null);
+        this.error.set(this.extractError(err));
+        this.notif.beep('alert');
       },
     });
   }

@@ -154,6 +154,10 @@ export class AppHeader {
     this.router.navigate([this.dashboardLink()]).then();
   }
 
+  goDepotDashboard(): void {
+    this.router.navigate(['/depot']).then();
+  }
+
   goProfile(): void {
     this.router.navigate(['/profile']);
   }

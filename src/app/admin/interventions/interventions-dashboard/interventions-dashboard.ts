@@ -970,7 +970,9 @@ export class InterventionsDashboard {
         }
         this.refreshCompare();
       },
-      error: () => {}
+      error: (err: HttpErrorResponse) => {
+        this.error.set(apiError(err, 'Erreur chargement factures'));
+      }
     });
   }
 
@@ -1687,7 +1689,9 @@ export class InterventionsDashboard {
       next: (res) => {
         this.filters.set(res.data);
       },
-      error: () => {}
+      error: (err: HttpErrorResponse) => {
+        this.error.set(apiError(err, 'Erreur chargement filtres'));
+      }
     });
   }
 

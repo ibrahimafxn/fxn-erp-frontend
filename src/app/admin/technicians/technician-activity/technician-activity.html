@@ -47,6 +47,15 @@
       }
 
       <label>
+        Type de prestations
+        <select formControlName="prestationType" (change)="applyFilters()">
+          @for (option of prestationTypeOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
         Du
         <input type="date" formControlName="fromDate" (change)="applyFilters()" />
       </label>
@@ -63,6 +72,9 @@
           Total de {{ summaryTotalCount() }} intervention(s) correspondant aux filtres
           @if (selectedBpuLabel()) {
             • BPU {{ selectedBpuLabel() }}
+          }
+          @if (filterForm.controls.prestationType.value) {
+            • Type de prestations {{ prestationTypeLabel(filterForm.controls.prestationType.value) }}
           }
         </span>
         @if (interventions().length > 0 && interventionTotal() > interventions().length) {

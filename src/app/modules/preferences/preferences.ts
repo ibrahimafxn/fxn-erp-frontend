@@ -141,15 +141,15 @@ export class Preferences implements OnInit {
         ];
       case Role.GESTION_DEPOT:
         return [...common,
-          { value: '/depot/dashboard',           label: 'Dashboard dépôt' },
-          { value: '/depot/attributions',        label: 'Attributions' },
+          { value: '/depot',                    label: 'Dashboard dépôt' },
+          { value: '/depot/attribution',        label: 'Attributions' },
           { value: '/depot/supply-requests',     label: 'Demandes de stock' }
         ];
       case Role.TECHNICIEN:
         return [...common,
-          { value: '/technician/dashboard',              label: 'Tableau de bord' },
-          { value: '/technician/agenda',                 label: 'Agenda' },
-          { value: '/technician/interventions-history',  label: 'Historique interventions' }
+          { value: '/technician',                    label: 'Tableau de bord' },
+          { value: '/technician/agenda',             label: 'Agenda' },
+          { value: '/technician/interventions',      label: 'Historique interventions' }
         ];
       default:
         return common;

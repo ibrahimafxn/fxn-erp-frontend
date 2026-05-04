@@ -4,11 +4,11 @@
       class="modal"
       role="dialog"
       aria-modal="true"
-      aria-label="Confirmation suppression"
+      [attr.aria-label]="dialogTitle()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
-        <div class="modal-title">{{ title() }}</div>
+        <div class="modal-title">{{ dialogTitle() }}</div>
 
         <button type="button" class="icon-btn" (click)="onCancel()" aria-label="Fermer">
           <i class="bi bi-x-lg"></i>
@@ -17,15 +17,10 @@
 
       <section class="modal-body">
         <p class="lead">
-          @if (question()) {
-            {{ question() }}
-          } @else {
-            Voulez-vous vraiment supprimer {{ entityLabel() }}
-            <span class="strong">{{ displayName() }}</span> ?
-          }
+          {{ dialogQuestion() }}
         </p>
 
-        <p class="hint">{{ dangerHint() }}</p>
+        <p class="hint">{{ dialogDangerHint() }}</p>
 
         @if (authorLabel()) {
           <div class="meta">
@@ -41,9 +36,9 @@
           {{ cancelText() }}
         </button>
 
-        <button type="button" class="btn-outline delete" title="Supprimer" (click)="onConfirm()" [disabled]="confirming()">
-          @if (confirmIcon()) { <i [class]="confirmIcon()"></i> }
-          @if (confirming()) { {{ confirmLoadingText() }} } @else { {{ confirmText() }} }
+        <button type="button" class="btn-outline delete" [attr.title]="dialogConfirmText()" (click)="onConfirm()" [disabled]="confirming()">
+          @if (dialogConfirmIcon()) { <i [class]="dialogConfirmIcon()"></i> }
+          @if (confirming()) { {{ dialogConfirmLoadingText() }} } @else { {{ dialogConfirmText() }} }
         </button>
       </footer>
     </div>
