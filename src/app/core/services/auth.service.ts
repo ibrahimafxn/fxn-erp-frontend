@@ -4,7 +4,7 @@ import {computed, inject, Injectable, signal} from '@angular/core';
 import {HttpClient, HttpErrorResponse} from '@angular/common/http';
 import {Router} from '@angular/router';
 import {Observable, of, ReplaySubject, throwError} from 'rxjs';
-import {catchError, finalize, map, shareReplay, switchMap, take, tap} from 'rxjs/operators';
+import {catchError, finalize, map, share, shareReplay, switchMap, take, tap} from 'rxjs/operators';
 import {environment} from '../../environments/environment';
 import {Role} from '../models/roles.model';
 import { UserPreferences } from '../models';
@@ -262,9 +262,13 @@ export class AuthService {
       map(() => this.isAuthenticated()),
       catchError((err: unknown) => {
         if (err instanceof HttpErrorResponse && (err.status === 401 || err.status === 403)) {
-          this.setAccessToken(null);
-          this.persistUser(null);
-          this.setCsrfToken(null);
+          // Ne pas effacer une session qui vient d'être créée par un login réussi pendant
+          // que ce refresh bootstrap était encore en vol (race condition réseau mobile).
+          if (!this.isAuthenticated()) {
+            this.setAccessToken(null);
+            this.persistUser(null);
+            this.setCsrfToken(null);
+          }
           this.refreshInProgress = false;
           this.refreshSubject = new ReplaySubject<boolean | null>(1);
         }
@@ -298,7 +302,6 @@ export class AuthService {
   login(credentials: { email: string; password: string; mfaCode?: string; rememberDevice?: boolean }): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${this.apiBase}/auth/login`, credentials, {
-        // IMPORTANT pour que le cookie refreshToken soit posé
         withCredentials: true
       })
       .pipe(
@@ -311,6 +314,12 @@ export class AuthService {
           }
           if (resp?.csrfToken) {
             this.setCsrfToken(resp.csrfToken);
+          }
+          // Marquer la session prête immédiatement après un login réussi.
+          // Sans ça, un refresh bootstrap encore en vol sur réseau lent (mobile) peut
+          // revenir avec 401 après le login et effacer la session qu'on vient de créer.
+          if (resp?.accessToken && resp?.user) {
+            this._ready.set(true);
           }
         })
       );
@@ -338,13 +347,17 @@ export class AuthService {
       headers['X-XSRF-TOKEN'] = savedCsrf;
     }
 
+    // share() garantit un seul appel HTTP même si le appelant subscribe() aussi au retour.
+    // Sans share(), profile/header/unauthorized déclenchaient 2 requêtes POST logout :
+    // la 2e échouait car le refreshToken était déjà invalidé par la 1re.
     const logout$ = this.http
       .post(`${this.apiBase}/auth/refresh/logout`, {}, {
         withCredentials: true,
         headers
       })
       .pipe(
-        catchError(() => of(null))
+        catchError(() => of(null)),
+        share()
       );
 
     // Clear local state immediately so the UI reflects the logout at once

@@ -90,8 +90,14 @@ export const authInterceptor: HttpInterceptorFn = (
         // 401 : tentative de refresh automatique
         if (err.status === 401) {
           if (isAuthBootstrapEndpoint) {
-            auth.clearSession();
-            router.navigate(['/login']);
+            // Ne pas effacer une session fraîchement créée par login pendant que le
+            // refresh bootstrap était encore en vol (race condition sur réseau mobile lent).
+            // Pour le refresh de renouvellement (déclenché par le catchError ci-dessous),
+            // la session est de toute façon déjà effacée par ce même catchError.
+            if (!auth.isAuthenticated()) {
+              auth.clearSession();
+              router.navigate(['/login']);
+            }
             return throwError(() => err);
           }
           return auth.refreshToken().pipe(
@@ -104,10 +110,16 @@ export const authInterceptor: HttpInterceptorFn = (
           );
         }
 
-        // 403 sur /auth/refresh = compte désactivé → logout immédiat
+        // 403 sur /auth/refresh = compte désactivé ou mdp expiré
         if (err.status === 403 && isRefreshEndpoint) {
-          auth.clearSession();
-          router.navigate(['/login']);
+          // Même logique race condition : si le bootstrap refresh revient avec 403 après
+          // un login réussi, on ne touche pas la session. Pour un refresh de renouvellement
+          // (déclenché suite à un 401 sur une API), le clearSession est géré par le
+          // catchError du pipe refreshToken() ci-dessus.
+          if (!auth.isAuthenticated()) {
+            auth.clearSession();
+            router.navigate(['/login']);
+          }
           return throwError(() => err);
         }
 
