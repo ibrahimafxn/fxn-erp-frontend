@@ -1,0 +1,20 @@
+PHOTOS DU DIAPORAMA — Page d'accueil FXN
+========================================
+
+Copiez vos photos dans ce dossier avec les noms suivants :
+
+  FLOTTE (camionnettes, véhicules)
+  → flotte-1.jpg
+  → flotte-2.jpg
+
+  MATÉRIELS (équipements fibre, outillage)
+  → materiel-1.jpg
+  → materiel-2.jpg
+
+  EPI (équipements de protection sur chantier)
+  → epi-1.jpg
+  → epi-2.jpg
+
+Format recommandé : JPG, 1920×1080px minimum, < 500 Ko par photo.
+
+Les photos s'affichent en mode "cover" (zoom centré) — cadrez large.

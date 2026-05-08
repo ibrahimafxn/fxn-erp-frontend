@@ -1,30 +1,31 @@
 import { CommonModule, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { MovementService } from '../../../core/services/movement.service';
 import { ConsumableService } from '../../../core/services/consumable.service';
 import { MaterialService } from '../../../core/services/material.service';
 import { Consumable, Material, Movement } from '../../../core/models';
 import { apiError } from '../../../core/utils/http-error';
-import { resolveStockFamily } from '../../../core/utils/stock-family';
+
+type ResourceCount = {
+  label: string;
+  quantity: number;
+};
+
+type ResourceSummary = {
+  label: string;
+  quantity: number;
+  technicianCount: number;
+  movementCount: number;
+};
 
 type ConsumptionRow = {
   technician: string;
   totalQty: number;
   movementCount: number;
-  ptoQty: number;
-  jarretiereQty: number;
-  boitierQty: number;
-  cableQty: number;
-  connectiqueQty: number;
-  outilQty: number;
-  epiQty: number;
-  otherQty: number;
-  materialQty: number;
-  consumableQty: number;
-  topResources: string[];
+  topResources: ResourceCount[];
 };
 
 @Component({
@@ -46,6 +47,7 @@ export class MaterialConsumption {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly rows = signal<ConsumptionRow[]>([]);
+  readonly resourceInsights = signal<ResourceSummary[]>([]);
 
   readonly filterForm = this.fb.nonNullable.group({
     fromDate: this.fb.nonNullable.control(this.firstDayOfCurrentMonth()),
@@ -55,85 +57,65 @@ export class MaterialConsumption {
 
   readonly totals = computed(() => {
     const rows = this.rows();
+    const resourceCount = this.resourceInsights().length;
     return rows.reduce((acc, row) => ({
       totalQty: acc.totalQty + row.totalQty,
       movementCount: acc.movementCount + row.movementCount,
       technicianCount: acc.technicianCount + 1,
-      ptoQty: acc.ptoQty + row.ptoQty,
-      jarretiereQty: acc.jarretiereQty + row.jarretiereQty,
-      boitierQty: acc.boitierQty + row.boitierQty,
-      cableQty: acc.cableQty + row.cableQty,
-      connectiqueQty: acc.connectiqueQty + row.connectiqueQty,
-      outilQty: acc.outilQty + row.outilQty,
-      epiQty: acc.epiQty + row.epiQty
+      resourceCount
     }), {
       totalQty: 0,
       movementCount: 0,
       technicianCount: 0,
-      ptoQty: 0,
-      jarretiereQty: 0,
-      boitierQty: 0,
-      cableQty: 0,
-      connectiqueQty: 0,
-      outilQty: 0,
-      epiQty: 0
+      resourceCount
     });
+  });
+
+  readonly resourceSummary = computed(() => {
+    const resources = this.resourceInsights();
+    return {
+      resourceCount: resources.length,
+      topResources: resources.slice(0, 6),
+      topResource: resources[0] ?? null
+    };
   });
 
   readonly topConsumer = computed(() => this.rows()[0] || null);
 
   constructor() {
-    this.load();
+    void this.load();
   }
 
-  load(): void {
+  async load(): Promise<void> {
     const filters = this.filterForm.getRawValue();
-    const requests = [];
-
-    if (filters.resourceType === 'ALL' || filters.resourceType === 'CONSUMABLE') {
-      requests.push(this.movementService.listRaw({
-        resourceType: 'CONSUMABLE',
-        action: 'ASSIGN',
-        toType: 'USER',
-        fromDate: filters.fromDate || undefined,
-        toDate: filters.toDate || undefined,
-        page: 1,
-        limit: 1000
-      }));
-    }
-
-    if (filters.resourceType === 'ALL' || filters.resourceType === 'MATERIAL') {
-      requests.push(this.movementService.listRaw({
-        resourceType: 'MATERIAL',
-        action: 'ASSIGN',
-        toType: 'USER',
-        fromDate: filters.fromDate || undefined,
-        toDate: filters.toDate || undefined,
-        page: 1,
-        limit: 1000
-      }));
-    }
-
-    requests.push(this.materialService.refresh(true, { page: 1, limit: 1000 }));
-    requests.push(this.consumableService.refresh(true, { page: 1, limit: 1000 }));
-
     this.loading.set(true);
     this.error.set(null);
 
-    forkJoin(requests).subscribe({
-      next: (results) => {
-        const materialCatalog = (results[results.length - 2] as { items?: Material[] })?.items ?? [];
-        const consumableCatalog = (results[results.length - 1] as { items?: Consumable[] })?.items ?? [];
-        const movementResults = results.slice(0, -2) as Array<{ items?: Movement[] }>;
-        const items = movementResults.flatMap((result) => result.items ?? []);
-        this.rows.set(this.buildRows(items, materialCatalog, consumableCatalog));
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.error.set(apiError(err, 'Erreur chargement gestion materiel'));
-        this.loading.set(false);
-      }
-    });
+    try {
+      const [movementGroups, materialCatalog, consumableCatalog] = await Promise.all([
+        this.loadMonthlyMovements(filters.fromDate || undefined, filters.toDate || undefined, filters.resourceType),
+        firstValueFrom(this.materialService.refresh(true, { page: 1, limit: 1000 })),
+        firstValueFrom(this.consumableService.refresh(true, { page: 1, limit: 1000 }))
+      ]);
+
+      const movements = movementGroups.flat();
+      this.rows.set(this.buildRows(
+        movements,
+        materialCatalog.items ?? [],
+        consumableCatalog.items ?? []
+      ));
+      this.resourceInsights.set(this.buildResourceInsights(
+        movements,
+        materialCatalog.items ?? [],
+        consumableCatalog.items ?? []
+      ));
+    } catch (err) {
+      this.rows.set([]);
+      this.resourceInsights.set([]);
+      this.error.set(apiError(err, 'Erreur chargement gestion materiel'));
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   clearFilters(): void {
@@ -142,7 +124,7 @@ export class MaterialConsumption {
       toDate: this.lastDayOfCurrentMonth(),
       resourceType: 'ALL'
     });
-    this.load();
+    void this.load();
   }
 
   formatPeriod(): string {
@@ -169,84 +151,27 @@ export class MaterialConsumption {
     const byTechnician = new Map<string, {
       totalQty: number;
       movementCount: number;
-      ptoQty: number;
-      jarretiereQty: number;
-      boitierQty: number;
-      cableQty: number;
-      connectiqueQty: number;
-      outilQty: number;
-      epiQty: number;
-      otherQty: number;
-      materialQty: number;
-      consumableQty: number;
       resourceCounts: Map<string, number>;
     }>();
 
     for (const item of items) {
-      const linkedMaterial = item.resourceType === 'MATERIAL' ? materialById.get(item.resourceId) : null;
-      const linkedConsumable = item.resourceType === 'CONSUMABLE' ? consumableById.get(item.resourceId) : null;
-      const technician = String(item.toLabel || item.authorName || item.to?.id || '').trim() || 'TECHNICIEN NON RENSEIGNE';
+      if (!this.isAssignedMovement(item)) {
+        continue;
+      }
+
+      const technician = this.technicianLabel(item);
       const qty = Math.max(0, Number(item.quantity || 0));
-      const resourceLabel = String(
-        linkedMaterial?.name
-          || linkedConsumable?.name
-          || item.resourceLabel
-          || item.resourceId
-          || 'RESSOURCE'
-      ).trim();
+      const resourceLabel = this.resourceLabel(item, materialById, consumableById);
 
       const current = byTechnician.get(technician) || {
         totalQty: 0,
         movementCount: 0,
-        ptoQty: 0,
-        jarretiereQty: 0,
-        boitierQty: 0,
-        cableQty: 0,
-        connectiqueQty: 0,
-        outilQty: 0,
-        epiQty: 0,
-        otherQty: 0,
-        materialQty: 0,
-        consumableQty: 0,
         resourceCounts: new Map<string, number>()
       };
 
       current.totalQty += qty;
       current.movementCount += 1;
       current.resourceCounts.set(resourceLabel, (current.resourceCounts.get(resourceLabel) || 0) + qty);
-
-      if (item.resourceType === 'MATERIAL') current.materialQty += qty;
-      if (item.resourceType === 'CONSUMABLE') current.consumableQty += qty;
-
-      switch (resolveStockFamily({
-        label: resourceLabel,
-        category: linkedMaterial?.category ? String(linkedMaterial.category) : null
-      })) {
-        case 'PTO':
-          current.ptoQty += qty;
-          break;
-        case 'JARRETIERE':
-          current.jarretiereQty += qty;
-          break;
-        case 'BOITIER':
-          current.boitierQty += qty;
-          break;
-        case 'CABLE':
-          current.cableQty += qty;
-          break;
-        case 'CONNECTIQUE':
-          current.connectiqueQty += qty;
-          break;
-        case 'OUTIL':
-          current.outilQty += qty;
-          break;
-        case 'EPI':
-          current.epiQty += qty;
-          break;
-        default:
-          current.otherQty += qty;
-          break;
-      }
 
       byTechnician.set(technician, current);
     }
@@ -256,26 +181,136 @@ export class MaterialConsumption {
         technician,
         totalQty: value.totalQty,
         movementCount: value.movementCount,
-        ptoQty: value.ptoQty,
-        jarretiereQty: value.jarretiereQty,
-        boitierQty: value.boitierQty,
-        cableQty: value.cableQty,
-        connectiqueQty: value.connectiqueQty,
-        outilQty: value.outilQty,
-        epiQty: value.epiQty,
-        otherQty: value.otherQty,
-        materialQty: value.materialQty,
-        consumableQty: value.consumableQty,
         topResources: [...value.resourceCounts.entries()]
           .sort((a, b) => b[1] - a[1])
           .slice(0, 3)
-          .map(([label, quantity]) => `${label} (${quantity})`)
+          .map(([label, quantity]) => ({ label, quantity }))
       }))
       .sort((a, b) => {
         const qtyDiff = b.totalQty - a.totalQty;
         if (qtyDiff !== 0) return qtyDiff;
         return b.movementCount - a.movementCount;
       });
+  }
+
+  private buildResourceInsights(items: Movement[], materials: Material[], consumables: Consumable[]): ResourceSummary[] {
+    const materialById = new Map(materials.map((item) => [item._id, item]));
+    const consumableById = new Map(consumables.map((item) => [item._id, item]));
+
+    const byResource = new Map<string, {
+      quantity: number;
+      movementCount: number;
+      technicians: Set<string>;
+    }>();
+
+    for (const item of items) {
+      if (!this.isAssignedMovement(item)) {
+        continue;
+      }
+
+      const resourceLabel = this.resourceLabel(item, materialById, consumableById);
+      const technician = this.technicianLabel(item);
+      const qty = Math.max(0, Number(item.quantity || 0));
+
+      const current = byResource.get(resourceLabel) || {
+        quantity: 0,
+        movementCount: 0,
+        technicians: new Set<string>()
+      };
+
+      current.quantity += qty;
+      current.movementCount += 1;
+      current.technicians.add(technician);
+      byResource.set(resourceLabel, current);
+    }
+
+    return [...byResource.entries()]
+      .map(([label, value]) => ({
+        label,
+        quantity: value.quantity,
+        movementCount: value.movementCount,
+        technicianCount: value.technicians.size
+      }))
+      .sort((a, b) => {
+        const qtyDiff = b.quantity - a.quantity;
+        if (qtyDiff !== 0) return qtyDiff;
+        const moveDiff = b.movementCount - a.movementCount;
+        if (moveDiff !== 0) return moveDiff;
+        return b.technicianCount - a.technicianCount;
+      });
+  }
+
+  private resourceLabel(
+    item: Movement,
+    materialById: Map<string, Material>,
+    consumableById: Map<string, Consumable>
+  ): string {
+    const linkedMaterial = item.resourceType === 'MATERIAL' ? materialById.get(item.resourceId) : null;
+    const linkedConsumable = item.resourceType === 'CONSUMABLE' ? consumableById.get(item.resourceId) : null;
+    return String(
+      linkedMaterial?.name
+        || linkedConsumable?.name
+        || item.resourceLabel
+        || item.resourceId
+        || 'RESSOURCE'
+    ).trim() || 'RESSOURCE';
+  }
+
+  private technicianLabel(item: Movement): string {
+    return String(item.toLabel || item.authorName || item.to?.id || '').trim() || 'TECHNICIEN NON RENSEIGNE';
+  }
+
+  private isAssignedMovement(item: Movement): boolean {
+    return item.action === 'ASSIGN' && item.status !== 'CANCELED';
+  }
+
+  private async loadMonthlyMovements(
+    fromDate?: string,
+    toDate?: string,
+    resourceType: 'ALL' | 'MATERIAL' | 'CONSUMABLE' = 'ALL'
+  ): Promise<Movement[][]> {
+    const requests: Promise<Movement[]>[] = [];
+
+    if (resourceType === 'ALL' || resourceType === 'CONSUMABLE') {
+      requests.push(this.loadPagedMovements('CONSUMABLE', fromDate, toDate));
+    }
+
+    if (resourceType === 'ALL' || resourceType === 'MATERIAL') {
+      requests.push(this.loadPagedMovements('MATERIAL', fromDate, toDate));
+    }
+
+    return Promise.all(requests);
+  }
+
+  private async loadPagedMovements(
+    resourceType: 'CONSUMABLE' | 'MATERIAL',
+    fromDate?: string,
+    toDate?: string
+  ): Promise<Movement[]> {
+    const limit = 1000;
+    let page = 1;
+    let total = 0;
+    const items: Movement[] = [];
+
+    do {
+      const res = await firstValueFrom(this.movementService.listRaw({
+        resourceType,
+        action: 'ASSIGN',
+        status: 'COMMITTED',
+        toType: 'USER',
+        fromDate,
+        toDate,
+        page,
+        limit
+      }));
+
+      const pageItems = res.items ?? [];
+      items.push(...pageItems);
+      total = Number(res.total ?? items.length);
+      page += 1;
+    } while ((page - 1) * limit < total);
+
+    return items;
   }
 
   private firstDayOfCurrentMonth(): string {

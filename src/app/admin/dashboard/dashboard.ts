@@ -3,7 +3,7 @@
 import { Component, computed, inject, OnInit, ChangeDetectionStrategy, signal } from '@angular/core';
 import {CommonModule, DatePipe} from '@angular/common';
 import {Router, RouterModule} from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import {AdminService} from '../../core/services/admin.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Role } from '../../core/models/roles.model';
@@ -28,6 +28,31 @@ type DashboardAuditInsight = {
   riskiestScore: number;
   riskiestRegion: string | null;
   regionFailures: number;
+};
+
+type ResourceInsight = {
+  label: string;
+  quantity: number;
+  technicianCount: number;
+  movementCount: number;
+};
+
+type MaterialInsight = {
+  totalQty: number;
+  technicianCount: number;
+  resourceCount: number;
+  topTechnician: string | null;
+  topTechnicianQty: number;
+  topResources: ResourceInsight[];
+};
+
+const EMPTY_MATERIAL_INSIGHT: MaterialInsight = {
+  totalQty: 0,
+  technicianCount: 0,
+  resourceCount: 0,
+  topTechnician: null,
+  topTechnicianQty: 0,
+  topResources: []
 };
 
 @Component({
@@ -84,12 +109,7 @@ export class Dashboard implements OnInit {
   readonly auditItems = signal<DashboardAuditItem[]>([]);
   readonly auditTotals = signal<{ nbTotal: number; nbEchecs: number; txEchecGlobal: number } | null>(null);
   readonly auditTopMotif = signal<string | null>(null);
-  readonly materialInsight = signal({
-    topTechnician: null as string | null,
-    topTechnicianQty: 0,
-    ptoQty: 0,
-    jarretiereQty: 0
-  });
+  readonly materialInsight = signal<MaterialInsight>(EMPTY_MATERIAL_INSIGHT);
 
   // On réexpose les signals du service pour les templates
   readonly stats = this.adminService.stats;       // Signal<DashboardStats | null>
@@ -234,82 +254,89 @@ export class Dashboard implements OnInit {
     return Math.min(100, Math.round((this.prestationsTypesWeekTotal() / month) * 100));
   });
   readonly auditInsight = computed(() => this.buildAuditInsight(this.auditItems()));
-  readonly moduleCards = computed(() => [
-    {
-      key: 'import',
-      title: 'Import CSV Osiris',
-      icon: 'upload_file',
-      tone: 'blue',
-      status: 'Actif',
-      metric: `${this.formatCount(this.todayInterventionsCount())} interventions du jour`,
-      detail: 'Import, fusion et lecture du flux terrain sans intégration officielle.',
-      action: 'Ouvrir import',
-      route: ['/admin/interventions/import']
-    },
-    {
-      key: 'dashboard',
-      title: 'Dashboard interventions',
-      icon: 'insights',
-      tone: 'green',
-      status: 'Pilotage',
-      metric: `${this.formatCount(this.prestationsTypesWeekTotal())} prestations cette semaine`,
-      detail: 'Lecture immédiate du volume, des tendances 7 jours et des priorités terrain.',
-      action: 'Voir le cockpit',
-      route: ['/admin/interventions/week']
-    },
-    {
-      key: 'failures',
-      title: 'Analyse des échecs',
-      icon: 'crisis_alert',
-      tone: 'amber',
-      status: 'DB + CSV',
-      metric: this.auditTotals()
-        ? `${this.formatCount(this.auditTotals()?.nbEchecs ?? 0)} échecs · ${this.auditTotals()?.txEchecGlobal ?? 0} % taux global`
-        : 'Audit mensuel en chargement',
-      detail: this.auditInsight().riskiestTechnician
-        ? `Alerte prioritaire : ${this.auditInsight().riskiestTechnician} (score ${this.auditInsight().riskiestScore}, ${this.auditInsight().riskiestFailures} échecs, ${this.auditInsight().riskiestRate} %). Zone la plus touchée : ${this.auditInsight().riskiestRegion} (${this.formatCount(this.auditInsight().regionFailures)} échecs). Top motif : ${this.auditTopMotif() || 'n/d'}.`
-        : (this.auditTopMotif()
-          ? `Top motif du mois : ${this.auditTopMotif()}. Vue détaillée par technicien, base et fichier Osiris.`
-          : 'Vue détaillée par technicien, base et fichier Osiris pour isoler rapidement les échecs critiques.'),
-      action: 'Auditer',
-      route: ['/admin/interventions/audit']
-    },
-    {
-      key: 'technicians',
-      title: 'Gestion techniciens',
-      icon: 'engineering',
-      tone: 'violet',
-      status: 'Actif',
-      metric: `${this.formatCount(this.todayAbsentTechniciansCount())} indisponibilité(s) aujourd'hui`,
-      detail: 'Suivi d activité, interventions et absences depuis un point d entrée unique.',
-      action: 'Voir activité',
-      route: ['/admin/technicians/activity']
-    },
-    {
-      key: 'materials',
-      title: 'Gestion matériel',
-      icon: 'inventory_2',
-      tone: 'slate',
-      status: 'Stock',
-      metric: `${this.formatCount((this.stats()?.totalLowStockMaterials ?? 0) + (this.stats()?.totalLowStockConsumables ?? 0))} alerte(s) stock · ${this.formatCount(this.materialInsight().topTechnicianQty)} unités affectées`,
-      detail: this.materialInsight().topTechnician
-        ? `Top consommation technicien : ${this.materialInsight().topTechnician} (${this.formatCount(this.materialInsight().topTechnicianQty)} unités). PTO : ${this.formatCount(this.materialInsight().ptoQty)} · JARRETIÈRES : ${this.formatCount(this.materialInsight().jarretiereQty)}.`
-        : `PTO : ${this.formatCount(this.materialInsight().ptoQty)} · JARRETIÈRES : ${this.formatCount(this.materialInsight().jarretiereQty)}. Objectif : réduire les pertes et mieux lire la consommation terrain.`,
-      action: 'Voir consommation',
-      route: ['/admin/resources/material-consumption']
-    },
-    {
-      key: 'compliance',
-      title: 'Mini conformité',
-      icon: 'verified_user',
-      tone: 'rose',
-      status: 'Phase 2',
-      metric: `${this.formatCount(this.pendingAbsenceCount())} demande(s) RH en attente`,
-      detail: 'Socle RH présent, à étendre avec documents techniciens et alertes expiration.',
-      action: 'Ouvrir RH',
-      route: ['/admin/hr']
-    }
-  ]);
+  readonly moduleCards = computed(() => {
+    const material = this.materialInsight();
+    const dominantResources = material.topResources.slice(0, 3)
+      .map((resource) => `${resource.label} (${this.formatCount(resource.quantity)})`)
+      .join(' · ') || 'n/d';
+
+    return [
+      {
+        key: 'import',
+        title: 'Import CSV Osiris',
+        icon: 'upload_file',
+        tone: 'blue',
+        status: 'Actif',
+        metric: `${this.formatCount(this.todayInterventionsCount())} interventions du jour`,
+        detail: 'Import, fusion et lecture du flux terrain sans intégration officielle.',
+        action: 'Ouvrir import',
+        route: ['/admin/interventions/import']
+      },
+      {
+        key: 'dashboard',
+        title: 'Dashboard interventions',
+        icon: 'insights',
+        tone: 'green',
+        status: 'Pilotage',
+        metric: `${this.formatCount(this.prestationsTypesWeekTotal())} prestations cette semaine`,
+        detail: 'Lecture immédiate du volume, des tendances 7 jours et des priorités terrain.',
+        action: 'Voir le cockpit',
+        route: ['/admin/interventions/week']
+      },
+      {
+        key: 'failures',
+        title: 'Analyse des échecs',
+        icon: 'crisis_alert',
+        tone: 'amber',
+        status: 'DB + CSV',
+        metric: this.auditTotals()
+          ? `${this.formatCount(this.auditTotals()?.nbEchecs ?? 0)} échecs · ${this.auditTotals()?.txEchecGlobal ?? 0} % taux global`
+          : 'Audit mensuel en chargement',
+        detail: this.auditInsight().riskiestTechnician
+          ? `Alerte prioritaire : ${this.auditInsight().riskiestTechnician} (score ${this.auditInsight().riskiestScore}, ${this.auditInsight().riskiestFailures} échecs, ${this.auditInsight().riskiestRate} %). Zone la plus touchée : ${this.auditInsight().riskiestRegion} (${this.formatCount(this.auditInsight().regionFailures)} échecs). Top motif : ${this.auditTopMotif() || 'n/d'}.`
+          : (this.auditTopMotif()
+            ? `Top motif du mois : ${this.auditTopMotif()}. Vue détaillée par technicien, base et fichier Osiris.`
+            : 'Vue détaillée par technicien, base et fichier Osiris pour isoler rapidement les échecs critiques.'),
+        action: 'Auditer',
+        route: ['/admin/interventions/audit']
+      },
+      {
+        key: 'technicians',
+        title: 'Gestion techniciens',
+        icon: 'engineering',
+        tone: 'violet',
+        status: 'Actif',
+        metric: `${this.formatCount(this.todayAbsentTechniciansCount())} indisponibilité(s) aujourd'hui`,
+        detail: 'Suivi d activité, interventions et absences depuis un point d entrée unique.',
+        action: 'Voir activité',
+        route: ['/admin/technicians/activity']
+      },
+      {
+        key: 'materials',
+        title: 'Gestion matériel',
+        icon: 'inventory_2',
+        tone: 'slate',
+        status: this.currentMonthLabel(),
+        metric: `${this.formatCount(material.totalQty)} unités attribuées ce mois`,
+        detail: material.topTechnician
+          ? `Top technicien : ${material.topTechnician} (${this.formatCount(material.topTechnicianQty)} unités). ${this.formatCount(material.technicianCount)} technicien(s) concernés. Ressources dominantes : ${dominantResources}.`
+          : `Aucune attribution sur le mois en cours. ${this.formatCount(material.resourceCount)} référence(s) distincte(s) suivie(s).`,
+        action: 'Voir consommation',
+        route: ['/admin/resources/material-consumption']
+      },
+      {
+        key: 'compliance',
+        title: 'Mini conformité',
+        icon: 'verified_user',
+        tone: 'rose',
+        status: 'Phase 2',
+        metric: `${this.formatCount(this.pendingAbsenceCount())} demande(s) RH en attente`,
+        detail: 'Socle RH présent, à étendre avec documents techniciens et alertes expiration.',
+        action: 'Ouvrir RH',
+        route: ['/admin/hr']
+      }
+    ];
+  });
   readonly prestationsDonut = computed(() => {
     const items = this.prestationsTypes();
     const total = items.reduce((sum, item) => sum + item.value, 0);
@@ -427,41 +454,7 @@ export class Dashboard implements OnInit {
       }
     });
 
-    forkJoin([
-      this.movementService.listRaw({
-        resourceType: 'CONSUMABLE',
-        action: 'ASSIGN',
-        toType: 'USER',
-        fromDate: this.firstDayOfCurrentMonth(),
-        toDate: this.lastDayOfCurrentMonth(),
-        page: 1,
-        limit: 500
-      }),
-      this.movementService.listRaw({
-        resourceType: 'MATERIAL',
-        action: 'ASSIGN',
-        toType: 'USER',
-        fromDate: this.firstDayOfCurrentMonth(),
-        toDate: this.lastDayOfCurrentMonth(),
-        page: 1,
-        limit: 500
-      })
-    ]).subscribe({
-      next: ([consumables, materials]) => {
-        this.materialInsight.set(this.buildMaterialInsight([
-          ...(consumables.items ?? []),
-          ...(materials.items ?? [])
-        ]));
-      },
-      error: () => {
-        this.materialInsight.set({
-          topTechnician: null,
-          topTechnicianQty: 0,
-          ptoQty: 0,
-          jarretiereQty: 0
-        });
-      }
-    });
+    void this.loadMaterialInsight();
   }
 
   // Navigation rapide depuis les cartes du dashboard
@@ -564,6 +557,50 @@ export class Dashboard implements OnInit {
 
   trackHistory(index: number, item: HistoryItem): string {
     return (item as any).id || `${index}`;
+  }
+
+  private async loadMaterialInsight(): Promise<void> {
+    const [consumablesResult, materialsResult] = await Promise.allSettled([
+      this.loadMonthlyAssignedMovements('CONSUMABLE'),
+      this.loadMonthlyAssignedMovements('MATERIAL')
+    ]);
+
+    const consumables = consumablesResult.status === 'fulfilled' ? consumablesResult.value : [];
+    const materials = materialsResult.status === 'fulfilled' ? materialsResult.value : [];
+
+    this.materialInsight.set(this.buildMaterialInsight([
+      ...consumables,
+      ...materials
+    ]));
+  }
+
+  private async loadMonthlyAssignedMovements(resourceType: 'CONSUMABLE' | 'MATERIAL'): Promise<Movement[]> {
+    const limit = 1000;
+    const fromDate = this.firstDayOfCurrentMonth();
+    const toDate = this.lastDayOfCurrentMonth();
+    let page = 1;
+    let total = 0;
+    const items: Movement[] = [];
+
+    do {
+      const res = await firstValueFrom(this.movementService.listRaw({
+        resourceType,
+        action: 'ASSIGN',
+        toType: 'USER',
+        status: 'COMMITTED',
+        fromDate,
+        toDate,
+        page,
+        limit
+      }));
+
+      const pageItems = res.items ?? [];
+      items.push(...pageItems);
+      total = Number(res.total ?? items.length);
+      page += 1;
+    } while ((page - 1) * limit < total);
+
+    return items;
   }
 
   formatCount(value: number | null | undefined): string {
@@ -675,47 +712,87 @@ export class Dashboard implements OnInit {
     };
   }
 
-  private buildMaterialInsight(items: Movement[]): {
-    topTechnician: string | null;
-    topTechnicianQty: number;
-    ptoQty: number;
-    jarretiereQty: number;
-  } {
+  private buildMaterialInsight(items: Movement[]): MaterialInsight {
     if (!items.length) {
       return {
+        totalQty: 0,
+        technicianCount: 0,
+        resourceCount: 0,
         topTechnician: null,
         topTechnicianQty: 0,
-        ptoQty: 0,
-        jarretiereQty: 0
+        topResources: []
       };
     }
 
     const totalsByTechnician = new Map<string, number>();
-    let ptoQty = 0;
-    let jarretiereQty = 0;
+    const technicians = new Set<string>();
+    const byResource = new Map<string, {
+      quantity: number;
+      movementCount: number;
+      technicians: Set<string>;
+    }>();
+    let totalQty = 0;
 
     for (const item of items) {
+      if (!this.isAssignedMovement(item)) {
+        continue;
+      }
+
       const qty = Math.max(0, Number(item.quantity || 0));
-      const technician = String(item.toLabel || item.authorName || item.to?.id || '').trim() || 'Technicien non renseigne';
+      const technician = this.technicianLabel(item);
+      const resourceLabel = this.resourceLabel(item);
+      technicians.add(technician);
+      totalQty += qty;
       totalsByTechnician.set(technician, (totalsByTechnician.get(technician) || 0) + qty);
 
-      const label = this.normalizeKey(item.resourceLabel || item.resourceId || '');
-      if (label.includes('pto')) {
-        ptoQty += qty;
-      }
-      if (label.includes('jarretiere') || label.includes('jarretière') || label.includes('jarret')) {
-        jarretiereQty += qty;
-      }
+      const current = byResource.get(resourceLabel) || {
+        quantity: 0,
+        movementCount: 0,
+        technicians: new Set<string>()
+      };
+
+      current.quantity += qty;
+      current.movementCount += 1;
+      current.technicians.add(technician);
+      byResource.set(resourceLabel, current);
     }
 
     const topTechnicianEntry = [...totalsByTechnician.entries()].sort((a, b) => b[1] - a[1])[0];
+    const topResources = [...byResource.entries()]
+      .map(([label, value]) => ({
+        label,
+        quantity: value.quantity,
+        movementCount: value.movementCount,
+        technicianCount: value.technicians.size
+      }))
+      .sort((a, b) => {
+        const qtyDiff = b.quantity - a.quantity;
+        if (qtyDiff !== 0) return qtyDiff;
+        const moveDiff = b.movementCount - a.movementCount;
+        if (moveDiff !== 0) return moveDiff;
+        return b.technicianCount - a.technicianCount;
+      });
 
     return {
+      totalQty,
+      technicianCount: technicians.size,
+      resourceCount: topResources.length,
       topTechnician: topTechnicianEntry?.[0] || null,
       topTechnicianQty: topTechnicianEntry?.[1] || 0,
-      ptoQty,
-      jarretiereQty
+      topResources
     };
+  }
+
+  private resourceLabel(item: Movement): string {
+    return String(item.resourceLabel || item.resourceId || '').trim() || 'RESSOURCE';
+  }
+
+  private technicianLabel(item: Movement): string {
+    return String(item.toLabel || item.authorName || item.to?.id || '').trim() || 'Technicien non renseigne';
+  }
+
+  private isAssignedMovement(item: Movement): boolean {
+    return item.action === 'ASSIGN' && item.status !== 'CANCELED';
   }
 
   private scoreAuditRisk(item: DashboardAuditItem, maxFailures: number): number {
@@ -733,6 +810,11 @@ export class Dashboard implements OnInit {
     const year = now.getFullYear();
     const month = `${now.getMonth() + 1}`.padStart(2, '0');
     return `${year}-${month}-01`;
+  }
+
+  private currentMonthLabel(): string {
+    const label = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(new Date());
+    return label.charAt(0).toUpperCase() + label.slice(1);
   }
 
   private lastDayOfCurrentMonth(): string {

@@ -1,4 +1,14 @@
-import { Component, ChangeDetectionStrategy, computed, inject, OnDestroy, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  OnDestroy,
+  WritableSignal,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -13,6 +23,13 @@ type LandingGoogleReview = {
   highlight: string;
 };
 
+type LandingSlide = {
+  src: string;
+  alt: string;
+  label: string;
+  categoryLabel: string;
+};
+
 @Component({
   selector: 'app-landing',
   standalone: true,
@@ -21,11 +38,16 @@ type LandingGoogleReview = {
   templateUrl: './landing.html',
   styleUrls: ['./landing.scss']
 })
-export class Landing implements OnDestroy {
+export class Landing implements AfterViewInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private el = inject(ElementRef);
+
   private reviewsTimer: ReturnType<typeof window.setInterval> | null = null;
+  private slideshowTimer: ReturnType<typeof window.setInterval> | null = null;
+  private kpiObserver: IntersectionObserver | null = null;
+  private kpiAnimated = false;
 
   form = this.fb.group({
     email: ['', Validators.required],
@@ -38,8 +60,63 @@ export class Landing implements OnDestroy {
   mfaRequired = signal(false);
   showPassword = signal(false);
   activeFocus = signal<'materiels' | 'flotte' | null>(null);
+
+  // Reviews
   activeReviewIndex = signal(0);
   reviewsPaused = signal(false);
+
+  // Slideshow
+  activeSlideshowIndex = signal(0);
+  slideshowPaused = signal(false);
+
+  // KPI animated counters
+  kpiTechniciens = signal(0);
+  kpiVehicules = signal(0);
+  kpiInterventions = signal(0);
+  kpiTauxSucces = signal(0);
+
+  readonly slideshowSlides: LandingSlide[] = [
+    {
+      src: 'assets/slideshow/flotte-1.jpg',
+      alt: "Véhicule d'intervention FXN sur chantier fibre optique",
+      label: "Flotte d'intervention opérationnelle",
+      categoryLabel: 'Flotte'
+    },
+    {
+      src: 'assets/slideshow/flotte-2.jpg',
+      alt: 'Camionnette FXN équipée fibre optique',
+      label: 'Mobilité et réactivité terrain',
+      categoryLabel: 'Flotte'
+    },
+    {
+      src: 'assets/slideshow/materiel-1.jpg',
+      alt: 'Équipements fibre optique certifiés',
+      label: 'Équipements techniques certifiés',
+      categoryLabel: 'Matériels'
+    },
+    {
+      src: 'assets/slideshow/materiel-2.jpg',
+      alt: 'Outillage spécialisé fibre optique',
+      label: 'Outillage professionnel homologué',
+      categoryLabel: 'Matériels'
+    },
+    {
+      src: 'assets/slideshow/epi-1.jpg',
+      alt: 'EPI complets sur chantier fibre',
+      label: 'Sécurité chantier — conformité totale',
+      categoryLabel: 'EPI'
+    },
+    {
+      src: 'assets/slideshow/epi-2.jpg',
+      alt: 'Équipements de protection individuelle FXN',
+      label: 'Protection individuelle réglementaire',
+      categoryLabel: 'EPI'
+    }
+  ];
+
+  readonly currentSlide = computed(
+    () => this.slideshowSlides[this.activeSlideshowIndex()] ?? this.slideshowSlides[0]
+  );
 
   readonly googleReviews: LandingGoogleReview[] = [
     {
@@ -47,7 +124,7 @@ export class Landing implements OnDestroy {
       company: 'Superviseur terrain',
       rating: 5,
       publishedLabel: 'Avis Google',
-      text: 'FXN nous a permis de centraliser les interventions et de mieux suivre les urgences sans perdre du temps entre plusieurs fichiers.',
+      text: "FXN nous a permis de centraliser les interventions et de mieux suivre les urgences sans perdre du temps entre plusieurs fichiers.",
       highlight: 'Vision claire des interventions'
     },
     {
@@ -55,7 +132,7 @@ export class Landing implements OnDestroy {
       company: 'Responsable dépôt',
       rating: 5,
       publishedLabel: 'Avis Google',
-      text: 'Le suivi du stock et des mouvements est beaucoup plus simple. On sait rapidement où agir et quelles équipes prioriser.',
+      text: "Le suivi du stock et des mouvements est beaucoup plus simple. On sait rapidement où agir et quelles équipes prioriser.",
       highlight: 'Pilotage du stock en temps réel'
     },
     {
@@ -63,7 +140,7 @@ export class Landing implements OnDestroy {
       company: 'Coordination opérationnelle',
       rating: 5,
       publishedLabel: 'Avis Google',
-      text: 'La lecture des performances terrain est immédiate. Le dashboard aide vraiment à prendre des décisions plus rapides.',
+      text: "La lecture des performances terrain est immédiate. Le dashboard aide vraiment à prendre des décisions plus rapides.",
       highlight: 'Décisions plus rapides'
     },
     {
@@ -71,14 +148,16 @@ export class Landing implements OnDestroy {
       company: 'Gestion flotte & support',
       rating: 5,
       publishedLabel: 'Avis Google',
-      text: 'Entre la flotte, les équipements et les interventions, tout est plus fluide. L’équipe travaille avec une seule source fiable.',
+      text: "Entre la flotte, les équipements et les interventions, tout est plus fluide. L'équipe travaille avec une seule source fiable.",
       highlight: 'Une seule source fiable'
     }
   ];
 
-  readonly currentReview = computed(() => this.googleReviews[this.activeReviewIndex()] ?? this.googleReviews[0]);
+  readonly currentReview = computed(
+    () => this.googleReviews[this.activeReviewIndex()] ?? this.googleReviews[0]
+  );
   readonly reviewStars = computed(() =>
-    Array.from({ length: this.currentReview()?.rating ?? 0 }, (_, index) => index)
+    Array.from({ length: this.currentReview()?.rating ?? 0 }, (_, i) => i)
   );
 
   constructor() {
@@ -89,11 +168,38 @@ export class Landing implements OnDestroy {
     });
 
     this.startReviewsAutoplay();
+    this.startSlideshowAutoplay();
+  }
+
+  ngAfterViewInit(): void {
+    const kpiSection = this.el.nativeElement.querySelector('.kpi-dashboard') as HTMLElement | null;
+
+    if (!kpiSection || typeof IntersectionObserver === 'undefined') {
+      this.animateAllKpis();
+      return;
+    }
+
+    this.kpiObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !this.kpiAnimated) {
+          this.kpiAnimated = true;
+          this.animateAllKpis();
+          this.kpiObserver?.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
+
+    this.kpiObserver.observe(kpiSection);
   }
 
   ngOnDestroy(): void {
     this.stopReviewsAutoplay();
+    this.stopSlideshowAutoplay();
+    this.kpiObserver?.disconnect();
   }
+
+  // ---- Auth ----
 
   submit(): void {
     if (this.form.invalid) return;
@@ -125,7 +231,7 @@ export class Landing implements OnDestroy {
       error: (err) => {
         this.loading.set(false);
         if (err?.error?.passwordExpired) {
-          this.error.set(err?.error?.message || 'Mot de passe expiré. Utilisez l’accès complet.');
+          this.error.set(err?.error?.message || "Mot de passe expiré. Utilisez l'accès complet.");
           return;
         }
         if (err?.error?.mfaRequired) {
@@ -144,17 +250,20 @@ export class Landing implements OnDestroy {
   }
 
   toggleFocus(key: 'materiels' | 'flotte'): void {
-    this.activeFocus.update((current) => (current === key ? null : key));
+    this.activeFocus.update((c) => (c === key ? null : key));
   }
 
   goToApp(): void {
     this.router.navigateByUrl('/app');
   }
 
+  // ---- Reviews ----
+
   selectReview(index: number): void {
     if (!this.googleReviews.length) return;
-    const safeIndex = ((index % this.googleReviews.length) + this.googleReviews.length) % this.googleReviews.length;
-    this.activeReviewIndex.set(safeIndex);
+    const safe =
+      ((index % this.googleReviews.length) + this.googleReviews.length) % this.googleReviews.length;
+    this.activeReviewIndex.set(safe);
   }
 
   nextReview(): void {
@@ -190,5 +299,75 @@ export class Landing implements OnDestroy {
       window.clearInterval(this.reviewsTimer);
       this.reviewsTimer = null;
     }
+  }
+
+  // ---- Slideshow ----
+
+  selectSlide(index: number): void {
+    if (!this.slideshowSlides.length) return;
+    const safe =
+      ((index % this.slideshowSlides.length) + this.slideshowSlides.length) %
+      this.slideshowSlides.length;
+    this.activeSlideshowIndex.set(safe);
+  }
+
+  nextSlide(): void {
+    this.selectSlide(this.activeSlideshowIndex() + 1);
+  }
+
+  previousSlide(): void {
+    this.selectSlide(this.activeSlideshowIndex() - 1);
+  }
+
+  pauseSlideshow(): void {
+    this.slideshowPaused.set(true);
+  }
+
+  resumeSlideshow(): void {
+    this.slideshowPaused.set(false);
+  }
+
+  trackSlide(_: number, slide: LandingSlide): string {
+    return slide.src;
+  }
+
+  handleSlideImgError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+  }
+
+  private startSlideshowAutoplay(): void {
+    this.stopSlideshowAutoplay();
+    this.slideshowTimer = window.setInterval(() => {
+      if (this.slideshowPaused() || this.slideshowSlides.length < 2) return;
+      this.nextSlide();
+    }, 4500);
+  }
+
+  private stopSlideshowAutoplay(): void {
+    if (this.slideshowTimer !== null) {
+      window.clearInterval(this.slideshowTimer);
+      this.slideshowTimer = null;
+    }
+  }
+
+  // ---- KPI Animation ----
+
+  private animateAllKpis(): void {
+    this.animateKpi(this.kpiTechniciens, 52, 1800);
+    this.animateKpi(this.kpiVehicules, 14, 1600);
+    this.animateKpi(this.kpiInterventions, 3800, 2200);
+    this.animateKpi(this.kpiTauxSucces, 97, 2000);
+  }
+
+  private animateKpi(target: WritableSignal<number>, end: number, duration: number): void {
+    const start = performance.now();
+    const tick = (now: number): void => {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      target.set(Math.round(eased * end));
+      if (t < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 }

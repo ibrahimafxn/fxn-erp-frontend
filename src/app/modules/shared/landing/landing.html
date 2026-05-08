@@ -1,14 +1,22 @@
 <div class="landing-page">
+
+  <!-- ═══════════════════════════════════════════════
+       HEADER — Marque + Mini-login
+  ════════════════════════════════════════════════ -->
   <header class="landing-top">
     <div class="brand">
       <img class="brand-logo" src="assets/fxn_logo_header.png" alt="FXN" height="1024" width="1024" />
       <div class="brand-text">
-        <div class="brand-tag">ERP & opérations terrain</div>
+        <div class="brand-name">FXN ERP</div>
+        <div class="brand-tag">ERT Technologies · Fibre optique</div>
       </div>
     </div>
 
     <form class="mini-login" [formGroup]="form" (ngSubmit)="submit()">
-      <div class="mini-title">Accès utilisateur</div>
+      <div class="mini-title">
+        <i class="bi bi-lock-fill" aria-hidden="true"></i>
+        Accès utilisateur
+      </div>
 
       <div class="mini-grid">
         <div class="field">
@@ -59,48 +67,93 @@
     </form>
   </header>
 
+  <!-- ═══════════════════════════════════════════════
+       HERO — Accroche donneurs d'ordre télécom
+  ════════════════════════════════════════════════ -->
   <section class="hero">
     <div class="hero-copy">
-      <div class="hero-badge">FXN ERP · ERT Technologies</div>
-      <h1>Pilotez FXN avec une vision claire, du dépôt au terrain.</h1>
-      <p>
-        FXN centralise les opérations, la flotte, les stocks et les interventions pour donner aux équipes
-        une lecture instantanée de la performance et des priorités terrain.
+      <div class="hero-badge">
+        <span class="hero-badge-pulse"></span>
+        Opérationnel · Infrastructure fibre optique
+      </div>
+
+      <h1>
+        Déployez la fibre avec<br />
+        <span class="hero-accent">un partenaire terrain certifié.</span>
+      </h1>
+
+      <p class="hero-sub">
+        FXN centralise la gestion de ses équipes, de sa flotte et de ses équipements pour offrir
+        aux donneurs d'ordre une vision transparente et traçable de chaque chantier.
       </p>
-      <div class="kpi-grid">
-        <button class="kpi-card kpi-action" type="button" (click)="activeFocus.set(null)">
-          <div class="kpi-title">Performances</div>
-          <div class="kpi-text">Suivi temps réel, alertes proactives, décisions rapides.</div>
-          <span class="focus-cta">Réinitialiser</span>
-        </button>
-        <button
-          class="kpi-card kpi-action"
-          type="button"
-          (click)="toggleFocus('materiels')"
-          [attr.aria-selected]="activeFocus() === 'materiels'"
-        >
-          <div class="kpi-title">Matériels</div>
-          <div class="kpi-text">Outillage, consommables et équipements critiques.</div>
-          <span class="focus-cta">Voir le détail</span>
-        </button>
-        <button
-          class="kpi-card kpi-action"
-          type="button"
-          (click)="toggleFocus('flotte')"
-          [attr.aria-selected]="activeFocus() === 'flotte'"
-        >
-          <div class="kpi-title">Flotte</div>
-          <div class="kpi-text">Véhicules d’intervention et maintenance préventive.</div>
-          <span class="focus-cta">Voir le détail</span>
-        </button>
+
+      <div class="hero-highlights">
+        <div class="hero-highlight">
+          <i class="bi bi-shield-check-fill" aria-hidden="true"></i>
+          <span>Certifié & conforme</span>
+        </div>
+        <div class="hero-highlight">
+          <i class="bi bi-lightning-charge-fill" aria-hidden="true"></i>
+          <span>Réactivité &lt; 4h</span>
+        </div>
+        <div class="hero-highlight">
+          <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+          <span>3 dépôts opérationnels</span>
+        </div>
+        <div class="hero-highlight">
+          <i class="bi bi-bar-chart-fill" aria-hidden="true"></i>
+          <span>Traçabilité complète</span>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <a class="btn-primary btn-hero" routerLink="/login">Accéder à la plateforme</a>
+        <a class="btn-ghost btn-hero" href="#photo-showcase">
+          <i class="bi bi-play-circle-fill" aria-hidden="true"></i>
+          Voir nos ressources
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-panel">
+      <div class="panel-card">
+        <h3><i class="bi bi-check2-circle" aria-hidden="true"></i> Pourquoi FXN ?</h3>
+        <ul class="panel-list">
+          <li>Traçabilité complète des flux et des opérations terrain.</li>
+          <li>Vue consolidée par dépôt, équipe et matériel.</li>
+          <li>Automatisation des alertes et décisions terrain.</li>
+          <li>Conformité PPSPS & réglementations télécom.</li>
+        </ul>
+      </div>
+
+      <div class="panel-card">
+        <h3><i class="bi bi-box-seam" aria-hidden="true"></i> Ressources disponibles</h3>
+        <div class="panel-grid">
+          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">
+            <i class="bi bi-truck" aria-hidden="true"></i> Véhicules d'intervention
+          </button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">
+            <i class="bi bi-tools" aria-hidden="true"></i> Consommables critiques
+          </button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">
+            <i class="bi bi-wrench-adjustable" aria-hidden="true"></i> Outillage & équipements
+          </button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">
+            <i class="bi bi-archive" aria-hidden="true"></i> Stock multi-dépôts
+          </button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">
+            <i class="bi bi-calendar-check" aria-hidden="true"></i> Maintenance préventive
+          </button>
+          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">
+            <i class="bi bi-clock-history" aria-hidden="true"></i> Historique & incidents
+          </button>
+        </div>
       </div>
 
       @if (activeFocus() === 'materiels') {
         <section class="focus-detail" id="focus-materiels" role="tabpanel" aria-live="polite">
           <h3>Suivi des matériels</h3>
-          <p>
-            Centralisez l’inventaire, l’état et l’utilisation des équipements critiques pour chaque dépôt et équipe terrain.
-          </p>
+          <p>Centralisez l'inventaire, l'état et l'utilisation des équipements critiques pour chaque dépôt et équipe terrain.</p>
           <ul class="focus-list">
             <li>Inventaire par catégorie, criticité et emplacement.</li>
             <li>Alertes de seuils et consommations anormales.</li>
@@ -112,9 +165,7 @@
       @if (activeFocus() === 'flotte') {
         <section class="focus-detail" id="focus-flotte" role="tabpanel" aria-live="polite">
           <h3>Gestion de flotte</h3>
-          <p>
-            Visualisez la disponibilité des véhicules, les coûts d’exploitation et la planification des interventions.
-          </p>
+          <p>Visualisez la disponibilité des véhicules, les coûts d'exploitation et la planification des interventions.</p>
           <ul class="focus-list">
             <li>Disponibilités, kilométrage et usage.</li>
             <li>Maintenance préventive et suivi des incidents.</li>
@@ -123,31 +174,253 @@
         </section>
       }
     </div>
+  </section>
 
-    <div class="hero-panel">
-      <div class="panel-card">
-        <h3>Pourquoi FXN ?</h3>
-        <ul class="panel-list">
-          <li>Traçabilité complète des flux et des opérations.</li>
-          <li>Vue consolidée par dépôt, équipe et matériel.</li>
-          <li>Automatisation des alertes et décisions terrain.</li>
-        </ul>
+  <!-- ═══════════════════════════════════════════════
+       KPI DASHBOARD — Indicateurs clés animés
+  ════════════════════════════════════════════════ -->
+  <section class="kpi-dashboard" aria-label="Indicateurs de performance FXN">
+    <div class="kpi-dashboard-header">
+      <div class="kpi-live-badge">
+        <span class="kpi-live-dot"></span>
+        Données opérationnelles · FXN ERP
+      </div>
+      <p class="kpi-dashboard-sub">Capacités déployées sur le terrain, actualisées en continu dans notre ERP.</p>
+    </div>
+
+    <div class="kpi-dashboard-grid">
+      <div class="kpi-dash-card kpi-cyan">
+        <div class="kpi-dash-icon">
+          <i class="bi bi-people-fill" aria-hidden="true"></i>
+        </div>
+        <div class="kpi-dash-value">
+          <span class="kpi-count" aria-live="polite">{{ kpiTechniciens() }}</span>
+        </div>
+        <div class="kpi-dash-label">Techniciens certifiés</div>
+        <div class="kpi-dash-sub">Actifs & qualifiés fibre</div>
       </div>
 
-      <div class="panel-card">
-        <h3>Matériels & flotte</h3>
-        <div class="panel-grid">
-          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">Véhicules d’intervention</button>
-          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">Consommables critiques</button>
-          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">Outillage & équipements</button>
-          <button class="chip chip-action" type="button" (click)="toggleFocus('materiels')">Stock multi-dépôts</button>
-          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">Maintenance préventive</button>
-          <button class="chip chip-action" type="button" (click)="toggleFocus('flotte')">Historique & incidents</button>
+      <div class="kpi-dash-card kpi-blue">
+        <div class="kpi-dash-icon">
+          <i class="bi bi-truck" aria-hidden="true"></i>
+        </div>
+        <div class="kpi-dash-value">
+          <span class="kpi-count" aria-live="polite">{{ kpiVehicules() }}</span>
+        </div>
+        <div class="kpi-dash-label">Véhicules d'intervention</div>
+        <div class="kpi-dash-sub">Flotte dédiée fibre optique</div>
+      </div>
+
+      <div class="kpi-dash-card kpi-green">
+        <div class="kpi-dash-icon">
+          <i class="bi bi-activity" aria-hidden="true"></i>
+        </div>
+        <div class="kpi-dash-value">
+          <span class="kpi-count" aria-live="polite">{{ kpiInterventions() | number: '1.0-0' }}</span>
+          <span class="kpi-suffix">+</span>
+        </div>
+        <div class="kpi-dash-label">Interventions réalisées</div>
+        <div class="kpi-dash-sub">Raccordements & déploiements</div>
+      </div>
+
+      <div class="kpi-dash-card kpi-gold">
+        <div class="kpi-dash-icon">
+          <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+        </div>
+        <div class="kpi-dash-value">
+          <span class="kpi-count" aria-live="polite">{{ kpiTauxSucces() }}</span>
+          <span class="kpi-suffix">%</span>
+        </div>
+        <div class="kpi-dash-label">Taux de succès</div>
+        <div class="kpi-dash-sub">Missions conformes & validées</div>
+      </div>
+    </div>
+
+    <div class="kpi-secondary-row">
+      <div class="kpi-secondary-item">
+        <i class="bi bi-building" aria-hidden="true"></i>
+        <span class="kpi-sec-value">3</span>
+        <span class="kpi-sec-label">Dépôts opérationnels</span>
+      </div>
+      <div class="kpi-sep"></div>
+      <div class="kpi-secondary-item">
+        <i class="bi bi-box-seam" aria-hidden="true"></i>
+        <span class="kpi-sec-value">200+</span>
+        <span class="kpi-sec-label">Matériels référencés</span>
+      </div>
+      <div class="kpi-sep"></div>
+      <div class="kpi-secondary-item">
+        <i class="bi bi-clock" aria-hidden="true"></i>
+        <span class="kpi-sec-value">&lt; 4h</span>
+        <span class="kpi-sec-label">Délai moyen d'intervention</span>
+      </div>
+      <div class="kpi-sep"></div>
+      <div class="kpi-secondary-item">
+        <i class="bi bi-geo-alt" aria-hidden="true"></i>
+        <span class="kpi-sec-value">Île-de-France</span>
+        <span class="kpi-sec-label">Zone de couverture principale</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       PHOTO SHOWCASE — Diaporama ressources terrain
+  ════════════════════════════════════════════════ -->
+  <section
+    class="photo-showcase"
+    id="photo-showcase"
+    aria-label="Nos ressources terrain"
+    (mouseenter)="pauseSlideshow()"
+    (mouseleave)="resumeSlideshow()"
+  >
+    <div class="photo-showcase-head">
+      <div class="photo-showcase-text">
+        <div class="section-badge">
+          <i class="bi bi-images" aria-hidden="true"></i>
+          Nos ressources terrain
+        </div>
+        <h2>Flotte, matériels & équipements de sécurité</h2>
+        <p>Découvrez les moyens humains et matériels déployés sur chaque chantier fibre optique.</p>
+      </div>
+
+      <div class="photo-nav-group">
+        <div class="photo-slide-indicator">
+          {{ activeSlideshowIndex() + 1 }} / {{ slideshowSlides.length }}
+        </div>
+        <button class="photo-nav" type="button" (click)="previousSlide()" aria-label="Diapositive précédente">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+        </button>
+        <button class="photo-nav" type="button" (click)="nextSlide()" aria-label="Diapositive suivante">
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="photo-slideshow-wrapper">
+      <div
+        class="photo-slideshow-track"
+        [style.transform]="'translateX(-' + activeSlideshowIndex() * 100 + '%)'"
+      >
+        @for (slide of slideshowSlides; track trackSlide($index, slide)) {
+          <div class="photo-slide">
+            <img
+              [src]="slide.src"
+              [alt]="slide.alt"
+              class="photo-slide-img"
+              (error)="handleSlideImgError($event)"
+            />
+            <div class="photo-slide-bg"></div>
+            <div class="photo-slide-overlay">
+              <span class="photo-slide-category">{{ slide.categoryLabel }}</span>
+              <div class="photo-slide-caption">{{ slide.label }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="photo-dots" role="tablist" aria-label="Navigation diaporama">
+      @for (slide of slideshowSlides; track trackSlide($index, slide)) {
+        <button
+          type="button"
+          class="photo-dot"
+          [class.is-active]="$index === activeSlideshowIndex()"
+          (click)="selectSlide($index)"
+          [attr.aria-label]="'Diapositive ' + ($index + 1)"
+          role="tab"
+        ></button>
+      }
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       RESOURCES SECTION — Grille capacités
+  ════════════════════════════════════════════════ -->
+  <section class="resources-section">
+    <div class="section-badge center">
+      <i class="bi bi-grid-3x3-gap-fill" aria-hidden="true"></i>
+      Capacités opérationnelles
+    </div>
+    <h2 class="resources-title">Des ressources adaptées à chaque chantier fibre</h2>
+    <p class="resources-sub">
+      Chaque intervention est préparée depuis nos dépôts avec le matériel adéquat,
+      les véhicules disponibles et les EPI conformes aux normes chantier télécom.
+    </p>
+
+    <div class="resources-grid">
+      <div class="resource-card resource-flotte">
+        <div class="resource-card-head">
+          <div class="resource-icon resource-icon-blue">
+            <i class="bi bi-truck" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h3>Flotte d'intervention</h3>
+            <span class="resource-count">14 véhicules actifs</span>
+          </div>
+        </div>
+        <p>Véhicules aménagés, équipés et planifiés pour intervenir rapidement sur toute la zone de couverture.</p>
+        <ul class="resource-list">
+          <li>Camionnettes spécifiquement aménagées fibre</li>
+          <li>Suivi GPS et maintenance préventive planifiée</li>
+          <li>Disponibilité synchronisée avec les chantiers</li>
+          <li>Couverture multi-dépôts coordonnée</li>
+        </ul>
+        <button class="resource-cta" type="button" (click)="toggleFocus('flotte')">
+          Détails flotte <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="resource-card resource-materiel">
+        <div class="resource-card-head">
+          <div class="resource-icon resource-icon-cyan">
+            <i class="bi bi-tools" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h3>Matériels & équipements</h3>
+            <span class="resource-count">200+ références</span>
+          </div>
+        </div>
+        <p>Outillage certifié et consommables fibre gérés en temps réel depuis nos 3 dépôts opérationnels.</p>
+        <ul class="resource-list">
+          <li>Soudeuses fibre & réflectomètres (OTDR)</li>
+          <li>Consommables tracés par dépôt et technicien</li>
+          <li>Inventaire actualisé en continu via ERP</li>
+          <li>Alertes automatiques sur les seuils critiques</li>
+        </ul>
+        <button class="resource-cta" type="button" (click)="toggleFocus('materiels')">
+          Détails matériels <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="resource-card resource-epi">
+        <div class="resource-card-head">
+          <div class="resource-icon resource-icon-green">
+            <i class="bi bi-shield-check" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h3>EPI & sécurité chantier</h3>
+            <span class="resource-count">Conformité PPSPS</span>
+          </div>
+        </div>
+        <p>Équipements de protection individuels complets, conformes aux normes télécom et PPSPS en vigueur.</p>
+        <ul class="resource-list">
+          <li>EPI complets & normalisés par poste</li>
+          <li>Traçabilité par technicien et chantier</li>
+          <li>Conformité vérifiée avant chaque intervention</li>
+          <li>Plan de renouvellement automatisé</li>
+        </ul>
+        <div class="resource-badge-row">
+          <span class="resource-compliance-badge">PPSPS</span>
+          <span class="resource-compliance-badge">EN 397</span>
+          <span class="resource-compliance-badge">EN ISO 20345</span>
         </div>
       </div>
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════════════
+       REVIEWS — Carrousel témoignages
+  ════════════════════════════════════════════════ -->
   <section
     class="reviews-showcase"
     aria-labelledby="google-reviews-title"
@@ -158,7 +431,7 @@
       <div>
         <div class="reviews-badge">Avis Google</div>
         <h2 id="google-reviews-title">Ce que les utilisateurs retiennent de FXN</h2>
-        <p>Un carrousel dédié aux retours clients, prêt à être alimenté avec les avis Google de FXN.</p>
+        <p>Retours d'expérience des équipes et partenaires qui utilisent la plateforme au quotidien.</p>
       </div>
       <div class="reviews-actions">
         <button type="button" class="review-nav" (click)="previousReview()" aria-label="Avis précédent">
@@ -184,7 +457,7 @@
                   <span>★</span>
                 }
               </div>
-              <blockquote class="review-quote">“{{ review.text }}”</blockquote>
+              <blockquote class="review-quote">"{{ review.text }}"</blockquote>
               <div class="review-author-block">
                 <div class="review-author">{{ review.author }}</div>
                 <div class="review-company">{{ review.company }}</div>
@@ -195,7 +468,7 @@
       </div>
 
       <aside class="reviews-sidecard">
-        <div class="sidecard-label">Slide actif</div>
+        <div class="sidecard-label">En ce moment</div>
         <div class="sidecard-title">{{ currentReview().highlight }}</div>
         <p>{{ currentReview().text }}</p>
         <div class="sidecard-author">{{ currentReview().author }} · {{ currentReview().company }}</div>
@@ -209,9 +482,28 @@
           class="review-dot"
           [class.is-active]="$index === activeReviewIndex()"
           (click)="selectReview($index)"
-          [attr.aria-label]="'Afficher l’avis ' + ($index + 1)"
+          [attr.aria-label]="'Afficher l\'avis ' + ($index + 1)"
         ></button>
       }
     </div>
   </section>
+
+  <!-- ═══════════════════════════════════════════════
+       FOOTER CTA
+  ════════════════════════════════════════════════ -->
+  <footer class="landing-footer">
+    <div class="footer-cta">
+      <h3>Vous êtes donneur d'ordre ?</h3>
+      <p>Accédez à notre plateforme pour suivre vos chantiers, vérifier nos capacités et piloter les interventions en temps réel.</p>
+      <div class="footer-cta-actions">
+        <a class="btn-primary btn-hero" routerLink="/login">Accéder à la plateforme</a>
+      </div>
+    </div>
+    <div class="footer-meta">
+      <span>© 2025 FXN · ERT Technologies</span>
+      <span class="footer-sep">·</span>
+      <span>Infrastructure fibre optique</span>
+    </div>
+  </footer>
+
 </div>
